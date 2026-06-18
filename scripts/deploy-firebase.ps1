@@ -1,5 +1,6 @@
 param(
   [string]$ProjectId = $env:FIREBASE_PROJECT_ID,
+  [string]$ProjectDisplayName = "MujahizIQ",
   [string]$Location = "nam5",
   [string]$DisplayName = "Mujahiz IQ",
   [string]$WebAppName = "Mujahiz IQ Web"
@@ -81,6 +82,12 @@ function Get-ExistingProjectId {
   try {
     $json = ConvertFrom-FirebaseJsonOutput $output
     $serialized = $json | ConvertTo-Json -Depth 30
+    if ($ProjectDisplayName -and $serialized -match '"displayName"\s*:\s*"' + [regex]::Escape($ProjectDisplayName) + '"[\s\S]*?"projectId"\s*:\s*"([^"]+)"') {
+      return $Matches[1]
+    }
+    if ($ProjectDisplayName -and $serialized -match '"projectId"\s*:\s*"([^"]+)"[\s\S]*?"displayName"\s*:\s*"' + [regex]::Escape($ProjectDisplayName) + '"') {
+      return $Matches[1]
+    }
     foreach ($candidate in @("mujahiz-iq-alani", "mujahiz-iq-260619", "mujahiz-iq-20260619")) {
       if ($serialized -match '"' + [regex]::Escape($candidate) + '"') {
         return $candidate
