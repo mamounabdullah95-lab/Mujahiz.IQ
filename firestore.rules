@@ -1,0 +1,168 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function myUser() {
+      return userDoc(request.auth.uid).data;
+    }
+
+    function hasAnyRole(roles) {
+      return signedIn() && myUser().role in roles;
+    }
+
+    function isAdmin() {
+      return hasAnyRole(["owner", "admin"]);
+    }
+
+    function isOwner() {
+      return hasAnyRole(["owner"]);
+    }
+
+    function isApproved() {
+      return signedIn() && myUser().status == "approved";
+    }
+
+    function hasActiveAccess() {
+      return isAdmin() || (
+        isApproved() &&
+        myUser().accessStatus in ["active", "temporary"] &&
+        myUser().accessExpiresAt is timestamp &&
+        myUser().accessExpiresAt > request.time
+      );
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function canContribute() {
+      return signedIn()
+        && myUser().status != "suspended"
+        && myUser().role in ["owner", "admin", "contributor"];
+    }
+
+    function canAdminUpdateUser() {
+      return isOwner()
+        || (
+          hasAnyRole(["admin"])
+          && resource.data.role != "owner"
+          && request.resource.data.role != "owner"
+        );
+    }
+
+    function onlySelfEditableProfileFields() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        "fullName",
+        "phone",
+        "jobTitle",
+        "organization",
+        "governorate",
+        "city",
+        "sector",
+        "reasonForJoining",
+        "language",
+        "updatedAt"
+      ]);
+    }
+
+    match /users/{userId} {
+      allow create: if isSelf(userId)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == "contributor"
+        && request.resource.data.status == "pending_approval"
+        && request.resource.data.accessStatus == "pending";
+
+      allow read: if isSelf(userId) || isAdmin();
+
+      allow update: if canAdminUpdateUser()
+        || (isSelf(userId) && onlySelfEditableProfileFields());
+
+      allow delete: if isOwner() && userId != request.auth.uid;
+    }
+
+    match /suppliers/{supplierId} {
+      allow read: if hasActiveAccess();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /supplierDuplicateIndex/{supplierId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /supplierSubmissions/{submissionId} {
+      allow create: if canContribute()
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.submissionStatus in ["draft", "pending_review", "possible_duplicate"];
+
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.submittedBy == request.auth.uid);
+
+      allow update: if isAdmin()
+        || (
+          canContribute()
+          && resource.data.submittedBy == request.auth.uid
+          && resource.data.submissionStatus in ["draft", "needs_correction"]
+          && request.resource.data.submittedBy == request.auth.uid
+          && request.resource.data.submissionStatus in ["draft", "pending_review"]
+        );
+
+      allow delete: if isAdmin()
+        || (
+          canContribute()
+          && resource.data.submittedBy == request.auth.uid
+          && resource.data.submissionStatus == "draft"
+        );
+    }
+
+    match /reviews/{reviewId} {
+      allow create: if canContribute()
+        && hasActiveAccess()
+        && request.resource.data.reviewedBy == request.auth.uid
+        && request.resource.data.status == "pending_review";
+
+      allow read: if isAdmin()
+        || (hasActiveAccess() && resource.data.status == "approved")
+        || (signedIn() && resource.data.reviewedBy == request.auth.uid);
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /accessCredits/{creditId} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /contributionLogs/{logId} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isOwner();
+    }
+
+    match /settings/{settingId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isOwner();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+  }
+}

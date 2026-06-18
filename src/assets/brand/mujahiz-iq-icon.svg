@@ -1,0 +1,24 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<title id="title">Mujahiz IQ icon</title>
+<desc id="desc">Icon for Mujahiz IQ, a smart supplier network.</desc>
+<defs>
+  <linearGradient id="bg" x1="75" y1="58" x2="435" y2="455" gradientUnits="userSpaceOnUse"><stop stop-color="#102B55"/><stop offset="1" stop-color="#0B1F3A"/></linearGradient>
+  <linearGradient id="arc" x1="94" y1="99" x2="425" y2="409" gradientUnits="userSpaceOnUse"><stop stop-color="#2563EB"/><stop offset="0.48" stop-color="#00B8D9"/><stop offset="1" stop-color="#16A34A"/></linearGradient>
+  <filter id="shadow" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#0B1F3A" flood-opacity="0.22"/></filter>
+</defs>
+<rect width="512" height="512" rx="96" fill="#F8FAFC"/>
+<g filter="url(#shadow)">
+  <rect x="64" y="64" width="384" height="384" rx="98" fill="url(#bg)"/>
+  <path d="M82 390C179 401 330 381 431 285" stroke="url(#arc)" stroke-width="26" stroke-linecap="round" opacity="0.95"/>
+  <path d="M93 112C197 95 354 119 430 223" stroke="url(#arc)" stroke-width="18" stroke-linecap="round" opacity="0.5"/>
+  <path d="M149 346V169L256 286L363 169V346" stroke="white" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="149" cy="169" r="24" fill="#00B8D9" stroke="white" stroke-width="10"/>
+  <circle cx="256" cy="286" r="24" fill="#16A34A" stroke="white" stroke-width="10"/>
+  <circle cx="363" cy="169" r="24" fill="#00B8D9" stroke="white" stroke-width="10"/>
+  <circle cx="363" cy="346" r="17" fill="white" opacity="0.94"/>
+  <circle cx="149" cy="346" r="17" fill="white" opacity="0.94"/>
+  <circle cx="389" cy="127" r="52" fill="white"/>
+  <path d="M365 127L382 144L416 104" stroke="#16A34A" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="413" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="52" font-weight="850" letter-spacing="-1.2" fill="white">IQ</text>
+</g>
+</svg>

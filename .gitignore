@@ -1,0 +1,16 @@
+node_modules
+dist
+.tools/
+.runtime/
+.codex/
+.agents/
+.env
+.env.local
+.env.production
+.env.*.local
+.firebase
+firebase-debug.log
+firestore-debug.log
+*.local
+*.tsbuildinfo
+runtime/
