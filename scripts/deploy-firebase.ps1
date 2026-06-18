@@ -3,7 +3,8 @@ param(
   [string]$ProjectDisplayName = "MujahizIQ",
   [string]$Location = "nam5",
   [string]$DisplayName = "Mujahiz IQ",
-  [string]$WebAppName = "Mujahiz IQ Web"
+  [string]$WebAppName = "Mujahiz IQ Web",
+  [string]$Token = $env:FIREBASE_TOKEN
 )
 
 Set-StrictMode -Version Latest
@@ -20,6 +21,10 @@ if (Test-Path -LiteralPath $NodeDir) {
 $Npx = Join-Path $NodeDir "npx.cmd"
 if (-not (Test-Path -LiteralPath $Npx)) {
   $Npx = "npx"
+}
+
+if ($Token) {
+  $env:FIREBASE_TOKEN = $Token
 }
 
 function Invoke-Firebase {
@@ -73,6 +78,24 @@ function Get-ProjectFromFirebaserc {
   return ""
 }
 
+function Get-ProjectFromServiceAccount {
+  $path = $env:GOOGLE_APPLICATION_CREDENTIALS
+  if (-not $path -or -not (Test-Path -LiteralPath $path)) {
+    return ""
+  }
+
+  try {
+    $json = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+    if ($json.project_id) {
+      return [string]$json.project_id
+    }
+  } catch {
+    return ""
+  }
+
+  return ""
+}
+
 function Get-ExistingProjectId {
   $output = & $Npx firebase projects:list --json 2>&1
   if ($LASTEXITCODE -ne 0) {
@@ -101,6 +124,10 @@ function Get-ExistingProjectId {
 }
 
 function Ensure-FirebaseLogin {
+  if ($Token -or $env:GOOGLE_APPLICATION_CREDENTIALS) {
+    return
+  }
+
   $loginOutput = & $Npx firebase login:list 2>&1
   if ($LASTEXITCODE -eq 0 -and (($loginOutput | Out-String) -notmatch "No authorized accounts")) {
     return
@@ -123,6 +150,11 @@ function Ensure-Project {
   $existingFromFile = Get-ProjectFromFirebaserc
   if ($existingFromFile) {
     return $existingFromFile
+  }
+
+  $existingFromServiceAccount = Get-ProjectFromServiceAccount
+  if ($existingFromServiceAccount) {
+    return $existingFromServiceAccount
   }
 
   $existingFromAccount = Get-ExistingProjectId
