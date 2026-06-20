@@ -1,6 +1,7 @@
 import {
   BarChart3,
   BookOpen,
+  CheckCircle2,
   ClipboardCheck,
   FilePlus2,
   Gauge,
@@ -12,7 +13,9 @@ import {
   Tags,
   UserRound,
   Users,
+  X,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
@@ -102,6 +105,7 @@ export function Layout() {
             </nav>
           </aside>
           <main className="min-w-0 rounded-md border border-slate-200 bg-white shadow-soft">
+            <TrialWelcomeNotice />
             <Outlet />
           </main>
         </div>
@@ -110,6 +114,52 @@ export function Layout() {
           <Outlet />
         </main>
       )}
+    </div>
+  );
+}
+
+function TrialWelcomeNotice() {
+  const { t } = useTranslation();
+  const { appUser, isAdmin } = useAuth();
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!appUser || isAdmin || appUser.role !== "contributor" || appUser.status !== "approved" || appUser.accessStatus !== "temporary") {
+      setVisible(false);
+      return;
+    }
+
+    const storageKey = `mujahiz-iq-trial-welcome-dismissed-${appUser.uid}`;
+    const forcedByRegistration = sessionStorage.getItem("mujahiz-iq-registration-success") === "1";
+    if (forcedByRegistration) {
+      sessionStorage.removeItem("mujahiz-iq-registration-success");
+    }
+    setVisible(forcedByRegistration || localStorage.getItem(storageKey) !== "1");
+  }, [appUser, isAdmin]);
+
+  if (!appUser || !visible) {
+    return null;
+  }
+
+  const storageKey = `mujahiz-iq-trial-welcome-dismissed-${appUser.uid}`;
+
+  return (
+    <div className="border-b border-mint/30 bg-mint/10 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="flex items-start gap-3 text-sm text-ink">
+        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-mint" aria-hidden="true" />
+        <p className="flex-1 leading-6">{t("registrationSuccessMessage")}</p>
+        <button
+          className="rounded-md p-1 text-slate-500 transition hover:bg-white hover:text-ink"
+          type="button"
+          aria-label={t("dismiss")}
+          onClick={() => {
+            localStorage.setItem(storageKey, "1");
+            setVisible(false);
+          }}
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
     </div>
   );
 }

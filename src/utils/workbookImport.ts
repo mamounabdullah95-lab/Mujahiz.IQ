@@ -116,8 +116,8 @@ function parseSharedStrings(xml: string) {
     return [];
   }
   const document = parseXml(xml);
-  return Array.from(document.getElementsByTagName("si")).map((item) =>
-    Array.from(item.getElementsByTagName("t"))
+  return getElementsByLocalName(document, "si").map((item) =>
+    getElementsByLocalName(item, "t")
       .map((node) => node.textContent || "")
       .join(""),
   );
@@ -138,10 +138,10 @@ function findFirstWorksheetPath(entries: Map<string, ZipEntry>) {
 
 function parseWorksheetRows(xml: string, sharedStrings: string[]) {
   const document = parseXml(xml);
-  return Array.from(document.getElementsByTagName("row"))
+  return getElementsByLocalName(document, "row")
     .map((row) => {
       const values: string[] = [];
-      Array.from(row.getElementsByTagName("c")).forEach((cell) => {
+      getElementsByLocalName(row, "c").forEach((cell) => {
         const reference = cell.getAttribute("r") || "";
         const columnIndex = reference ? columnNameToIndex(reference.replace(/\d+/g, "")) : values.length;
         values[columnIndex] = readCellText(cell, sharedStrings).trim();
@@ -154,11 +154,11 @@ function parseWorksheetRows(xml: string, sharedStrings: string[]) {
 function readCellText(cell: Element, sharedStrings: string[]) {
   const type = cell.getAttribute("t");
   if (type === "inlineStr") {
-    return Array.from(cell.getElementsByTagName("t"))
+    return getElementsByLocalName(cell, "t")
       .map((node) => node.textContent || "")
       .join("");
   }
-  const value = cell.getElementsByTagName("v")[0]?.textContent || "";
+  const value = getElementsByLocalName(cell, "v")[0]?.textContent || "";
   if (type === "s") {
     return sharedStrings[Number(value)] || "";
   }
@@ -174,10 +174,14 @@ function columnNameToIndex(name: string) {
 
 function parseXml(xml: string) {
   const document = new DOMParser().parseFromString(xml, "application/xml");
-  if (document.getElementsByTagName("parsererror").length) {
+  if (getElementsByLocalName(document, "parsererror").length) {
     throw new Error("invalidSupplierImportFile");
   }
   return document;
+}
+
+function getElementsByLocalName(parent: Document | Element, localName: string) {
+  return Array.from(parent.getElementsByTagNameNS("*", localName));
 }
 
 function parseCsv(text: string) {
