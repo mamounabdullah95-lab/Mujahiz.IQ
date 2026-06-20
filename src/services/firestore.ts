@@ -4,7 +4,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  increment,
   limit,
   orderBy,
   query,
@@ -338,8 +337,7 @@ export async function submitSupplierDraft(userId: string, draft: SupplierDraft, 
   if (!isFirebaseConfigured) {
     return demo.demoSubmitSupplierDraft(userId, draft, duplicateCheck);
   }
-  const batch = writeBatch(db);
-  batch.set(doc(submissionsRef), {
+  await addDoc(submissionsRef, {
     submittedBy: userId,
     submissionStatus: duplicateCheck.hasPossibleDuplicate ? "possible_duplicate" : "pending_review",
     supplierData: draft,
@@ -351,11 +349,6 @@ export async function submitSupplierDraft(userId: string, draft: SupplierDraft, 
     creditConsumed: false,
     createdAt: serverTimestamp(),
   } satisfies Omit<SupplierSubmission, "id" | "createdAt"> & { createdAt: unknown });
-  batch.update(doc(usersRef, userId), {
-    totalSubmissions: increment(1),
-    updatedAt: serverTimestamp(),
-  });
-  await batch.commit();
 }
 
 export async function resubmitSupplierSubmission(

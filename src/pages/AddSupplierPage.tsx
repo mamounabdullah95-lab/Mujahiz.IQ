@@ -654,7 +654,7 @@ export function AddSupplierPage() {
                 <Save className="h-4 w-4" aria-hidden="true" />
                 {t("saveAndReturn")}
               </Button>
-              <Button disabled={busy || missing.length > 0} type="button" onClick={() => bulkEditIndex !== null && void submitBulkItem(bulkEditIndex, form)}>
+              <Button disabled={busy} type="button" onClick={() => bulkEditIndex !== null && void submitBulkItem(bulkEditIndex, form)}>
                 <Send className="h-4 w-4" aria-hidden="true" />
                 {t("sendThisSupplier")}
               </Button>
