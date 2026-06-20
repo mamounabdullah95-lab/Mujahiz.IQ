@@ -77,6 +77,34 @@ const stopWords = new Set([
   "that",
   "accepts",
   "payment",
+  "and",
+  "after",
+  "before",
+  "day",
+  "days",
+  "month",
+  "months",
+  "invoice",
+  "invoicing",
+  "bank",
+  "transfer",
+  "cash",
+  "credit",
+  "term",
+  "terms",
+  "مصرفي",
+  "تحويل",
+  "نقدي",
+  "اجل",
+  "آجل",
+  "ائتمان",
+  "يوم",
+  "يوما",
+  "شهر",
+  "الفاتوره",
+  "الفوتره",
+  "الاستلام",
+  "التسليم",
 ]);
 
 export function parseSupplierSearchLocally(query: string, taxonomy: TaxonomyLists): SupplierSearchIntent {
@@ -195,7 +223,7 @@ export function recommendSuppliers(
         } else if (!intent.creditDays && supplier.acceptsCredit) {
           creditScore += 7;
         }
-        if (intent.creditStart && supplier.creditStart === intent.creditStart) creditScore += 3;
+        if (supplier.acceptsCredit && intent.creditStart && supplier.creditStart === intent.creditStart) creditScore += 3;
         rawScore += Math.min(15, creditScore);
         if (creditScore) reasons.add("credit");
       }
