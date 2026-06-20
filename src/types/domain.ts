@@ -28,6 +28,8 @@ export type VerificationStatus =
 
 export type ConfidenceLevel = "high" | "medium" | "low" | "needs_verification";
 
+export type CreditStart = "invoice_date" | "delivery_date" | "invoice_approval";
+
 export type SourceType =
   | "purchased_before"
   | "requested_quotation"
@@ -147,6 +149,10 @@ export interface SupplierDraft {
   subcategories: string[];
   capabilityTags: string[];
   paymentOptions: string[];
+  acceptsCredit?: boolean;
+  creditDays?: number[];
+  creditStart?: CreditStart;
+  creditTermsNote?: string;
   sourceType: SourceType;
   confidenceLevel: ConfidenceLevel;
   hasDirectExperience: "yes" | "no" | "not_sure";

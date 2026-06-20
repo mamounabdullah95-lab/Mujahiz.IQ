@@ -11,6 +11,7 @@ import {
   capabilityTags,
   confidenceLevels,
   coverageAreas,
+  creditStarts,
   labelFor,
   paymentOptions,
   sourceTypes,
@@ -126,6 +127,10 @@ export function SupplierSubmissionDetailPage() {
               label={t("paymentOptions")}
               value={<PillList values={supplier.paymentOptions.map((item) => labelFor(paymentOptions, item, locale))} />}
             />
+            <InfoRow label={t("acceptsCredit")} value={supplier.acceptsCredit === true ? t("yes") : supplier.acceptsCredit === false ? t("no") : t("unknown")} />
+            <InfoRow label={t("creditDays")} value={supplier.creditDays?.join(", ")} />
+            <InfoRow label={t("creditStart")} value={supplier.creditStart ? labelFor(creditStarts, supplier.creditStart, locale) : "-"} />
+            <InfoRow label={t("creditTermsNote")} value={localizedSupplierText(supplier.creditTermsNote, locale)} />
           </InfoPanel>
 
           <InfoPanel title={t("sourceConfidence")}>

@@ -12,8 +12,10 @@ import {
   capabilityTags,
   confidenceLevels,
   concernReviewTags,
+  creditStarts,
   interactionTypes,
   labelFor,
+  paymentOptions,
   positiveReviewTags,
 } from "../data/constants";
 import { getSupplier, listSupplierReviews, submitSupplierReview } from "../services/firestore";
@@ -180,7 +182,12 @@ export function SupplierProfilePage() {
               <div><b>{t("website")}:</b> {supplier.website || "-"}</div>
               <div><b>{t("contactPerson")}:</b> {localizedSupplierText(supplier.contactPerson, locale) || "-"}</div>
               <div><b>{t("confidenceLevel")}:</b> {labelFor(confidenceLevels, supplier.confidenceLevel, locale)}</div>
+              <div><b>{t("paymentOptions")}:</b> {supplier.paymentOptions?.map((item) => labelFor(paymentOptions, item, locale)).join(", ") || "-"}</div>
+              <div><b>{t("acceptsCredit")}:</b> {supplier.acceptsCredit === true ? t("yes") : supplier.acceptsCredit === false ? t("no") : t("unknown")}</div>
+              <div><b>{t("creditDays")}:</b> {supplier.creditDays?.join(", ") || "-"}</div>
+              <div><b>{t("creditStart")}:</b> {supplier.creditStart ? labelFor(creditStarts, supplier.creditStart, locale) : "-"}</div>
             </div>
+            {supplier.creditTermsNote ? <p className="mt-3 rounded bg-slate-50 p-3 text-sm text-slate-600">{localizedSupplierText(supplier.creditTermsNote, locale)}</p> : null}
           </div>
 
           <div className="rounded-md border border-slate-200 p-4">

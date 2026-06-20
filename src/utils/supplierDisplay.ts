@@ -1,4 +1,4 @@
-import { capabilityTags, labelFor, type OptionItem } from "../data/constants";
+import { capabilityTags, creditStarts, labelFor, paymentOptions, type OptionItem } from "../data/constants";
 import type { Locale, Supplier, SupplierDraft, TaxonomyLists } from "../types/domain";
 
 const cityPairs = [
@@ -188,6 +188,8 @@ export function supplierSearchText(supplier: Supplier, taxonomy: TaxonomyLists) 
       labelFor(taxonomy.supplierCategories, category, "ar"),
     ]),
     ...supplier.capabilityTags.flatMap((tag) => [labelFor(capabilityTags, tag, "en"), labelFor(capabilityTags, tag, "ar")]),
+    ...supplier.paymentOptions.flatMap((option) => [labelFor(paymentOptions, option, "en"), labelFor(paymentOptions, option, "ar")]),
+    ...(supplier.creditStart ? [labelFor(creditStarts, supplier.creditStart, "en"), labelFor(creditStarts, supplier.creditStart, "ar")] : []),
   ];
   const cityAliases = cityPairs
     .filter(([, en, ar]) => [supplier.city, supplier.marketArea].some((value) => [en, ar].some((item) => normalizeDisplayText(item) === normalizeDisplayText(value || ""))))
@@ -225,6 +227,11 @@ export function supplierSearchText(supplier: Supplier, taxonomy: TaxonomyLists) 
     ...supplier.subcategories,
     ...supplier.categories,
     ...supplier.capabilityTags,
+    ...supplier.paymentOptions,
+    ...(supplier.creditDays || []).map(String),
+    supplier.creditTermsNote,
+    localizedSupplierText(supplier.creditTermsNote, "en"),
+    localizedSupplierText(supplier.creditTermsNote, "ar"),
     ...taxonomyLabels,
     ...cityAliases,
   ]

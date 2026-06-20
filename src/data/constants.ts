@@ -135,6 +135,12 @@ export const paymentOptions: OptionItem[] = [
   { value: "official_invoice", labelEn: "Official invoice", labelAr: "فاتورة رسمية" },
 ];
 
+export const creditStarts: OptionItem[] = [
+  { value: "invoice_date", labelEn: "From invoice date", labelAr: "من تاريخ الفاتورة" },
+  { value: "delivery_date", labelEn: "From delivery date", labelAr: "من تاريخ الاستلام" },
+  { value: "invoice_approval", labelEn: "From invoice approval", labelAr: "من تاريخ اعتماد الفاتورة" },
+];
+
 export const interactionTypes: OptionItem[] = [
   { value: "rfq_only", labelEn: "RFQ only", labelAr: "طلب سعر فقط" },
   { value: "purchase_order", labelEn: "Purchase order", labelAr: "أمر شراء" },

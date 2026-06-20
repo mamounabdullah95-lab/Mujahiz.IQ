@@ -263,7 +263,10 @@ function Write-ProductionEnv {
     "VITE_FIREBASE_PROJECT_ID=$projectIdValue",
     "VITE_FIREBASE_STORAGE_BUCKET=$storageBucket",
     "VITE_FIREBASE_MESSAGING_SENDER_ID=$messagingSenderId",
-    "VITE_FIREBASE_APP_ID=$appIdValue"
+    "VITE_FIREBASE_APP_ID=$appIdValue",
+    "VITE_FIREBASE_AI_ENABLED=true",
+    "VITE_FIREBASE_AI_MODEL=gemini-2.5-flash-lite",
+    "VITE_FIREBASE_APP_CHECK_SITE_KEY="
   )
 
   Set-Content -LiteralPath (Join-Path $Root ".env.production") -Value $envLines -Encoding utf8

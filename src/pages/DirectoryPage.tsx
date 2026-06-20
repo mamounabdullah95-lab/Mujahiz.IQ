@@ -1,15 +1,24 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import Fuse from "fuse.js";
 import { Link } from "react-router-dom";
-import { Mail, MapPin, Phone, Search, SlidersHorizontal, X } from "lucide-react";
+import { LoaderCircle, Mail, MapPin, Phone, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { StarRating } from "../components/StarRating";
-import { Button, EmptyState, Section, SelectField, TextField } from "../components/ui";
+import { Button, EmptyState, Section, SelectField, TextAreaField, TextField } from "../components/ui";
 import { useTaxonomy } from "../contexts/TaxonomyContext";
-import { businessTypes, capabilityTags, confidenceLevels, coverageAreas, labelFor } from "../data/constants";
+import { businessTypes, capabilityTags, confidenceLevels, coverageAreas, creditStarts, labelFor, paymentOptions } from "../data/constants";
 import { listSuppliers } from "../services/firestore";
+import { isGeminiSupplierSearchEnabled, parseSupplierSearchWithGemini } from "../services/supplierSearchAI";
 import type { Supplier } from "../types/domain";
 import { localizedCity, localizedSupplierGovernorates, localizedSupplierName, localizedSupplierText, supplierGovernorates, supplierSearchText } from "../utils/supplierDisplay";
+import {
+  describeIntent,
+  mergeSupplierSearchIntents,
+  parseSupplierSearchLocally,
+  recommendSuppliers,
+  type SupplierRecommendation,
+  type SupplierSearchIntent,
+} from "../utils/supplierRecommendations";
 
 export function DirectoryPage() {
   const { t, i18n } = useTranslation();
@@ -19,6 +28,11 @@ export function DirectoryPage() {
   const [loading, setLoading] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [contactOpenId, setContactOpenId] = useState("");
+  const [smartQuery, setSmartQuery] = useState("");
+  const [smartSearching, setSmartSearching] = useState(false);
+  const [smartIntent, setSmartIntent] = useState<SupplierSearchIntent | null>(null);
+  const [recommendations, setRecommendations] = useState<SupplierRecommendation[]>([]);
+  const [smartSearchMessage, setSmartSearchMessage] = useState("");
   const [filters, setFilters] = useState({
     query: "",
     governorate: "",
@@ -78,8 +92,110 @@ export function DirectoryPage() {
       coverageArea: "",
     });
 
+  async function runSmartSearch() {
+    const query = smartQuery.trim();
+    if (!query) return;
+    setSmartSearching(true);
+    setSmartSearchMessage("");
+    try {
+      const localIntent = parseSupplierSearchLocally(query, taxonomy);
+      let aiIntent: Partial<SupplierSearchIntent> | null = null;
+      if (isGeminiSupplierSearchEnabled()) {
+        try {
+          aiIntent = await parseSupplierSearchWithGemini(query, taxonomy);
+        } catch {
+          setSmartSearchMessage(t("geminiSearchFallback"));
+        }
+      }
+      const intent = mergeSupplierSearchIntents(localIntent, aiIntent);
+      setSmartIntent(intent);
+      setRecommendations(recommendSuppliers(suppliers, intent, taxonomy, locale));
+    } finally {
+      setSmartSearching(false);
+    }
+  }
+
   return (
     <Section title={t("directory")} description={t("search")}>
+      <div className="rounded-md border border-river/25 bg-river/5 p-4">
+        <div className="flex items-start gap-3">
+          <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-river" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-ink">{t("askSupplierDirectory")}</h3>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{t("askSupplierDirectoryDescription")}</p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+          <TextAreaField
+            label={t("procurementRequest")}
+            value={smartQuery}
+            onChange={(event) => setSmartQuery(event.target.value)}
+            placeholder={t("procurementRequestPlaceholder")}
+            rows={3}
+          />
+          <Button disabled={smartSearching || !smartQuery.trim()} type="button" onClick={() => void runSmartSearch()}>
+            {smartSearching ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
+            {t("recommendSuppliers")}
+          </Button>
+        </div>
+        {smartSearchMessage ? <p className="mt-2 text-xs font-semibold text-amber">{smartSearchMessage}</p> : null}
+        {smartIntent ? (
+          <div className="mt-4">
+            <div className="flex flex-wrap gap-2">
+              {describeIntent(smartIntent, taxonomy, locale).map((item) => (
+                <span className="rounded bg-white px-2 py-1 text-xs font-bold text-river ring-1 ring-river/15" key={item}>{item}</span>
+              ))}
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <h3 className="font-bold text-ink">{t("topSupplierRecommendations")}</h3>
+              <span className="text-xs font-semibold text-slate-500">{t("recommendationCount", { count: recommendations.length })}</span>
+            </div>
+            {recommendations.length ? (
+              <div className="mt-3 grid gap-3">
+                {recommendations.map((item, index) => (
+                  <article className="rounded-md border border-slate-200 bg-white p-4" key={item.supplier.id}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="text-xs font-black text-river">#{index + 1}</div>
+                        <h4 className="mt-1 text-lg font-black text-ink">{localizedSupplierName(item.supplier, locale)}</h4>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {localizedSupplierGovernorates(item.supplier, taxonomy, locale)} ·{" "}
+                          {item.supplier.categories.map((category) => labelFor(taxonomy.supplierCategories, category, locale)).join(", ")}
+                        </p>
+                      </div>
+                      <div className="shrink-0 rounded-md bg-mint/10 px-3 py-2 text-center text-mint">
+                        <div className="text-2xl font-black">{item.score}%</div>
+                        <div className="text-xs font-bold">{t("matchScore")}</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {item.reasons.map((reason) => (
+                        <span className="rounded bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600" key={reason}>
+                          {t(`recommendationReason_${reason}`)}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-3">
+                      <div><b>{t("paymentOptions")}:</b> {item.supplier.paymentOptions?.map((value) => labelFor(paymentOptions, value, locale)).join(", ") || "-"}</div>
+                      <div><b>{t("creditDays")}:</b> {item.supplier.acceptsCredit && item.supplier.creditDays?.length ? item.supplier.creditDays.join(", ") : "-"}</div>
+                      <div><b>{t("creditStart")}:</b> {item.supplier.creditStart ? labelFor(creditStarts, item.supplier.creditStart, locale) : "-"}</div>
+                    </div>
+                    <div className="mt-4">
+                      <Link className="inline-flex min-h-9 items-center gap-2 rounded-md bg-river px-3 text-sm font-semibold text-white hover:bg-ink" to={`/suppliers/${item.supplier.id}`}>
+                        <Search className="h-4 w-4" aria-hidden="true" />
+                        {t("details")}
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-3 text-sm font-semibold text-slate-500">{t("noMatchingRecommendations")}</div>
+            )}
+          </div>
+        ) : null}
+      </div>
+
       <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
         <TextField label={t("search")} value={filters.query} onChange={(event) => setValue("query", event.target.value)} />
         <SelectField label={t("governorate")} value={filters.governorate} onChange={(event) => setValue("governorate", event.target.value)}>

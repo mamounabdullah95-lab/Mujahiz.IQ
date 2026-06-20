@@ -10,6 +10,7 @@ import {
   capabilityTags,
   confidenceLevels,
   coverageAreas,
+  creditStarts,
   labelFor,
   type OptionItem,
   paymentOptions,
@@ -59,6 +60,10 @@ interface FormState {
   subcategories: string;
   capabilityTags: string[];
   paymentOptions: string[];
+  acceptsCredit: "yes" | "no" | "unknown";
+  creditDays: string;
+  creditStart: string;
+  creditTermsNote: string;
   sourceType: string;
   confidenceLevel: string;
   hasDirectExperience: "yes" | "no" | "not_sure";
@@ -111,6 +116,10 @@ const initialForm: FormState = {
   subcategories: "",
   capabilityTags: [],
   paymentOptions: [],
+  acceptsCredit: "unknown",
+  creditDays: "",
+  creditStart: "",
+  creditTermsNote: "",
   sourceType: "",
   confidenceLevel: "",
   hasDirectExperience: "not_sure",
@@ -706,6 +715,33 @@ export function AddSupplierPage() {
               <div className="mb-2 text-sm font-bold text-slate-700">{t("paymentOptions")}</div>
               <ChipGroup options={paymentOptions.map(option)} values={form.paymentOptions} onChange={(values) => setValue("paymentOptions", values)} />
             </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <SelectField label={t("acceptsCredit")} value={form.acceptsCredit} onChange={(event) => setValue("acceptsCredit", event.target.value as FormState["acceptsCredit"])}>
+                <option value="unknown">{t("unknown")}</option>
+                <option value="yes">{t("yes")}</option>
+                <option value="no">{t("no")}</option>
+              </SelectField>
+              <TextField
+                label={t("creditDays")}
+                value={form.creditDays}
+                onChange={(event) => setValue("creditDays", event.target.value)}
+                placeholder={t("creditDaysPlaceholder")}
+                disabled={form.acceptsCredit === "no"}
+              />
+              <SelectField label={t("creditStart")} value={form.creditStart} onChange={(event) => setValue("creditStart", event.target.value)} disabled={form.acceptsCredit === "no"}>
+                <option value=""></option>
+                {creditStarts.map((item) => (
+                  <option key={item.value} value={item.value}>{labelFor(creditStarts, item.value, locale)}</option>
+                ))}
+              </SelectField>
+              <TextAreaField
+                className="md:col-span-3"
+                label={t("creditTermsNote")}
+                value={form.creditTermsNote}
+                onChange={(event) => setValue("creditTermsNote", event.target.value)}
+                disabled={form.acceptsCredit === "no"}
+              />
+            </div>
           </div>
         ) : null}
 
@@ -945,6 +981,14 @@ function buildDraft(form: FormState): SupplierDraft {
   const normalizedPhones = Array.from(new Set(phones.map(normalizePhone).filter(Boolean)));
   const governorates = form.governorates.filter(Boolean);
   const categories = form.mainCategories.filter(Boolean);
+  const creditDays = Array.from(
+    new Set(
+      form.creditDays
+        .split(/[,\s]+/)
+        .map((item) => Number.parseInt(item, 10))
+        .filter((item) => Number.isFinite(item) && item > 0 && item <= 365),
+    ),
+  ).sort((a, b) => a - b);
   const subcategories = form.subcategories
     .split(",")
     .map((item) => item.trim())
@@ -978,6 +1022,10 @@ function buildDraft(form: FormState): SupplierDraft {
     subcategories,
     capabilityTags: form.capabilityTags,
     paymentOptions: form.paymentOptions,
+    acceptsCredit: form.acceptsCredit === "yes" ? true : form.acceptsCredit === "no" ? false : undefined,
+    creditDays: form.acceptsCredit === "yes" ? creditDays : [],
+    creditStart: form.acceptsCredit === "yes" && form.creditStart ? form.creditStart as SupplierDraft["creditStart"] : undefined,
+    creditTermsNote: form.acceptsCredit === "yes" ? form.creditTermsNote.trim() : "",
     sourceType: form.sourceType as SupplierDraft["sourceType"],
     confidenceLevel: form.confidenceLevel as SupplierDraft["confidenceLevel"],
     hasDirectExperience: form.hasDirectExperience,
@@ -1023,6 +1071,10 @@ function formFromDraft(draft: SupplierDraft): FormState {
     subcategories: draft.subcategories?.join(", ") || "",
     capabilityTags: draft.capabilityTags || [],
     paymentOptions: draft.paymentOptions || [],
+    acceptsCredit: draft.acceptsCredit === true ? "yes" : draft.acceptsCredit === false ? "no" : "unknown",
+    creditDays: draft.creditDays?.join(", ") || "",
+    creditStart: draft.creditStart || "",
+    creditTermsNote: draft.creditTermsNote || "",
     sourceType: draft.sourceType || "",
     confidenceLevel: draft.confidenceLevel || "",
     hasDirectExperience: draft.hasDirectExperience || "not_sure",
@@ -1074,6 +1126,10 @@ const supplierImportAliases: Partial<Record<keyof FormState, string[]>> = {
   subcategories: ["subcategories", "sub categories", "فرعي", "التصنيفات الفرعية", "تخصصات فرعية"],
   capabilityTags: ["capability tags", "capabilities", "tags", "وسوم القدرات", "القدرات", "الوسوم"],
   paymentOptions: ["payment options", "payment", "خيارات الدفع", "الدفع"],
+  acceptsCredit: ["accepts credit", "credit payment", "deferred payment", "payment on credit", "دفع آجل", "دفع اجل", "يقبل الدفع الآجل", "ائتمان"],
+  creditDays: ["credit days", "payment term days", "net days", "مدة الائتمان", "مدة الدفع", "أيام الدفع", "ايام الدفع"],
+  creditStart: ["credit starts from", "payment term starts", "credit start", "بدء الاستحقاق", "بداية مدة الدفع", "احتساب المدة"],
+  creditTermsNote: ["credit terms note", "payment terms note", "credit note", "ملاحظات الدفع الآجل", "ملاحظات الدفع الاجل", "شروط الدفع"],
   sourceType: ["source of information", "source type", "source", "how do you know this supplier", "مصدر المعلومات", "المصدر", "كيف تعرف المجهز"],
   confidenceLevel: ["confidence level", "confidence", "مستوى الثقة", "الثقة"],
   hasDirectExperience: ["direct experience", "previous direct experience", "experience", "خبرة مباشرة", "تعامل مباشر", "تجربة سابقة"],
@@ -1148,6 +1204,8 @@ function fieldsToForm(fields: Partial<Record<keyof FormState, string>>, current:
   setText("contactPerson", fields.contactPerson);
   setText("contactPersonRole", fields.contactPersonRole);
   setText("subcategories", fields.subcategories);
+  setText("creditDays", fields.creditDays);
+  setText("creditTermsNote", fields.creditTermsNote);
   setText("lastInteractionYear", fields.lastInteractionYear);
   setText("relatedMaterialService", fields.relatedMaterialService);
   setText("sourceNote", fields.sourceNote);
@@ -1207,6 +1265,18 @@ function fieldsToForm(fields: Partial<Record<keyof FormState, string>>, current:
   const hasDirectExperience = matchDirectExperience(fields.hasDirectExperience);
   if (hasDirectExperience) {
     next.hasDirectExperience = hasDirectExperience;
+    matchedFields += 1;
+  }
+
+  const acceptsCredit = matchWhatsappAvailable(fields.acceptsCredit);
+  if (acceptsCredit) {
+    next.acceptsCredit = acceptsCredit;
+    matchedFields += 1;
+  }
+
+  const creditStart = matchOptionValue(fields.creditStart, creditStarts);
+  if (creditStart) {
+    next.creditStart = creditStart;
     matchedFields += 1;
   }
 
