@@ -1,6 +1,6 @@
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Pencil, Save, Send, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Pencil, RotateCcw, Save, Send, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, ChipGroup, Section, SelectField, TextAreaField, TextField } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
@@ -23,6 +23,7 @@ import { readWorkbookRows } from "../utils/workbookImport";
 
 const steps = ["supplierName", "location", "contactInfo", "capabilities", "sourceConfidence", "submitForReview"];
 const supplierImportMaxSize = 100 * 1024;
+const addSupplierDraftStorageVersion = 1;
 
 interface FormState {
   nameOriginal: string;
@@ -64,6 +65,16 @@ interface BulkImportItem {
   form: FormState;
   missing: string[];
   rowNumber: number;
+}
+
+interface SavedAddSupplierDraft {
+  bulkEditIndex: number | null;
+  bulkItems: BulkImportItem[];
+  form: FormState;
+  importSummary: string;
+  savedAt: string;
+  step: number;
+  version: number;
 }
 
 const initialForm: FormState = {
@@ -118,16 +129,72 @@ export function AddSupplierPage() {
   const [bulkItems, setBulkItems] = useState<BulkImportItem[]>([]);
   const [bulkEditIndex, setBulkEditIndex] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const draftLoadedRef = useRef(false);
   const isCorrectionMode = Boolean(submissionId);
 
   const draft = useMemo(() => buildDraft(form), [form]);
   const missing = missingRequiredSupplierFieldKeys(draft);
   const bulkEditItem = bulkEditIndex === null ? null : bulkItems[bulkEditIndex] || null;
   const isBulkEditing = Boolean(bulkEditItem);
+  const draftStorageKey = firebaseUser ? `mujahiz-iq-add-supplier-draft-${firebaseUser.uid}` : "";
   const option = (item: { value: string; labelEn: string; labelAr: string }) => ({
     value: item.value,
     label: locale === "ar" ? item.labelAr : item.labelEn,
   });
+
+  useEffect(() => {
+    if (!draftStorageKey || submissionId || draftLoadedRef.current) {
+      return;
+    }
+    draftLoadedRef.current = true;
+    const stored = localStorage.getItem(draftStorageKey);
+    if (!stored) {
+      return;
+    }
+    try {
+      const saved = JSON.parse(stored) as SavedAddSupplierDraft;
+      if (saved.version !== addSupplierDraftStorageVersion) {
+        return;
+      }
+      const nextBulkItems = Array.isArray(saved.bulkItems) ? saved.bulkItems : [];
+      const nextBulkEditIndex =
+        typeof saved.bulkEditIndex === "number" && saved.bulkEditIndex >= 0 && saved.bulkEditIndex < nextBulkItems.length
+          ? saved.bulkEditIndex
+          : null;
+      setForm(saved.form || initialForm);
+      setStep(typeof saved.step === "number" ? Math.min(5, Math.max(0, saved.step)) : 0);
+      setBulkItems(nextBulkItems);
+      setBulkEditIndex(nextBulkEditIndex);
+      setImportSummary(saved.importSummary || (nextBulkItems.length ? t("supplierBulkImportApplied", { count: nextBulkItems.length }) : ""));
+      setMessage(t("addSupplierDraftRestored"));
+    } catch {
+      localStorage.removeItem(draftStorageKey);
+    }
+  }, [draftStorageKey, submissionId, t]);
+
+  useEffect(() => {
+    if (!draftStorageKey || submissionId || !draftLoadedRef.current) {
+      return;
+    }
+    const hasDraft = bulkItems.length > 0 || bulkEditIndex !== null || importSummary || !isBlankForm(form);
+    if (!hasDraft) {
+      localStorage.removeItem(draftStorageKey);
+      return;
+    }
+    const timeoutId = window.setTimeout(() => {
+      const payload: SavedAddSupplierDraft = {
+        bulkEditIndex,
+        bulkItems,
+        form,
+        importSummary,
+        savedAt: new Date().toISOString(),
+        step,
+        version: addSupplierDraftStorageVersion,
+      };
+      localStorage.setItem(draftStorageKey, JSON.stringify(payload));
+    }, 250);
+    return () => window.clearTimeout(timeoutId);
+  }, [bulkEditIndex, bulkItems, draftStorageKey, form, importSummary, step, submissionId]);
 
   useEffect(() => {
     if (step !== 5) {
@@ -173,6 +240,27 @@ export function AddSupplierPage() {
 
   function setValue<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function clearSavedDraft() {
+    if (draftStorageKey) {
+      localStorage.removeItem(draftStorageKey);
+    }
+  }
+
+  function resetAddSupplierPage() {
+    if (!window.confirm(t("confirmResetAddSupplierPage"))) {
+      return;
+    }
+    clearSavedDraft();
+    setForm(initialForm);
+    setStep(0);
+    setDuplicateCheck({ hasPossibleDuplicate: false, matches: [] });
+    setCheckedKey("");
+    setImportSummary("");
+    setBulkItems([]);
+    setBulkEditIndex(null);
+    setMessage(t("addSupplierDraftReset"));
   }
 
   function firstMissingStep(keys: string[]) {
@@ -270,6 +358,7 @@ export function AddSupplierPage() {
       closeBulkEdit();
       setMessage(t("supplierBulkItemSubmitted"));
       if (!nextItems.length) {
+        clearSavedDraft();
         setTimeout(() => navigate("/my-submissions"), 900);
       }
     } catch (reason) {
@@ -277,6 +366,14 @@ export function AddSupplierPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function submitCurrentBulkEdit() {
+    if (bulkEditIndex === null) {
+      setMessage(t("supplierBulkNoActiveItem"));
+      return;
+    }
+    void submitBulkItem(bulkEditIndex, form);
   }
 
   async function runDuplicateCheck() {
@@ -366,6 +463,7 @@ export function AddSupplierPage() {
         setMessage(t("submissionThanks"));
       }
       setForm(initialForm);
+      clearSavedDraft();
       setTimeout(() => navigate("/my-submissions"), 700);
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : t("supplierSubmitFailed"));
@@ -386,6 +484,7 @@ export function AddSupplierPage() {
       }
       setMessage(t("supplierBulkSubmitted", { count: bulkItems.length }));
       setBulkItems([]);
+      clearSavedDraft();
       setTimeout(() => navigate("/my-submissions"), 900);
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : t("supplierSubmitFailed"));
@@ -395,7 +494,16 @@ export function AddSupplierPage() {
   }
 
   return (
-    <Section title={t("addSupplier")} description={t(steps[step])}>
+    <Section
+      title={t("addSupplier")}
+      description={t(steps[step])}
+      actions={
+        <Button type="button" variant="secondary" onClick={resetAddSupplierPage}>
+          <RotateCcw className="h-4 w-4" aria-hidden="true" />
+          {t("resetAddSupplierPage")}
+        </Button>
+      }
+    >
       <form
         className="grid gap-5"
         onSubmit={(event) => {
@@ -448,6 +556,7 @@ export function AddSupplierPage() {
             onCancel={() => {
               setBulkItems([]);
               setBulkEditIndex(null);
+              clearSavedDraft();
             }}
             onEdit={openBulkEdit}
             onSubmitItem={(index) => void submitBulkItem(index)}
@@ -457,10 +566,18 @@ export function AddSupplierPage() {
           <>
         {isBulkEditing && bulkEditItem ? (
           <div className="rounded-md border border-river/20 bg-river/5 p-4">
-            <h3 className="font-bold text-ink">{t("supplierBulkEditTitle")}</h3>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              {t("supplierBulkEditBody", { row: bulkEditItem.rowNumber })}
-            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="font-bold text-ink">{t("supplierBulkEditTitle")}</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  {t("supplierBulkEditBody", { row: bulkEditItem.rowNumber })}
+                </p>
+              </div>
+              <Button disabled={busy} type="button" onClick={submitCurrentBulkEdit}>
+                <Send className="h-4 w-4" aria-hidden="true" />
+                {t("sendThisSupplier")}
+              </Button>
+            </div>
           </div>
         ) : null}
 
@@ -654,7 +771,7 @@ export function AddSupplierPage() {
                 <Save className="h-4 w-4" aria-hidden="true" />
                 {t("saveAndReturn")}
               </Button>
-              <Button disabled={busy} type="button" onClick={() => bulkEditIndex !== null && void submitBulkItem(bulkEditIndex, form)}>
+              <Button disabled={busy} type="button" onClick={submitCurrentBulkEdit}>
                 <Send className="h-4 w-4" aria-hidden="true" />
                 {t("sendThisSupplier")}
               </Button>
@@ -766,7 +883,7 @@ function BulkImportPreview({
                         <Pencil className="h-4 w-4" aria-hidden="true" />
                         {t("edit")}
                       </Button>
-                      <Button className="min-h-9 px-3" disabled={busy || item.missing.length > 0} type="button" onClick={() => onSubmitItem(index)}>
+                      <Button className="min-h-9 px-3" disabled={busy} type="button" onClick={() => onSubmitItem(index)}>
                         <Send className="h-4 w-4" aria-hidden="true" />
                         {t("sendThisSupplier")}
                       </Button>
@@ -872,6 +989,10 @@ function formFromDraft(draft: SupplierDraft): FormState {
     relatedMaterialService: draft.relatedMaterialService || "",
     sourceNote: draft.sourceNote || "",
   };
+}
+
+function isBlankForm(value: FormState) {
+  return JSON.stringify(value) === JSON.stringify(initialForm);
 }
 
 type SupplierImportOptions = {
