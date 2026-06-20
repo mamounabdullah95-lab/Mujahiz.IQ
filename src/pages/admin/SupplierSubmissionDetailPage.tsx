@@ -18,6 +18,7 @@ import {
 import { approveSupplierSubmission, decideSupplierSubmission, getPlatformSettings, getSupplierSubmission } from "../../services/firestore";
 import type { DuplicateMatch, SupplierSubmission } from "../../types/domain";
 import { formatDate } from "../../utils/date";
+import { localizedSupplierGovernorates } from "../../utils/supplierDisplay";
 
 export function SupplierSubmissionDetailPage() {
   const { id } = useParams();
@@ -85,7 +86,7 @@ export function SupplierSubmissionDetailPage() {
           </InfoPanel>
 
           <InfoPanel title={t("location")}>
-            <InfoRow label={t("governorate")} value={labelFor(taxonomy.governorates, supplier.governorate, locale)} />
+            <InfoRow label={t("governorate")} value={localizedSupplierGovernorates(supplier, taxonomy, locale)} />
             <InfoRow label={t("city")} value={supplier.city} />
             <InfoRow label={t("marketArea")} value={supplier.marketArea} />
             <InfoRow className="md:col-span-2" label={t("address")} value={supplier.address} />

@@ -32,7 +32,7 @@ interface FormState {
   nameEn: string;
   shortDescription: string;
   businessType: string;
-  governorate: string;
+  governorates: string[];
   city: string;
   marketArea: string;
   address: string;
@@ -47,7 +47,7 @@ interface FormState {
   instagramLinkedin: string;
   contactPerson: string;
   contactPersonRole: string;
-  mainCategory: string;
+  mainCategories: string[];
   subcategories: string;
   capabilityTags: string[];
   paymentOptions: string[];
@@ -74,7 +74,7 @@ const initialForm: FormState = {
   nameEn: "",
   shortDescription: "",
   businessType: "company",
-  governorate: "",
+  governorates: [],
   city: "",
   marketArea: "",
   address: "",
@@ -89,7 +89,7 @@ const initialForm: FormState = {
   instagramLinkedin: "",
   contactPerson: "",
   contactPersonRole: "",
-  mainCategory: "",
+  mainCategories: [],
   subcategories: "",
   capabilityTags: [],
   paymentOptions: [],
@@ -368,14 +368,10 @@ export function AddSupplierPage() {
 
         {step === 1 ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <SelectField label={t("governorate")} value={form.governorate} onChange={(event) => setValue("governorate", event.target.value)} required>
-              <option value=""></option>
-              {taxonomy.governorates.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {labelFor(taxonomy.governorates, item.value, locale)}
-                </option>
-              ))}
-            </SelectField>
+            <div className="md:col-span-2">
+              <div className="mb-2 text-sm font-bold text-slate-700">{t("governorate")}</div>
+              <ChipGroup options={taxonomy.governorates.map(option)} values={form.governorates} onChange={(values) => setValue("governorates", values)} />
+            </div>
             <TextField label={t("city")} value={form.city} onChange={(event) => setValue("city", event.target.value)} required />
             <TextField label={t("marketArea")} value={form.marketArea} onChange={(event) => setValue("marketArea", event.target.value)} required />
             <TextField label={t("googleMapsLink")} value={form.googleMapsLink} onChange={(event) => setValue("googleMapsLink", event.target.value)} type="url" />
@@ -407,14 +403,10 @@ export function AddSupplierPage() {
 
         {step === 3 ? (
           <div className="grid gap-4">
-            <SelectField label={t("mainCategory")} value={form.mainCategory} onChange={(event) => setValue("mainCategory", event.target.value)} required>
-              <option value=""></option>
-              {taxonomy.supplierCategories.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {labelFor(taxonomy.supplierCategories, item.value, locale)}
-                </option>
-              ))}
-            </SelectField>
+            <div>
+              <div className="mb-2 text-sm font-bold text-slate-700">{t("mainCategory")}</div>
+              <ChipGroup options={taxonomy.supplierCategories.map(option)} values={form.mainCategories} onChange={(values) => setValue("mainCategories", values)} />
+            </div>
             <TextField label={t("subcategories")} value={form.subcategories} onChange={(event) => setValue("subcategories", event.target.value)} placeholder="pump, cable tray, valves..." />
             <div>
               <div className="mb-2 text-sm font-bold text-slate-700">{t("capabilityTags")}</div>
@@ -465,7 +457,9 @@ export function AddSupplierPage() {
               </div>
               <div className="rounded-md border border-slate-200 p-4">
                 <div className="text-xs font-bold uppercase text-slate-500">{t("mainCategory")}</div>
-                <div className="mt-2 font-bold text-ink">{draft.categories[0] ? labelFor(taxonomy.supplierCategories, draft.categories[0], locale) : "-"}</div>
+                <div className="mt-2 font-bold text-ink">
+                  {draft.categories.length ? draft.categories.map((category) => labelFor(taxonomy.supplierCategories, category, locale)).join(", ") : "-"}
+                </div>
               </div>
               <div className="rounded-md border border-slate-200 p-4">
                 <div className="text-xs font-bold uppercase text-slate-500">{t("confidence")}</div>
@@ -590,8 +584,12 @@ function BulkImportPreview({
                 <tr key={item.rowNumber}>
                   <td className="px-3 py-3 font-semibold text-slate-500">{item.rowNumber}</td>
                   <td className="px-3 py-3 font-bold text-ink">{draft.displayName || draft.nameOriginal || "-"}</td>
-                  <td className="px-3 py-3 text-slate-600">{draft.governorate ? labelFor(taxonomy.governorates, draft.governorate, locale) : "-"}</td>
-                  <td className="px-3 py-3 text-slate-600">{draft.categories[0] ? labelFor(taxonomy.supplierCategories, draft.categories[0], locale) : "-"}</td>
+                  <td className="px-3 py-3 text-slate-600">
+                    {(draft.governorates?.length ? draft.governorates : draft.governorate ? [draft.governorate] : []).map((governorate) => labelFor(taxonomy.governorates, governorate, locale)).join(", ") || "-"}
+                  </td>
+                  <td className="px-3 py-3 text-slate-600">
+                    {draft.categories.length ? draft.categories.map((category) => labelFor(taxonomy.supplierCategories, category, locale)).join(", ") : "-"}
+                  </td>
                   <td className="px-3 py-3">
                     {item.missing.length ? (
                       <span className="font-semibold text-clay">
@@ -616,7 +614,8 @@ function BulkImportPreview({
 function buildDraft(form: FormState): SupplierDraft {
   const phones = [form.primaryPhone, form.secondaryPhone].map((item) => item.trim()).filter(Boolean);
   const normalizedPhones = Array.from(new Set(phones.map(normalizePhone).filter(Boolean)));
-  const categories = form.mainCategory ? [form.mainCategory] : [];
+  const governorates = form.governorates.filter(Boolean);
+  const categories = form.mainCategories.filter(Boolean);
   const subcategories = form.subcategories
     .split(",")
     .map((item) => item.trim())
@@ -629,7 +628,8 @@ function buildDraft(form: FormState): SupplierDraft {
     nameEn: form.nameEn.trim(),
     shortDescription: form.shortDescription.trim(),
     businessType: form.businessType as SupplierDraft["businessType"],
-    governorate: form.governorate,
+    governorate: governorates[0] || "",
+    governorates,
     city: form.city.trim(),
     marketArea: form.marketArea.trim(),
     address: form.address.trim(),
@@ -675,7 +675,7 @@ function formFromDraft(draft: SupplierDraft): FormState {
     nameEn: draft.nameEn || "",
     shortDescription: draft.shortDescription || "",
     businessType: draft.businessType || "company",
-    governorate: draft.governorate || "",
+    governorates: draft.governorates?.length ? draft.governorates : draft.governorate ? [draft.governorate] : [],
     city: draft.city || "",
     marketArea: draft.marketArea || "",
     address: draft.address || "",
@@ -690,7 +690,7 @@ function formFromDraft(draft: SupplierDraft): FormState {
     instagramLinkedin: draft.instagramLinkedin || "",
     contactPerson: draft.contactPerson || "",
     contactPersonRole: draft.contactPersonRole || "",
-    mainCategory: draft.categories?.[0] || "",
+    mainCategories: draft.categories || [],
     subcategories: draft.subcategories?.join(", ") || "",
     capabilityTags: draft.capabilityTags || [],
     paymentOptions: draft.paymentOptions || [],
@@ -722,7 +722,7 @@ const supplierImportAliases: Partial<Record<keyof FormState, string[]>> = {
   nameEn: ["english company name", "english name", "اسم الشركة بالانجليزية", "اسم الشركة بالإنجليزية", "الاسم الانكليزي", "الاسم الإنجليزي"],
   shortDescription: ["short description", "description", "notes", "وصف مختصر", "الوصف", "ملاحظات"],
   businessType: ["business type", "company type", "نوع النشاط", "نوع الشركة", "النوع"],
-  governorate: ["governorate", "province", "محافظة", "المحافظة"],
+  governorates: ["governorate", "governorates", "province", "provinces", "branches", "branch governorates", "محافظة", "المحافظة", "المحافظات", "الفروع", "محافظات الفروع"],
   city: ["city", "town", "المدينة", "مدينة"],
   marketArea: ["market area", "main market", "area", "السوق", "منطقة السوق", "المنطقة", "السوق الرئيسي"],
   address: ["address", "full address", "العنوان", "العنوان الكامل"],
@@ -737,7 +737,7 @@ const supplierImportAliases: Partial<Record<keyof FormState, string[]>> = {
   instagramLinkedin: ["instagram", "linkedin", "instagram linkedin", "انستغرام", "لينكدان", "لينكدإن"],
   contactPerson: ["contact person", "representative", "مسؤول الاتصال", "الشخص المسؤول", "جهة الاتصال"],
   contactPersonRole: ["contact role", "contact person role", "position", "صفة الشخص المسؤول", "منصب", "الدور"],
-  mainCategory: ["main category", "category", "specialization", "specialty", "sector", "التصنيف الرئيسي", "التصنيف", "التخصص", "المجال"],
+  mainCategories: ["main category", "main categories", "category", "categories", "specialization", "specialty", "sector", "التصنيف الرئيسي", "التصنيفات الرئيسية", "التصنيف", "التصنيفات", "التخصص", "المجال"],
   subcategories: ["subcategories", "sub categories", "فرعي", "التصنيفات الفرعية", "تخصصات فرعية"],
   capabilityTags: ["capability tags", "capabilities", "tags", "وسوم القدرات", "القدرات", "الوسوم"],
   paymentOptions: ["payment options", "payment", "خيارات الدفع", "الدفع"],
@@ -841,17 +841,17 @@ function fieldsToForm(fields: Partial<Record<keyof FormState, string>>, current:
     matchedFields += 1;
   }
 
-  const governorate = matchOptionValue(fields.governorate, options.governorates);
-  if (governorate) {
-    next.governorate = governorate;
+  const governoratesList = mergeOptionList(next.governorates, fields.governorates, options.governorates);
+  if (governoratesList.length > next.governorates.length) {
     matchedFields += 1;
   }
+  next.governorates = governoratesList;
 
-  const mainCategory = matchOptionValue(fields.mainCategory, options.supplierCategories);
-  if (mainCategory) {
-    next.mainCategory = mainCategory;
+  const mainCategoriesList = mergeOptionList(next.mainCategories, fields.mainCategories, options.supplierCategories);
+  if (mainCategoriesList.length > next.mainCategories.length) {
     matchedFields += 1;
   }
+  next.mainCategories = mainCategoriesList;
 
   const sourceType = matchOptionValue(fields.sourceType, sourceTypes);
   if (sourceType) {

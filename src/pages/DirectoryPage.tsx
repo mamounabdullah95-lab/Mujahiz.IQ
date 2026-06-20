@@ -9,7 +9,7 @@ import { useTaxonomy } from "../contexts/TaxonomyContext";
 import { businessTypes, capabilityTags, confidenceLevels, coverageAreas, labelFor } from "../data/constants";
 import { listSuppliers } from "../services/firestore";
 import type { Supplier } from "../types/domain";
-import { localizedCity, localizedSupplierName, supplierSearchText } from "../utils/supplierDisplay";
+import { localizedCity, localizedSupplierGovernorates, localizedSupplierName, supplierGovernorates, supplierSearchText } from "../utils/supplierDisplay";
 
 export function DirectoryPage() {
   const { t, i18n } = useTranslation();
@@ -54,7 +54,7 @@ export function DirectoryPage() {
   const filtered = useMemo(() => {
     const source = filters.query ? fuse.search(filters.query).map((result) => result.item.supplier) : suppliers;
     return source.filter((supplier) => {
-      if (filters.governorate && supplier.governorate !== filters.governorate) return false;
+      if (filters.governorate && !supplierGovernorates(supplier).includes(filters.governorate)) return false;
       if (filters.category && !supplier.categories.includes(filters.category)) return false;
       if (filters.minRating && supplier.averageRating < Number(filters.minRating)) return false;
       if (filters.capabilityTag && !supplier.capabilityTags.includes(filters.capabilityTag)) return false;
@@ -163,7 +163,7 @@ export function DirectoryPage() {
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                   <span className="inline-flex items-center gap-1">
                     <MapPin className="h-4 w-4" aria-hidden="true" />
-                    {labelFor(taxonomy.governorates, supplier.governorate, locale)} - {localizedCity(supplier.city, locale)}
+                    {localizedSupplierGovernorates(supplier, taxonomy, locale)} - {localizedCity(supplier.city, locale)}
                   </span>
                   <span>{supplier.categories.map((category) => labelFor(taxonomy.supplierCategories, category, locale)).join(", ")}</span>
                 </div>

@@ -127,6 +127,7 @@ export interface SupplierDraft {
   shortDescription?: string;
   businessType: BusinessType;
   governorate: string;
+  governorates?: string[];
   city: string;
   marketArea: string;
   address?: string;
@@ -195,6 +196,7 @@ export interface SupplierDuplicateIndex {
   facebook?: string;
   contactPerson?: string;
   governorate: string;
+  governorates?: string[];
   categories: string[];
 }
 

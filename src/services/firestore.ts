@@ -529,6 +529,7 @@ export async function approveSupplierSubmission(
       facebook: normalizeUrl(supplierData.facebook),
       contactPerson: supplierData.contactPerson || "",
       governorate: supplierData.governorate,
+      governorates: supplierData.governorates || (supplierData.governorate ? [supplierData.governorate] : []),
       categories: supplierData.categories,
     } satisfies SupplierDuplicateIndex);
 

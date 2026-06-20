@@ -100,7 +100,8 @@ export function tokenizeSearch(value: string) {
     .filter((token) => token.length > 1);
 }
 
-export function createSearchKeywords(draft: Pick<SupplierDraft, "nameOriginal" | "nameAr" | "nameEn" | "categories" | "subcategories" | "capabilityTags" | "city" | "marketArea">) {
+export function createSearchKeywords(draft: Pick<SupplierDraft, "nameOriginal" | "nameAr" | "nameEn" | "governorate" | "governorates" | "categories" | "subcategories" | "capabilityTags" | "city" | "marketArea">) {
+  const governorates = draft.governorates?.length ? draft.governorates : draft.governorate ? [draft.governorate] : [];
   return Array.from(
     new Set([
       ...tokenizeSearch(draft.nameOriginal),
@@ -109,6 +110,7 @@ export function createSearchKeywords(draft: Pick<SupplierDraft, "nameOriginal" |
       ...draft.categories,
       ...draft.subcategories,
       ...draft.capabilityTags,
+      ...governorates,
       draft.city,
       draft.marketArea,
     ].filter(Boolean)),
@@ -201,7 +203,9 @@ export function findDuplicateMatches(draft: SupplierDraft, indexes: SupplierDupl
     }
 
     const nameScore = diceCoefficient(draft.normalizedName, item.normalizedName);
-    const sameGovernorate = draft.governorate === item.governorate;
+    const draftGovernorates = draft.governorates?.length ? draft.governorates : draft.governorate ? [draft.governorate] : [];
+    const indexGovernorates = item.governorates?.length ? item.governorates : item.governorate ? [item.governorate] : [];
+    const sameGovernorate = draftGovernorates.some((governorate) => indexGovernorates.includes(governorate));
     const sharedCategory = draft.categories.some((category) => item.categories.includes(category));
     if (nameScore >= 0.72 && (sameGovernorate || sharedCategory)) {
       matches.push({

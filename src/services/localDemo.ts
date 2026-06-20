@@ -319,6 +319,7 @@ export async function demoFetchDuplicateIndexes(): Promise<SupplierDuplicateInde
     facebook: normalizeUrl(supplier.facebook),
     contactPerson: supplier.contactPerson || "",
     governorate: supplier.governorate,
+    governorates: supplier.governorates || (supplier.governorate ? [supplier.governorate] : []),
     categories: supplier.categories,
   }));
 }

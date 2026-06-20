@@ -85,10 +85,28 @@ export function localizedCity(value: string | undefined, locale: Locale) {
   return text;
 }
 
+export function supplierGovernorates(supplier: Pick<SupplierDraft, "governorate" | "governorates">) {
+  const values = supplier.governorates?.length ? supplier.governorates : supplier.governorate ? [supplier.governorate] : [];
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+export function localizedSupplierGovernorates(
+  supplier: Pick<SupplierDraft, "governorate" | "governorates">,
+  taxonomy: TaxonomyLists,
+  locale: Locale,
+) {
+  return supplierGovernorates(supplier)
+    .map((governorate) => labelFor(taxonomy.governorates, governorate, locale))
+    .join(", ");
+}
+
 export function supplierSearchText(supplier: Supplier, taxonomy: TaxonomyLists) {
+  const governorates = supplierGovernorates(supplier);
   const taxonomyLabels = [
-    labelFor(taxonomy.governorates, supplier.governorate, "en"),
-    labelFor(taxonomy.governorates, supplier.governorate, "ar"),
+    ...governorates.flatMap((governorate) => [
+      labelFor(taxonomy.governorates, governorate, "en"),
+      labelFor(taxonomy.governorates, governorate, "ar"),
+    ]),
     ...supplier.categories.flatMap((category) => [
       labelFor(taxonomy.supplierCategories, category, "en"),
       labelFor(taxonomy.supplierCategories, category, "ar"),

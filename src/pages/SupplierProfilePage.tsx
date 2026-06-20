@@ -19,7 +19,7 @@ import {
 import { getSupplier, listSupplierReviews, submitSupplierReview } from "../services/firestore";
 import type { Supplier, SupplierReview } from "../types/domain";
 import { formatDate } from "../utils/date";
-import { localizedCity, localizedSupplierName } from "../utils/supplierDisplay";
+import { localizedCity, localizedSupplierGovernorates, localizedSupplierName } from "../utils/supplierDisplay";
 
 const criteria = [
   "overall",
@@ -106,7 +106,7 @@ export function SupplierProfilePage() {
   }
 
   return (
-    <Section title={localizedSupplierName(supplier, locale)} description={`${labelFor(taxonomy.governorates, supplier.governorate, locale)} - ${localizedCity(supplier.city, locale)}`}>
+    <Section title={localizedSupplierName(supplier, locale)} description={`${localizedSupplierGovernorates(supplier, taxonomy, locale)} - ${localizedCity(supplier.city, locale)}`}>
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <div className="grid gap-4">
           <div className="rounded-md border border-slate-200 p-4">
