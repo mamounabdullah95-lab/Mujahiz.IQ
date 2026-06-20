@@ -3,7 +3,13 @@ import { Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
-import { listMySubmissions, listPendingReviews, listSupplierSubmissions } from "../services/firestore";
+import {
+  listMySubmissions,
+  listMySupplierFeedback,
+  listPendingReviews,
+  listSupplierFeedback,
+  listSupplierSubmissions,
+} from "../services/firestore";
 import { localizedSupplierName } from "../utils/supplierDisplay";
 
 interface NotificationItem {
@@ -67,7 +73,10 @@ export function NotificationBell() {
     const uid = firebaseUser.uid;
     async function load() {
       const nextItems: NotificationItem[] = [];
-      const submissions = await listMySubmissions(uid);
+      const [submissions, myFeedback] = await Promise.all([
+        listMySubmissions(uid),
+        listMySupplierFeedback(uid),
+      ]);
       const correction = submissions.filter((item) => item.submissionStatus === "needs_correction");
       const rejected = submissions.filter((item) => item.submissionStatus === "rejected");
       const approved = submissions.filter((item) => item.submissionStatus === "approved");
@@ -98,8 +107,24 @@ export function NotificationBell() {
         });
       }
 
+      const resolvedFeedback = myFeedback.filter((item) => item.status === "resolved" || item.status === "rejected");
+      resolvedFeedback.slice(0, 3).forEach((item) => {
+        const supplierName = locale === "ar"
+          ? item.supplierNameAr || item.supplierName
+          : item.supplierNameEn || item.supplierName;
+        nextItems.push({
+          id: `feedback:${item.id}:${item.status}:${String(item.reviewedAt ?? item.createdAt ?? "")}`,
+          label: `${t("notificationFeedbackResolved", { count: 1 })}: ${supplierName}`,
+          to: `/suppliers/${item.supplierId}`,
+        });
+      });
+
       if (isAdmin) {
-        const [pendingSubmissions, pendingReviews] = await Promise.all([listSupplierSubmissions(), listPendingReviews()]);
+        const [pendingSubmissions, pendingReviews, pendingFeedback] = await Promise.all([
+          listSupplierSubmissions(),
+          listPendingReviews(),
+          listSupplierFeedback(),
+        ]);
         if (pendingSubmissions.length) {
           const latest = latestKey(pendingSubmissions.map((item) => String(item.createdAt ?? "")));
           nextItems.push({
@@ -115,6 +140,15 @@ export function NotificationBell() {
             id: `admin:reviews:${pendingReviews.length}:${latest}`,
             label: t("notificationPendingReviews", { count: pendingReviews.length }),
             to: "/admin/reviews",
+            tone: "warning",
+          });
+        }
+        if (pendingFeedback.length) {
+          const latest = latestKey(pendingFeedback.map((item) => String(item.createdAt ?? "")));
+          nextItems.push({
+            id: `admin:supplier-feedback:${pendingFeedback.length}:${latest}`,
+            label: t("notificationPendingFeedback", { count: pendingFeedback.length }),
+            to: "/admin/supplier-feedback",
             tone: "warning",
           });
         }

@@ -3,12 +3,16 @@ import { useTranslation } from "react-i18next";
 import { StarRating } from "../../components/StarRating";
 import { Button, EmptyState, Section } from "../../components/ui";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTaxonomy } from "../../contexts/TaxonomyContext";
+import { interactionTypes, labelFor } from "../../data/constants";
 import { listPendingReviews, moderateReview } from "../../services/firestore";
 import type { SupplierReview } from "../../types/domain";
 
 export function AdminReviewModerationPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language.startsWith("ar") ? "ar" : "en";
   const { firebaseUser } = useAuth();
+  const { taxonomy } = useTaxonomy();
   const [reviews, setReviews] = useState<SupplierReview[]>([]);
   const [busyId, setBusyId] = useState("");
 
@@ -34,7 +38,9 @@ export function AdminReviewModerationPage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 className="font-bold text-ink">{review.supplierName || review.supplierId}</h3>
-                <p className="text-sm text-slate-500">{review.interactionType} · {review.relatedCategory}</p>
+                <p className="text-sm text-slate-500">
+                  {labelFor(interactionTypes, review.interactionType, locale)} · {labelFor(taxonomy.supplierCategories, review.relatedCategory, locale)}
+                </p>
               </div>
               <StarRating readOnly value={review.overall} />
             </div>

@@ -1,6 +1,18 @@
 import { defaultTaxonomyLists, labelFor } from "../data/constants";
 import type { Locale, PlatformSettings, TaxonomyItem, TaxonomyLists } from "../types/domain";
 
+const legacyArabicLabels = new Set([
+  "فلنجات ووصلات",
+  "أجهزة قياس وسيطرة",
+  "حديد وتصنيع",
+  "لحام وخراطة",
+  "سلامة ومعدات حماية",
+  "عدد ومعدات",
+  "نقل ولوجستيات",
+  "تقنية ومعدات إلكترونية",
+  "مواد كيمياوية",
+]);
+
 export function slugFromLabel(label: string) {
   const normalized = label
     .trim()
@@ -13,13 +25,21 @@ export function slugFromLabel(label: string) {
 
 export function normalizeTaxonomyItems(items: TaxonomyItem[] | undefined, fallback: TaxonomyItem[]) {
   const source = items?.length ? items : fallback;
+  const fallbackByValue = new Map(fallback.map((item) => [item.value, item]));
   const seen = new Set<string>();
   return source
-    .map((item) => ({
-      value: item.value?.trim() || slugFromLabel(item.labelEn || item.labelAr),
-      labelEn: item.labelEn?.trim() || item.value?.replaceAll("_", " ") || item.labelAr,
-      labelAr: item.labelAr?.trim() || item.labelEn?.trim() || item.value?.replaceAll("_", " "),
-    }))
+    .map((item) => {
+      const value = item.value?.trim() || slugFromLabel(item.labelEn || item.labelAr);
+      const defaultItem = fallbackByValue.get(value);
+      const storedArabicLabel = item.labelAr?.trim();
+      return {
+        value,
+        labelEn: item.labelEn?.trim() || item.value?.replaceAll("_", " ") || item.labelAr,
+        labelAr: storedArabicLabel && !legacyArabicLabels.has(storedArabicLabel)
+          ? storedArabicLabel
+          : defaultItem?.labelAr || item.labelEn?.trim() || item.value?.replaceAll("_", " "),
+      };
+    })
     .filter((item) => {
       if (!item.value || seen.has(item.value)) {
         return false;

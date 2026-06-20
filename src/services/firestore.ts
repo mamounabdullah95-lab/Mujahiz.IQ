@@ -10,10 +10,12 @@ import {
   query,
   runTransaction,
   serverTimestamp,
+  startAfter,
   updateDoc,
   where,
   writeBatch,
   type DocumentData,
+  type QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "../config/firebase";
 import * as demo from "./localDemo";
@@ -36,6 +38,9 @@ import type {
   Supplier,
   SupplierDraft,
   SupplierDuplicateIndex,
+  SupplierFeedback,
+  SupplierFeedbackStatus,
+  SupplierFeedbackType,
   SupplierReview,
   SupplierSubmission,
   SupplierSubmissionStatus,
@@ -55,6 +60,7 @@ const categoriesRef = collection(db, "categories");
 const accessCreditsRef = collection(db, "accessCredits");
 const contributionLogsRef = collection(db, "contributionLogs");
 const auditLogsRef = collection(db, "auditLogs");
+const supplierFeedbackRef = collection(db, "supplierFeedback");
 
 function withId<T>(snapshot: { id: string; data: () => DocumentData }) {
   return {
@@ -447,6 +453,42 @@ export async function listSuppliers() {
   return snapshot.docs.map((item) => withId<Supplier>(item));
 }
 
+export type SupplierPageCursor = QueryDocumentSnapshot<DocumentData> | number | null;
+
+export async function listSuppliersPage(pageSize = 50, cursor: SupplierPageCursor = null) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListSuppliersPage(pageSize, typeof cursor === "number" ? cursor : 0);
+  }
+  const baseQuery = [
+    where("status", "==", "approved"),
+    ...(cursor && typeof cursor !== "number" ? [startAfter(cursor)] : []),
+    limit(pageSize),
+  ];
+  const snapshot = await getDocs(query(suppliersRef, ...baseQuery));
+  return {
+    items: snapshot.docs.map((item) => withId<Supplier>(item)),
+    cursor: snapshot.docs.length ? snapshot.docs[snapshot.docs.length - 1] : null,
+    hasMore: snapshot.docs.length === pageSize,
+  };
+}
+
+export async function listSupplierCandidates(categories: string[]) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListSupplierCandidates(categories);
+  }
+  if (!categories.length) {
+    return [];
+  }
+  const snapshot = await getDocs(query(
+    suppliersRef,
+    where("categories", "array-contains-any", categories.slice(0, 10)),
+    limit(100),
+  ));
+  return snapshot.docs
+    .map((item) => withId<Supplier>(item))
+    .filter((item) => item.status === "approved");
+}
+
 export async function getSupplier(supplierId: string) {
   if (!isFirebaseConfigured) {
     return demo.demoGetSupplier(supplierId);
@@ -817,4 +859,88 @@ export async function listAccessCredits(userId: string) {
     snapshot.docs.map((item) => withId<AccessCredit>(item)),
     50,
   );
+}
+
+export async function submitSupplierFeedback(
+  userId: string,
+  supplier: Pick<Supplier, "id" | "displayName" | "nameOriginal" | "nameAr" | "nameEn">,
+  type: SupplierFeedbackType,
+  message: string,
+  suggestedCorrection: string,
+) {
+  if (!isFirebaseConfigured) {
+    return demo.demoSubmitSupplierFeedback(userId, supplier, type, message, suggestedCorrection);
+  }
+  await addDoc(supplierFeedbackRef, {
+    supplierId: supplier.id,
+    supplierName: supplier.displayName || supplier.nameOriginal,
+    supplierNameAr: supplier.nameAr || "",
+    supplierNameEn: supplier.nameEn || "",
+    submittedBy: userId,
+    type,
+    message: message.trim(),
+    suggestedCorrection: suggestedCorrection.trim(),
+    status: "pending",
+    adminNotes: "",
+    createdAt: serverTimestamp(),
+  } satisfies Omit<SupplierFeedback, "id" | "createdAt"> & { createdAt: unknown });
+}
+
+export async function listMySupplierFeedback(userId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListMySupplierFeedback(userId);
+  }
+  const snapshot = await getDocs(query(supplierFeedbackRef, where("submittedBy", "==", userId)));
+  return sortByCreatedAtDesc(
+    snapshot.docs.map((item) => withId<SupplierFeedback>(item)),
+    100,
+  );
+}
+
+export async function listSupplierFeedback(
+  statuses: SupplierFeedbackStatus[] = ["pending", "in_review"],
+) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListSupplierFeedback(statuses);
+  }
+  const snapshot = await getDocs(
+    statuses.length === 1
+      ? query(supplierFeedbackRef, where("status", "==", statuses[0]))
+      : query(supplierFeedbackRef, where("status", "in", statuses)),
+  );
+  return sortByCreatedAtDesc(
+    snapshot.docs.map((item) => withId<SupplierFeedback>(item)),
+    100,
+  );
+}
+
+export async function updateSupplierFeedbackStatus(
+  feedback: SupplierFeedback,
+  actorId: string,
+  status: Exclude<SupplierFeedbackStatus, "pending">,
+  adminNotes: string,
+) {
+  if (!isFirebaseConfigured) {
+    return demo.demoUpdateSupplierFeedbackStatus(feedback, actorId, status, adminNotes);
+  }
+  const feedbackDoc = doc(supplierFeedbackRef, feedback.id);
+  await runTransaction(db, async (transaction) => {
+    transaction.update(feedbackDoc, {
+      status,
+      adminNotes: adminNotes.trim(),
+      reviewedAt: serverTimestamp(),
+      reviewedBy: actorId,
+    });
+    transaction.set(doc(auditLogsRef), {
+      actorId,
+      action: `supplier_feedback.${status}`,
+      targetType: "supplierFeedback",
+      targetId: feedback.id,
+      details: {
+        supplierId: feedback.supplierId,
+        feedbackType: feedback.type,
+      },
+      createdAt: serverTimestamp(),
+    } satisfies Omit<AuditLog, "id">);
+  });
 }

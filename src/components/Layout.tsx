@@ -7,6 +7,7 @@ import {
   Gauge,
   History,
   LogOut,
+  Menu,
   Settings,
   ShieldCheck,
   Star,
@@ -16,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import logoUrl from "../assets/brand/mujahiz-iq-logo-horizontal-transparent.svg";
@@ -39,6 +40,7 @@ const adminItems = [
   { to: "/admin/users", labelKey: "users", icon: Users },
   { to: "/admin/submissions", labelKey: "reviewQueue", icon: ClipboardCheck },
   { to: "/admin/reviews", labelKey: "reviewModeration", icon: Star },
+  { to: "/admin/supplier-feedback", labelKey: "supplierFeedbackAdmin", icon: ClipboardCheck },
   { to: "/admin/suppliers", labelKey: "approvedSuppliers", icon: BookOpen },
   { to: "/admin/categories", labelKey: "categories", icon: Tags },
   { to: "/admin/settings", labelKey: "settings", icon: Settings },
@@ -65,6 +67,12 @@ export function Layout() {
   const { t } = useTranslation();
   const { appUser, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -75,12 +83,23 @@ export function Layout() {
             <div className="sr-only">{t("tagline")}</div>
           </button>
           <div className="flex items-center gap-2">
+            {appUser ? (
+              <button
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100 md:hidden"
+                type="button"
+                aria-label={t(navOpen ? "closeMenu" : "menu")}
+                aria-expanded={navOpen}
+                onClick={() => setNavOpen((current) => !current)}
+              >
+                {navOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
+              </button>
+            ) : null}
             <LanguageToggle />
             {appUser ? <NotificationBell /> : null}
             {appUser ? (
-              <Button variant="ghost" onClick={() => void logout()}>
+              <Button className="px-2 sm:px-4" variant="ghost" onClick={() => void logout()}>
                 <LogOut className="h-4 w-4" aria-hidden="true" />
-                {t("logout")}
+                <span className="hidden sm:inline">{t("logout")}</span>
               </Button>
             ) : null}
           </div>
@@ -89,7 +108,21 @@ export function Layout() {
 
       {appUser ? (
         <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4 sm:px-6 md:grid-cols-[250px_1fr] lg:px-8">
-          <aside className="md:sticky md:top-20 md:h-[calc(100vh-6rem)]">
+          {navOpen ? (
+            <button
+              className="fixed inset-0 top-[4.5rem] z-20 bg-ink/25 md:hidden"
+              type="button"
+              aria-label={t("closeMenu")}
+              onClick={() => setNavOpen(false)}
+            />
+          ) : null}
+          <aside
+            className={`${
+              navOpen
+                ? "fixed inset-x-4 top-20 z-30 max-h-[calc(100vh-6rem)] overflow-y-auto"
+                : "hidden"
+            } md:sticky md:top-20 md:z-auto md:block md:h-[calc(100vh-6rem)] md:max-h-none md:overflow-visible`}
+          >
             <nav className="grid gap-1 rounded-md border border-slate-200 bg-white p-2 shadow-soft">
               {navItems.map((item) => (
                 <AppNavLink key={item.to} to={item.to} label={t(item.labelKey)} icon={item.icon} />

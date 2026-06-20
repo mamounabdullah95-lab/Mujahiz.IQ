@@ -171,6 +171,33 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    match /supplierFeedback/{feedbackId} {
+      allow create: if canContribute()
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.status == "pending"
+        && request.resource.data.supplierId is string
+        && request.resource.data.supplierName is string
+        && request.resource.data.type in [
+          "incorrect_information",
+          "contact_issue",
+          "location_issue",
+          "category_issue",
+          "duplicate_supplier",
+          "business_closed",
+          "other"
+        ]
+        && request.resource.data.message is string
+        && request.resource.data.message.size() >= 10
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.suggestedCorrection is string
+        && request.resource.data.suggestedCorrection.size() <= 1000;
+
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.submittedBy == request.auth.uid);
+
+      allow update, delete: if isAdmin();
+    }
+
     match /accessCredits/{creditId} {
       allow read: if isAdmin()
         || (signedIn() && resource.data.userId == request.auth.uid);

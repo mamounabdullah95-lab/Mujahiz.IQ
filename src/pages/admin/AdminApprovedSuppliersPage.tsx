@@ -22,8 +22,8 @@ export function AdminApprovedSuppliersPage() {
   return (
     <Section title={t("approvedSuppliers")} description={t("directory")}>
       {!suppliers.length ? <EmptyState title={t("noResults")} /> : null}
-      <div className="overflow-hidden rounded-md border border-slate-200">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-md border border-slate-200">
+        <table className="min-w-[680px] w-full text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-3 py-2 text-start">{t("supplierName")}</th>

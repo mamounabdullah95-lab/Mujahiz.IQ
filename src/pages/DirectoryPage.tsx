@@ -1,15 +1,19 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import Fuse from "fuse.js";
 import { Link } from "react-router-dom";
-import { LoaderCircle, Mail, MapPin, Phone, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { CheckCircle2, CircleHelp, LoaderCircle, Mail, MapPin, Phone, Search, SlidersHorizontal, Sparkles, X, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { StarRating } from "../components/StarRating";
 import { Button, EmptyState, Section, SelectField, TextAreaField, TextField } from "../components/ui";
 import { useTaxonomy } from "../contexts/TaxonomyContext";
-import { businessTypes, capabilityTags, confidenceLevels, coverageAreas, creditStarts, labelFor, paymentOptions } from "../data/constants";
-import { listSuppliers } from "../services/firestore";
-import { isGeminiSupplierSearchEnabled, parseSupplierSearchWithGemini } from "../services/supplierSearchAI";
+import { businessTypes, capabilityTags, confidenceLevels, coverageAreas, creditStarts, labelFor, paymentOptions, searchableCapabilityTags } from "../data/constants";
+import {
+  listSupplierCandidates,
+  listSuppliersPage,
+  type SupplierPageCursor,
+} from "../services/firestore";
 import type { Supplier } from "../types/domain";
+import { formatDate } from "../utils/date";
 import { localizedCity, localizedSupplierGovernorates, localizedSupplierName, localizedSupplierText, supplierGovernorates, supplierSearchText } from "../utils/supplierDisplay";
 import {
   describeIntent,
@@ -26,6 +30,9 @@ export function DirectoryPage() {
   const { taxonomy } = useTaxonomy();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [supplierCursor, setSupplierCursor] = useState<SupplierPageCursor>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [contactOpenId, setContactOpenId] = useState("");
   const [smartQuery, setSmartQuery] = useState("");
@@ -45,8 +52,12 @@ export function DirectoryPage() {
   });
 
   useEffect(() => {
-    void listSuppliers()
-      .then(setSuppliers)
+    void listSuppliersPage(100)
+      .then((page) => {
+        setSuppliers(page.items);
+        setSupplierCursor(page.cursor);
+        setHasMore(page.hasMore);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -100,23 +111,45 @@ export function DirectoryPage() {
     try {
       const localIntent = parseSupplierSearchLocally(query, taxonomy);
       let aiIntent: Partial<SupplierSearchIntent> | null = null;
-      if (isGeminiSupplierSearchEnabled()) {
+      const supplierSearchAI = await import("../services/supplierSearchAI");
+      if (supplierSearchAI.isGeminiSupplierSearchEnabled()) {
         try {
-          aiIntent = await parseSupplierSearchWithGemini(query, taxonomy);
+          aiIntent = await supplierSearchAI.parseSupplierSearchWithGemini(query, taxonomy);
         } catch {
           setSmartSearchMessage(t("geminiSearchFallback"));
         }
       }
       const intent = mergeSupplierSearchIntents(localIntent, aiIntent);
       setSmartIntent(intent);
-      setRecommendations(recommendSuppliers(suppliers, intent, taxonomy, locale));
+      const serverCandidates = intent.categories.length
+        ? await listSupplierCandidates(intent.categories).catch(() => [])
+        : [];
+      const candidatePool = serverCandidates.length
+        ? Array.from(new Map([...serverCandidates, ...suppliers].map((item) => [item.id, item])).values())
+        : suppliers;
+      setRecommendations(recommendSuppliers(candidatePool, intent, taxonomy, locale));
     } finally {
       setSmartSearching(false);
     }
   }
 
+  async function loadMoreSuppliers() {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await listSuppliersPage(100, supplierCursor);
+      setSuppliers((current) =>
+        Array.from(new Map([...current, ...page.items].map((item) => [item.id, item])).values()),
+      );
+      setSupplierCursor(page.cursor);
+      setHasMore(page.hasMore);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   return (
-    <Section title={t("directory")} description={t("search")}>
+    <Section title={t("directory")} description={t("directoryDescription")}>
       <div className="rounded-md border border-river/25 bg-river/5 p-4">
         <div className="flex items-start gap-3">
           <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-river" aria-hidden="true" />
@@ -175,6 +208,34 @@ export function DirectoryPage() {
                         </span>
                       ))}
                     </div>
+                    {item.criteria.length ? (
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {item.criteria.map((criterion) => {
+                          const Icon = criterion.status === "matched"
+                            ? CheckCircle2
+                            : criterion.status === "unconfirmed"
+                              ? CircleHelp
+                              : XCircle;
+                          const tone = criterion.status === "matched"
+                            ? "border-mint/30 bg-mint/10 text-mint"
+                            : criterion.status === "unconfirmed"
+                              ? "border-amber/40 bg-amber/10 text-amber"
+                              : "border-clay/30 bg-clay/10 text-clay";
+                          return (
+                            <div className={`flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-bold ${tone}`} key={criterion.key}>
+                              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                              <span>{t(`recommendationReason_${criterion.key}`)}: {t(
+                                criterion.status === "matched"
+                                  ? "recommendationMatched"
+                                  : criterion.status === "unconfirmed"
+                                    ? "recommendationUnconfirmed"
+                                    : "recommendationNotMatched",
+                              )}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : null}
                     <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-3">
                       <div><b>{t("paymentOptions")}:</b> {item.supplier.paymentOptions?.map((value) => labelFor(paymentOptions, value, locale)).join(", ") || "-"}</div>
                       <div><b>{t("creditDays")}:</b> {item.supplier.acceptsCredit && item.supplier.creditDays?.length ? item.supplier.creditDays.join(", ") : "-"}</div>
@@ -236,7 +297,7 @@ export function DirectoryPage() {
         <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-4 lg:grid-cols-2 xl:grid-cols-4">
           <SelectField label={t("capabilityTags")} value={filters.capabilityTag} onChange={(event) => setValue("capabilityTag", event.target.value)}>
             <option value="">{t("all")}</option>
-            {capabilityTags.map((item) => (
+            {searchableCapabilityTags.map((item) => (
               <option key={item.value} value={item.value}>{labelFor(capabilityTags, item.value, locale)}</option>
             ))}
           </SelectField>
@@ -286,7 +347,9 @@ export function DirectoryPage() {
               </div>
               <div className="grid shrink-0 gap-1">
                 <StarRating readOnly value={Math.round(supplier.averageRating || 0)} />
+                <span className="text-xs font-bold text-ink">{t("ratingOutOfFive", { rating: Number(supplier.averageRating || 0).toFixed(1) })}</span>
                 <span className="text-xs font-semibold text-slate-500">{supplier.reviewCount || 0} {t("reviews")}</span>
+                <span className="text-xs text-slate-500">{t("lastUpdated")}: {formatDate(supplier.updatedAt, locale)}</span>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -327,6 +390,14 @@ export function DirectoryPage() {
           </article>
         ))}
       </div>
+      {hasMore ? (
+        <div className="flex justify-center">
+          <Button disabled={loadingMore} type="button" variant="secondary" onClick={() => void loadMoreSuppliers()}>
+            {loadingMore ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+            {t("loadMore")}
+          </Button>
+        </div>
+      ) : null}
     </Section>
   );
 }

@@ -8,6 +8,9 @@ import type {
   Supplier,
   SupplierDraft,
   SupplierDuplicateIndex,
+  SupplierFeedback,
+  SupplierFeedbackStatus,
+  SupplierFeedbackType,
   SupplierReview,
   SupplierSubmission,
   SupplierSubmissionStatus,
@@ -30,6 +33,7 @@ interface DemoDb {
   accessCredits: AccessCredit[];
   contributionLogs: unknown[];
   auditLogs: AuditLog[];
+  supplierFeedback: SupplierFeedback[];
   settings: PlatformSettings;
 }
 
@@ -47,6 +51,7 @@ function readDb(): DemoDb {
     const parsed = JSON.parse(raw) as DemoDb;
     return {
       ...parsed,
+      supplierFeedback: parsed.supplierFeedback || [],
       settings: { ...defaultSettings, ...parsed.settings },
     };
   }
@@ -59,6 +64,7 @@ function readDb(): DemoDb {
     accessCredits: [],
     contributionLogs: [],
     auditLogs: [],
+    supplierFeedback: [],
     settings: defaultSettings,
   };
 }
@@ -612,4 +618,92 @@ export async function demoListAuditLogs() {
 
 export async function demoListAccessCredits(userId: string) {
   return readDb().accessCredits.filter((credit) => credit.userId === userId);
+}
+
+export async function demoListSuppliersPage(pageSize = 50, offset = 0) {
+  const suppliers = readDb()
+    .suppliers
+    .filter((item) => item.status === "approved")
+    .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+  const items = suppliers.slice(offset, offset + pageSize);
+  return {
+    items,
+    cursor: offset + items.length,
+    hasMore: offset + items.length < suppliers.length,
+  };
+}
+
+export async function demoListSupplierCandidates(categories: string[]) {
+  return readDb().suppliers.filter(
+    (item) => item.status === "approved" && item.categories.some((category) => categories.includes(category)),
+  );
+}
+
+export async function demoSubmitSupplierFeedback(
+  userId: string,
+  supplier: Pick<Supplier, "id" | "displayName" | "nameOriginal" | "nameAr" | "nameEn">,
+  type: SupplierFeedbackType,
+  message: string,
+  suggestedCorrection: string,
+) {
+  const db = readDb();
+  db.supplierFeedback.push({
+    id: id("feedback"),
+    supplierId: supplier.id,
+    supplierName: supplier.displayName || supplier.nameOriginal,
+    supplierNameAr: supplier.nameAr || "",
+    supplierNameEn: supplier.nameEn || "",
+    submittedBy: userId,
+    type,
+    message: message.trim(),
+    suggestedCorrection: suggestedCorrection.trim(),
+    status: "pending",
+    adminNotes: "",
+    createdAt: now(),
+  });
+  writeDb(db);
+}
+
+export async function demoListMySupplierFeedback(userId: string) {
+  return readDb()
+    .supplierFeedback
+    .filter((item) => item.submittedBy === userId)
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+}
+
+export async function demoListSupplierFeedback(statuses: SupplierFeedbackStatus[] = ["pending", "in_review"]) {
+  return readDb()
+    .supplierFeedback
+    .filter((item) => statuses.includes(item.status))
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+}
+
+export async function demoUpdateSupplierFeedbackStatus(
+  feedback: SupplierFeedback,
+  actorId: string,
+  status: Exclude<SupplierFeedbackStatus, "pending">,
+  adminNotes: string,
+) {
+  const db = readDb();
+  db.supplierFeedback = db.supplierFeedback.map((item) =>
+    item.id === feedback.id
+      ? {
+          ...item,
+          status,
+          adminNotes: adminNotes.trim(),
+          reviewedAt: now(),
+          reviewedBy: actorId,
+        }
+      : item,
+  );
+  db.auditLogs.push({
+    id: id("audit"),
+    actorId,
+    action: `supplier_feedback.${status}`,
+    targetType: "supplierFeedback",
+    targetId: feedback.id,
+    details: { supplierId: feedback.supplierId, feedbackType: feedback.type },
+    createdAt: now(),
+  });
+  writeDb(db);
 }

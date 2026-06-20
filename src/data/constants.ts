@@ -43,9 +43,9 @@ export const businessTypes: OptionItem[] = [
   { value: "workshop", labelEn: "Workshop", labelAr: "ورشة" },
   { value: "factory", labelEn: "Factory", labelAr: "معمل" },
   { value: "trader", labelEn: "Trader", labelAr: "تاجر" },
-  { value: "authorized_distributor", labelEn: "Authorized distributor", labelAr: "وكيل معتمد" },
+  { value: "authorized_distributor", labelEn: "Authorized distributor", labelAr: "موزّع معتمد" },
   { value: "importer", labelEn: "Importer", labelAr: "مستورد" },
-  { value: "service_provider", labelEn: "Service provider", labelAr: "مزود خدمة" },
+  { value: "service_provider", labelEn: "Service provider", labelAr: "مقدّم خدمات" },
   { value: "individual_supplier", labelEn: "Individual supplier", labelAr: "مجهز فردي" },
   { value: "other", labelEn: "Other", labelAr: "أخرى" },
 ] satisfies Array<OptionItem & { value: BusinessType }>;
@@ -54,20 +54,20 @@ export const supplierCategories: OptionItem[] = [
   { value: "electrical_materials", labelEn: "Electrical materials", labelAr: "مواد كهربائية" },
   { value: "mechanical_materials", labelEn: "Mechanical materials", labelAr: "مواد ميكانيكية" },
   { value: "piping_materials", labelEn: "Piping materials", labelAr: "مواد الأنابيب" },
-  { value: "flanges_fittings", labelEn: "Flanges and fittings", labelAr: "فلنجات ووصلات" },
+  { value: "flanges_fittings", labelEn: "Flanges and fittings", labelAr: "الفلنجات وملحقات الأنابيب" },
   { value: "valves", labelEn: "Valves", labelAr: "صمامات" },
-  { value: "instrumentation", labelEn: "Instrumentation", labelAr: "أجهزة قياس وسيطرة" },
+  { value: "instrumentation", labelEn: "Instrumentation", labelAr: "أجهزة القياس والتحكم" },
   { value: "civil_construction", labelEn: "Civil and construction materials", labelAr: "مواد إنشائية ومدنية" },
-  { value: "steel_fabrication", labelEn: "Steel and fabrication", labelAr: "حديد وتصنيع" },
-  { value: "welding_machining", labelEn: "Welding and machining", labelAr: "لحام وخراطة" },
-  { value: "safety_ppe", labelEn: "Safety and PPE", labelAr: "سلامة ومعدات حماية" },
-  { value: "tools_equipment", labelEn: "Tools and equipment", labelAr: "عدد ومعدات" },
+  { value: "steel_fabrication", labelEn: "Steel and fabrication", labelAr: "الأعمال المعدنية والتصنيع الهندسي" },
+  { value: "welding_machining", labelEn: "Welding and machining", labelAr: "اللحام والتشغيل الميكانيكي" },
+  { value: "safety_ppe", labelEn: "Safety and PPE", labelAr: "معدات السلامة والوقاية الشخصية" },
+  { value: "tools_equipment", labelEn: "Tools and equipment", labelAr: "أدوات ومعدات" },
   { value: "heavy_equipment_rental", labelEn: "Heavy equipment rental", labelAr: "تأجير معدات ثقيلة" },
-  { value: "transport_logistics", labelEn: "Transportation and logistics", labelAr: "نقل ولوجستيات" },
+  { value: "transport_logistics", labelEn: "Transportation and logistics", labelAr: "النقل والخدمات اللوجستية" },
   { value: "office_supplies", labelEn: "Office supplies", labelAr: "مستلزمات مكتبية" },
-  { value: "it_electronics", labelEn: "IT and electronics", labelAr: "تقنية ومعدات إلكترونية" },
+  { value: "it_electronics", labelEn: "IT and electronics", labelAr: "تقنية المعلومات والإلكترونيات" },
   { value: "furniture", labelEn: "Furniture", labelAr: "أثاث" },
-  { value: "chemicals", labelEn: "Chemicals", labelAr: "مواد كيمياوية" },
+  { value: "chemicals", labelEn: "Chemicals", labelAr: "مواد كيميائية" },
   { value: "oil_gas_materials", labelEn: "Oil and gas materials", labelAr: "مواد النفط والغاز" },
   { value: "power_plant_materials", labelEn: "Power plant materials", labelAr: "مواد محطات الطاقة" },
   { value: "general_trading", labelEn: "General trading", labelAr: "تجارة عامة" },
@@ -95,13 +95,54 @@ export const capabilityTags: OptionItem[] = [
   { value: "usd_pricing", labelEn: "USD pricing", labelAr: "تسعير بالدولار" },
   { value: "iqd_pricing", labelEn: "IQD pricing", labelAr: "تسعير بالدينار" },
   { value: "official_invoice", labelEn: "Can issue official invoice", labelAr: "يصدر فاتورة رسمية" },
-  { value: "company_profile", labelEn: "Has company profile", labelAr: "لديه بروفايل شركة" },
-  { value: "project_experience", labelEn: "Has previous project experience", labelAr: "لديه خبرة مشاريع" },
+  { value: "company_profile", labelEn: "Has company profile", labelAr: "لديه ملف تعريفي للشركة" },
+  { value: "project_experience", labelEn: "Has previous project experience", labelAr: "لديه خبرة سابقة في المشاريع" },
+  { value: "obsolete_items", labelEn: "Can source obsolete items", labelAr: "يوفر المواد المتوقفة أو النادرة" },
+  { value: "repair_overhaul", labelEn: "Repair and overhaul", labelAr: "إصلاح وإعادة تأهيل" },
+  { value: "emergency_sourcing", labelEn: "Emergency sourcing", labelAr: "تجهيز الحالات الطارئة" },
   { value: "works_ngos", labelEn: "Works with NGOs", labelAr: "يتعامل مع المنظمات" },
   { value: "works_construction", labelEn: "Works with construction companies", labelAr: "يتعامل مع شركات إنشائية" },
   { value: "works_oil_gas", labelEn: "Works with oil and gas", labelAr: "يتعامل مع النفط والغاز" },
   { value: "works_power_plants", labelEn: "Works with power plants", labelAr: "يتعامل مع محطات الطاقة" },
 ];
+
+export const supplierCapabilityGroups = [
+  {
+    labelKey: "operationalCapabilities",
+    values: [
+      "local_stock",
+      "import_only",
+      "custom_fabrication",
+      "fast_delivery",
+      "technical_support",
+      "site_visit",
+      "installation",
+      "warranty",
+      "obsolete_items",
+      "repair_overhaul",
+      "emergency_sourcing",
+    ],
+  },
+  {
+    labelKey: "supplierDocumentation",
+    values: ["company_profile", "project_experience", "official_invoice"],
+  },
+  {
+    labelKey: "sectorExperience",
+    values: ["works_ngos", "works_construction", "works_oil_gas", "works_power_plants"],
+  },
+] as const;
+
+const legacyCommercialCapabilityValues = new Set([
+  "cash_payment",
+  "bank_transfer",
+  "usd_pricing",
+  "iqd_pricing",
+]);
+
+export const searchableCapabilityTags = capabilityTags.filter(
+  (item) => !legacyCommercialCapabilityValues.has(item.value),
+);
 
 export const sourceTypes: OptionItem[] = [
   { value: "purchased_before", labelEn: "I purchased from them before", labelAr: "اشتريت منهم سابقًا" },
@@ -142,25 +183,23 @@ export const creditStarts: OptionItem[] = [
 ];
 
 export const interactionTypes: OptionItem[] = [
-  { value: "rfq_only", labelEn: "RFQ only", labelAr: "طلب سعر فقط" },
-  { value: "purchase_order", labelEn: "Purchase order", labelAr: "أمر شراء" },
+  { value: "technical_inquiry", labelEn: "Technical inquiry", labelAr: "استفسار فني" },
+  { value: "market_inquiry", labelEn: "Market inquiry", labelAr: "استفسار سوقي" },
+  { value: "past_purchase", labelEn: "Past purchase", labelAr: "شراء سابق" },
   { value: "delivery_completed", labelEn: "Delivery completed", labelAr: "تسليم مكتمل" },
   { value: "site_visit", labelEn: "Site visit", labelAr: "زيارة موقع" },
-  { value: "market_inquiry", labelEn: "Market inquiry", labelAr: "استفسار سوقي" },
-  { value: "contract", labelEn: "Contract", labelAr: "عقد" },
   { value: "after_sales_support", labelEn: "After-sales support", labelAr: "دعم بعد البيع" },
   { value: "other", labelEn: "Other", labelAr: "أخرى" },
 ];
 
 export const positiveReviewTags: OptionItem[] = [
   { value: "fast_response", labelEn: "Fast response", labelAr: "استجابة سريعة" },
-  { value: "good_price", labelEn: "Good price", labelAr: "سعر جيد" },
   { value: "professional", labelEn: "Professional", labelAr: "مهني" },
-  { value: "clear_quotation", labelEn: "Clear quotation", labelAr: "عرض واضح" },
   { value: "delivered_on_time", labelEn: "Delivered on time", labelAr: "سلّم في الوقت" },
   { value: "good_quality", labelEn: "Good quality", labelAr: "جودة جيدة" },
-  { value: "flexible_negotiation", labelEn: "Flexible negotiation", labelAr: "مرن بالتفاوض" },
   { value: "technical_knowledge", labelEn: "Good technical knowledge", labelAr: "معرفة فنية جيدة" },
+  { value: "specification_match", labelEn: "Matched the required specification", labelAr: "مطابقة جيدة للمواصفات" },
+  { value: "authentic_materials", labelEn: "Reliable material authenticity", labelAr: "موثوقية في أصالة المواد" },
   { value: "has_stock", labelEn: "Has stock", labelAr: "لديه مخزون" },
   { value: "good_documentation", labelEn: "Good documentation", labelAr: "توثيق جيد" },
   { value: "after_sales", labelEn: "Good after-sales support", labelAr: "دعم جيد بعد البيع" },
@@ -168,15 +207,14 @@ export const positiveReviewTags: OptionItem[] = [
 
 export const concernReviewTags: OptionItem[] = [
   { value: "slow_response", labelEn: "Slow response", labelAr: "استجابة بطيئة" },
-  { value: "high_price", labelEn: "High price", labelAr: "سعر مرتفع" },
   { value: "delayed_delivery", labelEn: "Delayed delivery", labelAr: "تأخر بالتسليم" },
-  { value: "unclear_quotation", labelEn: "Unclear quotation", labelAr: "عرض غير واضح" },
   { value: "needs_follow_up", labelEn: "Needs follow-up", labelAr: "يحتاج متابعة" },
   { value: "limited_stock", labelEn: "Limited stock", labelAr: "مخزون محدود" },
   { value: "weak_documentation", labelEn: "Weak documentation", labelAr: "توثيق ضعيف" },
   { value: "poor_communication", labelEn: "Poor communication", labelAr: "تواصل ضعيف" },
-  { value: "changed_price", labelEn: "Changed price", labelAr: "غيّر السعر" },
   { value: "missed_specification", labelEn: "Did not meet specification", labelAr: "لم يطابق المواصفة" },
+  { value: "unclear_origin", labelEn: "Unclear material origin", labelAr: "منشأ المواد غير واضح" },
+  { value: "outdated_contact", labelEn: "Outdated contact information", labelAr: "معلومات الاتصال غير محدثة" },
 ];
 
 export const badgeDefinitions: OptionItem[] = [

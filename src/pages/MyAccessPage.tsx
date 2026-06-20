@@ -37,8 +37,8 @@ export function MyAccessPage() {
         <StatCard label={t("availableCredits")} value={available} />
         <StatCard label={t("remainingForNextMonth")} value={available % required === 0 ? required : required - (available % required)} />
       </div>
-      <div className="mt-5 overflow-hidden rounded-md border border-slate-200">
-        <table className="w-full text-sm">
+      <div className="mt-5 overflow-x-auto rounded-md border border-slate-200">
+        <table className="min-w-[620px] w-full text-sm">
           <thead className="bg-slate-50 text-start text-slate-500">
             <tr>
               <th className="px-3 py-2 text-start">{t("source")}</th>

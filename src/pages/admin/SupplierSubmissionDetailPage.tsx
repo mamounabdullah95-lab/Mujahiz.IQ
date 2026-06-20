@@ -97,6 +97,18 @@ export function SupplierSubmissionDetailPage() {
               label={t("coverageAreas")}
               value={<PillList values={supplier.coverageAreas.map((item) => labelFor(coverageAreas, item, locale))} />}
             />
+            <InfoRow
+              className="md:col-span-2"
+              label={t("supplierBranches")}
+              value={(supplier.branches || []).map((branch) =>
+                [
+                  labelFor(taxonomy.governorates, branch.governorate, locale),
+                  localizedCity(branch.city, locale),
+                  localizedSupplierText(branch.marketArea, locale),
+                  branch.phone,
+                ].filter(Boolean).join(" - ")
+              ).join(" | ")}
+            />
           </InfoPanel>
 
           <InfoPanel title={t("contactInfo")}>

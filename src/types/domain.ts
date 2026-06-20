@@ -120,6 +120,14 @@ export interface DuplicateCheck {
   checkedAt?: TimestampLike;
 }
 
+export interface SupplierBranch {
+  governorate: string;
+  city: string;
+  marketArea?: string;
+  address?: string;
+  phone?: string;
+}
+
 export interface SupplierDraft {
   nameOriginal: string;
   displayName: string;
@@ -130,6 +138,7 @@ export interface SupplierDraft {
   businessType: BusinessType;
   governorate: string;
   governorates?: string[];
+  branches?: SupplierBranch[];
   city: string;
   marketArea: string;
   address?: string;
@@ -214,8 +223,10 @@ export interface SupplierReview {
   status: "pending_review" | "approved" | "rejected";
   overall: number;
   responseSpeed: number;
-  priceClarity: number;
-  flexibility: number;
+  priceClarity?: number;
+  flexibility?: number;
+  technicalCompliance?: number;
+  technicalKnowledge?: number;
   deliveryCommitment: number;
   contractCommitment: number;
   quality: number;
@@ -229,6 +240,34 @@ export interface SupplierReview {
   interactionYear: string;
   createdAt: TimestampLike;
   approvedAt?: TimestampLike;
+}
+
+export type SupplierFeedbackType =
+  | "incorrect_information"
+  | "contact_issue"
+  | "location_issue"
+  | "category_issue"
+  | "duplicate_supplier"
+  | "business_closed"
+  | "other";
+
+export type SupplierFeedbackStatus = "pending" | "in_review" | "resolved" | "rejected";
+
+export interface SupplierFeedback {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  supplierNameAr?: string;
+  supplierNameEn?: string;
+  submittedBy: string;
+  type: SupplierFeedbackType;
+  message: string;
+  suggestedCorrection?: string;
+  status: SupplierFeedbackStatus;
+  adminNotes?: string;
+  createdAt: TimestampLike;
+  reviewedAt?: TimestampLike;
+  reviewedBy?: string;
 }
 
 export interface ContributionLog {

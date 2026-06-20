@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Pencil, RotateCcw, Save, Send, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Pencil, Plus, RotateCcw, Save, Send, Trash2, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, ChipGroup, Section, SelectField, TextAreaField, TextField } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
@@ -15,6 +15,7 @@ import {
   type OptionItem,
   paymentOptions,
   sourceTypes,
+  supplierCapabilityGroups,
 } from "../data/constants";
 import {
   fetchDuplicateIndexes,
@@ -29,7 +30,7 @@ import { createSearchKeywords, findDuplicateMatches, normalizeEmail, normalizeNa
 import { calculateCompletionScore, missingRequiredSupplierFieldKeys } from "../utils/scoring";
 import { readWorkbookRows } from "../utils/workbookImport";
 
-const steps = ["supplierName", "location", "contactInfo", "capabilities", "sourceConfidence", "submitForReview"];
+const steps = ["supplierIdentity", "location", "contactInfo", "capabilities", "sourceConfidence", "submitForReview"];
 const supplierImportMaxSize = 100 * 1024;
 const addSupplierDraftStorageVersion = 1;
 
@@ -42,6 +43,13 @@ interface FormState {
   shortDescription: string;
   businessType: string;
   governorates: string[];
+  branches: Array<{
+    governorate: string;
+    city: string;
+    marketArea: string;
+    address: string;
+    phone: string;
+  }>;
   city: string;
   marketArea: string;
   address: string;
@@ -98,6 +106,7 @@ const initialForm: FormState = {
   shortDescription: "",
   businessType: "company",
   governorates: [],
+  branches: [],
   city: "",
   marketArea: "",
   address: "",
@@ -127,6 +136,14 @@ const initialForm: FormState = {
   relatedMaterialService: "",
   sourceNote: "",
 };
+
+function normalizeFormState(value?: Partial<FormState> | null): FormState {
+  return {
+    ...initialForm,
+    ...(value || {}),
+    branches: value?.branches || [],
+  };
+}
 
 export function AddSupplierPage() {
   const { t, i18n } = useTranslation();
@@ -173,12 +190,14 @@ export function AddSupplierPage() {
       if (saved.version !== addSupplierDraftStorageVersion) {
         return;
       }
-      const nextBulkItems = Array.isArray(saved.bulkItems) ? saved.bulkItems : [];
+      const nextBulkItems = Array.isArray(saved.bulkItems)
+        ? saved.bulkItems.map((item) => ({ ...item, form: normalizeFormState(item.form) }))
+        : [];
       const nextBulkEditIndex =
         typeof saved.bulkEditIndex === "number" && saved.bulkEditIndex >= 0 && saved.bulkEditIndex < nextBulkItems.length
           ? saved.bulkEditIndex
           : null;
-      setForm(saved.form || initialForm);
+      setForm(normalizeFormState(saved.form));
       setStep(typeof saved.step === "number" ? Math.min(5, Math.max(0, saved.step)) : 0);
       setBulkItems(nextBulkItems);
       setBulkEditIndex(nextBulkEditIndex);
@@ -318,7 +337,7 @@ export function AddSupplierPage() {
       return;
     }
     setBulkEditIndex(index);
-    setForm(item.form);
+    setForm(normalizeFormState(item.form));
     setDuplicateCheck(item.duplicateCheck);
     setCheckedKey("");
     setStep(firstMissingStep(item.missing));
@@ -631,16 +650,27 @@ export function AddSupplierPage() {
           </div>
         ) : null}
 
-        <div className="grid grid-cols-6 gap-2">
-          {steps.map((item, index) => (
-            <button
-              className={`h-2 rounded ${index <= step ? "bg-river" : "bg-slate-200"}`}
-              key={item}
-              type="button"
-              aria-label={t(item)}
-              onClick={() => setStep(index)}
-            />
-          ))}
+        <div className="overflow-x-auto pb-1">
+          <div className="grid min-w-[720px] grid-cols-6 gap-2">
+            {steps.map((item, index) => (
+              <button
+                className={`grid min-h-14 gap-1 rounded-md border px-2 py-2 text-center text-xs font-bold transition ${
+                  index === step
+                    ? "border-river bg-river text-white"
+                    : index < step
+                      ? "border-mint/30 bg-mint/10 text-mint"
+                      : "border-slate-200 bg-white text-slate-500 hover:border-river hover:text-river"
+                }`}
+                key={item}
+                type="button"
+                aria-current={index === step ? "step" : undefined}
+                onClick={() => setStep(index)}
+              >
+                <span>{index + 1}</span>
+                <span>{t(item)}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {step === 0 ? (
@@ -679,6 +709,80 @@ export function AddSupplierPage() {
               <div className="mb-2 text-sm font-bold text-slate-700">{t("coverageAreas")}</div>
               <ChipGroup options={coverageAreas.map(option)} values={form.coverageAreas} onChange={(values) => setValue("coverageAreas", values)} />
             </div>
+            <div className="grid gap-3 border-t border-slate-200 pt-4 md:col-span-2">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-bold text-ink">{t("supplierBranches")}</div>
+                  <p className="mt-1 text-sm text-slate-500">{t("supplierBranchesDescription")}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setValue("branches", [
+                    ...form.branches,
+                    { governorate: "", city: "", marketArea: "", address: "", phone: "" },
+                  ])}
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  {t("addBranch")}
+                </Button>
+              </div>
+              {form.branches.map((branch, index) => (
+                <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 md:grid-cols-2" key={index}>
+                  <SelectField
+                    label={t("governorate")}
+                    value={branch.governorate}
+                    onChange={(event) => setValue("branches", form.branches.map((item, itemIndex) =>
+                      itemIndex === index ? { ...item, governorate: event.target.value } : item
+                    ))}
+                  >
+                    <option value=""></option>
+                    {taxonomy.governorates.map((item) => (
+                      <option key={item.value} value={item.value}>{labelFor(taxonomy.governorates, item.value, locale)}</option>
+                    ))}
+                  </SelectField>
+                  <TextField
+                    label={t("city")}
+                    value={branch.city}
+                    onChange={(event) => setValue("branches", form.branches.map((item, itemIndex) =>
+                      itemIndex === index ? { ...item, city: event.target.value } : item
+                    ))}
+                  />
+                  <TextField
+                    label={t("marketArea")}
+                    value={branch.marketArea}
+                    onChange={(event) => setValue("branches", form.branches.map((item, itemIndex) =>
+                      itemIndex === index ? { ...item, marketArea: event.target.value } : item
+                    ))}
+                  />
+                  <TextField
+                    label={t("phone")}
+                    value={branch.phone}
+                    onChange={(event) => setValue("branches", form.branches.map((item, itemIndex) =>
+                      itemIndex === index ? { ...item, phone: event.target.value } : item
+                    ))}
+                  />
+                  <TextField
+                    className="md:col-span-2"
+                    label={t("address")}
+                    value={branch.address}
+                    onChange={(event) => setValue("branches", form.branches.map((item, itemIndex) =>
+                      itemIndex === index ? { ...item, address: event.target.value } : item
+                    ))}
+                  />
+                  <div className="md:col-span-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setValue("branches", form.branches.filter((_, itemIndex) => itemIndex !== index))}
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      {t("removeBranch")}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : null}
 
@@ -706,10 +810,27 @@ export function AddSupplierPage() {
               <div className="mb-2 text-sm font-bold text-slate-700">{t("mainCategory")}</div>
               <ChipGroup options={taxonomy.supplierCategories.map(option)} values={form.mainCategories} onChange={(values) => setValue("mainCategories", values)} />
             </div>
-            <TextField label={t("subcategories")} value={form.subcategories} onChange={(event) => setValue("subcategories", event.target.value)} placeholder="pump, cable tray, valves..." />
-            <div>
-              <div className="mb-2 text-sm font-bold text-slate-700">{t("capabilityTags")}</div>
-              <ChipGroup options={capabilityTags.map(option)} values={form.capabilityTags} onChange={(values) => setValue("capabilityTags", values)} />
+            <TextField label={t("subcategories")} value={form.subcategories} onChange={(event) => setValue("subcategories", event.target.value)} placeholder={t("subcategoriesPlaceholder")} />
+            <div className="grid gap-4">
+              <div className="text-sm font-bold text-slate-700">{t("capabilityTags")}</div>
+              {supplierCapabilityGroups.map((group) => {
+                const groupValues = new Set<string>(group.values);
+                const selected = form.capabilityTags.filter((value) => groupValues.has(value));
+                const options = capabilityTags.filter((item) => groupValues.has(item.value)).map(option);
+                return (
+                  <div className="rounded-md border border-slate-200 p-3" key={group.labelKey}>
+                    <div className="mb-2 text-xs font-bold text-slate-500">{t(group.labelKey)}</div>
+                    <ChipGroup
+                      options={options}
+                      values={selected}
+                      onChange={(values) => setValue("capabilityTags", [
+                        ...form.capabilityTags.filter((value) => !groupValues.has(value)),
+                        ...values,
+                      ])}
+                    />
+                  </div>
+                );
+              })}
             </div>
             <div>
               <div className="mb-2 text-sm font-bold text-slate-700">{t("paymentOptions")}</div>
@@ -836,7 +957,7 @@ export function AddSupplierPage() {
           </Button>
           {step < 5 ? (
             <Button type="button" onClick={() => setStep((current) => Math.min(5, current + 1))}>
-              {t("details")}
+              {t("next")}
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
           ) : isBulkEditing ? (
@@ -979,7 +1100,19 @@ function BulkImportPreview({
 function buildDraft(form: FormState): SupplierDraft {
   const phones = [form.primaryPhone, form.secondaryPhone].map((item) => item.trim()).filter(Boolean);
   const normalizedPhones = Array.from(new Set(phones.map(normalizePhone).filter(Boolean)));
-  const governorates = form.governorates.filter(Boolean);
+  const branches = (form.branches || [])
+    .map((branch) => ({
+      governorate: branch.governorate.trim(),
+      city: branch.city.trim(),
+      marketArea: branch.marketArea.trim(),
+      address: branch.address.trim(),
+      phone: branch.phone.trim(),
+    }))
+    .filter((branch) => branch.governorate || branch.city || branch.marketArea || branch.address || branch.phone);
+  const governorates = Array.from(new Set([
+    ...form.governorates.filter(Boolean),
+    ...branches.map((branch) => branch.governorate).filter(Boolean),
+  ]));
   const categories = form.mainCategories.filter(Boolean);
   const creditDays = Array.from(
     new Set(
@@ -1003,6 +1136,7 @@ function buildDraft(form: FormState): SupplierDraft {
     businessType: form.businessType as SupplierDraft["businessType"],
     governorate: governorates[0] || "",
     governorates,
+    branches,
     city: form.city.trim(),
     marketArea: form.marketArea.trim(),
     address: form.address.trim(),
@@ -1055,6 +1189,13 @@ function formFromDraft(draft: SupplierDraft): FormState {
     shortDescription: draft.shortDescription || "",
     businessType: draft.businessType || "company",
     governorates: draft.governorates?.length ? draft.governorates : draft.governorate ? [draft.governorate] : [],
+    branches: (draft.branches || []).map((branch) => ({
+      governorate: branch.governorate || "",
+      city: branch.city || "",
+      marketArea: branch.marketArea || "",
+      address: branch.address || "",
+      phone: branch.phone || "",
+    })),
     city: draft.city || "",
     marketArea: draft.marketArea || "",
     address: draft.address || "",

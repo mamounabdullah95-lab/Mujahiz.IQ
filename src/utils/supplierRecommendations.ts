@@ -17,6 +17,10 @@ export interface SupplierSearchIntent {
 
 export interface SupplierRecommendation {
   reasons: Array<"category" | "credit" | "freshness" | "location" | "payment" | "quality" | "text">;
+  criteria: Array<{
+    key: "category" | "credit" | "location" | "payment" | "quality";
+    status: "matched" | "unconfirmed" | "not_matched";
+  }>;
   score: number;
   supplier: Supplier;
 }
@@ -181,6 +185,7 @@ export function recommendSuppliers(
   return suppliers
     .map((supplier): SupplierRecommendation & { rawScore: number } => {
       const reasons = new Set<SupplierRecommendation["reasons"][number]>();
+      const criteria: SupplierRecommendation["criteria"] = [];
       let rawScore = 0;
       const haystack = normalizeText(supplierSearchText(supplier, taxonomy));
 
@@ -193,6 +198,10 @@ export function recommendSuppliers(
         rawScore += productRatio * 30;
         if (categoryMatches) reasons.add("category");
         if (termMatches) reasons.add("text");
+        criteria.push({
+          key: "category",
+          status: productRatio > 0 ? "matched" : "not_matched",
+        });
       }
 
       if (intent.governorates.length) {
@@ -204,6 +213,14 @@ export function recommendSuppliers(
           rawScore += 20;
           reasons.add("location");
         }
+        criteria.push({
+          key: "location",
+          status: matchesLocation
+            ? "matched"
+            : supplierLocations.length || supplier.coverageAreas?.length
+              ? "not_matched"
+              : "unconfirmed",
+        });
       }
 
       if (intent.paymentOptions.length) {
@@ -212,6 +229,14 @@ export function recommendSuppliers(
           rawScore += (matches / intent.paymentOptions.length) * 15;
           reasons.add("payment");
         }
+        criteria.push({
+          key: "payment",
+          status: matches
+            ? "matched"
+            : supplier.paymentOptions?.length
+              ? "not_matched"
+              : "unconfirmed",
+        });
       }
 
       if (intent.acceptsCredit || intent.creditDays || intent.creditStart) {
@@ -226,12 +251,34 @@ export function recommendSuppliers(
         if (supplier.acceptsCredit && intent.creditStart && supplier.creditStart === intent.creditStart) creditScore += 3;
         rawScore += Math.min(15, creditScore);
         if (creditScore) reasons.add("credit");
+        criteria.push({
+          key: "credit",
+          status: creditScore
+            ? "matched"
+            : supplier.acceptsCredit === undefined
+              ? "unconfirmed"
+              : "not_matched",
+        });
       }
 
       const rating = Math.max(0, Math.min(5, supplier.averageRating || 0));
-      if (!intent.minRating || rating >= intent.minRating) {
-        rawScore += (rating / 5) * 10;
+      const reviewCount = Math.max(0, supplier.reviewCount || 0);
+      const weightedRating = reviewCount
+        ? ((rating * reviewCount) + (3.5 * 5)) / (reviewCount + 5)
+        : 0;
+      if (!intent.minRating || weightedRating >= intent.minRating) {
+        rawScore += (weightedRating / 5) * 10;
         if (rating > 0) reasons.add("quality");
+      }
+      if (intent.minRating) {
+        criteria.push({
+          key: "quality",
+          status: !reviewCount
+            ? "unconfirmed"
+            : weightedRating >= intent.minRating
+              ? "matched"
+              : "not_matched",
+        });
       }
       const confidenceScore = supplier.confidenceLevel === "high" ? 5 : supplier.confidenceLevel === "medium" ? 3 : 1;
       rawScore += confidenceScore;
@@ -246,6 +293,7 @@ export function recommendSuppliers(
       return {
         rawScore,
         reasons: Array.from(reasons),
+        criteria,
         score: Math.round((rawScore / Math.max(1, maxScore)) * 100),
         supplier,
       };
