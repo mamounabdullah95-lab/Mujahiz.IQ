@@ -73,13 +73,47 @@ service cloud.firestore {
       ]);
     }
 
-    match /users/{userId} {
-      allow create: if isSelf(userId)
+    function isValidSelfRegistration(userId) {
+      return isSelf(userId)
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.role == "contributor"
-        && request.resource.data.status == "pending_approval"
-        && request.resource.data.accessStatus == "pending";
+        && request.resource.data.status == "approved"
+        && request.resource.data.accessStatus == "temporary"
+        && request.resource.data.points == 5
+        && request.resource.data.trustScore == 0
+        && request.resource.data.totalSubmissions == 0
+        && request.resource.data.approvedSubmissions == 0
+        && request.resource.data.rejectedSubmissions == 0
+        && request.resource.data.duplicateSubmissions == 0
+        && request.resource.data.approvedReviews == 0
+        && request.resource.data.approvedNewSupplierContributions == 0
+        && request.resource.data.consumedApprovedSupplierContributions == 0
+        && request.resource.data.accessExpiresAt is timestamp
+        && request.resource.data.accessExpiresAt > request.time;
+    }
+
+    function isValidOwnTrialCredit() {
+      return signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.source == "trial_access"
+        && request.resource.data.approvedSupplierCount == 0
+        && request.resource.data.daysGranted is int
+        && request.resource.data.daysGranted >= 0
+        && request.resource.data.daysGranted <= 14
+        && request.resource.data.status == "applied";
+    }
+
+    function isValidOwnTrialAuditLog() {
+      return signedIn()
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.action == "user.trial_access_started"
+        && request.resource.data.targetType == "user"
+        && request.resource.data.targetId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow create: if isValidSelfRegistration(userId);
 
       allow read: if isSelf(userId) || isAdmin();
 
@@ -140,7 +174,8 @@ service cloud.firestore {
     match /accessCredits/{creditId} {
       allow read: if isAdmin()
         || (signedIn() && resource.data.userId == request.auth.uid);
-      allow create, update, delete: if isAdmin();
+      allow create: if isAdmin() || isValidOwnTrialCredit();
+      allow update, delete: if isAdmin();
     }
 
     match /contributionLogs/{logId} {
@@ -161,7 +196,7 @@ service cloud.firestore {
 
     match /auditLogs/{logId} {
       allow read: if isAdmin();
-      allow create: if isAdmin();
+      allow create: if isAdmin() || isValidOwnTrialAuditLog();
       allow update, delete: if false;
     }
   }

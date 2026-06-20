@@ -34,6 +34,7 @@ export function RegisterPage() {
     setError("");
     try {
       await register({ ...form, language: locale });
+      sessionStorage.setItem("mujahiz-iq-registration-success", "1");
       navigate("/dashboard");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Registration failed.");

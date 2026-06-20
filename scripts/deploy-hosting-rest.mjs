@@ -2,8 +2,9 @@ import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
 import { gzipSync } from "node:zlib";
+import { getAccessToken } from "./google-service-account-auth.mjs";
 
-const token = process.env.GOOGLE_ACCESS_TOKEN;
+const token = process.env.GOOGLE_ACCESS_TOKEN || (await getAccessToken());
 if (!token) {
   throw new Error("GOOGLE_ACCESS_TOKEN is required.");
 }
