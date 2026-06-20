@@ -43,6 +43,7 @@ export function SupplierProfilePage() {
   const { taxonomy } = useTaxonomy();
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [reviews, setReviews] = useState<SupplierReview[]>([]);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [review, setReview] = useState({
     overall: 5,
@@ -64,18 +65,53 @@ export function SupplierProfilePage() {
 
   useEffect(() => {
     if (!id) return;
-    void Promise.all([getSupplier(id), listSupplierReviews(id)]).then(([supplierResult, reviewResult]) => {
-      setSupplier(supplierResult);
-      setReviews(reviewResult);
-    });
+    const supplierId = id;
+    let active = true;
+    async function load() {
+      setLoading(true);
+      setMessage("");
+      try {
+        const supplierResult = await getSupplier(supplierId);
+        if (!active) return;
+        setSupplier(supplierResult);
+        if (!supplierResult) {
+          setReviews([]);
+          return;
+        }
+        const reviewResult = await listSupplierReviews(supplierId).catch(() => []);
+        if (!active) return;
+        setReviews(reviewResult);
+      } catch (reason) {
+        if (!active) return;
+        setSupplier(null);
+        setReviews([]);
+        setMessage(reason instanceof Error ? reason.message : t("noResults"));
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+    void load();
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   if (!id) {
     return null;
   }
 
-  if (!supplier) {
+  if (loading) {
     return <Section title={t("details")}><EmptyState title={t("loading")} /></Section>;
+  }
+
+  if (!supplier) {
+    return (
+      <Section title={t("details")}>
+        <EmptyState title={t("noResults")} body={message || undefined} />
+      </Section>
+    );
   }
 
   const setRating = (key: (typeof criteria)[number], value: number) => setReview((current) => ({ ...current, [key]: value }));

@@ -649,10 +649,13 @@ export async function listSupplierReviews(supplierId: string, includePending = f
   if (!isFirebaseConfigured) {
     return demo.demoListSupplierReviews(supplierId, includePending);
   }
-  const snapshot = await getDocs(query(reviewsRef, where("supplierId", "==", supplierId)));
-  const items = snapshot.docs.map((item) => withId<SupplierReview>(item));
+  const snapshot = await getDocs(
+    includePending
+      ? query(reviewsRef, where("supplierId", "==", supplierId))
+      : query(reviewsRef, where("supplierId", "==", supplierId), where("status", "==", "approved")),
+  );
   return sortByCreatedAtDesc(
-    includePending ? items : items.filter((item) => item.status === "approved"),
+    snapshot.docs.map((item) => withId<SupplierReview>(item)),
     50,
   );
 }

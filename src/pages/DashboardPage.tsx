@@ -6,19 +6,43 @@ import { StatusBadge } from "../components/StatusBadge";
 import { Button, Section, StatCard } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { badgeDefinitions, defaultSettings, labelFor } from "../data/constants";
-import { getPlatformSettings } from "../services/firestore";
+import { getPlatformSettings, listMySubmissions } from "../services/firestore";
 import type { PlatformSettings } from "../types/domain";
 import { formatDate } from "../utils/date";
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
-  const { appUser, hasActiveAccess } = useAuth();
+  const { appUser, firebaseUser, hasActiveAccess } = useAuth();
   const [settings, setSettings] = useState<PlatformSettings>(defaultSettings);
+  const [pendingSubmissions, setPendingSubmissions] = useState(0);
 
   useEffect(() => {
     void getPlatformSettings().then(setSettings);
   }, []);
+
+  useEffect(() => {
+    if (!firebaseUser) {
+      setPendingSubmissions(0);
+      return;
+    }
+    let active = true;
+    void listMySubmissions(firebaseUser.uid)
+      .then((items) => {
+        if (!active) return;
+        setPendingSubmissions(
+          items.filter((item) => item.submissionStatus === "pending_review" || item.submissionStatus === "possible_duplicate").length,
+        );
+      })
+      .catch(() => {
+        if (active) {
+          setPendingSubmissions(0);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [firebaseUser]);
 
   if (!appUser) {
     return null;
@@ -60,7 +84,7 @@ export function DashboardPage() {
         <div className="rounded-md border border-slate-200 p-4">
           <ClipboardCheck className="h-5 w-5 text-river" aria-hidden="true" />
           <h3 className="mt-3 font-bold text-ink">{t("pendingSubmissions")}</h3>
-          <p className="mt-1 text-3xl font-black text-ink">{appUser.totalSubmissions - appUser.approvedSubmissions - appUser.rejectedSubmissions - appUser.duplicateSubmissions}</p>
+          <p className="mt-1 text-3xl font-black text-ink">{pendingSubmissions}</p>
         </div>
         <div className="rounded-md border border-slate-200 p-4">
           <CalendarClock className="h-5 w-5 text-river" aria-hidden="true" />
