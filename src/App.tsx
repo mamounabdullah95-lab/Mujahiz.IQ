@@ -56,6 +56,7 @@ export function App() {
           <Route path="admin/submissions/:id" element={<SupplierSubmissionDetailPage />} />
           <Route path="admin/reviews" element={<AdminReviewModerationPage />} />
           <Route path="admin/suppliers" element={<AdminApprovedSuppliersPage />} />
+          <Route path="admin/suppliers/:supplierId/edit" element={<AddSupplierPage />} />
           <Route path="admin/categories" element={<AdminCategoriesPage />} />
           <Route path="admin/settings" element={<AdminSettingsPage />} />
           <Route path="admin/audit-logs" element={<AdminAuditLogsPage />} />

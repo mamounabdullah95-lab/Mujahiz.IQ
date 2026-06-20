@@ -448,6 +448,55 @@ export async function getSupplier(supplierId: string) {
   return snapshot.exists() ? withId<Supplier>(snapshot) : null;
 }
 
+export async function updateApprovedSupplier(supplierId: string, actorId: string, supplierData: SupplierDraft) {
+  if (!isFirebaseConfigured) {
+    return demo.demoUpdateApprovedSupplier(supplierId, actorId, supplierData);
+  }
+  const supplierDoc = doc(suppliersRef, supplierId);
+  const duplicateDoc = doc(duplicateIndexRef, supplierId);
+  const auditDoc = doc(auditLogsRef);
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(supplierDoc);
+    if (!snapshot.exists()) {
+      throw new Error("supplierNotFound");
+    }
+
+    transaction.update(supplierDoc, {
+      ...supplierData,
+      sourceSummary: supplierData.sourceNote || supplierData.sourceType,
+      updatedAt: serverTimestamp(),
+    });
+    transaction.set(
+      duplicateDoc,
+      {
+        supplierId,
+        supplierName: supplierData.displayName || supplierData.nameOriginal,
+        normalizedName: supplierData.normalizedName,
+        normalizedPhones: supplierData.normalizedPhones,
+        normalizedEmail: normalizeEmail(supplierData.email),
+        website: normalizeUrl(supplierData.website),
+        facebook: normalizeUrl(supplierData.facebook),
+        contactPerson: supplierData.contactPerson || "",
+        governorate: supplierData.governorate,
+        governorates: supplierData.governorates || (supplierData.governorate ? [supplierData.governorate] : []),
+        categories: supplierData.categories,
+      } satisfies SupplierDuplicateIndex,
+      { merge: true },
+    );
+    transaction.set(auditDoc, {
+      actorId,
+      action: "supplier.updated",
+      targetType: "supplier",
+      targetId: supplierId,
+      details: {
+        supplierName: supplierData.displayName || supplierData.nameOriginal,
+      },
+      createdAt: serverTimestamp(),
+    } satisfies Omit<AuditLog, "id">);
+  });
+}
+
 export async function approveSupplierSubmission(
   submission: SupplierSubmission,
   actorId: string,

@@ -1,6 +1,6 @@
 ﻿import { FormEvent, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Send } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
+import { Pencil, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { StarRating } from "../components/StarRating";
 import { StatusBadge } from "../components/StatusBadge";
@@ -142,7 +142,20 @@ export function SupplierProfilePage() {
   }
 
   return (
-    <Section title={localizedSupplierName(supplier, locale)} description={`${localizedSupplierGovernorates(supplier, taxonomy, locale)} - ${localizedCity(supplier.city, locale)}`}>
+    <Section
+      title={localizedSupplierName(supplier, locale)}
+      description={`${localizedSupplierGovernorates(supplier, taxonomy, locale)} - ${localizedCity(supplier.city, locale)}`}
+      actions={
+        isAdmin ? (
+          <Link to={`/admin/suppliers/${supplier.id}/edit`}>
+            <Button type="button" variant="secondary">
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              {t("edit")}
+            </Button>
+          </Link>
+        ) : null
+      }
+    >
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <div className="grid gap-4">
           <div className="rounded-md border border-slate-200 p-4">

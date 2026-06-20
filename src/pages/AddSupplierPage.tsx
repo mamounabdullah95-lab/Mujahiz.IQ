@@ -15,7 +15,14 @@ import {
   paymentOptions,
   sourceTypes,
 } from "../data/constants";
-import { fetchDuplicateIndexes, getSupplierSubmission, resubmitSupplierSubmission, submitSupplierDraft } from "../services/firestore";
+import {
+  fetchDuplicateIndexes,
+  getSupplier,
+  getSupplierSubmission,
+  resubmitSupplierSubmission,
+  submitSupplierDraft,
+  updateApprovedSupplier,
+} from "../services/firestore";
 import type { DuplicateCheck, SupplierDraft } from "../types/domain";
 import { createSearchKeywords, findDuplicateMatches, normalizeEmail, normalizeName, normalizePhone } from "../utils/normalization";
 import { calculateCompletionScore, missingRequiredSupplierFieldKeys } from "../utils/scoring";
@@ -115,10 +122,10 @@ const initialForm: FormState = {
 export function AddSupplierPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
-  const { appUser, firebaseUser } = useAuth();
+  const { appUser, firebaseUser, isAdmin } = useAuth();
   const { taxonomy } = useTaxonomy();
   const navigate = useNavigate();
-  const { submissionId } = useParams();
+  const { submissionId, supplierId } = useParams();
   const [form, setForm] = useState<FormState>(initialForm);
   const [step, setStep] = useState(0);
   const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheck>({ hasPossibleDuplicate: false, matches: [] });
@@ -129,8 +136,9 @@ export function AddSupplierPage() {
   const [bulkItems, setBulkItems] = useState<BulkImportItem[]>([]);
   const [bulkEditIndex, setBulkEditIndex] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const [approvedSupplierOriginalForm, setApprovedSupplierOriginalForm] = useState<FormState | null>(null);
   const draftLoadedRef = useRef(false);
-  const isCorrectionMode = Boolean(submissionId);
+  const isApprovedEditMode = Boolean(supplierId);
 
   const draft = useMemo(() => buildDraft(form), [form]);
   const missing = missingRequiredSupplierFieldKeys(draft);
@@ -143,7 +151,7 @@ export function AddSupplierPage() {
   });
 
   useEffect(() => {
-    if (!draftStorageKey || submissionId || draftLoadedRef.current) {
+    if (!draftStorageKey || submissionId || supplierId || draftLoadedRef.current) {
       return;
     }
     draftLoadedRef.current = true;
@@ -170,10 +178,10 @@ export function AddSupplierPage() {
     } catch {
       localStorage.removeItem(draftStorageKey);
     }
-  }, [draftStorageKey, submissionId, t]);
+  }, [draftStorageKey, submissionId, supplierId, t]);
 
   useEffect(() => {
-    if (!draftStorageKey || submissionId || !draftLoadedRef.current) {
+    if (!draftStorageKey || submissionId || supplierId || !draftLoadedRef.current) {
       return;
     }
     const hasDraft = bulkItems.length > 0 || bulkEditIndex !== null || importSummary || !isBlankForm(form);
@@ -194,7 +202,7 @@ export function AddSupplierPage() {
       localStorage.setItem(draftStorageKey, JSON.stringify(payload));
     }, 250);
     return () => window.clearTimeout(timeoutId);
-  }, [bulkEditIndex, bulkItems, draftStorageKey, form, importSummary, step, submissionId]);
+  }, [bulkEditIndex, bulkItems, draftStorageKey, form, importSummary, step, submissionId, supplierId]);
 
   useEffect(() => {
     if (step !== 5) {
@@ -228,6 +236,29 @@ export function AddSupplierPage() {
       .finally(() => setBusy(false));
   }, [firebaseUser, submissionId, t]);
 
+  useEffect(() => {
+    if (!supplierId || !firebaseUser || !isAdmin) {
+      return;
+    }
+    setBusy(true);
+    void getSupplier(supplierId)
+      .then((supplier) => {
+        if (!supplier) {
+          setMessage(t("supplierNotFound"));
+          return;
+        }
+        const nextForm = formFromDraft(supplier);
+        setForm(nextForm);
+        setApprovedSupplierOriginalForm(nextForm);
+        setDuplicateCheck({ hasPossibleDuplicate: false, matches: [] });
+        setStep(0);
+        setImportSummary("");
+        setBulkItems([]);
+      })
+      .catch((reason) => setMessage(reason instanceof Error ? reason.message : t("supplierNotFound")))
+      .finally(() => setBusy(false));
+  }, [firebaseUser, isAdmin, supplierId, t]);
+
   if (appUser?.role === "viewer" || appUser?.status === "suspended") {
     return (
       <Section title={t("addSupplier")} description={t("noAccessBody")}>
@@ -249,18 +280,18 @@ export function AddSupplierPage() {
   }
 
   function resetAddSupplierPage() {
-    if (!window.confirm(t("confirmResetAddSupplierPage"))) {
+    if (!window.confirm(t(isApprovedEditMode ? "confirmResetSupplierChanges" : "confirmResetAddSupplierPage"))) {
       return;
     }
     clearSavedDraft();
-    setForm(initialForm);
+    setForm(isApprovedEditMode && approvedSupplierOriginalForm ? approvedSupplierOriginalForm : initialForm);
     setStep(0);
     setDuplicateCheck({ hasPossibleDuplicate: false, matches: [] });
     setCheckedKey("");
     setImportSummary("");
     setBulkItems([]);
     setBulkEditIndex(null);
-    setMessage(t("addSupplierDraftReset"));
+    setMessage(t(isApprovedEditMode ? "supplierChangesReset" : "addSupplierDraftReset"));
   }
 
   function firstMissingStep(keys: string[]) {
@@ -378,7 +409,10 @@ export function AddSupplierPage() {
 
   async function runDuplicateCheck() {
     const indexes = await fetchDuplicateIndexes();
-    const matches = findDuplicateMatches(draft, indexes);
+    const matches = findDuplicateMatches(
+      draft,
+      supplierId ? indexes.filter((item) => item.supplierId !== supplierId) : indexes,
+    );
     const nextCheck = { hasPossibleDuplicate: matches.length > 0, matches };
     setDuplicateCheck(nextCheck);
     return nextCheck;
@@ -455,6 +489,13 @@ export function AddSupplierPage() {
     setBusy(true);
     try {
       const latestDuplicateCheck = await runDuplicateCheck();
+      if (supplierId) {
+        await updateApprovedSupplier(supplierId, firebaseUser.uid, draft);
+        setApprovedSupplierOriginalForm(formFromDraft(draft));
+        setMessage(t("approvedSupplierUpdated"));
+        setTimeout(() => navigate("/admin/suppliers"), 700);
+        return;
+      }
       if (submissionId) {
         await resubmitSupplierSubmission(submissionId, firebaseUser.uid, draft, latestDuplicateCheck);
         setMessage(t("correctionResubmitted"));
@@ -495,12 +536,12 @@ export function AddSupplierPage() {
 
   return (
     <Section
-      title={t("addSupplier")}
-      description={t(steps[step])}
+      title={isApprovedEditMode ? t("editApprovedSupplier") : t("addSupplier")}
+      description={isApprovedEditMode ? t("editApprovedSupplierDescription") : t(steps[step])}
       actions={
         <Button type="button" variant="secondary" onClick={resetAddSupplierPage}>
           <RotateCcw className="h-4 w-4" aria-hidden="true" />
-          {t("resetAddSupplierPage")}
+          {isApprovedEditMode ? t("resetChanges") : t("resetAddSupplierPage")}
         </Button>
       }
     >
@@ -515,7 +556,7 @@ export function AddSupplierPage() {
           void handleSubmit();
         }}
       >
-        <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+        {!isApprovedEditMode ? <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="font-bold text-ink">{t("supplierImportTitle")}</h3>
@@ -545,7 +586,7 @@ export function AddSupplierPage() {
               {importSummary}
             </div>
           ) : null}
-        </div>
+        </div> : null}
 
         {bulkItems.length && !isBulkEditing ? (
           <BulkImportPreview
@@ -724,7 +765,7 @@ export function AddSupplierPage() {
             ) : (
               <div className="rounded-md border border-mint/30 bg-mint/10 p-4 text-sm font-semibold text-mint">
                 <CheckCircle2 className="me-2 inline h-4 w-4" aria-hidden="true" />
-                {t("readyForAdminReview")}
+                {isApprovedEditMode ? t("readyToSave") : t("readyForAdminReview")}
               </div>
             )}
 
@@ -778,8 +819,8 @@ export function AddSupplierPage() {
             </div>
           ) : (
             <Button disabled={busy || missing.length > 0} type="submit">
-              <Send className="h-4 w-4" aria-hidden="true" />
-              {t("submitForReview")}
+              {isApprovedEditMode ? <Save className="h-4 w-4" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
+              {isApprovedEditMode ? t("saveChanges") : t("submitForReview")}
             </Button>
           )}
         </div>

@@ -402,6 +402,29 @@ export async function demoGetSupplier(supplierId: string) {
   return readDb().suppliers.find((supplier) => supplier.id === supplierId) || null;
 }
 
+export async function demoUpdateApprovedSupplier(supplierId: string, actorId: string, supplierData: SupplierDraft) {
+  const db = readDb();
+  const supplier = db.suppliers.find((item) => item.id === supplierId);
+  if (!supplier) {
+    throw new Error("supplierNotFound");
+  }
+  Object.assign(supplier, {
+    ...supplierData,
+    sourceSummary: supplierData.sourceNote || supplierData.sourceType,
+    updatedAt: now(),
+  });
+  db.auditLogs.push({
+    id: id("audit"),
+    actorId,
+    action: "supplier.updated",
+    targetType: "supplier",
+    targetId: supplierId,
+    details: { supplierName: supplierData.displayName || supplierData.nameOriginal },
+    createdAt: now(),
+  });
+  writeDb(db);
+}
+
 export async function demoApproveSupplierSubmission(
   submission: SupplierSubmission,
   actorId: string,

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { EmptyState, Section } from "../../components/ui";
 import { useTaxonomy } from "../../contexts/TaxonomyContext";
@@ -28,7 +29,7 @@ export function AdminApprovedSuppliersPage() {
               <th className="px-3 py-2 text-start">{t("supplierName")}</th>
               <th className="px-3 py-2 text-start">{t("mainCategory")}</th>
               <th className="px-3 py-2 text-start">{t("rating")}</th>
-              <th className="px-3 py-2 text-start">{t("details")}</th>
+              <th className="px-3 py-2 text-start">{t("actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -37,7 +38,15 @@ export function AdminApprovedSuppliersPage() {
                 <td className="px-3 py-2 font-semibold text-ink">{localizedSupplierName(supplier, locale)}</td>
                 <td className="px-3 py-2">{supplier.categories.map((category) => labelFor(taxonomy.supplierCategories, category, locale)).join(", ")}</td>
                 <td className="px-3 py-2">{supplier.averageRating || 0}</td>
-                <td className="px-3 py-2"><Link className="font-semibold text-river" to={`/suppliers/${supplier.id}`}>{t("details")}</Link></td>
+                <td className="px-3 py-2">
+                  <div className="flex flex-wrap gap-3">
+                    <Link className="font-semibold text-river" to={`/suppliers/${supplier.id}`}>{t("details")}</Link>
+                    <Link className="inline-flex items-center gap-1 font-semibold text-river" to={`/admin/suppliers/${supplier.id}/edit`}>
+                      <Pencil className="h-4 w-4" aria-hidden="true" />
+                      {t("edit")}
+                    </Link>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
