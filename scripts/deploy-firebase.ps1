@@ -4,6 +4,7 @@ param(
   [string]$Location = "nam5",
   [string]$DisplayName = "Mujahiz IQ",
   [string]$WebAppName = "Mujahiz IQ Web",
+  [string]$AppCheckSiteKey = $env:FIREBASE_APP_CHECK_SITE_KEY,
   [string]$Token = $env:FIREBASE_TOKEN
 )
 
@@ -266,7 +267,7 @@ function Write-ProductionEnv {
     "VITE_FIREBASE_APP_ID=$appIdValue",
     "VITE_FIREBASE_AI_ENABLED=true",
     "VITE_FIREBASE_AI_MODEL=gemini-2.5-flash-lite",
-    "VITE_FIREBASE_APP_CHECK_SITE_KEY="
+    "VITE_FIREBASE_APP_CHECK_SITE_KEY=$AppCheckSiteKey"
   )
 
   Set-Content -LiteralPath (Join-Path $Root ".env.production") -Value $envLines -Encoding utf8
