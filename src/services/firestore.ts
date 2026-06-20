@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -68,6 +69,12 @@ function createdAtMillis(value: TimestampLike) {
 
 function sortByCreatedAtDesc<T extends { createdAt: TimestampLike }>(items: T[], maxItems: number) {
   return [...items].sort((a, b) => createdAtMillis(b.createdAt) - createdAtMillis(a.createdAt)).slice(0, maxItems);
+}
+
+function withoutUndefinedFields<T extends object>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined),
+  ) as T;
 }
 
 export async function createUserProfile(
@@ -347,7 +354,7 @@ export async function submitSupplierDraft(userId: string, draft: SupplierDraft, 
   await addDoc(submissionsRef, {
     submittedBy: userId,
     submissionStatus: duplicateCheck.hasPossibleDuplicate ? "possible_duplicate" : "pending_review",
-    supplierData: draft,
+    supplierData: withoutUndefinedFields(draft),
     duplicateCheck: {
       ...duplicateCheck,
       checkedAt: serverTimestamp(),
@@ -382,7 +389,7 @@ export async function resubmitSupplierSubmission(
       submissionStatus: duplicateCheck.hasPossibleDuplicate ? "possible_duplicate" : "pending_review",
       adminDecision: "resubmitted",
       adminNotes: "",
-      supplierData: draft,
+      supplierData: withoutUndefinedFields(draft),
       duplicateCheck: {
         ...duplicateCheck,
         checkedAt: serverTimestamp(),
@@ -463,7 +470,9 @@ export async function updateApprovedSupplier(supplierId: string, actorId: string
     }
 
     transaction.update(supplierDoc, {
-      ...supplierData,
+      ...withoutUndefinedFields(supplierData),
+      ...(supplierData.acceptsCredit === undefined ? { acceptsCredit: deleteField() } : {}),
+      ...(supplierData.creditStart === undefined ? { creditStart: deleteField() } : {}),
       sourceSummary: supplierData.sourceNote || supplierData.sourceType,
       updatedAt: serverTimestamp(),
     });

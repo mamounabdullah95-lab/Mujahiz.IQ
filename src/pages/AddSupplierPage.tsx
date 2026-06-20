@@ -1022,9 +1022,11 @@ function buildDraft(form: FormState): SupplierDraft {
     subcategories,
     capabilityTags: form.capabilityTags,
     paymentOptions: form.paymentOptions,
-    acceptsCredit: form.acceptsCredit === "yes" ? true : form.acceptsCredit === "no" ? false : undefined,
+    ...(form.acceptsCredit === "unknown" ? {} : { acceptsCredit: form.acceptsCredit === "yes" }),
     creditDays: form.acceptsCredit === "yes" ? creditDays : [],
-    creditStart: form.acceptsCredit === "yes" && form.creditStart ? form.creditStart as SupplierDraft["creditStart"] : undefined,
+    ...(form.acceptsCredit === "yes" && form.creditStart
+      ? { creditStart: form.creditStart as SupplierDraft["creditStart"] }
+      : {}),
     creditTermsNote: form.acceptsCredit === "yes" ? form.creditTermsNote.trim() : "",
     sourceType: form.sourceType as SupplierDraft["sourceType"],
     confidenceLevel: form.confidenceLevel as SupplierDraft["confidenceLevel"],
