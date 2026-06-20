@@ -1,6 +1,6 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Send, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Pencil, Save, Send, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, ChipGroup, Section, SelectField, TextAreaField, TextField } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
@@ -116,11 +116,14 @@ export function AddSupplierPage() {
   const [importing, setImporting] = useState(false);
   const [importSummary, setImportSummary] = useState("");
   const [bulkItems, setBulkItems] = useState<BulkImportItem[]>([]);
+  const [bulkEditIndex, setBulkEditIndex] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const isCorrectionMode = Boolean(submissionId);
 
   const draft = useMemo(() => buildDraft(form), [form]);
   const missing = missingRequiredSupplierFieldKeys(draft);
+  const bulkEditItem = bulkEditIndex === null ? null : bulkItems[bulkEditIndex] || null;
+  const isBulkEditing = Boolean(bulkEditItem);
   const option = (item: { value: string; labelEn: string; labelAr: string }) => ({
     value: item.value,
     label: locale === "ar" ? item.labelAr : item.labelEn,
@@ -172,6 +175,110 @@ export function AddSupplierPage() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function firstMissingStep(keys: string[]) {
+    if (keys.some((key) => ["supplierName"].includes(key))) return 0;
+    if (keys.some((key) => ["governorate", "cityOrMarketArea"].includes(key))) return 1;
+    if (keys.some((key) => ["contactMethod"].includes(key))) return 2;
+    if (keys.some((key) => ["mainCategory", "capabilityTag"].includes(key))) return 3;
+    if (keys.some((key) => ["sourceType", "confidenceLevel"].includes(key))) return 4;
+    return 5;
+  }
+
+  function openBulkEdit(index: number) {
+    const item = bulkItems[index];
+    if (!item) {
+      return;
+    }
+    setBulkEditIndex(index);
+    setForm(item.form);
+    setDuplicateCheck(item.duplicateCheck);
+    setCheckedKey("");
+    setStep(firstMissingStep(item.missing));
+    setMessage("");
+  }
+
+  function closeBulkEdit() {
+    setBulkEditIndex(null);
+    setForm(initialForm);
+    setDuplicateCheck({ hasPossibleDuplicate: false, matches: [] });
+    setCheckedKey("");
+    setStep(5);
+  }
+
+  async function evaluateBulkForm(input: FormState) {
+    const itemDraft = buildDraft(input);
+    const indexes = await fetchDuplicateIndexes();
+    const matches = findDuplicateMatches(itemDraft, indexes);
+    return {
+      draft: itemDraft,
+      missing: missingRequiredSupplierFieldKeys(itemDraft),
+      duplicateCheck: { hasPossibleDuplicate: matches.length > 0, matches },
+    };
+  }
+
+  async function saveBulkEdit() {
+    if (bulkEditIndex === null) {
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    try {
+      const evaluated = await evaluateBulkForm(form);
+      setBulkItems((current) =>
+        current.map((item, index) =>
+          index === bulkEditIndex
+            ? { ...item, form, missing: evaluated.missing, duplicateCheck: evaluated.duplicateCheck }
+            : item,
+        ),
+      );
+      closeBulkEdit();
+      setMessage(t("supplierBulkItemSaved"));
+    } catch (reason) {
+      setMessage(reason instanceof Error ? reason.message : t("supplierSubmitFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitBulkItem(index: number, inputForm?: FormState) {
+    if (!firebaseUser) {
+      return;
+    }
+    const item = bulkItems[index];
+    if (!item) {
+      return;
+    }
+    const itemForm = inputForm || item.form;
+    const itemDraft = buildDraft(itemForm);
+    const itemMissing = missingRequiredSupplierFieldKeys(itemDraft);
+    if (itemMissing.length) {
+      setMessage(t("missingRequiredFields", { fields: itemMissing.map((field) => t(field)).join(", ") }));
+      if (inputForm) {
+        setStep(firstMissingStep(itemMissing));
+      } else {
+        openBulkEdit(index);
+      }
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    try {
+      const evaluated = await evaluateBulkForm(itemForm);
+      await submitSupplierDraft(firebaseUser.uid, evaluated.draft, evaluated.duplicateCheck);
+      const nextItems = bulkItems.filter((_, itemIndex) => itemIndex !== index);
+      setBulkItems(nextItems);
+      closeBulkEdit();
+      setMessage(t("supplierBulkItemSubmitted"));
+      if (!nextItems.length) {
+        setTimeout(() => navigate("/my-submissions"), 900);
+      }
+    } catch (reason) {
+      setMessage(reason instanceof Error ? reason.message : t("supplierSubmitFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function runDuplicateCheck() {
     const indexes = await fetchDuplicateIndexes();
     const matches = findDuplicateMatches(draft, indexes);
@@ -189,6 +296,7 @@ export function AddSupplierPage() {
     setMessage("");
     setImportSummary("");
     setBulkItems([]);
+    setBulkEditIndex(null);
     if (file.size > supplierImportMaxSize) {
       setMessage(t("supplierImportTooLarge"));
       return;
@@ -214,6 +322,7 @@ export function AddSupplierPage() {
           };
         });
         setBulkItems(bulk);
+        setBulkEditIndex(null);
         setStep(5);
         setImportSummary(t("supplierBulkImportApplied", { count: bulk.length }));
         return;
@@ -236,8 +345,7 @@ export function AddSupplierPage() {
     }
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function handleSubmit() {
     if (!firebaseUser) {
       return;
     }
@@ -288,7 +396,17 @@ export function AddSupplierPage() {
 
   return (
     <Section title={t("addSupplier")} description={t(steps[step])}>
-      <form className="grid gap-5" onSubmit={(event) => void handleSubmit(event)}>
+      <form
+        className="grid gap-5"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (isBulkEditing) {
+            void saveBulkEdit();
+            return;
+          }
+          void handleSubmit();
+        }}
+      >
         <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -321,17 +439,31 @@ export function AddSupplierPage() {
           ) : null}
         </div>
 
-        {bulkItems.length ? (
+        {bulkItems.length && !isBulkEditing ? (
           <BulkImportPreview
             items={bulkItems}
             locale={locale}
             taxonomy={taxonomy}
             busy={busy}
-            onCancel={() => setBulkItems([])}
+            onCancel={() => {
+              setBulkItems([]);
+              setBulkEditIndex(null);
+            }}
+            onEdit={openBulkEdit}
+            onSubmitItem={(index) => void submitBulkItem(index)}
             onSubmit={() => void handleBulkSubmit()}
           />
         ) : (
           <>
+        {isBulkEditing && bulkEditItem ? (
+          <div className="rounded-md border border-river/20 bg-river/5 p-4">
+            <h3 className="font-bold text-ink">{t("supplierBulkEditTitle")}</h3>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              {t("supplierBulkEditBody", { row: bulkEditItem.rowNumber })}
+            </p>
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-6 gap-2">
           {steps.map((item, index) => (
             <button
@@ -513,6 +645,20 @@ export function AddSupplierPage() {
               {t("details")}
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
+          ) : isBulkEditing ? (
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={busy} type="button" variant="secondary" onClick={closeBulkEdit}>
+                {t("backToBulkReview")}
+              </Button>
+              <Button disabled={busy} type="button" variant="secondary" onClick={() => void saveBulkEdit()}>
+                <Save className="h-4 w-4" aria-hidden="true" />
+                {t("saveAndReturn")}
+              </Button>
+              <Button disabled={busy || missing.length > 0} type="button" onClick={() => bulkEditIndex !== null && void submitBulkItem(bulkEditIndex, form)}>
+                <Send className="h-4 w-4" aria-hidden="true" />
+                {t("sendThisSupplier")}
+              </Button>
+            </div>
           ) : (
             <Button disabled={busy || missing.length > 0} type="submit">
               <Send className="h-4 w-4" aria-hidden="true" />
@@ -533,6 +679,8 @@ function BulkImportPreview({
   taxonomy,
   busy,
   onCancel,
+  onEdit,
+  onSubmitItem,
   onSubmit,
 }: {
   items: BulkImportItem[];
@@ -540,6 +688,8 @@ function BulkImportPreview({
   taxonomy: SupplierImportOptions;
   busy: boolean;
   onCancel: () => void;
+  onEdit: (index: number) => void;
+  onSubmitItem: (index: number) => void;
   onSubmit: () => void;
 }) {
   const { t } = useTranslation();
@@ -575,15 +725,24 @@ function BulkImportPreview({
               <th className="px-3 py-2 text-start">{t("governorate")}</th>
               <th className="px-3 py-2 text-start">{t("mainCategory")}</th>
               <th className="px-3 py-2 text-start">{t("status")}</th>
+              <th className="px-3 py-2 text-start">{t("actions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 bg-white">
-            {items.map((item) => {
+            {items.map((item, index) => {
               const draft = buildDraft(item.form);
               return (
                 <tr key={item.rowNumber}>
                   <td className="px-3 py-3 font-semibold text-slate-500">{item.rowNumber}</td>
-                  <td className="px-3 py-3 font-bold text-ink">{draft.displayName || draft.nameOriginal || "-"}</td>
+                  <td className="px-3 py-3">
+                    <button
+                      className="text-start font-bold text-river hover:text-ink"
+                      type="button"
+                      onClick={() => onEdit(index)}
+                    >
+                      {draft.displayName || draft.nameOriginal || "-"}
+                    </button>
+                  </td>
                   <td className="px-3 py-3 text-slate-600">
                     {(draft.governorates?.length ? draft.governorates : draft.governorate ? [draft.governorate] : []).map((governorate) => labelFor(taxonomy.governorates, governorate, locale)).join(", ") || "-"}
                   </td>
@@ -600,6 +759,18 @@ function BulkImportPreview({
                     ) : (
                       <span className="font-semibold text-mint">{t("readyForAdminReview")}</span>
                     )}
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Button className="min-h-9 px-3" disabled={busy} type="button" variant="secondary" onClick={() => onEdit(index)}>
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
+                        {t("edit")}
+                      </Button>
+                      <Button className="min-h-9 px-3" disabled={busy || item.missing.length > 0} type="button" onClick={() => onSubmitItem(index)}>
+                        <Send className="h-4 w-4" aria-hidden="true" />
+                        {t("sendThisSupplier")}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               );
