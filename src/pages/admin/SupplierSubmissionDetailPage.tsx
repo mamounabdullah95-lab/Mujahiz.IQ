@@ -18,7 +18,7 @@ import {
 import { approveSupplierSubmission, decideSupplierSubmission, getPlatformSettings, getSupplierSubmission } from "../../services/firestore";
 import type { DuplicateMatch, SupplierSubmission } from "../../types/domain";
 import { formatDate } from "../../utils/date";
-import { localizedSupplierGovernorates } from "../../utils/supplierDisplay";
+import { localizedCity, localizedSupplierGovernorates, localizedSupplierName, localizedSupplierText } from "../../utils/supplierDisplay";
 
 export function SupplierSubmissionDetailPage() {
   const { id } = useParams();
@@ -57,7 +57,7 @@ export function SupplierSubmissionDetailPage() {
 
   return (
     <Section
-      title={supplier.displayName || supplier.nameOriginal}
+      title={localizedSupplierName(supplier, locale)}
       description={`${t("submittedAt")}: ${formatDate(submission.createdAt, locale)}`}
     >
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
@@ -67,7 +67,7 @@ export function SupplierSubmissionDetailPage() {
               <div>
                 <StatusBadge value={submission.submissionStatus} />
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {supplier.shortDescription || t("noDescription")}
+                  {localizedSupplierText(supplier.shortDescription, locale) || t("noDescription")}
                 </p>
               </div>
               <div className="rounded-md bg-slate-50 px-3 py-2 text-sm font-bold text-ink">
@@ -77,19 +77,19 @@ export function SupplierSubmissionDetailPage() {
           </div>
 
           <InfoPanel title={t("supplierIdentity")}>
-            <InfoRow label={t("supplierName")} value={supplier.nameOriginal} />
-            <InfoRow label={t("displayName")} value={supplier.displayName} />
+            <InfoRow label={t("supplierName")} value={localizedSupplierText(supplier.nameOriginal, locale)} />
+            <InfoRow label={t("displayName")} value={localizedSupplierText(supplier.displayName, locale)} />
             <InfoRow label={t("companyNameLanguage")} value={t(`nameLanguage_${supplier.nameLanguage}`)} />
             <InfoRow label={t("businessType")} value={labelFor(businessTypes, supplier.businessType, locale)} />
-            <InfoRow label={t("arabicCompanyName")} value={supplier.nameAr} />
-            <InfoRow label={t("englishCompanyName")} value={supplier.nameEn} />
+            <InfoRow label={t("arabicCompanyName")} value={localizedSupplierText(supplier.nameAr, locale)} />
+            <InfoRow label={t("englishCompanyName")} value={localizedSupplierText(supplier.nameEn, locale)} />
           </InfoPanel>
 
           <InfoPanel title={t("location")}>
             <InfoRow label={t("governorate")} value={localizedSupplierGovernorates(supplier, taxonomy, locale)} />
-            <InfoRow label={t("city")} value={supplier.city} />
-            <InfoRow label={t("marketArea")} value={supplier.marketArea} />
-            <InfoRow className="md:col-span-2" label={t("address")} value={supplier.address} />
+            <InfoRow label={t("city")} value={localizedCity(supplier.city, locale)} />
+            <InfoRow label={t("marketArea")} value={localizedSupplierText(supplier.marketArea, locale)} />
+            <InfoRow className="md:col-span-2" label={t("address")} value={localizedSupplierText(supplier.address, locale)} />
             <InfoRow className="md:col-span-2" label={t("googleMapsLink")} value={supplier.googleMapsLink} />
             <InfoRow
               className="md:col-span-2"
@@ -105,8 +105,8 @@ export function SupplierSubmissionDetailPage() {
             <InfoRow label={t("website")} value={supplier.website} />
             <InfoRow label={t("facebook")} value={supplier.facebook} />
             <InfoRow label={t("instagramLinkedin")} value={supplier.instagramLinkedin} />
-            <InfoRow label={t("contactPerson")} value={supplier.contactPerson} />
-            <InfoRow label={t("contactPersonRole")} value={supplier.contactPersonRole} />
+            <InfoRow label={t("contactPerson")} value={localizedSupplierText(supplier.contactPerson, locale)} />
+            <InfoRow label={t("contactPersonRole")} value={localizedSupplierText(supplier.contactPersonRole, locale)} />
           </InfoPanel>
 
           <InfoPanel title={t("capabilities")}>
@@ -115,7 +115,7 @@ export function SupplierSubmissionDetailPage() {
               label={t("mainCategory")}
               value={<PillList tone="river" values={supplier.categories.map((item) => labelFor(taxonomy.supplierCategories, item, locale))} />}
             />
-            <InfoRow label={t("subcategories")} value={supplier.subcategories.join(", ")} />
+            <InfoRow label={t("subcategories")} value={supplier.subcategories.map((item) => localizedSupplierText(item, locale)).join(", ")} />
             <InfoRow
               className="md:col-span-2"
               label={t("capabilityTags")}
@@ -133,11 +133,11 @@ export function SupplierSubmissionDetailPage() {
             <InfoRow label={t("confidenceLevel")} value={labelFor(confidenceLevels, supplier.confidenceLevel, locale)} />
             <InfoRow label={t("directExperience")} value={t(supplier.hasDirectExperience)} />
             <InfoRow label={t("lastInteractionYear")} value={supplier.lastInteractionYear} />
-            <InfoRow label={t("relatedMaterialService")} value={supplier.relatedMaterialService} />
-            <InfoRow className="md:col-span-2" label={t("sourceNote")} value={supplier.sourceNote} />
+            <InfoRow label={t("relatedMaterialService")} value={localizedSupplierText(supplier.relatedMaterialService, locale)} />
+            <InfoRow className="md:col-span-2" label={t("sourceNote")} value={localizedSupplierText(supplier.sourceNote, locale)} />
           </InfoPanel>
 
-          <DuplicatePanel matches={submission.duplicateCheck.matches} />
+          <DuplicatePanel locale={locale} matches={submission.duplicateCheck.matches} />
         </div>
 
         <div className="grid h-fit gap-3 rounded-md border border-slate-200 p-4">
@@ -210,7 +210,7 @@ function PillList({ values, tone = "slate" }: { values: string[]; tone?: "slate"
   );
 }
 
-function DuplicatePanel({ matches }: { matches: DuplicateMatch[] }) {
+function DuplicatePanel({ locale, matches }: { locale: "en" | "ar"; matches: DuplicateMatch[] }) {
   const { t } = useTranslation();
   return (
     <div className="rounded-md border border-amber/40 bg-amber/10 p-4">
@@ -219,7 +219,7 @@ function DuplicatePanel({ matches }: { matches: DuplicateMatch[] }) {
         {matches.length ? (
           matches.map((match) => (
             <div className="rounded border border-amber/30 bg-white p-3 text-sm" key={`${match.supplierId}-${match.reason}`}>
-              <div className="font-bold text-ink">{match.supplierName}</div>
+              <div className="font-bold text-ink">{localizedSupplierText(match.supplierName, locale)}</div>
               <div className="mt-1 text-slate-600">
                 {t("duplicateReason")}: {t(`duplicate_${match.reason}`)} - {t(match.confidence)} - {match.score}%
               </div>

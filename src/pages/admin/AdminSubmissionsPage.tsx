@@ -9,6 +9,7 @@ import { useTaxonomy } from "../../contexts/TaxonomyContext";
 import { confidenceLevels, labelFor } from "../../data/constants";
 import { approveSupplierSubmission, decideSupplierSubmission, getPlatformSettings, listSupplierSubmissions } from "../../services/firestore";
 import type { SupplierSubmission } from "../../types/domain";
+import { localizedCity, localizedSupplierName } from "../../utils/supplierDisplay";
 
 export function AdminSubmissionsPage() {
   const { t, i18n } = useTranslation();
@@ -49,9 +50,9 @@ export function AdminSubmissionsPage() {
           <div className="rounded-md border border-slate-200 p-4" key={item.id}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 className="font-bold text-ink">{item.supplierData.displayName || item.supplierData.nameOriginal}</h3>
+                <h3 className="font-bold text-ink">{localizedSupplierName(item.supplierData, locale)}</h3>
                 <p className="text-sm text-slate-500">
-                  {item.supplierData.categories.map((category) => labelFor(taxonomy.supplierCategories, category, locale)).join(", ")} · {item.supplierData.city}
+                  {item.supplierData.categories.map((category) => labelFor(taxonomy.supplierCategories, category, locale)).join(", ")} · {localizedCity(item.supplierData.city, locale)}
                 </p>
               </div>
               <StatusBadge value={item.submissionStatus} />

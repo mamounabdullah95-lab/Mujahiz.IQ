@@ -9,6 +9,7 @@ import { labelFor } from "../data/constants";
 import { listMySubmissions } from "../services/firestore";
 import type { SupplierSubmission } from "../types/domain";
 import { formatDate } from "../utils/date";
+import { localizedCity, localizedSupplierName, localizedSupplierText } from "../utils/supplierDisplay";
 
 export function MySubmissionsPage() {
   const { t, i18n } = useTranslation();
@@ -34,10 +35,10 @@ export function MySubmissionsPage() {
           <div className="rounded-md border border-slate-200 p-4" key={item.id}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 className="font-bold text-ink">{item.supplierData.displayName || item.supplierData.nameOriginal}</h3>
+                <h3 className="font-bold text-ink">{localizedSupplierName(item.supplierData, locale)}</h3>
                 <p className="mt-1 text-sm text-slate-500">
                   {item.supplierData.categories.map((category) => labelFor(taxonomy.supplierCategories, category, locale)).join(", ")} ·{" "}
-                  {item.supplierData.city || item.supplierData.marketArea}
+                  {localizedCity(item.supplierData.city || item.supplierData.marketArea, locale)}
                 </p>
               </div>
               <StatusBadge value={item.submissionStatus} />
@@ -53,7 +54,7 @@ export function MySubmissionsPage() {
                 {t("duplicateWarning")}: <b>{item.duplicateCheck?.matches?.length || 0}</b>
               </div>
             </div>
-            {item.adminNotes ? <p className="mt-3 rounded bg-slate-50 p-3 text-sm text-slate-600">{item.adminNotes}</p> : null}
+            {item.adminNotes ? <p className="mt-3 rounded bg-slate-50 p-3 text-sm text-slate-600">{localizedSupplierText(item.adminNotes, locale)}</p> : null}
             {item.submissionStatus === "needs_correction" ? (
               <div className="mt-3">
                 <Link to={`/suppliers/submissions/${item.id}/edit`}>

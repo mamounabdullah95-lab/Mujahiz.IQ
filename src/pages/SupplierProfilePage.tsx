@@ -19,7 +19,7 @@ import {
 import { getSupplier, listSupplierReviews, submitSupplierReview } from "../services/firestore";
 import type { Supplier, SupplierReview } from "../types/domain";
 import { formatDate } from "../utils/date";
-import { localizedCity, localizedSupplierGovernorates, localizedSupplierName } from "../utils/supplierDisplay";
+import { localizedCity, localizedSupplierGovernorates, localizedSupplierName, localizedSupplierText } from "../utils/supplierDisplay";
 
 const criteria = [
   "overall",
@@ -149,7 +149,9 @@ export function SupplierProfilePage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <StatusBadge value={supplier.verificationStatus} />
-                <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{supplier.shortDescription || supplier.sourceSummary}</p>
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+                  {localizedSupplierText(supplier.shortDescription || supplier.sourceSummary, locale)}
+                </p>
               </div>
               <div>
                 <StarRating readOnly value={Math.round(supplier.averageRating || 0)} />
@@ -158,12 +160,12 @@ export function SupplierProfilePage() {
             </div>
             <div className="mt-4 grid gap-3 text-sm text-slate-700 md:grid-cols-2">
               <div><b>{t("businessType")}:</b> {labelFor(businessTypes, supplier.businessType, locale)}</div>
-              <div><b>{t("marketArea")}:</b> {supplier.marketArea}</div>
+              <div><b>{t("marketArea")}:</b> {localizedSupplierText(supplier.marketArea, locale)}</div>
               <div><b>{t("phone")}:</b> {supplier.phones.join(", ") || "-"}</div>
               <div><b>{t("whatsapp")}:</b> {t(supplier.whatsappAvailable)}</div>
               <div><b>{t("email")}:</b> {supplier.email || "-"}</div>
               <div><b>{t("website")}:</b> {supplier.website || "-"}</div>
-              <div><b>{t("contactPerson")}:</b> {supplier.contactPerson || "-"}</div>
+              <div><b>{t("contactPerson")}:</b> {localizedSupplierText(supplier.contactPerson, locale) || "-"}</div>
               <div><b>{t("confidenceLevel")}:</b> {labelFor(confidenceLevels, supplier.confidenceLevel, locale)}</div>
             </div>
           </div>
@@ -236,7 +238,7 @@ export function SupplierProfilePage() {
               <ChipGroup options={concernReviewTags.map((item) => ({ value: item.value, label: labelFor(concernReviewTags, item.value, locale) }))} values={review.concernTags} onChange={(values) => setTagValue("concernTags", values)} />
             </div>
             <TextAreaField label={t("comment")} maxLength={500} placeholder={t("professionalCommentPlaceholder")} value={review.comment} onChange={(event) => setTextValue("comment", event.target.value)} />
-            {isAdmin ? <div className="rounded bg-slate-50 p-3 text-xs text-slate-500">{t("adminNotes")}: {supplier.sourceSummary}</div> : null}
+            {isAdmin ? <div className="rounded bg-slate-50 p-3 text-xs text-slate-500">{t("adminNotes")}: {localizedSupplierText(supplier.sourceSummary, locale)}</div> : null}
             {message ? <div className="text-sm font-semibold text-river">{message}</div> : null}
             <Button type="submit">
               <Send className="h-4 w-4" aria-hidden="true" />

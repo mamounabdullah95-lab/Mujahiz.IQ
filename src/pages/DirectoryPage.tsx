@@ -9,7 +9,7 @@ import { useTaxonomy } from "../contexts/TaxonomyContext";
 import { businessTypes, capabilityTags, confidenceLevels, coverageAreas, labelFor } from "../data/constants";
 import { listSuppliers } from "../services/firestore";
 import type { Supplier } from "../types/domain";
-import { localizedCity, localizedSupplierGovernorates, localizedSupplierName, supplierGovernorates, supplierSearchText } from "../utils/supplierDisplay";
+import { localizedCity, localizedSupplierGovernorates, localizedSupplierName, localizedSupplierText, supplierGovernorates, supplierSearchText } from "../utils/supplierDisplay";
 
 export function DirectoryPage() {
   const { t, i18n } = useTranslation();
@@ -204,8 +204,8 @@ export function DirectoryPage() {
                 <div><b>{t("whatsapp")}:</b> {t(supplier.whatsappAvailable)}</div>
                 <div><b>{t("email")}:</b> {supplier.email || "-"}</div>
                 <div><b>{t("website")}:</b> {supplier.website || "-"}</div>
-                <div><b>{t("contactPerson")}:</b> {supplier.contactPerson || "-"}</div>
-                <div><b>{t("address")}:</b> {supplier.address || "-"}</div>
+                <div><b>{t("contactPerson")}:</b> {localizedSupplierText(supplier.contactPerson, locale) || "-"}</div>
+                <div><b>{t("address")}:</b> {localizedSupplierText(supplier.address, locale) || "-"}</div>
               </div>
             ) : null}
           </article>

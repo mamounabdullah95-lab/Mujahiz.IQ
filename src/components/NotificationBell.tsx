@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { listMySubmissions, listPendingReviews, listSupplierSubmissions } from "../services/firestore";
+import { localizedSupplierName } from "../utils/supplierDisplay";
 
 interface NotificationItem {
   id: string;
@@ -18,7 +19,8 @@ function latestKey(values: string[]) {
 }
 
 export function NotificationBell() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language.startsWith("ar") ? "ar" : "en";
   const { firebaseUser, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
@@ -73,7 +75,7 @@ export function NotificationBell() {
       correction.slice(0, 3).forEach((item) => {
         nextItems.push({
           id: `submission:${item.id}:${item.submissionStatus}:${String(item.reviewedAt ?? item.createdAt ?? "")}`,
-          label: `${t("needsCorrection")}: ${item.supplierData.displayName || item.supplierData.nameOriginal}`,
+          label: `${t("needsCorrection")}: ${localizedSupplierName(item.supplierData, locale)}`,
           to: `/suppliers/submissions/${item.id}/edit`,
           tone: "danger",
         });
@@ -134,7 +136,7 @@ export function NotificationBell() {
       window.removeEventListener("mujahiz-iq-demo-db-updated", listener);
       window.removeEventListener("focus", listener);
     };
-  }, [firebaseUser, isAdmin, t]);
+  }, [firebaseUser, isAdmin, locale, t]);
 
   const count = useMemo(() => items.filter((item) => !readIds.has(item.id)).length, [items, readIds]);
 
