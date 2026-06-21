@@ -2,7 +2,8 @@ import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button, Section, SelectField, TextAreaField, TextField } from "../components/ui";
+import { PublicAuthShell } from "../components/PublicAuthShell";
+import { Button, SelectField, TextAreaField, TextField } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useTaxonomy } from "../contexts/TaxonomyContext";
 import { labelFor } from "../data/constants";
@@ -46,7 +47,7 @@ export function RegisterPage() {
   const setValue = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
-    <Section title={t("register")} description={t("pendingApprovalBody")}>
+    <PublicAuthShell title={t("register")} description={t("pendingApprovalBody")}>
       <form className="grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
         <div className="grid gap-4 md:grid-cols-2">
           <TextField label={t("email")} value={form.email} onChange={(event) => setValue("email", event.target.value)} type="email" required />
@@ -73,6 +74,6 @@ export function RegisterPage() {
           {t("createAccount")}
         </Button>
       </form>
-    </Section>
+    </PublicAuthShell>
   );
 }

@@ -548,6 +548,34 @@ export async function updateApprovedSupplier(supplierId: string, actorId: string
   });
 }
 
+export async function deleteApprovedSupplier(supplierId: string, actorId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoDeleteApprovedSupplier(supplierId, actorId);
+  }
+  const supplierDoc = doc(suppliersRef, supplierId);
+  const duplicateDoc = doc(duplicateIndexRef, supplierId);
+  const auditDoc = doc(auditLogsRef);
+  const snapshot = await getDoc(supplierDoc);
+  if (!snapshot.exists()) {
+    throw new Error("supplierNotFound");
+  }
+  const supplier = snapshot.data() as Supplier;
+  const batch = writeBatch(db);
+  batch.delete(supplierDoc);
+  batch.delete(duplicateDoc);
+  batch.set(auditDoc, {
+    actorId,
+    action: "supplier.deleted",
+    targetType: "supplier",
+    targetId: supplierId,
+    details: {
+      supplierName: supplier.displayName || supplier.nameOriginal,
+    },
+    createdAt: serverTimestamp(),
+  } satisfies Omit<AuditLog, "id">);
+  await batch.commit();
+}
+
 export async function approveSupplierSubmission(
   submission: SupplierSubmission,
   actorId: string,

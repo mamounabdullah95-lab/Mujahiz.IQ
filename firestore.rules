@@ -125,7 +125,8 @@ service cloud.firestore {
 
     match /suppliers/{supplierId} {
       allow read: if hasActiveAccess();
-      allow create, update, delete: if isAdmin();
+      allow create, update: if isAdmin();
+      allow delete: if isOwner();
     }
 
     match /supplierDuplicateIndex/{supplierId} {

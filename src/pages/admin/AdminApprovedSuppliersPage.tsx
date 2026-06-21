@@ -1,26 +1,52 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { EmptyState, Section } from "../../components/ui";
+import { Button, EmptyState, Section } from "../../components/ui";
+import { useAuth } from "../../contexts/AuthContext";
 import { useTaxonomy } from "../../contexts/TaxonomyContext";
 import { labelFor } from "../../data/constants";
-import { listSuppliers } from "../../services/firestore";
+import { deleteApprovedSupplier, listSuppliers } from "../../services/firestore";
 import type { Supplier } from "../../types/domain";
 import { localizedSupplierName } from "../../utils/supplierDisplay";
 
 export function AdminApprovedSuppliersPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
+  const { firebaseUser, isOwner } = useAuth();
   const { taxonomy } = useTaxonomy();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [busyId, setBusyId] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     void listSuppliers().then(setSuppliers);
   }, []);
 
+  async function removeSupplier(supplier: Supplier) {
+    if (!firebaseUser || !isOwner) {
+      return;
+    }
+    const supplierName = localizedSupplierName(supplier, locale);
+    if (!window.confirm(t("confirmDeleteSupplier", { name: supplierName }))) {
+      return;
+    }
+    setBusyId(supplier.id);
+    setMessage("");
+    try {
+      await deleteApprovedSupplier(supplier.id, firebaseUser.uid);
+      setSuppliers((current) => current.filter((item) => item.id !== supplier.id));
+      setMessage(t("supplierDeleted"));
+    } catch (reason) {
+      setMessage(t(reason instanceof Error ? reason.message : "supplierDeleteFailed"));
+    } finally {
+      setBusyId("");
+    }
+  }
+
   return (
     <Section title={t("approvedSuppliers")} description={t("directory")}>
+      {message ? <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-ink">{message}</div> : null}
       {!suppliers.length ? <EmptyState title={t("noResults")} /> : null}
       <div className="overflow-x-auto rounded-md border border-slate-200">
         <table className="min-w-[680px] w-full text-sm">
@@ -45,6 +71,18 @@ export function AdminApprovedSuppliersPage() {
                       <Pencil className="h-4 w-4" aria-hidden="true" />
                       {t("edit")}
                     </Link>
+                    {isOwner ? (
+                      <Button
+                        className="!min-h-0 !px-0 !py-0 text-sm"
+                        disabled={busyId === supplier.id}
+                        type="button"
+                        variant="ghost"
+                        onClick={() => void removeSupplier(supplier)}
+                      >
+                        <Trash2 className="h-4 w-4 text-clay" aria-hidden="true" />
+                        <span className="text-clay">{t("deleteSupplier")}</span>
+                      </Button>
+                    ) : null}
                   </div>
                 </td>
               </tr>

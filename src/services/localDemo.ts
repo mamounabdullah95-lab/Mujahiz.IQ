@@ -431,6 +431,25 @@ export async function demoUpdateApprovedSupplier(supplierId: string, actorId: st
   writeDb(db);
 }
 
+export async function demoDeleteApprovedSupplier(supplierId: string, actorId: string) {
+  const db = readDb();
+  const supplier = db.suppliers.find((item) => item.id === supplierId);
+  if (!supplier) {
+    throw new Error("supplierNotFound");
+  }
+  db.suppliers = db.suppliers.filter((item) => item.id !== supplierId);
+  db.auditLogs.push({
+    id: id("audit"),
+    actorId,
+    action: "supplier.deleted",
+    targetType: "supplier",
+    targetId: supplierId,
+    details: { supplierName: supplier.displayName || supplier.nameOriginal },
+    createdAt: now(),
+  });
+  writeDb(db);
+}
+
 export async function demoApproveSupplierSubmission(
   submission: SupplierSubmission,
   actorId: string,

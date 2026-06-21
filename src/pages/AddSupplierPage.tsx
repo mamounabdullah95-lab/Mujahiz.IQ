@@ -1282,6 +1282,86 @@ const supplierImportAliases: Partial<Record<keyof FormState, string[]>> = {
   sourceNote: ["source note", "note", "ملاحظة المصدر", "ملاحظة", "تفاصيل المصدر"],
 };
 
+const optionImportSynonyms: Record<string, string[]> = {
+  company: ["co", "business", "شركة"],
+  office: ["مكتب"],
+  workshop: ["ورشه", "ورشة"],
+  factory: ["plant", "manufacturing", "manufacturer", "معمل", "مصنع"],
+  trader: ["merchant", "تاجر"],
+  authorized_distributor: ["distributor", "distributer", "authorized dealer", "authorised distributor", "agent", "dealer", "موزع", "موزع معتمد", "وكيل"],
+  importer: ["import", "imports", "importer only", "مستورد", "استيراد"],
+  service_provider: ["services", "service", "contractor", "مزود خدمة", "مقدم خدمات", "خدمات"],
+  individual_supplier: ["individual", "person", "freelancer", "مجهز فردي", "فرد"],
+
+  all_iraq: ["all iraq", "iraq", "nationwide", "all governorates", "كل العراق", "جميع العراق"],
+  local_only: ["local", "local only", "محلي", "محلي فقط"],
+  governorate_level: ["governorate", "province level", "within governorate", "ضمن المحافظة"],
+  imports_outside_iraq: ["outside iraq", "international import", "imports abroad", "استيراد خارجي", "خارج العراق"],
+
+  valves: ["valve", "valvs", "صمام", "صمامات"],
+  mechanical_materials: ["mechanical", "mechanic", "mech", "مواد ميكانيكية", "ميكانيك"],
+  electrical_materials: ["electrical", "electric", "elect", "مواد كهربائية", "كهرباء"],
+  piping_materials: ["pipe", "pipes", "piping", "أنابيب", "انابيب"],
+  flanges_fittings: ["flange", "flanges", "fitting", "fittings", "فلنج", "فلنجات", "وصلات"],
+  instrumentation: ["instrument", "instruments", "control instruments", "قياس", "سيطرة", "تحكم"],
+  civil_construction: ["civil", "construction", "building materials", "مواد انشائية", "مواد إنشائية"],
+  steel_fabrication: ["steel", "fabrication", "metal works", "تصنيع", "حديد"],
+  welding_machining: ["welding", "machining", "lathe", "لحام", "خراطة"],
+  safety_ppe: ["safety", "ppe", "hse", "personal protective", "سلامة", "وقاية"],
+  tools_equipment: ["tools", "equipment", "عدة", "عدد", "معدات"],
+  heavy_equipment_rental: ["heavy equipment", "rental", "rent", "تأجير معدات", "معدات ثقيلة"],
+  transport_logistics: ["transport", "logistics", "shipping", "نقل", "لوجستيات"],
+  office_supplies: ["office", "stationery", "مكتبية", "قرطاسية"],
+  it_electronics: ["it", "electronics", "computer", "network", "تقنية", "الكترونيات", "إلكترونيات"],
+  furniture: ["furnitures", "اثاث", "أثاث"],
+  chemicals: ["chemical", "chem", "مواد كيمياوية", "مواد كيميائية"],
+  oil_gas_materials: ["oil gas", "oil and gas", "petroleum", "نفط", "غاز"],
+  power_plant_materials: ["power", "power plant", "محطات الطاقة", "طاقة"],
+  general_trading: ["general trade", "trading", "تجارة عامة"],
+  maintenance_services: ["maintenance", "repair service", "صيانة"],
+  printing_advertising: ["printing", "advertising", "print", "طباعة", "اعلان", "إعلان"],
+
+  local_stock: ["stock", "available stock", "inventory", "ready stock", "مخزون", "متوفر"],
+  import_only: ["import only", "special order", "استيراد فقط"],
+  custom_fabrication: ["custom", "fabricate", "fabrication", "تصنيع حسب الطلب"],
+  fast_delivery: ["fast", "quick delivery", "urgent delivery", "تسليم سريع"],
+  technical_support: ["technical", "tech support", "engineering support", "دعم فني"],
+  site_visit: ["site visit", "visit", "زيارة موقع"],
+  installation: ["install", "installation", "تنصيب", "تركيب"],
+  warranty: ["guarantee", "warranty", "ضمان"],
+  company_profile: ["profile", "company profile", "بروفايل", "ملف تعريفي"],
+  project_experience: ["project experience", "previous projects", "خبرة مشاريع", "مشاريع سابقة"],
+  obsolete_items: ["obsolete", "rare", "hard to find", "نادر", "متوقف"],
+  repair_overhaul: ["repair", "overhaul", "اصلاح", "إصلاح", "تأهيل"],
+  emergency_sourcing: ["emergency", "urgent", "طارئ", "طوارئ"],
+  works_ngos: ["ngo", "ngos", "منظمات"],
+  works_construction: ["construction companies", "contractors", "شركات إنشائية"],
+  works_oil_gas: ["oil gas", "oil and gas", "نفط وغاز"],
+  works_power_plants: ["power plants", "محطات الطاقة"],
+
+  cash: ["cash payment", "cash", "نقد", "نقدا", "نقداً"],
+  bank_transfer: ["bank", "bank transfer", "wire transfer", "transfer", "تحويل", "تحويل مصرفي"],
+  usd: ["dollar", "dollars", "usd", "دولار"],
+  iqd: ["dinar", "iraqi dinar", "iqd", "دينار"],
+  official_invoice: ["invoice", "official invoice", "فاتورة", "فاتورة رسمية"],
+
+  invoice_date: ["invoice", "invoice date", "from invoice", "تاريخ الفاتورة", "من الفاتورة"],
+  delivery_date: ["delivery", "delivery date", "receipt date", "تاريخ الاستلام", "من الاستلام"],
+  invoice_approval: ["invoice approval", "approved invoice", "اعتماد الفاتورة"],
+
+  purchased_before: ["purchased", "bought", "buy", "past purchase", "تعامل سابق", "شراء سابق", "اشتريت"],
+  requested_quotation: ["quotation", "quote", "rfq", "offer", "price offer", "عرض سعر", "تسعيرة"],
+  trusted_recommendation: ["recommendation", "recommended", "referral", "trusted referral", "توصية", "مرشح"],
+  market_visit: ["market", "market visit", "visited market", "زيارة السوق", "سوق"],
+  found_online: ["online", "internet", "web", "website", "found online", "facebook", "linkedin", "انترنت", "إنترنت", "اونلاين", "أونلاين"],
+  known_market_supplier: ["known", "known supplier", "market supplier", "معروف", "معروف بالسوق"],
+
+  high: ["strong", "trusted", "sure", "good", "عالي", "عالية", "موثوق"],
+  medium: ["average", "moderate", "middle", "متوسط", "متوسطة"],
+  low: ["weak", "poor", "low confidence", "ضعيف", "منخفض"],
+  needs_verification: ["verify", "verification", "needs check", "not verified", "تحتاج تحقق", "غير مؤكد"],
+};
+
 function extractSupplierImportForms(rows: string[][], current: FormState, options: SupplierImportOptions): SupplierImportedForm[] {
   const headerRowIndex = rows.findIndex((row) => row.filter((cell) => lookupSupplierImportField(cell)).length >= 3);
   if (headerRowIndex < 0) {
@@ -1566,19 +1646,18 @@ function matchOptionValue(value: string | undefined, options: OptionItem[]) {
   if (!raw) {
     return "";
   }
-  const direct = options.find((option) => option.value.toLowerCase() === raw.toLowerCase());
-  if (direct) {
-    return direct.value;
-  }
   const normalized = normalizeImportText(value);
   if (!normalized) {
     return "";
   }
-  return (
-    options.find((option) =>
-      [option.value, option.labelEn, option.labelAr].some((candidate) => normalizeImportText(candidate) === normalized),
-    )?.value || ""
-  );
+  const ranked = options
+    .map((option) => ({
+      option,
+      score: Math.max(...optionImportCandidates(option).map((candidate) => scoreOptionImportMatch(normalized, candidate))),
+    }))
+    .sort((a, b) => b.score - a.score);
+  const best = ranked[0];
+  return best && best.score >= 0.82 ? best.option.value : "";
 }
 
 function mergeOptionList(current: string[], value: string | undefined, options: OptionItem[]) {
@@ -1586,6 +1665,76 @@ function mergeOptionList(current: string[], value: string | undefined, options: 
     .map((item) => matchOptionValue(item, options))
     .filter(Boolean);
   return Array.from(new Set([...current, ...matched]));
+}
+
+function optionImportCandidates(option: OptionItem) {
+  return [
+    option.value,
+    option.value.replaceAll("_", " "),
+    option.labelEn,
+    option.labelAr,
+    ...(optionImportSynonyms[option.value] || []),
+  ];
+}
+
+function scoreOptionImportMatch(value: string, candidate: string) {
+  const normalizedCandidate = normalizeImportText(candidate);
+  if (!value || !normalizedCandidate) {
+    return 0;
+  }
+  if (value === normalizedCandidate) {
+    return 1;
+  }
+  if (value.length >= 4 && normalizedCandidate.includes(value)) {
+    return 0.95;
+  }
+  if (normalizedCandidate.length >= 4 && value.includes(normalizedCandidate)) {
+    return 0.93;
+  }
+  const valueTokens = optionMatchTokens(value);
+  const candidateTokens = optionMatchTokens(normalizedCandidate);
+  if (valueTokens.length && candidateTokens.length) {
+    const overlap = valueTokens.filter((token) => candidateTokens.includes(token)).length;
+    const ratio = overlap / Math.max(valueTokens.length, candidateTokens.length);
+    if (overlap === valueTokens.length && ratio >= 0.5) {
+      return 0.88;
+    }
+    if (ratio >= 0.67) {
+      return 0.84;
+    }
+  }
+  const similarity = normalizedSimilarity(value, normalizedCandidate);
+  return similarity >= 0.82 ? similarity * 0.9 : 0;
+}
+
+function optionMatchTokens(value: string) {
+  return value.split(" ").filter((token) => token.length >= 3);
+}
+
+function normalizedSimilarity(a: string, b: string) {
+  const maxLength = Math.max(a.length, b.length);
+  if (!maxLength) {
+    return 1;
+  }
+  return 1 - levenshteinDistance(a, b) / maxLength;
+}
+
+function levenshteinDistance(a: string, b: string) {
+  const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  const current = Array.from({ length: b.length + 1 }, () => 0);
+  for (let row = 1; row <= a.length; row += 1) {
+    current[0] = row;
+    for (let column = 1; column <= b.length; column += 1) {
+      const substitutionCost = a[row - 1] === b[column - 1] ? 0 : 1;
+      current[column] = Math.min(
+        current[column - 1] + 1,
+        previous[column] + 1,
+        previous[column - 1] + substitutionCost,
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return previous[b.length];
 }
 
 function matchNameLanguage(value?: string): FormState["nameLanguage"] | "" {

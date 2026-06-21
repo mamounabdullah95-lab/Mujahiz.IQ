@@ -20,7 +20,8 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
-import logoUrl from "../assets/brand/mujahiz-iq-logo-horizontal-transparent.svg";
+import headerLogoUrl from "../assets/brand/mujahiz-iq-header-logo.svg";
+import iconLogoUrl from "../assets/brand/mujahiz-iq-icon-final.svg";
 import { LanguageToggle } from "./LanguageToggle";
 import { NotificationBell } from "./NotificationBell";
 import { Button } from "./ui";
@@ -79,7 +80,11 @@ export function Layout() {
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex min-h-[4.5rem] max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <button className="text-start" type="button" onClick={() => navigate(appUser ? "/dashboard" : "/")}>
-            <img className="h-12 w-auto" src={logoUrl} alt={t("appName")} />
+            <img
+              className={appUser ? "h-12 w-auto" : "h-11 w-11"}
+              src={appUser ? headerLogoUrl : iconLogoUrl}
+              alt={t("appName")}
+            />
             <div className="sr-only">{t("tagline")}</div>
           </button>
           <div className="flex items-center gap-2">

@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
-import { Button, Section, TextField } from "../components/ui";
+import { PublicAuthShell } from "../components/PublicAuthShell";
+import { Button, TextField } from "../components/ui";
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -29,8 +30,8 @@ export function LoginPage() {
   }
 
   return (
-    <Section title={t("login")} description={t("tagline")}>
-      <form className="mx-auto grid max-w-md gap-4" onSubmit={(event) => void handleSubmit(event)}>
+    <PublicAuthShell title={t("login")} description={t("landingLead")}>
+      <form className="grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
         <TextField label={t("email")} value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
         <TextField label={t("password")} value={password} onChange={(event) => setPassword(event.target.value)} type="password" required />
         {error ? <div className="rounded-md border border-clay/30 bg-clay/10 px-3 py-2 text-sm text-clay">{error}</div> : null}
@@ -42,6 +43,6 @@ export function LoginPage() {
           {t("register")}
         </Link>
       </form>
-    </Section>
+    </PublicAuthShell>
   );
 }

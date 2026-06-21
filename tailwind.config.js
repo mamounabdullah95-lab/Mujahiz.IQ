@@ -3,9 +3,9 @@ export default {
     theme: {
         extend: {
             colors: {
-                ink: "#14213d",
-                river: "#1b6b93",
-                mint: "#2a9d8f",
+                ink: "#061e46",
+                river: "#00a7a7",
+                mint: "#11c8d3",
                 amber: "#e9a227",
                 clay: "#b85c38",
             },

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 760" role="img" aria-label="Mujahiz IQ logo">
+  <defs><style>
+  .en{font-family:Inter, Arial, sans-serif;font-weight:800;fill:#061E46;}
+  .iq{font-family:Inter, Arial, sans-serif;font-weight:800;fill:#00A7A7;}
+  .ar{font-family:'Noto Kufi Arabic','Noto Sans Arabic',Arial,sans-serif;font-weight:700;fill:#061E46;}
+  .slogan{font-family:Inter, Arial, sans-serif;font-weight:600;fill:#5B6B7D;}
+  .sloganar{font-family:'Noto Kufi Arabic','Noto Sans Arabic',Arial,sans-serif;font-weight:600;fill:#5B6B7D;}
+  </style></defs>
+  <g transform="translate(110,75) scale(.58)">
+  <defs><style>.navy{stroke:#061E46;fill:#061E46}.teal{stroke:#00A7A7;fill:#00A7A7}.lineN{stroke:#061E46;stroke-width:12;stroke-linecap:round}.lineT{stroke:#00A7A7;stroke-width:14;stroke-linecap:round}</style></defs>
+  <line x1="635" y1="620" x2="810" y2="795" stroke="#061E46" stroke-width="95" stroke-linecap="round"/>
+  <circle cx="445" cy="415" r="270" fill="none" stroke="#061E46" stroke-width="60"/>
+  <g stroke-linecap="round">
+    <line x1="445" y1="415" x2="445" y2="270" class="lineT"/>
+    <line x1="445" y1="415" x2="576" y2="354" class="lineT"/>
+    <line x1="445" y1="415" x2="564" y2="498" class="lineT"/>
+    <line x1="445" y1="415" x2="445" y2="560" class="lineT"/>
+    <line x1="445" y1="415" x2="314" y2="477" class="lineT"/>
+    <line x1="445" y1="415" x2="334" y2="322" class="lineT"/>
+    <line x1="445" y1="270" x2="576" y2="354" class="lineN"/><line x1="576" y1="354" x2="564" y2="498" class="lineT"/><line x1="564" y1="498" x2="445" y2="560" class="lineN"/><line x1="445" y1="560" x2="314" y2="477" class="lineT"/><line x1="314" y1="477" x2="334" y2="322" class="lineN"/><line x1="334" y1="322" x2="445" y2="270" class="lineT"/>
+  </g>
+  <circle cx="445" cy="415" r="78" fill="#fff" stroke="#00A7A7" stroke-width="20"/><circle cx="445" cy="415" r="35" fill="#00A7A7"/>
+  <circle cx="445" cy="270" r="43" fill="#061E46"/><circle cx="576" cy="354" r="43" fill="#00A7A7"/><circle cx="564" cy="498" r="43" fill="#00A7A7"/><circle cx="445" cy="560" r="43" fill="#061E46"/><circle cx="314" cy="477" r="43" fill="#00A7A7"/><circle cx="334" cy="322" r="43" fill="#061E46"/>
+</g>
+  <text x="820" y="220" font-size="134" class="en">Mujahiz</text><text x="1435" y="220" font-size="134" class="iq">IQ</text>
+  <line x1="820" y1="277" x2="1570" y2="277" stroke="#00A7A7" stroke-width="5"/>
+  <text x="1080" y="390" font-size="82" class="iq">IQ</text><text x="1330" y="390" font-size="82" text-anchor="end" direction="rtl" class="ar">مجهز</text>
+  <text x="820" y="485" font-size="34" class="slogan">Iraq’s Smart Supplier Network</text>
+  <text x="1570" y="545" font-size="36" text-anchor="end" direction="rtl" class="sloganar">شبكة المجهزين الذكية في العراق</text>
+</svg>
