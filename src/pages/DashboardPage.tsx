@@ -8,7 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { badgeDefinitions, defaultSettings, labelFor } from "../data/constants";
 import { getPlatformSettings, listMySubmissions } from "../services/firestore";
 import type { PlatformSettings } from "../types/domain";
-import { formatDate } from "../utils/date";
+import { formatDate, toDate } from "../utils/date";
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation();
@@ -55,12 +55,19 @@ export function DashboardPage() {
   const days = settings.daysGrantedPerBatch || defaultSettings.daysGrantedPerBatch;
   const months = Math.floor(available / required);
   const remaining = available % required === 0 ? required : required - (available % required);
+  const accessExpiresAt = toDate(appUser.accessExpiresAt);
+  const daysRemaining = accessExpiresAt
+    ? Math.max(0, Math.ceil((accessExpiresAt.getTime() - Date.now()) / 86400000))
+    : 0;
+  const showContributionChallenge = !hasActiveAccess || daysRemaining <= days;
 
   return (
     <Section
       title={t("dashboard")}
       description={
-        months > 0
+        !showContributionChallenge
+          ? t("dashboardAccessCovered", { date: formatDate(appUser.accessExpiresAt, locale), days: daysRemaining })
+          : months > 0
           ? t("dashboardAccessEarned", { months, remaining: available % required })
           : t("dashboardAccessProgress", { available, remaining, days })
       }
@@ -88,8 +95,8 @@ export function DashboardPage() {
         </div>
         <div className="rounded-md border border-slate-200 p-4">
           <CalendarClock className="h-5 w-5 text-river" aria-hidden="true" />
-          <h3 className="mt-3 font-bold text-ink">{t("availableCredits")}</h3>
-          <p className="mt-1 text-3xl font-black text-ink">{available}</p>
+          <h3 className="mt-3 font-bold text-ink">{showContributionChallenge ? t("availableCredits") : t("accessDaysRemaining")}</h3>
+          <p className="mt-1 text-3xl font-black text-ink">{showContributionChallenge ? available : daysRemaining}</p>
         </div>
         <div className="rounded-md border border-slate-200 p-4">
           <Star className="h-5 w-5 text-river" aria-hidden="true" />

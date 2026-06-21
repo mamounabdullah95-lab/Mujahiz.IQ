@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { defaultSettings } from "../data/constants";
 import { getPlatformSettings, listAccessCredits } from "../services/firestore";
 import type { AccessCredit, PlatformSettings } from "../types/domain";
-import { formatDate } from "../utils/date";
+import { formatDate, toDate } from "../utils/date";
 
 export function MyAccessPage() {
   const { t, i18n } = useTranslation();
@@ -29,13 +29,26 @@ export function MyAccessPage() {
     (appUser.approvedNewSupplierContributions || 0) - (appUser.consumedApprovedSupplierContributions || 0),
   );
   const required = settings.requiredApprovedSuppliersPerMonth || defaultSettings.requiredApprovedSuppliersPerMonth;
+  const days = settings.daysGrantedPerBatch || defaultSettings.daysGrantedPerBatch;
+  const accessExpiresAt = toDate(appUser.accessExpiresAt);
+  const daysRemaining = accessExpiresAt
+    ? Math.max(0, Math.ceil((accessExpiresAt.getTime() - Date.now()) / 86400000))
+    : 0;
+  const showContributionChallenge = daysRemaining <= days;
 
   return (
-    <Section title={t("myAccess")} description={t("noAccessBody")}>
+    <Section
+      title={t("myAccess")}
+      description={showContributionChallenge ? t("noAccessBody") : t("myAccessCoveredDescription", { days: daysRemaining })}
+    >
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label={t("accessExpires")} value={formatDate(appUser.accessExpiresAt, locale)} />
-        <StatCard label={t("availableCredits")} value={available} />
-        <StatCard label={t("remainingForNextMonth")} value={available % required === 0 ? required : required - (available % required)} />
+        <StatCard label={showContributionChallenge ? t("availableCredits") : t("accessDaysRemaining")} value={showContributionChallenge ? available : daysRemaining} />
+        {showContributionChallenge ? (
+          <StatCard label={t("remainingForNextMonth")} value={available % required === 0 ? required : required - (available % required)} />
+        ) : (
+          <StatCard label={t("accessCovered")} value={t("status_active")} tone="good" />
+        )}
       </div>
       <div className="mt-5 overflow-x-auto rounded-md border border-slate-200">
         <table className="min-w-[620px] w-full text-sm">

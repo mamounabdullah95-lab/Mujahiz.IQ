@@ -47,7 +47,7 @@ export function RegisterPage() {
   const setValue = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
-    <PublicAuthShell title={t("register")} description={t("pendingApprovalBody")}>
+    <PublicAuthShell title={t("register")} description={t("pendingApprovalBody")} size="wide">
       <form className="grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
         <div className="grid gap-4 md:grid-cols-2">
           <TextField label={t("email")} value={form.email} onChange={(event) => setValue("email", event.target.value)} type="email" required />
