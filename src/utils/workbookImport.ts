@@ -154,15 +154,22 @@ function parseWorksheetRows(xml: string, sharedStrings: string[]) {
 function readCellText(cell: Element, sharedStrings: string[]) {
   const type = cell.getAttribute("t");
   if (type === "inlineStr") {
-    return getElementsByLocalName(cell, "t")
+    return decodeExcelEscapedText(getElementsByLocalName(cell, "t")
       .map((node) => node.textContent || "")
-      .join("");
+      .join(""));
   }
   const value = getElementsByLocalName(cell, "v")[0]?.textContent || "";
   if (type === "s") {
-    return sharedStrings[Number(value)] || "";
+    return decodeExcelEscapedText(sharedStrings[Number(value)] || "");
   }
-  return value;
+  return decodeExcelEscapedText(value);
+}
+
+function decodeExcelEscapedText(value: string) {
+  return value
+    .replace(/_x000D_/gi, "\n")
+    .replace(/_x000A_/gi, "\n")
+    .replace(/_x0009_/gi, "\t");
 }
 
 function columnNameToIndex(name: string) {

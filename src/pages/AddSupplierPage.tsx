@@ -1251,6 +1251,7 @@ const supplierImportAliases: Partial<Record<keyof FormState, string[]>> = {
   shortDescription: ["short description", "description", "notes", "وصف مختصر", "الوصف", "ملاحظات"],
   businessType: ["business type", "company type", "نوع النشاط", "نوع الشركة", "النوع"],
   governorates: ["governorate", "governorates", "province", "provinces", "branches", "branch governorates", "محافظة", "المحافظة", "المحافظات", "الفروع", "محافظات الفروع"],
+  branches: ["branch details", "supplier branches", "branch locations", "تفاصيل الفروع", "فروع المجهز", "مواقع الفروع"],
   city: ["city", "town", "المدينة", "مدينة"],
   marketArea: ["market area", "main market", "area", "السوق", "منطقة السوق", "المنطقة", "السوق الرئيسي"],
   address: ["address", "full address", "العنوان", "العنوان الكامل"],
@@ -1264,20 +1265,20 @@ const supplierImportAliases: Partial<Record<keyof FormState, string[]>> = {
   facebook: ["facebook", "facebook page", "fb", "فيسبوك", "صفحة فيسبوك"],
   instagramLinkedin: ["instagram", "linkedin", "instagram linkedin", "انستغرام", "لينكدان", "لينكدإن"],
   contactPerson: ["contact person", "representative", "مسؤول الاتصال", "الشخص المسؤول", "جهة الاتصال"],
-  contactPersonRole: ["contact role", "contact person role", "position", "صفة الشخص المسؤول", "منصب", "الدور"],
-  mainCategories: ["main category", "main categories", "category", "categories", "specialization", "specialty", "sector", "التصنيف الرئيسي", "التصنيفات الرئيسية", "التصنيف", "التصنيفات", "التخصص", "المجال"],
+  contactPersonRole: ["contact role", "contact person role", "contact title", "position", "صفة مسؤول الاتصال", "صفة الشخص المسؤول", "دور مسؤول الاتصال", "منصب", "الدور"],
+  mainCategories: ["main category", "main categories", "maincategories", "main category codes", "category codes", "category", "categories", "specialization", "specialty", "sector", "التصنيف الرئيسي", "التصنيفات الرئيسية", "أكواد التصنيف", "التصنيف", "التصنيفات", "التخصص", "المجال"],
   subcategories: ["subcategories", "sub categories", "فرعي", "التصنيفات الفرعية", "تخصصات فرعية"],
   capabilityTags: ["capability tags", "capabilities", "tags", "وسوم القدرات", "القدرات", "الوسوم"],
   paymentOptions: ["payment options", "payment", "خيارات الدفع", "الدفع"],
   acceptsCredit: ["accepts credit", "credit payment", "deferred payment", "payment on credit", "دفع آجل", "دفع اجل", "يقبل الدفع الآجل", "ائتمان"],
   creditDays: ["credit days", "payment term days", "net days", "مدة الائتمان", "مدة الدفع", "أيام الدفع", "ايام الدفع"],
-  creditStart: ["credit starts from", "payment term starts", "credit start", "بدء الاستحقاق", "بداية مدة الدفع", "احتساب المدة"],
+  creditStart: ["credit starts from", "payment term starts", "credit period starts", "credit start", "بدء الاستحقاق", "بداية مدة الدفع", "بداية مدة الدفع الآجل", "احتساب المدة"],
   creditTermsNote: ["credit terms note", "payment terms note", "credit note", "ملاحظات الدفع الآجل", "ملاحظات الدفع الاجل", "شروط الدفع"],
   sourceType: ["source of information", "source type", "source", "how do you know this supplier", "مصدر المعلومات", "المصدر", "كيف تعرف المجهز"],
   confidenceLevel: ["confidence level", "confidence", "مستوى الثقة", "الثقة"],
   hasDirectExperience: ["direct experience", "previous direct experience", "experience", "خبرة مباشرة", "تعامل مباشر", "تجربة سابقة"],
   lastInteractionYear: ["last interaction year", "year", "سنة اخر تعامل", "سنة آخر تعامل", "آخر تعامل"],
-  relatedMaterialService: ["related material service", "material", "service", "المادة", "الخدمة", "المادة او الخدمة", "المادة أو الخدمة"],
+  relatedMaterialService: ["related material service", "related category or service", "related category", "category or service", "material", "service", "التصنيف أو الخدمة المرتبطة", "التصنيف او الخدمة المرتبطة", "المادة", "الخدمة", "المادة او الخدمة", "المادة أو الخدمة"],
   sourceNote: ["source note", "note", "ملاحظة المصدر", "ملاحظة", "تفاصيل المصدر"],
 };
 
@@ -1318,7 +1319,7 @@ function mergeWorkbookRowsIntoForm(rows: string[][], current: FormState, options
 }
 
 function fieldsToForm(fields: Partial<Record<keyof FormState, string>>, current: FormState, options: SupplierImportOptions) {
-  const next: FormState = { ...current };
+  const next: FormState = { ...current, branches: [...(current.branches || [])] };
   let matchedFields = 0;
 
   const setText = (key: keyof FormState, value?: string) => {
@@ -1380,6 +1381,23 @@ function fieldsToForm(fields: Partial<Record<keyof FormState, string>>, current:
     matchedFields += 1;
   }
   next.governorates = governoratesList;
+
+  const importedBranches = parseImportedBranches(fields.branches, options.governorates);
+  if (importedBranches.length) {
+    const branchKeys = new Set(next.branches.map((branch) => JSON.stringify(branch)));
+    importedBranches.forEach((branch) => {
+      const key = JSON.stringify(branch);
+      if (!branchKeys.has(key)) {
+        next.branches.push(branch);
+        branchKeys.add(key);
+        matchedFields += 1;
+      }
+    });
+    next.governorates = Array.from(new Set([
+      ...next.governorates,
+      ...importedBranches.map((branch) => branch.governorate).filter(Boolean),
+    ]));
+  }
 
   const mainCategoriesList = mergeOptionList(next.mainCategories, fields.mainCategories, options.supplierCategories);
   if (mainCategoriesList.length > next.mainCategories.length) {
@@ -1523,7 +1541,35 @@ function splitImportList(value?: string) {
     .map((item) => item.trim())
     .filter(Boolean);
 }
+
+function parseImportedBranches(value: string | undefined, governorateOptions: OptionItem[]) {
+  return (value || "")
+    .split(/[\n;؛]+/)
+    .map((branch) => branch.trim())
+    .filter(Boolean)
+    .map((branch) => {
+      const [governorateValue = "", city = "", marketArea = "", address = "", phone = ""] = branch
+        .split("|")
+        .map((item) => item.trim());
+      return {
+        governorate: matchOptionValue(governorateValue, governorateOptions) || governorateValue,
+        city,
+        marketArea,
+        address,
+        phone,
+      };
+    })
+    .filter((branch) => branch.governorate || branch.city || branch.marketArea || branch.address || branch.phone);
+}
 function matchOptionValue(value: string | undefined, options: OptionItem[]) {
+  const raw = value?.trim();
+  if (!raw) {
+    return "";
+  }
+  const direct = options.find((option) => option.value.toLowerCase() === raw.toLowerCase());
+  if (direct) {
+    return direct.value;
+  }
   const normalized = normalizeImportText(value);
   if (!normalized) {
     return "";
