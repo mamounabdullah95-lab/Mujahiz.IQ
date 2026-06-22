@@ -1,6 +1,7 @@
 import {
   BarChart3,
   BookOpen,
+  BookMarked,
   CheckCircle2,
   ClipboardCheck,
   FilePlus2,
@@ -44,6 +45,7 @@ const adminItems = [
   { to: "/admin/supplier-feedback", labelKey: "supplierFeedbackAdmin", icon: ClipboardCheck },
   { to: "/admin/suppliers", labelKey: "approvedSuppliers", icon: BookOpen },
   { to: "/admin/categories", labelKey: "categories", icon: Tags },
+  { to: "/admin/material-dictionary", labelKey: "materialDictionary", icon: BookMarked },
   { to: "/admin/settings", labelKey: "settings", icon: Settings },
   { to: "/admin/audit-logs", labelKey: "auditLogs", icon: History },
 ];

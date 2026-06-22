@@ -20,6 +20,7 @@ const AdminApprovedSuppliersPage = lazy(() => import("./pages/admin/AdminApprove
 const AdminAuditLogsPage = lazy(() => import("./pages/admin/AdminAuditLogsPage").then((module) => ({ default: module.AdminAuditLogsPage })));
 const AdminCategoriesPage = lazy(() => import("./pages/admin/AdminCategoriesPage").then((module) => ({ default: module.AdminCategoriesPage })));
 const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage").then((module) => ({ default: module.AdminDashboardPage })));
+const AdminMaterialDictionaryPage = lazy(() => import("./pages/admin/AdminMaterialDictionaryPage").then((module) => ({ default: module.AdminMaterialDictionaryPage })));
 const AdminReviewModerationPage = lazy(() => import("./pages/admin/AdminReviewModerationPage").then((module) => ({ default: module.AdminReviewModerationPage })));
 const AdminSettingsPage = lazy(() => import("./pages/admin/AdminSettingsPage").then((module) => ({ default: module.AdminSettingsPage })));
 const AdminSubmissionsPage = lazy(() => import("./pages/admin/AdminSubmissionsPage").then((module) => ({ default: module.AdminSubmissionsPage })));
@@ -63,6 +64,7 @@ export function App() {
             <Route path="admin/suppliers" element={<AdminApprovedSuppliersPage />} />
             <Route path="admin/suppliers/:supplierId/edit" element={<AddSupplierPage />} />
             <Route path="admin/categories" element={<AdminCategoriesPage />} />
+            <Route path="admin/material-dictionary" element={<AdminMaterialDictionaryPage />} />
             <Route path="admin/settings" element={<AdminSettingsPage />} />
             <Route path="admin/audit-logs" element={<AdminAuditLogsPage />} />
           </Route>

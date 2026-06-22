@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   limit,
   orderBy,
   query,
@@ -14,6 +15,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  arrayUnion,
   type DocumentData,
   type QueryDocumentSnapshot,
 } from "firebase/firestore";
@@ -29,11 +31,13 @@ import {
   sourceTypes,
   supplierCategories,
 } from "../data/constants";
+import { mergeMaterialTerms } from "../data/materialTerms";
 import type {
   AccessCredit,
   AppUser,
   AuditLog,
   DuplicateCheck,
+  MaterialTerm,
   PlatformSettings,
   Supplier,
   SupplierDraft,
@@ -44,11 +48,14 @@ import type {
   SupplierReview,
   SupplierSubmission,
   SupplierSubmissionStatus,
+  TermSuggestion,
+  TermSuggestionSource,
   TimestampLike,
 } from "../types/domain";
 import { addDays, maxDate, toDate } from "../utils/date";
 import { calculateAccessGrant, deriveBadges, qualityRatio } from "../utils/scoring";
 import { normalizeEmail, normalizeUrl } from "../utils/normalization";
+import { normalizeDictionaryText } from "../utils/materialDictionary";
 
 const usersRef = collection(db, "users");
 const suppliersRef = collection(db, "suppliers");
@@ -61,6 +68,8 @@ const accessCreditsRef = collection(db, "accessCredits");
 const contributionLogsRef = collection(db, "contributionLogs");
 const auditLogsRef = collection(db, "auditLogs");
 const supplierFeedbackRef = collection(db, "supplierFeedback");
+const materialTermsRef = collection(db, "materialTerms");
+const termSuggestionsRef = collection(db, "termSuggestions");
 
 function withId<T>(snapshot: { id: string; data: () => DocumentData }) {
   return {
@@ -487,6 +496,144 @@ export async function listSupplierCandidates(categories: string[]) {
   return snapshot.docs
     .map((item) => withId<Supplier>(item))
     .filter((item) => item.status === "approved");
+}
+
+export async function listMaterialTerms() {
+  if (!isFirebaseConfigured) {
+    return demo.demoListMaterialTerms();
+  }
+  const snapshot = await getDocs(query(materialTermsRef, where("status", "==", "active"), limit(500)));
+  return mergeMaterialTerms(snapshot.docs.map((item) => withId<MaterialTerm>(item)));
+}
+
+export async function recordTermSuggestions(
+  terms: string[],
+  options: {
+    source: TermSuggestionSource;
+    queryText: string;
+    userId?: string;
+  },
+) {
+  const uniqueTerms = Array.from(new Set(terms.map((term) => term.trim()).filter(Boolean))).slice(0, 8);
+  if (!uniqueTerms.length) {
+    return;
+  }
+  if (!isFirebaseConfigured) {
+    return demo.demoRecordTermSuggestions(uniqueTerms, options);
+  }
+  const batch = writeBatch(db);
+  const seenAt = new Date().toISOString();
+  uniqueTerms.forEach((term) => {
+    const normalizedTerm = normalizeDictionaryText(term);
+    if (!normalizedTerm) return;
+    const suggestionDoc = doc(termSuggestionsRef, stableSuggestionId(normalizedTerm));
+    batch.set(
+      suggestionDoc,
+      {
+        term,
+        normalizedTerm,
+        status: "pending",
+        count: increment(1),
+        sources: arrayUnion(options.source),
+        examples: arrayUnion({
+          queryText: options.queryText.slice(0, 280),
+          source: options.source,
+          createdBy: options.userId || "",
+          seenAt,
+        }),
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+  });
+  await batch.commit();
+}
+
+export async function listTermSuggestions(status: TermSuggestion["status"] = "pending") {
+  if (!isFirebaseConfigured) {
+    return demo.demoListTermSuggestions(status);
+  }
+  const snapshot = await getDocs(query(termSuggestionsRef, where("status", "==", status), limit(120)));
+  return snapshot.docs
+    .map((item) => withId<TermSuggestion>(item))
+    .sort((a, b) => (b.count || 0) - (a.count || 0));
+}
+
+export async function approveTermSuggestion(
+  suggestion: TermSuggestion,
+  actorId: string,
+  material: Pick<MaterialTerm, "canonicalEn" | "canonicalAr" | "category" | "subcategories" | "synonyms" | "brands" | "standards">,
+) {
+  if (!isFirebaseConfigured) {
+    return demo.demoApproveTermSuggestion(suggestion, actorId, material);
+  }
+  const materialDoc = doc(materialTermsRef);
+  const suggestionDoc = doc(termSuggestionsRef, suggestion.id);
+  const auditDoc = doc(auditLogsRef);
+  const normalizedSynonyms = Array.from(new Set([suggestion.term, ...material.synonyms].map((item) => item.trim()).filter(Boolean)));
+  const payload: MaterialTerm = {
+    id: materialDoc.id,
+    canonicalEn: material.canonicalEn.trim(),
+    canonicalAr: material.canonicalAr.trim(),
+    category: material.category,
+    subcategories: material.subcategories,
+    synonyms: normalizedSynonyms,
+    brands: material.brands,
+    standards: material.standards,
+    status: "active",
+    createdBy: actorId,
+    updatedBy: actorId,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  const batch = writeBatch(db);
+  batch.set(materialDoc, payload);
+  batch.update(suggestionDoc, {
+    status: "approved",
+    materialTermId: materialDoc.id,
+    reviewedAt: serverTimestamp(),
+    reviewedBy: actorId,
+    updatedAt: serverTimestamp(),
+  });
+  batch.set(auditDoc, {
+    actorId,
+    action: "term_suggestion.approved",
+    targetType: "termSuggestion",
+    targetId: suggestion.id,
+    details: { term: suggestion.term, materialTermId: materialDoc.id },
+    createdAt: serverTimestamp(),
+  } satisfies Omit<AuditLog, "id">);
+  await batch.commit();
+}
+
+export async function ignoreTermSuggestion(suggestion: TermSuggestion, actorId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoIgnoreTermSuggestion(suggestion, actorId);
+  }
+  await updateDoc(doc(termSuggestionsRef, suggestion.id), {
+    status: "ignored",
+    reviewedAt: serverTimestamp(),
+    reviewedBy: actorId,
+    updatedAt: serverTimestamp(),
+  });
+  await addDoc(auditLogsRef, {
+    actorId,
+    action: "term_suggestion.ignored",
+    targetType: "termSuggestion",
+    targetId: suggestion.id,
+    details: { term: suggestion.term },
+    createdAt: serverTimestamp(),
+  } satisfies Omit<AuditLog, "id">);
+}
+
+function stableSuggestionId(normalizedTerm: string) {
+  let hash = 0;
+  for (let index = 0; index < normalizedTerm.length; index += 1) {
+    hash = (hash * 31 + normalizedTerm.charCodeAt(index)) | 0;
+  }
+  const suffix = normalizedTerm.replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 28);
+  return `term_${Math.abs(hash)}${suffix ? `_${suffix}` : ""}`;
 }
 
 export async function getSupplier(supplierId: string) {

@@ -26,6 +26,16 @@ export type VerificationStatus =
   | "needs_more_info"
   | "watchlist";
 
+export type MaterialTermStatus = "active" | "archived";
+
+export type TermSuggestionStatus = "pending" | "approved" | "ignored" | "merged";
+
+export type TermSuggestionSource =
+  | "directory_search"
+  | "smart_search"
+  | "market_request"
+  | "supplier_import";
+
 export type ConfidenceLevel = "high" | "medium" | "low" | "needs_verification";
 
 export type CreditStart = "invoice_date" | "delivery_date" | "invoice_approval";
@@ -266,6 +276,46 @@ export interface SupplierFeedback {
   status: SupplierFeedbackStatus;
   adminNotes?: string;
   createdAt: TimestampLike;
+  reviewedAt?: TimestampLike;
+  reviewedBy?: string;
+}
+
+export interface MaterialTerm {
+  id: string;
+  canonicalEn: string;
+  canonicalAr: string;
+  category: string;
+  subcategories: string[];
+  synonyms: string[];
+  brands: string[];
+  standards: string[];
+  status: MaterialTermStatus;
+  createdAt?: TimestampLike;
+  updatedAt?: TimestampLike;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface TermSuggestionExample {
+  queryText: string;
+  source: TermSuggestionSource;
+  createdBy?: string;
+  seenAt?: TimestampLike;
+}
+
+export interface TermSuggestion {
+  id: string;
+  term: string;
+  normalizedTerm: string;
+  status: TermSuggestionStatus;
+  count: number;
+  sources: TermSuggestionSource[];
+  examples: TermSuggestionExample[];
+  suggestedCategory?: string;
+  materialTermId?: string;
+  adminNotes?: string;
+  createdAt?: TimestampLike;
+  updatedAt?: TimestampLike;
   reviewedAt?: TimestampLike;
   reviewedBy?: string;
 }

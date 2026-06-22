@@ -199,6 +199,44 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    match /materialTerms/{termId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /termSuggestions/{suggestionId} {
+      allow create: if hasActiveAccess()
+        && request.resource.data.term is string
+        && request.resource.data.term.size() >= 2
+        && request.resource.data.term.size() <= 80
+        && request.resource.data.normalizedTerm is string
+        && request.resource.data.status == "pending"
+        && request.resource.data.count is int
+        && request.resource.data.sources is list
+        && request.resource.data.examples is list;
+
+      allow read: if isAdmin();
+
+      allow update: if isAdmin()
+        || (
+          hasActiveAccess()
+          && resource.data.status == "pending"
+          && request.resource.data.status == "pending"
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "count",
+            "sources",
+            "examples",
+            "updatedAt",
+            "createdAt",
+            "term",
+            "normalizedTerm",
+            "status"
+          ])
+        );
+
+      allow delete: if isAdmin();
+    }
+
     match /accessCredits/{creditId} {
       allow read: if isAdmin()
         || (signedIn() && resource.data.userId == request.auth.uid);

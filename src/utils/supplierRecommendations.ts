@@ -1,6 +1,7 @@
-import type { CreditStart, Locale, Supplier, TaxonomyLists } from "../types/domain";
+import type { CreditStart, Locale, MaterialTerm, Supplier, TaxonomyLists } from "../types/domain";
 import { creditStarts, labelFor, paymentOptions } from "../data/constants";
 import { toDate } from "./date";
+import { expandIntentTerms } from "./materialDictionary";
 import { supplierGovernorates, supplierSearchText } from "./supplierDisplay";
 
 export interface SupplierSearchIntent {
@@ -111,7 +112,7 @@ const stopWords = new Set([
   "التسليم",
 ]);
 
-export function parseSupplierSearchLocally(query: string, taxonomy: TaxonomyLists): SupplierSearchIntent {
+export function parseSupplierSearchLocally(query: string, taxonomy: TaxonomyLists, materialTerms: MaterialTerm[] = []): SupplierSearchIntent {
   const normalized = normalizeText(query);
   const governorates = taxonomy.governorates
     .filter((item) => optionMentioned(normalized, item.value, item.labelEn, item.labelAr))
@@ -137,16 +138,18 @@ export function parseSupplierSearchLocally(query: string, taxonomy: TaxonomyList
     ),
   );
 
+  const expanded = expandIntentTerms(searchTerms, materialTerms);
+
   return {
     acceptsCredit: acceptsCredit || undefined,
-    categories,
+    categories: unique([...categories, ...expanded.categories]),
     creditDays,
     creditStart,
     governorates,
     minRating: minRatingMatch ? Number(minRatingMatch[1]) : undefined,
     paymentOptions: matchedPayments,
     query,
-    searchTerms,
+    searchTerms: expanded.searchTerms,
   };
 }
 

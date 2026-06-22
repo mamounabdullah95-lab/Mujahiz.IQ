@@ -5,15 +5,19 @@ import { CheckCircle2, CircleHelp, LoaderCircle, Mail, MapPin, Phone, Search, Sl
 import { useTranslation } from "react-i18next";
 import { StarRating } from "../components/StarRating";
 import { Button, EmptyState, Section, SelectField, TextAreaField, TextField } from "../components/ui";
+import { useAuth } from "../contexts/AuthContext";
 import { useTaxonomy } from "../contexts/TaxonomyContext";
 import { businessTypes, capabilityTags, confidenceLevels, coverageAreas, creditStarts, labelFor, paymentOptions, searchableCapabilityTags } from "../data/constants";
 import {
+  listMaterialTerms,
   listSupplierCandidates,
   listSuppliersPage,
+  recordTermSuggestions,
   type SupplierPageCursor,
 } from "../services/firestore";
-import type { Supplier } from "../types/domain";
+import type { MaterialTerm, Supplier, TermSuggestionSource } from "../types/domain";
 import { formatDate } from "../utils/date";
+import { expandSearchWithMaterialTerms, suggestUnknownTerms } from "../utils/materialDictionary";
 import { localizedCity, localizedSupplierGovernorates, localizedSupplierName, localizedSupplierText, supplierGovernorates, supplierSearchText } from "../utils/supplierDisplay";
 import {
   describeIntent,
@@ -27,8 +31,10 @@ import {
 export function DirectoryPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
+  const { firebaseUser } = useAuth();
   const { taxonomy } = useTaxonomy();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [materialTerms, setMaterialTerms] = useState<MaterialTerm[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [supplierCursor, setSupplierCursor] = useState<SupplierPageCursor>(null);
@@ -59,6 +65,7 @@ export function DirectoryPage() {
         setHasMore(page.hasMore);
       })
       .finally(() => setLoading(false));
+    void listMaterialTerms().then(setMaterialTerms);
   }, []);
 
   const searchableSuppliers = useMemo(
@@ -77,7 +84,10 @@ export function DirectoryPage() {
   );
 
   const filtered = useMemo(() => {
-    const source = filters.query ? fuse.search(filters.query).map((result) => result.item.supplier) : suppliers;
+    const expandedQuery = filters.query
+      ? expandSearchWithMaterialTerms(filters.query, materialTerms).expandedQuery
+      : "";
+    const source = expandedQuery ? fuse.search(expandedQuery).map((result) => result.item.supplier) : suppliers;
     return source.filter((supplier) => {
       if (filters.governorate && !supplierGovernorates(supplier).includes(filters.governorate)) return false;
       if (filters.category && !supplier.categories.includes(filters.category)) return false;
@@ -88,7 +98,7 @@ export function DirectoryPage() {
       if (filters.coverageArea && !supplier.coverageAreas.includes(filters.coverageArea)) return false;
       return true;
     });
-  }, [filters, fuse, suppliers]);
+  }, [filters, fuse, materialTerms, suppliers]);
 
   const setValue = (key: keyof typeof filters, value: string) => setFilters((current) => ({ ...current, [key]: value }));
   const resetFilters = () =>
@@ -103,13 +113,33 @@ export function DirectoryPage() {
       coverageArea: "",
     });
 
+  function captureUnknownTerms(query: string, source: TermSuggestionSource) {
+    const suggestions = suggestUnknownTerms(query, taxonomy, materialTerms);
+    if (suggestions.length) {
+      void recordTermSuggestions(suggestions, {
+        source,
+        queryText: query,
+        userId: firebaseUser?.uid,
+      });
+    }
+  }
+
+  function runKeywordSearch() {
+    const query = filters.query.trim();
+    setValue("query", query);
+    if (query) {
+      captureUnknownTerms(query, "directory_search");
+    }
+  }
+
   async function runSmartSearch() {
     const query = smartQuery.trim();
     if (!query) return;
     setSmartSearching(true);
     setSmartSearchMessage("");
+    captureUnknownTerms(query, "smart_search");
     try {
-      const localIntent = parseSupplierSearchLocally(query, taxonomy);
+      const localIntent = parseSupplierSearchLocally(query, taxonomy, materialTerms);
       let aiIntent: Partial<SupplierSearchIntent> | null = null;
       const supplierSearchAI = await import("../services/supplierSearchAI");
       if (supplierSearchAI.isGeminiSupplierSearchEnabled()) {
@@ -283,7 +313,7 @@ export function DirectoryPage() {
         </SelectField>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={() => setValue("query", filters.query.trim())}>
+        <Button type="button" onClick={runKeywordSearch}>
           <Search className="h-4 w-4" aria-hidden="true" />
           {t("search")}
         </Button>

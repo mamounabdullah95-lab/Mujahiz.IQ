@@ -4,6 +4,7 @@ import type {
   AppUser,
   AuditLog,
   DuplicateCheck,
+  MaterialTerm,
   PlatformSettings,
   Supplier,
   SupplierDraft,
@@ -14,10 +15,14 @@ import type {
   SupplierReview,
   SupplierSubmission,
   SupplierSubmissionStatus,
+  TermSuggestion,
+  TermSuggestionSource,
   UserRole,
   UserStatus,
 } from "../types/domain";
+import { mergeMaterialTerms } from "../data/materialTerms";
 import { addDays, maxDate, toDate } from "../utils/date";
+import { normalizeDictionaryText } from "../utils/materialDictionary";
 import { normalizeEmail, normalizeUrl } from "../utils/normalization";
 import { calculateAccessGrant, deriveBadges, qualityRatio } from "../utils/scoring";
 
@@ -34,6 +39,8 @@ interface DemoDb {
   contributionLogs: unknown[];
   auditLogs: AuditLog[];
   supplierFeedback: SupplierFeedback[];
+  materialTerms: MaterialTerm[];
+  termSuggestions: TermSuggestion[];
   settings: PlatformSettings;
 }
 
@@ -52,6 +59,8 @@ function readDb(): DemoDb {
     return {
       ...parsed,
       supplierFeedback: parsed.supplierFeedback || [],
+      materialTerms: parsed.materialTerms || [],
+      termSuggestions: parsed.termSuggestions || [],
       settings: { ...defaultSettings, ...parsed.settings },
     };
   }
@@ -65,6 +74,8 @@ function readDb(): DemoDb {
     contributionLogs: [],
     auditLogs: [],
     supplierFeedback: [],
+    materialTerms: [],
+    termSuggestions: [],
     settings: defaultSettings,
   };
 }
@@ -722,6 +733,117 @@ export async function demoUpdateSupplierFeedbackStatus(
     targetType: "supplierFeedback",
     targetId: feedback.id,
     details: { supplierId: feedback.supplierId, feedbackType: feedback.type },
+    createdAt: now(),
+  });
+  writeDb(db);
+}
+
+export async function demoListMaterialTerms() {
+  return mergeMaterialTerms(readDb().materialTerms || []);
+}
+
+export async function demoRecordTermSuggestions(
+  terms: string[],
+  options: {
+    source: TermSuggestionSource;
+    queryText: string;
+    userId?: string;
+  },
+) {
+  const db = readDb();
+  const seenAt = now();
+  terms.forEach((term) => {
+    const normalizedTerm = normalizeDictionaryText(term);
+    if (!normalizedTerm) return;
+    const existing = db.termSuggestions.find((item) => item.normalizedTerm === normalizedTerm && item.status === "pending");
+    const example = {
+      queryText: options.queryText.slice(0, 280),
+      source: options.source,
+      createdBy: options.userId || "",
+      seenAt,
+    };
+    if (existing) {
+      existing.count = (existing.count || 0) + 1;
+      existing.sources = Array.from(new Set([...(existing.sources || []), options.source]));
+      existing.examples = [...(existing.examples || []), example].slice(-8);
+      existing.updatedAt = seenAt;
+      return;
+    }
+    db.termSuggestions.push({
+      id: id("term"),
+      term,
+      normalizedTerm,
+      status: "pending",
+      count: 1,
+      sources: [options.source],
+      examples: [example],
+      createdAt: seenAt,
+      updatedAt: seenAt,
+    });
+  });
+  writeDb(db);
+}
+
+export async function demoListTermSuggestions(status: TermSuggestion["status"] = "pending") {
+  return [...(readDb().termSuggestions || [])]
+    .filter((item) => item.status === status)
+    .sort((a, b) => (b.count || 0) - (a.count || 0))
+    .slice(0, 120);
+}
+
+export async function demoApproveTermSuggestion(
+  suggestion: TermSuggestion,
+  actorId: string,
+  material: Pick<MaterialTerm, "canonicalEn" | "canonicalAr" | "category" | "subcategories" | "synonyms" | "brands" | "standards">,
+) {
+  const db = readDb();
+  const materialTerm: MaterialTerm = {
+    id: id("material"),
+    canonicalEn: material.canonicalEn.trim(),
+    canonicalAr: material.canonicalAr.trim(),
+    category: material.category,
+    subcategories: material.subcategories,
+    synonyms: Array.from(new Set([suggestion.term, ...material.synonyms].map((item) => item.trim()).filter(Boolean))),
+    brands: material.brands,
+    standards: material.standards,
+    status: "active",
+    createdAt: now(),
+    updatedAt: now(),
+    createdBy: actorId,
+    updatedBy: actorId,
+  };
+  db.materialTerms.push(materialTerm);
+  db.termSuggestions = db.termSuggestions.map((item) =>
+    item.id === suggestion.id
+      ? { ...item, status: "approved", materialTermId: materialTerm.id, reviewedAt: now(), reviewedBy: actorId, updatedAt: now() }
+      : item,
+  );
+  db.auditLogs.push({
+    id: id("audit"),
+    actorId,
+    action: "term_suggestion.approved",
+    targetType: "termSuggestion",
+    targetId: suggestion.id,
+    details: { term: suggestion.term, materialTermId: materialTerm.id },
+    createdAt: now(),
+  });
+  writeDb(db);
+}
+
+export async function demoIgnoreTermSuggestion(suggestion: TermSuggestion, actorId: string) {
+  const db = readDb();
+  db.termSuggestions = db.termSuggestions.map((item) =>
+    item.id === suggestion.id
+      ? { ...item, status: "ignored", reviewedAt: now(), reviewedBy: actorId, updatedAt: now() }
+      : item,
+  );
+  db.auditLogs.push({
+    id: id("audit"),
+    actorId,
+    action: "term_suggestion.ignored",
+    targetType: "termSuggestion",
+    targetId: suggestion.id,
+    details: { term: suggestion.term },
     createdAt: now(),
   });
   writeDb(db);
