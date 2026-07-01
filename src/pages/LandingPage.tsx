@@ -1,4 +1,4 @@
-import { ArrowRight, BadgeCheck, Database, Search, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
+import { ArrowRight, BadgeCheck, Database, Search, ShieldCheck, UsersRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { isFirebaseConfigured } from "../config/firebase";
@@ -24,11 +24,7 @@ export function LandingPage() {
         <div className="absolute inset-0 -z-10 bg-[linear-gradient(105deg,rgba(255,248,238,0.98)_0%,rgba(255,248,238,0.9)_42%,rgba(255,255,255,0.68)_100%)]" />
         <div className="mx-auto grid min-h-[74vh] max-w-7xl content-center gap-10 px-4 py-12 sm:px-6 lg:px-8">
           <div className="max-w-3xl rounded-md border border-orange-100 bg-white/78 p-5 shadow-soft backdrop-blur-sm sm:p-7">
-            <div className="inline-flex items-center gap-2 rounded-md border border-amber/25 bg-white/85 px-3 py-1 text-sm font-bold text-ink shadow-soft backdrop-blur">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-              {t("tagline")}
-            </div>
-            <img className="mt-7 h-20 w-auto sm:h-24" src={brandLogoUrl} alt={t("appName")} />
+            <img className="h-20 w-auto sm:h-24" src={brandLogoUrl} alt={t("appName")} />
             <h1 className="sr-only">{t("landingHeadline")}</h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700">{t("landingLead")}</p>
             {showDeveloperNotice ? (
