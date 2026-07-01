@@ -30,7 +30,7 @@ const SupplierSubmissionDetailPage = lazy(() => import("./pages/admin/SupplierSu
 
 export function App() {
   return (
-    <Suspense fallback={<div className="grid min-h-screen place-items-center bg-slate-50 text-sm font-semibold text-slate-600">Loading...</div>}>
+    <Suspense fallback={<div className="grid min-h-screen place-items-center bg-[#fff7ec] text-sm font-semibold text-ink">Loading...</div>}>
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<LandingPage />} />

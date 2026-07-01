@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import brandLogoUrl from "../assets/brand/mujahiz-iq-logo-horizontal-final.svg";
-import heroImageUrl from "../assets/brand/mujahiz-iq-login-hero-1920x1080.png";
+import brandLogoUrl from "../assets/brand/mujahiz-iq-brand-lockup-horizontal.png";
+import heroImageUrl from "../assets/brand/mujahiz-iq-brand-hero.png";
 
 export function PublicAuthShell({
   title,
@@ -16,16 +16,18 @@ export function PublicAuthShell({
   const panelWidth = size === "wide" ? "max-w-4xl" : "max-w-lg";
 
   return (
-    <section className="relative isolate overflow-hidden border-b border-slate-200 bg-[#f7fbfc]">
-      <img className="absolute inset-0 -z-20 h-full w-full object-cover opacity-25" src={heroImageUrl} alt="" />
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(115deg,rgba(247,251,252,0.98)_0%,rgba(247,251,252,0.9)_46%,rgba(255,255,255,0.68)_100%)]" />
+    <section className="relative isolate overflow-hidden border-b border-orange-100 bg-[#fff7ec]">
+      <img className="absolute inset-0 -z-20 h-full w-full object-cover object-left-bottom opacity-90" src={heroImageUrl} alt="" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(255,247,236,0.92)_0%,rgba(255,247,236,0.82)_42%,rgba(255,250,244,0.96)_100%)]" />
+      <div className="absolute inset-y-0 right-0 -z-10 hidden w-1/3 bg-[radial-gradient(circle_at_center,rgba(255,107,0,0.12),transparent_58%)] lg:block" />
       <div className="mx-auto grid min-h-[calc(100vh-4.5rem)] max-w-7xl content-center px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-4xl text-center">
-          <img className="mx-auto h-20 w-auto sm:h-24" src={brandLogoUrl} alt="Mujahiz IQ" />
+          <img className="mx-auto h-16 w-auto sm:h-20" src={brandLogoUrl} alt="Mujahiz IQ" />
+          <div className="mx-auto mt-5 h-px max-w-sm bg-gradient-to-r from-transparent via-amber/50 to-transparent" />
           <h1 className="mt-6 text-3xl font-black text-ink sm:text-4xl">{title}</h1>
           <p className="mx-auto mt-3 max-w-2xl text-base leading-8 text-slate-600">{description}</p>
         </div>
-        <div className={`mx-auto mt-8 w-full ${panelWidth} rounded-md border border-slate-200 bg-white/95 p-5 shadow-soft backdrop-blur sm:p-6`}>
+        <div className={`mx-auto mt-8 w-full ${panelWidth} rounded-md border border-orange-100 bg-white/92 p-5 shadow-soft backdrop-blur sm:p-6`}>
           {children}
         </div>
       </div>

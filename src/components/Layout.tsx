@@ -21,8 +21,8 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
-import headerLogoUrl from "../assets/brand/mujahiz-iq-header-logo.svg";
-import iconLogoUrl from "../assets/brand/mujahiz-iq-icon-final.svg";
+import headerLogoUrl from "../assets/brand/mujahiz-iq-brand-lockup-horizontal.png";
+import iconLogoUrl from "../assets/brand/mujahiz-iq-brand-icon.png";
 import { LanguageToggle } from "./LanguageToggle";
 import { NotificationBell } from "./NotificationBell";
 import { Button } from "./ui";
@@ -55,7 +55,7 @@ function AppNavLink({ to, label, icon: Icon }: { to: string; label: string; icon
     <NavLink
       className={({ isActive }) =>
         `flex min-h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold transition ${
-          isActive ? "bg-ink text-white" : "text-slate-600 hover:bg-slate-100 hover:text-ink"
+          isActive ? "bg-ink text-white shadow-soft" : "text-slate-600 hover:bg-orange-50 hover:text-ink"
         }`
       }
       to={to}
@@ -78,12 +78,12 @@ export function Layout() {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div className="min-h-screen bg-[#fff7ec] text-slate-900">
+      <header className="sticky top-0 z-20 border-b border-orange-100 bg-white/92 backdrop-blur">
         <div className="mx-auto flex min-h-[4.5rem] max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <button className="text-start" type="button" onClick={() => navigate(appUser ? "/dashboard" : "/")}>
             <img
-              className={appUser ? "h-12 w-auto" : "h-11 w-11"}
+              className={appUser ? "h-14 w-auto" : "h-11 w-11"}
               src={appUser ? headerLogoUrl : iconLogoUrl}
               alt={t("appName")}
             />
@@ -92,7 +92,7 @@ export function Layout() {
           <div className="flex items-center gap-2">
             {appUser ? (
               <button
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100 md:hidden"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-700 hover:bg-orange-50 md:hidden"
                 type="button"
                 aria-label={t(navOpen ? "closeMenu" : "menu")}
                 aria-expanded={navOpen}
@@ -117,7 +117,7 @@ export function Layout() {
         <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4 sm:px-6 md:grid-cols-[250px_1fr] lg:px-8">
           {navOpen ? (
             <button
-              className="fixed inset-0 top-[4.5rem] z-20 bg-ink/25 md:hidden"
+              className="fixed inset-0 top-[4.5rem] z-20 bg-ink/25 backdrop-blur-[1px] md:hidden"
               type="button"
               aria-label={t("closeMenu")}
               onClick={() => setNavOpen(false)}
@@ -130,13 +130,13 @@ export function Layout() {
                 : "hidden"
             } md:sticky md:top-20 md:z-auto md:block md:h-[calc(100vh-6rem)] md:max-h-none md:overflow-visible`}
           >
-            <nav className="grid gap-1 rounded-md border border-slate-200 bg-white p-2 shadow-soft">
+            <nav className="grid gap-1 rounded-md border border-orange-100 bg-white/95 p-2 shadow-soft">
               {navItems.map((item) => (
                 <AppNavLink key={item.to} to={item.to} label={t(item.labelKey)} icon={item.icon} />
               ))}
               {isAdmin ? (
                 <>
-                  <div className="my-2 h-px bg-slate-200" />
+                  <div className="my-2 h-px bg-orange-100" />
                   {adminItems.map((item) => (
                     <AppNavLink key={item.to} to={item.to} label={t(item.labelKey)} icon={item.icon} />
                   ))}
@@ -144,7 +144,7 @@ export function Layout() {
               ) : null}
             </nav>
           </aside>
-          <main className="min-w-0 rounded-md border border-slate-200 bg-white shadow-soft">
+          <main className="min-w-0 rounded-md border border-orange-100 bg-white/96 shadow-soft">
             <TrialWelcomeNotice />
             <Outlet />
           </main>
