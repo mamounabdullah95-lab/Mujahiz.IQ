@@ -458,7 +458,7 @@ export async function listSuppliers() {
   if (!isFirebaseConfigured) {
     return demo.demoListSuppliers();
   }
-  const snapshot = await getDocs(query(suppliersRef, where("status", "==", "approved"), limit(250)));
+  const snapshot = await getDocs(query(suppliersRef, where("status", "==", "approved")));
   return snapshot.docs.map((item) => withId<Supplier>(item));
 }
 
