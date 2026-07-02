@@ -28,6 +28,39 @@ import {
   type SupplierSearchIntent,
 } from "../utils/supplierRecommendations";
 
+const KEYWORD_SEARCH_LIMIT = { words: 20, chars: 160 };
+const SMART_SEARCH_LIMIT = { words: 35, chars: 280 };
+const SMART_SEARCH_COOLDOWN_MS = 8_000;
+
+type SearchLimit = typeof KEYWORD_SEARCH_LIMIT;
+
+function countSearchWords(value: string) {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function limitSearchText(value: string, limit: SearchLimit) {
+  const normalized = value.replace(/\s+/g, " ").trimStart();
+  const words = normalized.split(/\s+/).filter(Boolean);
+  const limitedByWords = words.length > limit.words ? words.slice(0, limit.words).join(" ") : normalized;
+  return limitedByWords.length > limit.chars ? limitedByWords.slice(0, limit.chars).trimEnd() : limitedByWords;
+}
+
+function isWithinSearchLimit(value: string, limit: SearchLimit) {
+  return value.trim().length <= limit.chars && countSearchWords(value) <= limit.words;
+}
+
+function searchLimitMessage(locale: "ar" | "en", limit: SearchLimit) {
+  return locale === "ar"
+    ? `تم اختصار النص للسيطرة على الاستخدام. الحد الأقصى ${limit.words} كلمة أو ${limit.chars} حرف.`
+    : `The text was shortened to control usage. Maximum: ${limit.words} words or ${limit.chars} characters.`;
+}
+
+function smartCooldownMessage(locale: "ar" | "en", seconds: number) {
+  return locale === "ar"
+    ? `انتظر ${seconds} ثوانٍ قبل تشغيل بحث ذكي جديد.`
+    : `Please wait ${seconds} seconds before running another smart search.`;
+}
+
 export function DirectoryPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
@@ -46,6 +79,8 @@ export function DirectoryPage() {
   const [smartIntent, setSmartIntent] = useState<SupplierSearchIntent | null>(null);
   const [recommendations, setRecommendations] = useState<SupplierRecommendation[]>([]);
   const [smartSearchMessage, setSmartSearchMessage] = useState("");
+  const [keywordSearchMessage, setKeywordSearchMessage] = useState("");
+  const [lastSmartSearchAt, setLastSmartSearchAt] = useState(0);
   const [filters, setFilters] = useState({
     query: "",
     governorate: "",
@@ -101,7 +136,18 @@ export function DirectoryPage() {
   }, [filters, fuse, materialTerms, suppliers]);
 
   const setValue = (key: keyof typeof filters, value: string) => setFilters((current) => ({ ...current, [key]: value }));
-  const resetFilters = () =>
+  const setKeywordQuery = (value: string) => {
+    const limited = limitSearchText(value, KEYWORD_SEARCH_LIMIT);
+    setKeywordSearchMessage(limited !== value ? searchLimitMessage(locale, KEYWORD_SEARCH_LIMIT) : "");
+    setValue("query", limited);
+  };
+  const setSmartQueryLimited = (value: string) => {
+    const limited = limitSearchText(value, SMART_SEARCH_LIMIT);
+    setSmartSearchMessage(limited !== value ? searchLimitMessage(locale, SMART_SEARCH_LIMIT) : "");
+    setSmartQuery(limited);
+  };
+  const resetFilters = () => {
+    setKeywordSearchMessage("");
     setFilters({
       query: "",
       governorate: "",
@@ -112,8 +158,13 @@ export function DirectoryPage() {
       confidenceLevel: "",
       coverageArea: "",
     });
+  };
 
   function captureUnknownTerms(query: string, source: TermSuggestionSource) {
+    const limit = source === "smart_search" ? SMART_SEARCH_LIMIT : KEYWORD_SEARCH_LIMIT;
+    if (!isWithinSearchLimit(query, limit)) {
+      return;
+    }
     const suggestions = suggestUnknownTerms(query, taxonomy, materialTerms);
     if (suggestions.length) {
       void recordTermSuggestions(suggestions, {
@@ -125,16 +176,28 @@ export function DirectoryPage() {
   }
 
   function runKeywordSearch() {
-    const query = filters.query.trim();
+    const query = limitSearchText(filters.query, KEYWORD_SEARCH_LIMIT);
     setValue("query", query);
+    setKeywordSearchMessage(query !== filters.query.trim() ? searchLimitMessage(locale, KEYWORD_SEARCH_LIMIT) : "");
     if (query) {
       captureUnknownTerms(query, "directory_search");
     }
   }
 
   async function runSmartSearch() {
-    const query = smartQuery.trim();
+    const query = limitSearchText(smartQuery, SMART_SEARCH_LIMIT);
     if (!query) return;
+    if (query !== smartQuery.trim()) {
+      setSmartQuery(query);
+      setSmartSearchMessage(searchLimitMessage(locale, SMART_SEARCH_LIMIT));
+      return;
+    }
+    const cooldownRemaining = Math.ceil((SMART_SEARCH_COOLDOWN_MS - (Date.now() - lastSmartSearchAt)) / 1000);
+    if (cooldownRemaining > 0) {
+      setSmartSearchMessage(smartCooldownMessage(locale, cooldownRemaining));
+      return;
+    }
+    setLastSmartSearchAt(Date.now());
     setSmartSearching(true);
     setSmartSearchMessage("");
     captureUnknownTerms(query, "smart_search");
@@ -192,8 +255,9 @@ export function DirectoryPage() {
           <TextAreaField
             label={t("procurementRequest")}
             value={smartQuery}
-            onChange={(event) => setSmartQuery(event.target.value)}
+            onChange={(event) => setSmartQueryLimited(event.target.value)}
             placeholder={t("procurementRequestPlaceholder")}
+            maxLength={SMART_SEARCH_LIMIT.chars}
             rows={3}
           />
           <Button disabled={smartSearching || !smartQuery.trim()} type="button" onClick={() => void runSmartSearch()}>
@@ -288,7 +352,7 @@ export function DirectoryPage() {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
-        <TextField label={t("search")} value={filters.query} onChange={(event) => setValue("query", event.target.value)} />
+        <TextField label={t("search")} value={filters.query} onChange={(event) => setKeywordQuery(event.target.value)} maxLength={KEYWORD_SEARCH_LIMIT.chars} />
         <SelectField label={t("governorate")} value={filters.governorate} onChange={(event) => setValue("governorate", event.target.value)}>
           <option value="">{t("allIraq")}</option>
           {taxonomy.governorates.map((item) => (
@@ -312,6 +376,7 @@ export function DirectoryPage() {
           <option value="2">2+</option>
         </SelectField>
       </div>
+      {keywordSearchMessage ? <p className="text-xs font-semibold text-amber">{keywordSearchMessage}</p> : null}
       <div className="flex flex-wrap gap-2">
         <Button type="button" onClick={runKeywordSearch}>
           <Search className="h-4 w-4" aria-hidden="true" />
@@ -431,4 +496,3 @@ export function DirectoryPage() {
     </Section>
   );
 }
-
