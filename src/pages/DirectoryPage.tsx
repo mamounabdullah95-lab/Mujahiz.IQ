@@ -61,6 +61,22 @@ function smartCooldownMessage(locale: "ar" | "en", seconds: number) {
     : `Please wait ${seconds} seconds before running another smart search.`;
 }
 
+function understandingTitle(locale: "ar" | "en") {
+  return locale === "ar" ? "فهمنا طلبك بهذه الطريقة" : "We understood your request as";
+}
+
+function understoodProductsTitle(locale: "ar" | "en") {
+  return locale === "ar" ? "المنتج" : "Product";
+}
+
+function understoodSupplierTypesTitle(locale: "ar" | "en") {
+  return locale === "ar" ? "نوع المورد المناسب" : "Likely supplier type";
+}
+
+function understoodCategoriesTitle(locale: "ar" | "en") {
+  return locale === "ar" ? "التصنيف المتوقع" : "Likely category";
+}
+
 export function DirectoryPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
@@ -202,7 +218,7 @@ export function DirectoryPage() {
     setSmartSearchMessage("");
     captureUnknownTerms(query, "smart_search");
     try {
-      const localIntent = parseSupplierSearchLocally(query, taxonomy, materialTerms);
+      const localIntent = parseSupplierSearchLocally(query, taxonomy, materialTerms, locale);
       let aiIntent: Partial<SupplierSearchIntent> | null = null;
       const supplierSearchAI = await import("../services/supplierSearchAI");
       if (supplierSearchAI.isGeminiSupplierSearchEnabled()) {
@@ -268,6 +284,45 @@ export function DirectoryPage() {
         {smartSearchMessage ? <p className="mt-2 text-xs font-semibold text-amber">{smartSearchMessage}</p> : null}
         {smartIntent ? (
           <div className="mt-4">
+            {(smartIntent.inferredProducts?.length || smartIntent.supplierTypes?.length || smartIntent.categories.length) ? (
+              <div className="mb-4 rounded-md border border-amber/25 bg-white/85 p-3">
+                <div className="text-sm font-black text-ink">{understandingTitle(locale)}</div>
+                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  {smartIntent.inferredProducts?.length ? (
+                    <div>
+                      <div className="text-xs font-bold uppercase text-slate-500">{understoodProductsTitle(locale)}</div>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {smartIntent.inferredProducts.map((item) => (
+                          <span className="rounded bg-amber/10 px-2 py-1 text-xs font-bold text-ink" key={item}>{item}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {smartIntent.supplierTypes?.length ? (
+                    <div>
+                      <div className="text-xs font-bold uppercase text-slate-500">{understoodSupplierTypesTitle(locale)}</div>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {smartIntent.supplierTypes.map((item) => (
+                          <span className="rounded bg-river/10 px-2 py-1 text-xs font-bold text-river" key={item}>{item}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {smartIntent.categories.length ? (
+                    <div>
+                      <div className="text-xs font-bold uppercase text-slate-500">{understoodCategoriesTitle(locale)}</div>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {smartIntent.categories.map((item) => (
+                          <span className="rounded bg-mint/10 px-2 py-1 text-xs font-bold text-mint" key={item}>
+                            {labelFor(taxonomy.supplierCategories, item, locale)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               {describeIntent(smartIntent, taxonomy, locale).map((item) => (
                 <span className="rounded bg-white px-2 py-1 text-xs font-bold text-river ring-1 ring-river/15" key={item}>{item}</span>

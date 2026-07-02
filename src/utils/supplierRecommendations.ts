@@ -1,5 +1,6 @@
 import type { CreditStart, Locale, MaterialTerm, Supplier, TaxonomyLists } from "../types/domain";
 import { creditStarts, labelFor, paymentOptions } from "../data/constants";
+import { inferProcurementOntology } from "../data/procurementOntology";
 import { toDate } from "./date";
 import { expandIntentTerms } from "./materialDictionary";
 import { supplierGovernorates, supplierSearchText } from "./supplierDisplay";
@@ -14,6 +15,8 @@ export interface SupplierSearchIntent {
   paymentOptions: string[];
   query: string;
   searchTerms: string[];
+  inferredProducts?: string[];
+  supplierTypes?: string[];
 }
 
 export interface SupplierRecommendation {
@@ -112,8 +115,14 @@ const stopWords = new Set([
   "التسليم",
 ]);
 
-export function parseSupplierSearchLocally(query: string, taxonomy: TaxonomyLists, materialTerms: MaterialTerm[] = []): SupplierSearchIntent {
+export function parseSupplierSearchLocally(
+  query: string,
+  taxonomy: TaxonomyLists,
+  materialTerms: MaterialTerm[] = [],
+  locale: Locale = "en",
+): SupplierSearchIntent {
   const normalized = normalizeText(query);
+  const ontology = inferProcurementOntology(query, taxonomy.supplierCategories.map((item) => item.value), locale);
   const governorates = taxonomy.governorates
     .filter((item) => optionMentioned(normalized, item.value, item.labelEn, item.labelAr))
     .map((item) => item.value);
@@ -129,12 +138,15 @@ export function parseSupplierSearchLocally(query: string, taxonomy: TaxonomyList
   const minRatingMatch = normalized.match(/(?:تقييم|rating)\s*(?:لا يقل عن|at least|minimum|min)?\s*([1-5](?:\.\d)?)/);
   const searchTerms = Array.from(
     new Set(
-      normalized
+      [
+        ...normalized
         .split(/\s+/)
         .map((item) => item.trim())
         .filter((item) => item.length > 1 && !stopWords.has(item) && !/^\d+$/.test(item))
         .filter((item) => !creditWords.some((word) => normalizeText(word).includes(item)))
         .filter((item) => !taxonomy.governorates.some((option) => optionMentioned(item, option.value, option.labelEn, option.labelAr))),
+        ...ontology.searchTerms,
+      ],
     ),
   );
 
@@ -142,14 +154,16 @@ export function parseSupplierSearchLocally(query: string, taxonomy: TaxonomyList
 
   return {
     acceptsCredit: acceptsCredit || undefined,
-    categories: unique([...categories, ...expanded.categories]),
+    categories: unique([...categories, ...ontology.categories, ...expanded.categories]),
     creditDays,
     creditStart,
     governorates,
     minRating: minRatingMatch ? Number(minRatingMatch[1]) : undefined,
     paymentOptions: matchedPayments,
     query,
-    searchTerms: expanded.searchTerms,
+    searchTerms: unique(expanded.searchTerms).slice(0, 28),
+    inferredProducts: ontology.products,
+    supplierTypes: ontology.supplierTypes,
   };
 }
 
@@ -166,7 +180,9 @@ export function mergeSupplierSearchIntents(local: SupplierSearchIntent, ai?: Par
     governorates: unique([...local.governorates, ...(ai.governorates || [])]),
     minRating: ai.minRating || local.minRating,
     paymentOptions: unique([...local.paymentOptions, ...(ai.paymentOptions || [])]),
-    searchTerms: unique([...(ai.searchTerms || []), ...local.searchTerms]),
+    searchTerms: unique([...(ai.searchTerms || []), ...local.searchTerms]).slice(0, 28),
+    inferredProducts: unique([...(local.inferredProducts || []), ...(ai.inferredProducts || [])]),
+    supplierTypes: unique([...(local.supplierTypes || []), ...(ai.supplierTypes || [])]),
   } satisfies SupplierSearchIntent;
 }
 
@@ -309,7 +325,8 @@ export function recommendSuppliers(
 
 export function describeIntent(intent: SupplierSearchIntent, taxonomy: TaxonomyLists, locale: Locale) {
   return [
-    ...intent.searchTerms,
+    ...(intent.inferredProducts || []),
+    ...intent.searchTerms.slice(0, 12),
     ...intent.categories.map((value) => labelFor(taxonomy.supplierCategories, value, locale)),
     ...intent.governorates.map((value) => labelFor(taxonomy.governorates, value, locale)),
     ...intent.paymentOptions.map((value) => labelFor(paymentOptions, value, locale)),

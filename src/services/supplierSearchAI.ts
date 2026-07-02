@@ -17,15 +17,23 @@ const responseSchema = Schema.object({
     }),
     governorates: Schema.array({ items: Schema.string(), description: "Only governorate values from the supplied taxonomy." }),
     minRating: Schema.number({ description: "Minimum rating from 1 to 5." }),
+    inferredProducts: Schema.array({
+      items: Schema.string(),
+      description: "The normalized product or service names the buyer is asking for.",
+    }),
     paymentOptions: Schema.array({
       items: Schema.enumString({ enum: ["cash", "bank_transfer", "usd", "iqd", "official_invoice"] }),
     }),
     searchTerms: Schema.array({
       items: Schema.string(),
-      description: "Core products, materials, services, brands, or technical terms, in Arabic and English when useful.",
+      description: "Core products, materials, services, industries, supplier category terms, and useful Arabic/English equivalents.",
+    }),
+    supplierTypes: Schema.array({
+      items: Schema.string(),
+      description: "Plain-language supplier types likely to sell the requested item.",
     }),
   },
-  optionalProperties: ["acceptsCredit", "creditDays", "creditStart", "minRating"],
+  optionalProperties: ["acceptsCredit", "creditDays", "creditStart", "inferredProducts", "minRating", "supplierTypes"],
 });
 
 export async function parseSupplierSearchWithGemini(
@@ -46,7 +54,7 @@ export async function parseSupplierSearchWithGemini(
       temperature: 0,
     },
     systemInstruction:
-      "You parse procurement supplier-search requests for Iraq. Return only structured search intent. Do not invent supplier facts. Convert a month to 30 days. Interpret 'after invoicing' as invoice_date. Keep product and service terms concise and include useful Arabic/English equivalents.",
+      "You parse procurement supplier-search requests for Iraq. First infer what type of supplier would sell the requested item, then return structured search intent. Map specific products to likely categories from the supplied taxonomy, e.g. differential pressure gauges are instrumentation/measurement and control, mechanical seals are mechanical/rotating equipment, cable trays are electrical/cable management. Do not invent supplier facts. Convert a month to 30 days. Interpret 'after invoicing' as invoice_date. Keep product, service, and supplier-type terms concise and include useful Arabic/English equivalents.",
   });
 
   const taxonomySummary = {
@@ -71,8 +79,10 @@ export async function parseSupplierSearchWithGemini(
     creditStart?: CreditStart;
     governorates?: string[];
     minRating?: number;
+    inferredProducts?: string[];
     paymentOptions?: string[];
     searchTerms?: string[];
+    supplierTypes?: string[];
   };
 
   return {
@@ -83,9 +93,11 @@ export async function parseSupplierSearchWithGemini(
       ? parsed.creditStart
       : undefined,
     governorates: validValues(parsed.governorates, taxonomy.governorates.map((item) => item.value)),
+    inferredProducts: (parsed.inferredProducts || []).map((item) => item.trim()).filter(Boolean).slice(0, 5),
     minRating: validNumber(parsed.minRating, 1, 5),
     paymentOptions: validValues(parsed.paymentOptions, ["cash", "bank_transfer", "usd", "iqd", "official_invoice"]),
-    searchTerms: (parsed.searchTerms || []).map((item) => item.trim()).filter(Boolean).slice(0, 10),
+    searchTerms: (parsed.searchTerms || []).map((item) => item.trim()).filter(Boolean).slice(0, 14),
+    supplierTypes: (parsed.supplierTypes || []).map((item) => item.trim()).filter(Boolean).slice(0, 6),
   };
 }
 
@@ -102,4 +114,3 @@ function validNumber(value: number | undefined, min: number, max: number) {
     ? value
     : undefined;
 }
-
