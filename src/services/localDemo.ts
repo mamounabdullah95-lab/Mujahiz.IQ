@@ -107,7 +107,7 @@ export async function demoRegister(
   email: string,
   password: string,
   profile: Pick<AppUser, "fullName" | "phone" | "jobTitle" | "organization" | "governorate" | "sector"> &
-    Partial<Pick<AppUser, "city" | "reasonForJoining" | "language">>,
+    Partial<Pick<AppUser, "city" | "reasonForJoining" | "accountType" | "language">>,
 ) {
   const db = readDb();
   if (db.credentials.some((item) => item.email.toLowerCase() === email.toLowerCase())) {
@@ -127,6 +127,7 @@ export async function demoRegister(
     city: profile.city || "",
     sector: profile.sector,
     reasonForJoining: profile.reasonForJoining || "",
+    accountType: profile.accountType || "buyer",
     role: firstUser ? "owner" : "contributor",
     status: "approved",
     accessStatus: firstUser ? "active" : "temporary",
