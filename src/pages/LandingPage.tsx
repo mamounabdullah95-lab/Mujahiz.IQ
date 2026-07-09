@@ -32,7 +32,7 @@ export function LandingPage() {
       <section className="relative isolate overflow-hidden border-b border-borderSoft bg-creamLight">
         <div className="absolute inset-0 -z-30 bg-[radial-gradient(circle_at_18%_18%,rgba(243,112,33,0.1),transparent_26rem),linear-gradient(180deg,#fff9f1_0%,#fff6ea_100%)]" />
         <img
-          className="pointer-events-none absolute bottom-0 left-0 -z-20 h-[78%] w-[58rem] max-w-[49%] object-contain object-left-bottom opacity-92"
+          className="pointer-events-none absolute bottom-0 left-0 -z-20 h-[72%] w-[50rem] max-w-[45%] object-contain object-left-bottom opacity-92"
           src={heroLogisticsUrl}
           alt=""
         />
