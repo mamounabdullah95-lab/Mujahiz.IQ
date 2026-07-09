@@ -96,7 +96,7 @@ export async function createUserProfile(
   uid: string,
   email: string,
   profile: Pick<AppUser, "fullName" | "phone" | "jobTitle" | "organization" | "governorate" | "sector"> &
-    Partial<Pick<AppUser, "city" | "reasonForJoining" | "language">>,
+    Partial<Pick<AppUser, "city" | "reasonForJoining" | "accountType" | "language">>,
 ) {
   const now = serverTimestamp();
   const trialExpiresAt = addDays(new Date(), defaultSettings.trialAccessDays);
@@ -111,6 +111,7 @@ export async function createUserProfile(
     city: profile.city || "",
     sector: profile.sector,
     reasonForJoining: profile.reasonForJoining || "",
+    accountType: profile.accountType || "buyer",
     role: "contributor",
     status: "approved",
     accessStatus: "temporary",
