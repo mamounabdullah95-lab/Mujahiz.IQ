@@ -31,6 +31,7 @@ interface RegisterInput {
   city?: string;
   sector: string;
   reasonForJoining?: string;
+  accountType?: "buyer" | "supplier";
   language?: "en" | "ar";
 }
 
@@ -186,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               city: input.city,
               sector: input.sector,
               reasonForJoining: input.reasonForJoining,
+              accountType: input.accountType,
               language: input.language,
             });
             setAppUser(profile);
@@ -209,6 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           city: input.city,
           sector: input.sector,
           reasonForJoining: input.reasonForJoining,
+          accountType: input.accountType,
           language: input.language,
         });
         await loadProfile(credential.user);
