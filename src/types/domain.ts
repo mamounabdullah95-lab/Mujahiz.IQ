@@ -63,6 +63,8 @@ export type BusinessType =
 
 export type TimestampLike = Timestamp | Date | FieldValue | string | null | undefined;
 
+export type AccountType = "buyer" | "supplier";
+
 export interface AppUser {
   uid: string;
   fullName: string;
@@ -74,6 +76,7 @@ export interface AppUser {
   city?: string;
   sector: string;
   reasonForJoining?: string;
+  accountType?: AccountType;
   role: UserRole;
   status: UserStatus;
   accessStatus: AccessStatus;
