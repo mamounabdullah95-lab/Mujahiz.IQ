@@ -14,11 +14,11 @@ document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <TaxonomyProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <TaxonomyProvider>
           <AppV2 />
-        </AuthProvider>
-      </TaxonomyProvider>
+        </TaxonomyProvider>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,
 );

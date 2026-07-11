@@ -13,8 +13,8 @@ test("accountType is not self editable", () => {
   assert.equal(editableFields.includes('"accountType"'), false);
 });
 
-test("company submission creation is supplier/admin only", () => {
-  assert.match(rules, /function canSubmitCompany\(\)[\s\S]*?\(isSupplierAccount\(\) \|\| isAdmin\(\)\)/);
+test("company submission creation supports buyers, suppliers, and admins", () => {
+  assert.match(rules, /function canSubmitCompany\(\)[\s\S]*?\(isBuyer\(\) \|\| isSupplierAccount\(\) \|\| isAdmin\(\)\)/);
   assert.match(rules, /match \/supplierSubmissions\/\{submissionId\}[\s\S]*?allow create: if canSubmitCompany\(\)/);
 });
 

@@ -1,4 +1,4 @@
-﻿import type { FieldValue, Timestamp } from "firebase/firestore";
+import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type Locale = "en" | "ar";
 
@@ -78,6 +78,7 @@ export interface AppUser {
   reasonForJoining?: string;
   accountType?: AccountType;
   supplierProfileId?: string;
+  unconsumedApprovedSubmissionIds?: string[];
   role: UserRole;
   status: UserStatus;
   accessStatus: AccessStatus;
@@ -189,6 +190,8 @@ export interface SupplierDraft {
 
 export interface Supplier extends SupplierDraft {
   id: string;
+  accountOwnerId?: string;
+  canReceiveRfqs?: boolean;
   nameOriginal: string;
   status: SupplierStatus;
   verificationStatus: VerificationStatus;

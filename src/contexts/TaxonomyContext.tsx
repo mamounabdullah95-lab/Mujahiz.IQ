@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import { getPlatformSettings } from "../services/firestore";
+import { isFirebaseConfigured } from "../config/firebase";
+import { useAuth } from "./AuthContext";
 import type { TaxonomyLists } from "../types/domain";
 import { taxonomyFromSettings } from "../utils/taxonomy";
 
@@ -19,14 +21,24 @@ interface TaxonomyContextValue {
 const TaxonomyContext = createContext<TaxonomyContextValue | null>(null);
 
 export function TaxonomyProvider({ children }: { children: ReactNode }) {
+  const { firebaseUser, loading: authLoading } = useAuth();
   const [taxonomy, setTaxonomy] = useState<TaxonomyLists>(() => taxonomyFromSettings());
 
   const reloadTaxonomy = useCallback(async () => {
-    const settings = await getPlatformSettings();
-    setTaxonomy(taxonomyFromSettings(settings));
-  }, []);
+    if (isFirebaseConfigured && !firebaseUser) {
+      setTaxonomy(taxonomyFromSettings());
+      return;
+    }
+    try {
+      const settings = await getPlatformSettings();
+      setTaxonomy(taxonomyFromSettings(settings));
+    } catch {
+      setTaxonomy(taxonomyFromSettings());
+    }
+  }, [firebaseUser]);
 
   useEffect(() => {
+    if (authLoading) return;
     void reloadTaxonomy();
     const sync = () => void reloadTaxonomy();
     window.addEventListener("mujahiz-iq-demo-db-updated", sync);
@@ -35,7 +47,7 @@ export function TaxonomyProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("mujahiz-iq-demo-db-updated", sync);
       window.removeEventListener("mujahiz-iq-taxonomy-updated", sync);
     };
-  }, [reloadTaxonomy]);
+  }, [authLoading, reloadTaxonomy]);
 
   const value = useMemo(() => ({ taxonomy, reloadTaxonomy }), [reloadTaxonomy, taxonomy]);
 

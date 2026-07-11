@@ -1,127 +1,30 @@
-﻿import { ArrowRight, BookOpen, CheckCircle2, HelpCircle, Mail, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, HelpCircle, Mail, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../components/ui";
 import { publicFaqItems, publicPages, type PublicPageKey } from "../data/publicContent";
 import logoLockupUrl from "../assets/identity/logo-lockup.png";
+import { getPublishedContentPage } from "../services/workspace";
+import type { ContentPageRecord } from "../types/workspace";
 
 const pageIcons = [BookOpen, ShieldCheck, UsersRound, Sparkles];
-
-function localized(text: { ar: string; en: string }, locale: "ar" | "en") {
-  return text[locale] || text.en || text.ar;
-}
-
-function pageActionTarget(pageKey: PublicPageKey) {
-  if (pageKey === "join_request" || pageKey === "suppliers") return "/register";
-  if (pageKey === "buyers" || pageKey === "supplier_directory") return "/login";
-  if (pageKey === "contact") return "mailto:mujahiziq@gmail.com";
-  return "/register";
-}
+const localized = (text: { ar: string; en: string }, locale: "ar" | "en") => text[locale] || text.en || text.ar;
+const slugs: Record<PublicPageKey, string> = { about: "about", suppliers: "suppliers", buyers: "buyers", how_it_works: "how-it-works", supplier_directory: "supplier-directory", join_request: "register", contact: "contact", faq: "faq", resources: "resources", terms: "terms", privacy: "privacy", security: "security" };
+function actionTarget(pageKey: PublicPageKey) { if (pageKey === "join_request" || pageKey === "suppliers") return "/register"; if (pageKey === "buyers" || pageKey === "supplier_directory") return "/login"; return "/register"; }
 
 export function PublicContentPage({ pageKey }: { pageKey: PublicPageKey }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language.startsWith("ar") ? "ar" : "en";
-  const page = publicPages[pageKey];
-  const isFaq = pageKey === "faq";
-  const isLegal = pageKey === "terms" || pageKey === "privacy" || pageKey === "security";
-
-  useEffect(() => {
-    document.title = localized(page.metaTitle, locale);
-  }, [locale, page]);
-
-  return (
-    <div className="bg-creamLight text-ink">
-      <section className="relative isolate overflow-hidden border-b border-borderSoft bg-creamLight">
-        <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_12%,rgba(243,112,33,0.11),transparent_24rem),radial-gradient(circle_at_85%_24%,rgba(6,43,77,0.045),transparent_28rem),linear-gradient(180deg,#fff9f1_0%,#fff6ea_100%)]" />
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_0.56fr] lg:items-center lg:px-8">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber/20 bg-white/76 px-4 py-2 text-sm font-black text-amber shadow-card">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-              {t("homepageSlogan")}
-            </div>
-            <h1 className="mt-6 max-w-4xl text-4xl font-black leading-tight text-ink sm:text-5xl">{localized(page.title, locale)}</h1>
-            <p className="mt-5 max-w-3xl text-lg font-medium leading-9 text-ink/72">{localized(page.subtitle, locale)}</p>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-muted">{localized(page.metaDescription, locale)}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link to={pageActionTarget(pageKey)}>
-                <Button>
-                  {pageKey === "buyers" || pageKey === "supplier_directory" ? t("landingAction") : t("requestAccess")}
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </Link>
-              <Link to="/contact">
-                <Button variant="secondary">
-                  {t("contactUs")}
-                  <Mail className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-          <aside className="rounded-[28px] border border-borderSoft bg-white/88 p-7 text-center shadow-soft">
-            <img className="mx-auto h-24 w-auto object-contain" src={logoLockupUrl} alt={t("appName")} />
-            <div className="mt-6 rounded-[22px] bg-cream p-5 text-start">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-amber" aria-hidden="true" />
-                <p className="text-sm font-bold leading-7 text-ink/78">{localized(page.cta, locale)}</p>
-              </div>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        {isFaq ? (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {publicFaqItems.map((item, index) => (
-              <article className="rounded-[18px] border border-borderSoft bg-white p-5 shadow-card" key={`${item.question.en}-${index}`}>
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-cream text-amber">
-                    <HelpCircle className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-black text-ink">{localized(item.question, locale)}</h2>
-                    <p className="mt-2 text-sm font-medium leading-7 text-muted">{localized(item.answer, locale)}</p>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className={isLegal ? "grid gap-4" : "grid gap-4 md:grid-cols-2"}>
-            {page.sections.map((section, index) => {
-              const Icon = pageIcons[index % pageIcons.length];
-              return (
-                <article className="rounded-[18px] border border-borderSoft bg-white p-6 shadow-card" key={`${section.title.en}-${index}`}>
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber/20 bg-cream text-amber">
-                      <Icon className="h-6 w-6" aria-hidden="true" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black text-ink">{localized(section.title, locale)}</h2>
-                      <p className="mt-3 text-sm font-medium leading-8 text-muted">{localized(section.body, locale)}</p>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="bg-navy text-white">
-        <div className="mx-auto grid max-w-7xl gap-5 px-4 py-9 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8">
-          <div>
-            <div className="text-2xl font-black text-orange-100">{localized(page.cta, locale)}</div>
-            <p className="mt-2 max-w-3xl text-sm leading-7 text-white/72">{t("footerDescription")}</p>
-          </div>
-          <Link to={pageActionTarget(pageKey)}>
-            <Button className="!bg-white text-navy hover:!bg-orange-100 hover:text-navy">
-              {pageKey === "buyers" || pageKey === "supplier_directory" ? t("landingAction") : t("requestAccess")}
-            </Button>
-          </Link>
-        </div>
-      </section>
-    </div>
-  );
+  const locale = i18n.language.startsWith("ar") ? "ar" as const : "en" as const;
+  const fallback = publicPages[pageKey];
+  const [managed, setManaged] = useState<ContentPageRecord | null>(null);
+  const isFaq = pageKey === "faq" && !managed?.contentAr && !managed?.contentEn;
+  const isLegal = ["terms", "privacy", "security"].includes(pageKey);
+  useEffect(() => { void getPublishedContentPage(slugs[pageKey]).then(setManaged).catch(() => setManaged(null)); }, [pageKey]);
+  const title = managed ? locale === "ar" ? managed.titleAr : managed.titleEn : localized(fallback.title, locale);
+  const content = managed ? locale === "ar" ? managed.contentAr : managed.contentEn : "";
+  const managedParagraphs = useMemo(() => content.split(/\n{2,}/).map((item) => item.trim()).filter(Boolean), [content]);
+  useEffect(() => { document.title = managed ? (locale === "ar" ? managed.metaTitleAr || managed.titleAr : managed.metaTitleEn || managed.titleEn) : localized(fallback.metaTitle, locale); }, [fallback, locale, managed]);
+  const action = pageKey === "contact" ? <a href="mailto:mujahiziq@gmail.com?subject=Inquiry%20from%20Mujahiz%20IQ%20Platform"><Button>{t("contactUs")}<Mail className="h-4 w-4" /></Button></a> : <Link to={actionTarget(pageKey)}><Button>{pageKey === "buyers" || pageKey === "supplier_directory" ? t("landingAction") : t("requestAccess")}<ArrowRight className="h-4 w-4" /></Button></Link>;
+  return <div className="bg-creamLight text-ink"><section className="relative isolate overflow-hidden border-b border-borderSoft"><div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_12%,rgba(243,112,33,0.11),transparent_24rem),linear-gradient(180deg,#fff9f1_0%,#fff6ea_100%)]" /><div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_0.56fr] lg:items-center lg:px-8"><div><div className="inline-flex items-center gap-2 rounded-full border border-amber/20 bg-white/76 px-4 py-2 text-sm font-black text-amber"><Sparkles className="h-4 w-4" />{t("homepageSlogan")}</div><h1 className="mt-6 max-w-4xl text-4xl font-black leading-tight sm:text-5xl">{title}</h1><p className="mt-5 max-w-3xl text-lg font-medium leading-9 text-ink/72">{localized(fallback.subtitle, locale)}</p><p className="mt-4 max-w-3xl text-sm leading-7 text-muted">{localized(fallback.metaDescription, locale)}</p><div className="mt-8 flex flex-wrap gap-3">{action}{pageKey !== "contact" ? <Link to="/contact"><Button variant="secondary">{t("contactUs")}<Mail className="h-4 w-4" /></Button></Link> : null}</div></div><aside className="rounded-[28px] border border-borderSoft bg-white/88 p-7 text-center shadow-soft"><img className="mx-auto h-24 w-auto object-contain" src={logoLockupUrl} alt={t("appName")} /><div className="mt-6 rounded-[22px] bg-cream p-5 text-start"><div className="flex items-start gap-3"><CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-amber" /><p className="text-sm font-bold leading-7 text-ink/78">{localized(fallback.cta, locale)}</p></div></div></aside></div></section><section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">{isFaq ? <div className="grid gap-4 lg:grid-cols-2">{publicFaqItems.map((item, index) => <article className="rounded-[18px] border border-borderSoft bg-white p-5 shadow-card" key={index}><div className="flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-cream text-amber"><HelpCircle className="h-5 w-5" /></div><div><h2 className="text-lg font-black">{localized(item.question, locale)}</h2><p className="mt-2 text-sm font-medium leading-7 text-muted">{localized(item.answer, locale)}</p></div></div></article>)}</div> : managedParagraphs.length ? <div className="grid gap-4">{managedParagraphs.map((paragraph, index) => <article className="rounded-[18px] border border-borderSoft bg-white p-6 shadow-card" key={index}><p className="whitespace-pre-wrap text-sm font-medium leading-8 text-muted">{paragraph}</p></article>)}</div> : <div className={isLegal ? "grid gap-4" : "grid gap-4 md:grid-cols-2"}>{fallback.sections.map((section, index) => { const Icon = pageIcons[index % pageIcons.length]; return <article className="rounded-[18px] border border-borderSoft bg-white p-6 shadow-card" key={index}><div className="flex items-start gap-4"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber/20 bg-cream text-amber"><Icon className="h-6 w-6" /></div><div><h2 className="text-xl font-black">{localized(section.title, locale)}</h2><p className="mt-3 text-sm font-medium leading-8 text-muted">{localized(section.body, locale)}</p></div></div></article>; })}</div>}</section></div>;
 }

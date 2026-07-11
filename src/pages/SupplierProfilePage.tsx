@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { Flag, MessageSquareText, Pencil, Send, X } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { FileText, Flag, Heart, MessageSquareText, Pencil, Send, X } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { StarRating } from "../components/StarRating";
 import { StatusBadge } from "../components/StatusBadge";
@@ -25,6 +25,7 @@ import {
   submitSupplierFeedback,
   submitSupplierReview,
 } from "../services/firestore";
+import { ensureConversation, listFavorites, removeFavorite, saveFavorite } from "../services/workspace";
 import type { Supplier, SupplierFeedback, SupplierFeedbackType, SupplierReview } from "../types/domain";
 import { formatDate } from "../utils/date";
 import { localizedCity, localizedSupplierGovernorates, localizedSupplierName, localizedSupplierText } from "../utils/supplierDisplay";
@@ -59,12 +60,15 @@ export function SupplierProfilePage() {
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
   const { appUser, firebaseUser, isAdmin } = useAuth();
   const { taxonomy } = useTaxonomy();
+  const navigate = useNavigate();
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [reviews, setReviews] = useState<SupplierReview[]>([]);
   const [myFeedback, setMyFeedback] = useState<SupplierFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewMessage, setReviewMessage] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
+  const [isFavorite, setIsFavorite] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -130,6 +134,16 @@ export function SupplierProfilePage() {
     };
   }, [firebaseUser, id, t]);
 
+  useEffect(() => {
+    if (!firebaseUser || appUser?.accountType !== "buyer" || !id) {
+      setIsFavorite(false);
+      return;
+    }
+    void listFavorites(firebaseUser.uid)
+      .then((items) => setIsFavorite(items.some((item) => item.supplierId === id)))
+      .catch(() => setIsFavorite(false));
+  }, [appUser?.accountType, firebaseUser?.uid, id]);
+
   if (!id) return null;
 
   if (loading) {
@@ -145,6 +159,8 @@ export function SupplierProfilePage() {
   }
 
   const canContribute = appUser?.role !== "viewer" && appUser?.role !== "suspended" && appUser?.status !== "suspended";
+  const isBuyerAccount = appUser?.accountType === "buyer" && Boolean(firebaseUser);
+  const canContactDirectly = isBuyerAccount && supplier.canReceiveRfqs === true && Boolean(supplier.accountOwnerId);
   const averageRating = Number(supplier.averageRating || 0);
 
   const setRating = (key: (typeof reviewCriteria)[number], value: number) =>
@@ -153,6 +169,42 @@ export function SupplierProfilePage() {
     setReview((current) => ({ ...current, [key]: value }));
   const setTagValue = (key: "positiveTags" | "concernTags", value: string[]) =>
     setReview((current) => ({ ...current, [key]: value }));
+
+  async function handleFavoriteToggle() {
+    if (!firebaseUser || !supplier || appUser?.accountType !== "buyer") return;
+    setBusy(true);
+    setActionMessage("");
+    try {
+      if (isFavorite) await removeFavorite(firebaseUser.uid, supplier.id);
+      else await saveFavorite(firebaseUser.uid, supplier);
+      setIsFavorite((current) => !current);
+    } catch {
+      setActionMessage(locale === "ar" ? "تعذر تحديث المفضلة. حاول مجدداً." : "The favorite could not be updated. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleStartConversation() {
+    if (!firebaseUser || !supplier?.accountOwnerId || appUser?.accountType !== "buyer") return;
+    setBusy(true);
+    setActionMessage("");
+    try {
+      const conversationId = await ensureConversation({
+        participantIds: [firebaseUser.uid, supplier.accountOwnerId],
+        participantLabels: {
+          [firebaseUser.uid]: appUser.fullName || appUser.organization || "Buyer",
+          [supplier.accountOwnerId]: localizedSupplierName(supplier, locale),
+        },
+        supplierId: supplier.id,
+      });
+      navigate(`/buyer/messages?conversation=${encodeURIComponent(conversationId)}`);
+    } catch {
+      setActionMessage(locale === "ar" ? "تعذر بدء المحادثة. حاول مجدداً." : "The conversation could not be started. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function handleReviewSubmit(event: FormEvent) {
     event.preventDefault();
@@ -212,6 +264,24 @@ export function SupplierProfilePage() {
       description={`${localizedSupplierGovernorates(supplier, taxonomy, locale)} - ${localizedCity(supplier.city, locale)}`}
       actions={
         <>
+          {isBuyerAccount ? (
+            <Button type="button" variant="secondary" disabled={busy} onClick={() => void handleFavoriteToggle()}>
+              <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} aria-hidden="true" />
+              {locale === "ar" ? (isFavorite ? "إزالة من المفضلة" : "حفظ في المفضلة") : (isFavorite ? "Remove favorite" : "Save favorite")}
+            </Button>
+          ) : null}
+          {canContactDirectly ? (
+            <Button type="button" variant="secondary" disabled={busy} onClick={() => void handleStartConversation()}>
+              <MessageSquareText className="h-4 w-4" aria-hidden="true" />
+              {locale === "ar" ? "مراسلة المجهز" : "Message supplier"}
+            </Button>
+          ) : null}
+          {canContactDirectly ? (
+            <Button type="button" disabled={busy} onClick={() => navigate(`/buyer/rfqs?supplier=${encodeURIComponent(supplier.id)}&category=${encodeURIComponent(supplier.categories[0] || "")}`)}>
+              <FileText className="h-4 w-4" aria-hidden="true" />
+              {locale === "ar" ? "طلب عرض سعر مباشر" : "Request direct quote"}
+            </Button>
+          ) : null}
           {canContribute ? (
             <Button type="button" variant="secondary" onClick={() => setShowFeedbackForm((current) => !current)}>
               {showFeedbackForm ? <X className="h-4 w-4" aria-hidden="true" /> : <Flag className="h-4 w-4" aria-hidden="true" />}
@@ -229,6 +299,16 @@ export function SupplierProfilePage() {
         </>
       }
     >
+      {actionMessage ? (
+        <div className="rounded-md border border-clay/25 bg-clay/5 px-3 py-2 text-sm font-semibold text-clay">{actionMessage}</div>
+      ) : null}
+      {isBuyerAccount && !canContactDirectly ? (
+        <div className="rounded-md border border-amber/30 bg-amber/5 px-3 py-2 text-sm font-semibold leading-6 text-ink">
+          {locale === "ar"
+            ? "هذه الشركة متاحة للبحث والتقييم فقط حالياً. سيظهر التواصل وطلب عرض السعر عند ربطها بحساب مجهز معتمد."
+            : "This company is currently available for discovery and reviews only. Messaging and direct RFQs appear after it is linked to an approved supplier account."}
+        </div>
+      ) : null}
       {feedbackMessage ? (
         <div className="rounded-md border border-mint/30 bg-mint/10 px-3 py-2 text-sm font-semibold text-mint">
           {feedbackMessage}

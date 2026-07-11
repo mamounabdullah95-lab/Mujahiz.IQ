@@ -2,6 +2,17 @@ import type { MaterialTerm } from "../types/domain";
 
 export const defaultMaterialTerms: MaterialTerm[] = [
   {
+    id: "term_differential_pressure_gauge",
+    canonicalEn: "Differential Pressure Gauge",
+    canonicalAr: "مقياس فرق الضغط",
+    category: "instrumentation",
+    subcategories: ["differential pressure instruments", "mechanical pressure gauges"],
+    synonyms: ["DP Gauge", "Differential Pressure Indicator", "differential pressure gauge", "عداد فرق الضغط", "مؤشر فرق الضغط", "مقياس ضغط تفاضلي"],
+    brands: [],
+    standards: [],
+    status: "active",
+  },
+  {
     id: "term_valves",
     canonicalEn: "Valves",
     canonicalAr: "صمامات",

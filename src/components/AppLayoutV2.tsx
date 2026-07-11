@@ -28,6 +28,8 @@ const publicRoutes = new Set([
   "/",
   "/login",
   "/register",
+  "/verify-email",
+  "/complete-profile",
   "/about",
   "/suppliers",
   "/buyers",

@@ -1,205 +1,73 @@
 import type { MaterialTerm, TaxonomyLists } from "../types/domain";
 
-const dictionaryStopWords = new Set([
-  "a",
-  "an",
-  "and",
-  "are",
-  "as",
-  "at",
-  "by",
-  "can",
-  "bank",
-  "cash",
-  "credit",
-  "invoice",
-  "for",
-  "from",
-  "has",
-  "have",
-  "i",
-  "in",
-  "is",
-  "it",
-  "need",
-  "needs",
-  "or",
-  "supplier",
-  "suppliers",
-  "the",
-  "to",
-  "want",
-  "with",
-  "transfer",
-  "payment",
-  "payments",
-  "terms",
-  "اريد",
-  "أريد",
-  "احتاج",
-  "أحتاج",
-  "ابحث",
-  "عن",
-  "في",
-  "من",
-  "الى",
-  "إلى",
-  "او",
-  "أو",
-  "و",
-  "مع",
-  "مجهز",
-  "مجهزين",
-  "شركة",
-  "شركات",
-  "لديه",
-  "لديها",
-  "يقبل",
-  "تقبل",
-  "دفع",
-  "مصرفي",
-  "نقدي",
-  "بعد",
-  "قبل",
-  "يوم",
-  "شهر",
-]);
+const stopWords = new Set(["a", "an", "and", "are", "as", "at", "by", "can", "for", "from", "has", "have", "i", "in", "is", "it", "need", "needs", "or", "supplier", "suppliers", "the", "to", "want", "with", "bank", "cash", "credit", "invoice", "transfer", "payment", "terms", "اريد", "أريد", "احتاج", "أحتاج", "ابحث", "عن", "في", "من", "الى", "إلى", "او", "أو", "و", "مع", "مجهز", "مجهزين", "شركة", "شركات", "لديه", "لديها", "يقبل", "تقبل", "دفع", "مصرفي", "نقدي", "بعد", "قبل"]);
 
 export function normalizeDictionaryText(value?: string) {
-  return (value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[\u064B-\u065F\u0670]/g, "")
-    .replace(/[أإآ]/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/ة/g, "ه")
-    .replace(/[^a-z0-9\u0600-\u06ff]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (value || "").trim().toLowerCase().replace(/[\u064B-\u065F\u0670]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/[^a-z0-9\u0600-\u06ff.+#/-]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
 export function materialAliases(term: MaterialTerm) {
-  return Array.from(
-    new Set([
-      term.canonicalEn,
-      term.canonicalAr,
-      ...term.synonyms,
-      ...term.brands,
-      ...term.standards,
-      ...term.subcategories,
-    ].filter(Boolean)),
-  );
+  return Array.from(new Set([term.canonicalEn, term.canonicalAr, ...term.synonyms, ...term.brands, ...term.standards, ...term.subcategories].filter(Boolean)));
 }
 
-export function matchMaterialTerms(query: string, terms: MaterialTerm[]) {
-  const normalizedQuery = ` ${normalizeDictionaryText(query)} `;
-  if (!normalizedQuery.trim()) {
-    return [];
-  }
-  return terms.filter((term) =>
-    materialAliases(term).some((alias) => {
-      const normalizedAlias = normalizeDictionaryText(alias);
-      if (!normalizedAlias || normalizedAlias.length < 2) {
-        return false;
-      }
-      return normalizedQuery.includes(` ${normalizedAlias} `) || normalizedQuery.includes(normalizedAlias);
-    }),
-  );
+function aliasesByLength(term: MaterialTerm) {
+  return materialAliases(term).map((alias) => ({ alias, normalized: normalizeDictionaryText(alias) })).filter((item) => item.normalized.length >= 2).sort((a, b) => b.normalized.length - a.normalized.length);
 }
 
-export function expandSearchWithMaterialTerms(query: string, terms: MaterialTerm[]) {
-  const matchedTerms = matchMaterialTerms(query, terms);
-  const expandedTerms = Array.from(
-    new Set(matchedTerms.flatMap((term) => [term.canonicalEn, term.canonicalAr, term.category, ...term.synonyms, ...term.brands, ...term.standards])),
-  );
+export function matchMaterialTerms(queryText: string, terms: MaterialTerm[]) {
+  const normalizedQuery = normalizeDictionaryText(queryText);
+  if (!normalizedQuery) return [];
+  const padded = ` ${normalizedQuery} `;
+  return terms.filter((term) => aliasesByLength(term).some(({ normalized }) => padded.includes(` ${normalized} `) || normalizedQuery === normalized));
+}
+
+export function expandSearchWithMaterialTerms(queryText: string, terms: MaterialTerm[]) {
+  const matchedTerms = matchMaterialTerms(queryText, terms);
+  const expandedTerms = Array.from(new Set(matchedTerms.flatMap((term) => [term.canonicalEn, term.canonicalAr, term.category, ...term.synonyms, ...term.brands, ...term.standards])));
+  return { expandedQuery: [queryText, ...expandedTerms].filter(Boolean).join(" "), matchedTerms };
+}
+
+export function expandIntentTerms(searchTerms: string[], terms: MaterialTerm[]) {
+  const matchedTerms = matchMaterialTerms(searchTerms.join(" "), terms);
   return {
-    expandedQuery: [query, ...expandedTerms].filter(Boolean).join(" "),
+    categories: Array.from(new Set(matchedTerms.map((term) => term.category).filter(Boolean))),
+    searchTerms: Array.from(new Set([...searchTerms, ...matchedTerms.flatMap((term) => [term.canonicalEn, term.canonicalAr, term.category, ...term.synonyms, ...term.brands, ...term.standards])].filter(Boolean))),
     matchedTerms,
   };
 }
 
-export function expandIntentTerms(searchTerms: string[], terms: MaterialTerm[]) {
-  const matched = matchMaterialTerms(searchTerms.join(" "), terms);
-  return {
-    categories: Array.from(new Set(matched.map((term) => term.category).filter(Boolean))),
-    searchTerms: Array.from(
-      new Set([
-        ...searchTerms,
-        ...matched.flatMap((term) => [
-          term.canonicalEn,
-          term.canonicalAr,
-          term.category,
-          ...term.synonyms,
-          ...term.brands,
-          ...term.standards,
-        ]),
-      ].filter(Boolean)),
-    ),
-    matchedTerms: matched,
-  };
+function knownPhrases(taxonomy: TaxonomyLists, terms: MaterialTerm[]) {
+  const values = [...taxonomy.governorates.flatMap((item) => [item.value, item.labelEn, item.labelAr]), ...taxonomy.supplierCategories.flatMap((item) => [item.value, item.labelEn, item.labelAr]), ...terms.flatMap((term) => [term.category, ...materialAliases(term)])];
+  return new Set(values.map(normalizeDictionaryText).filter(Boolean));
 }
 
-export function suggestUnknownTerms(query: string, taxonomy: TaxonomyLists, terms: MaterialTerm[]) {
-  const known = knownDictionaryTokens(taxonomy, terms);
-  const tokens = query
-    .split(/[\s,;،؛|/\\()[\]{}]+/)
-    .map((token) => token.trim())
-    .filter(Boolean);
+function useful(value: string) {
+  if (!value || stopWords.has(value) || /^\d+$/.test(value) || /^[a-z\u0600-\u06ff]{1,2}$/i.test(value)) return false;
+  return /[a-z\u0600-\u06ff]/i.test(value) || /\d/.test(value);
+}
 
+export function analyzeUnknownMaterialPhrases(queryText: string, taxonomy: TaxonomyLists, terms: MaterialTerm[]) {
+  const known = knownPhrases(taxonomy, terms);
+  const rawTokens = queryText.split(/[\s,;،؛|\\()[\]{}]+/).map((item) => item.trim()).filter(Boolean);
+  const tokens = rawTokens.map((raw, index) => ({ raw, normalized: normalizeDictionaryText(raw), index })).filter((item) => item.normalized && !stopWords.has(item.normalized) && !known.has(item.normalized));
   const suggestions: string[] = [];
-  const seen = new Set<string>();
-
-  for (const rawToken of tokens) {
-    const normalized = normalizeDictionaryText(rawToken);
-    if (!isUsefulCandidate(rawToken, normalized) || known.has(normalized) || seen.has(normalized)) {
-      continue;
-    }
-    suggestions.push(rawToken);
-    seen.add(normalized);
-    if (suggestions.length >= 8) {
-      break;
+  const covered = new Set<number>();
+  for (let size = Math.min(5, tokens.length); size >= 2; size -= 1) {
+    for (let start = 0; start <= tokens.length - size; start += 1) {
+      const group = tokens.slice(start, start + size);
+      if (group.some((item, index) => index > 0 && item.index !== group[index - 1].index + 1) || group.some((item) => covered.has(item.index))) continue;
+      const normalized = group.map((item) => item.normalized).join(" ");
+      if (!useful(normalized) || known.has(normalized)) continue;
+      suggestions.push(group.map((item) => item.raw).join(" "));
+      group.forEach((item) => covered.add(item.index));
+      if (suggestions.length >= 8) return suggestions;
     }
   }
-
+  tokens.filter((item) => !covered.has(item.index) && useful(item.normalized)).forEach((item) => { if (suggestions.length < 8) suggestions.push(item.raw); });
   return suggestions;
 }
 
-function knownDictionaryTokens(taxonomy: TaxonomyLists, terms: MaterialTerm[]) {
-  const values = [
-    ...taxonomy.governorates.flatMap((item) => [item.value, item.labelEn, item.labelAr]),
-    ...taxonomy.supplierCategories.flatMap((item) => [item.value, item.labelEn, item.labelAr]),
-    ...terms.flatMap((term) => [term.category, term.canonicalEn, term.canonicalAr, ...materialAliases(term)]),
-  ];
-  const tokens = new Set<string>();
-  values.forEach((value) => {
-    const normalized = normalizeDictionaryText(value);
-    if (normalized) {
-      tokens.add(normalized);
-      normalized.split(" ").forEach((token) => {
-        if (token.length > 1) {
-          tokens.add(token);
-        }
-      });
-    }
-  });
-  return tokens;
-}
-
-function isUsefulCandidate(rawToken: string, normalized: string) {
-  if (!normalized || dictionaryStopWords.has(normalized)) {
-    return false;
-  }
-  if (/^\d+$/.test(normalized)) {
-    return false;
-  }
-  if (/^[a-z]$/.test(normalized)) {
-    return false;
-  }
-  if (/^[\u0600-\u06ff]{1,2}$/.test(normalized)) {
-    return false;
-  }
-  if (/^(?:\+?\d[\d\s-]{5,}|[\w.-]+@[\w.-]+)$/.test(rawToken)) {
-    return false;
-  }
-  return /[a-z\u0600-\u06ff]/i.test(normalized) || /\d/.test(normalized);
+export function suggestUnknownTerms(queryText: string, taxonomy: TaxonomyLists, terms: MaterialTerm[]) {
+  if (matchMaterialTerms(queryText, terms).length) return [];
+  return analyzeUnknownMaterialPhrases(queryText, taxonomy, terms);
 }
