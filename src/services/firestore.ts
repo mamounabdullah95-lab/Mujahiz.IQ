@@ -1,4 +1,4 @@
-import {
+﻿import {
   addDoc,
   collection,
   deleteField,
@@ -821,6 +821,9 @@ export async function approveSupplierSubmission(
     });
 
     transaction.update(userDocRef, {
+      ...(user.accountType === "supplier" && !user.supplierProfileId
+        ? { supplierProfileId: supplierDoc.id }
+        : {}),
       approvedSubmissions,
       approvedNewSupplierContributions,
       consumedApprovedSupplierContributions:
@@ -1120,3 +1123,5 @@ export async function updateSupplierFeedbackStatus(
     } satisfies Omit<AuditLog, "id">);
   });
 }
+
+

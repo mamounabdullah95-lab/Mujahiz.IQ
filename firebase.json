@@ -10,7 +10,7 @@
     ]
   },
   "firestore": {
-    "rules": "firestore.rules",
+    "rules": "firestore.rbac.rules",
     "indexes": "firestore.indexes.json"
   }
 }

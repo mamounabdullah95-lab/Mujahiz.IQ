@@ -1,10 +1,10 @@
-import { ArrowRight, BadgeCheck, BarChart3, BookOpen, LockKeyhole, ShieldCheck, Truck, UserPlus, UsersRound } from "lucide-react";
+﻿import { ArrowRight, BadgeCheck, BarChart3, BookOpen, LockKeyhole, ShieldCheck, Truck, UserPlus, UsersRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { isFirebaseConfigured } from "../config/firebase";
 import { Button } from "../components/ui";
-import logoLockupUrl from "../assets/brand/mujahiz-iq-brand-lockup-horizontal.png";
-import heroLogisticsUrl from "../assets/brand/mujahiz-iq-brand-hero.png";
+import logoLockupUrl from "../assets/identity/logo-lockup.png";
+import heroLogisticsUrl from "../assets/identity/hero-logistics-full.png";
 
 const features = [
   { icon: BookOpen, titleKey: "landingDirectoryTitle", bodyKey: "landingDirectoryBody" },
@@ -125,3 +125,10 @@ export function LandingPage() {
     </div>
   );
 }
+
+
+
+
+
+
+

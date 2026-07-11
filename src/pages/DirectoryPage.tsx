@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import Fuse from "fuse.js";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle2, CircleHelp, LoaderCircle, Mail, MapPin, Phone, Search, SlidersHorizontal, Sparkles, X, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { StarRating } from "../components/StarRating";
@@ -82,6 +82,7 @@ export function DirectoryPage() {
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
   const { firebaseUser } = useAuth();
   const { taxonomy } = useTaxonomy();
+  const [searchParams] = useSearchParams();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [materialTerms, setMaterialTerms] = useState<MaterialTerm[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,15 +99,23 @@ export function DirectoryPage() {
   const [keywordSearchMessage, setKeywordSearchMessage] = useState("");
   const [lastSmartSearchAt, setLastSmartSearchAt] = useState(0);
   const [filters, setFilters] = useState({
-    query: "",
+    query: limitSearchText(searchParams.get("q") || "", KEYWORD_SEARCH_LIMIT),
     governorate: "",
-    category: "",
+    category: searchParams.get("category") || "",
     minRating: "",
     capabilityTag: "",
     businessType: "",
     confidenceLevel: "",
     coverageArea: "",
   });
+
+  useEffect(() => {
+    const nextQuery = limitSearchText(searchParams.get("q") || "", KEYWORD_SEARCH_LIMIT);
+    const nextCategory = searchParams.get("category") || "";
+    setFilters((current) => current.query === nextQuery && current.category === nextCategory
+      ? current
+      : { ...current, query: nextQuery, category: nextCategory });
+  }, [searchParams]);
 
   useEffect(() => {
     void listSuppliersPage(100)

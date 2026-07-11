@@ -1,4 +1,4 @@
-import type { FieldValue, Timestamp } from "firebase/firestore";
+﻿import type { FieldValue, Timestamp } from "firebase/firestore";
 
 export type Locale = "en" | "ar";
 
@@ -77,6 +77,7 @@ export interface AppUser {
   sector: string;
   reasonForJoining?: string;
   accountType?: AccountType;
+  supplierProfileId?: string;
   role: UserRole;
   status: UserStatus;
   accessStatus: AccessStatus;
@@ -355,3 +356,6 @@ export interface AuditLog {
   details: Record<string, unknown>;
   createdAt: TimestampLike;
 }
+
+
+

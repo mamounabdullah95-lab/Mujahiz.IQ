@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "./i18n";
 import "./index.css";
-import { App } from "./App";
+import { AppV2 } from "./AppV2";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TaxonomyProvider } from "./contexts/TaxonomyContext";
 
@@ -16,7 +16,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <TaxonomyProvider>
         <AuthProvider>
-          <App />
+          <AppV2 />
         </AuthProvider>
       </TaxonomyProvider>
     </BrowserRouter>

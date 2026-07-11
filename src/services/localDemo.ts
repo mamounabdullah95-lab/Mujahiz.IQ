@@ -1,4 +1,4 @@
-import { defaultSettings } from "../data/constants";
+﻿import { defaultSettings } from "../data/constants";
 import type {
   AccessCredit,
   AppUser,
@@ -514,6 +514,9 @@ export async function demoApproveSupplierSubmission(
   );
 
   Object.assign(user, {
+    ...(user.accountType === "supplier" && !user.supplierProfileId
+      ? { supplierProfileId: supplierId }
+      : {}),
     approvedSubmissions,
     approvedNewSupplierContributions,
     consumedApprovedSupplierContributions: (user.consumedApprovedSupplierContributions || 0) + accessGrant.consumed,
@@ -849,3 +852,5 @@ export async function demoIgnoreTermSuggestion(suggestion: TermSuggestion, actor
   });
   writeDb(db);
 }
+
+

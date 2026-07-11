@@ -1,0 +1,283 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function myUser() {
+      return userDoc(request.auth.uid).data;
+    }
+
+    function hasAnyRole(roles) {
+      return signedIn() && myUser().role in roles;
+    }
+
+    function isAdmin() {
+      return hasAnyRole(["owner", "admin"]);
+    }
+
+    function isOwner() {
+      return hasAnyRole(["owner"]);
+    }
+
+    function isBuyer() {
+      return signedIn() && (
+        myUser().accountType == "buyer"
+        || (!("accountType" in myUser()) && myUser().role == "contributor")
+      );
+    }
+
+    function isSupplierAccount() {
+      return signedIn() && myUser().accountType == "supplier";
+    }
+
+    function isApproved() {
+      return signedIn() && myUser().status == "approved";
+    }
+
+    function hasActiveAccess() {
+      return isAdmin() || (
+        isApproved()
+        && myUser().accessStatus in ["active", "temporary"]
+        && myUser().accessExpiresAt is timestamp
+        && myUser().accessExpiresAt > request.time
+      );
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function canSubmitCompany() {
+      return signedIn()
+        && myUser().status != "suspended"
+        && (isSupplierAccount() || isAdmin());
+    }
+
+    function isOwnSupplierProfile(supplierId) {
+      return isSupplierAccount()
+        && "supplierProfileId" in myUser()
+        && myUser().supplierProfileId == supplierId;
+    }
+
+    function canAdminUpdateUser() {
+      return isOwner()
+        || (
+          hasAnyRole(["admin"])
+          && resource.data.role in ["contributor", "viewer", "suspended"]
+          && request.resource.data.role in ["contributor", "viewer", "suspended"]
+          && ((!("accountType" in resource.data) && !("accountType" in request.resource.data))
+            || ("accountType" in resource.data && "accountType" in request.resource.data
+              && request.resource.data.accountType == resource.data.accountType))
+        );
+    }
+
+    function onlySelfEditableProfileFields() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        "fullName",
+        "phone",
+        "jobTitle",
+        "organization",
+        "governorate",
+        "city",
+        "sector",
+        "reasonForJoining",
+        "language",
+        "updatedAt"
+      ]);
+    }
+
+    function isValidSelfRegistration(userId) {
+      return isSelf(userId)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.accountType in ["buyer", "supplier"]
+        && request.resource.data.role == "contributor"
+        && request.resource.data.status == "approved"
+        && request.resource.data.accessStatus == "temporary"
+        && request.resource.data.points == 5
+        && request.resource.data.trustScore == 0
+        && request.resource.data.totalSubmissions == 0
+        && request.resource.data.approvedSubmissions == 0
+        && request.resource.data.rejectedSubmissions == 0
+        && request.resource.data.duplicateSubmissions == 0
+        && request.resource.data.approvedReviews == 0
+        && request.resource.data.approvedNewSupplierContributions == 0
+        && request.resource.data.consumedApprovedSupplierContributions == 0
+        && request.resource.data.accessExpiresAt is timestamp
+        && request.resource.data.accessExpiresAt > request.time;
+    }
+
+    function isValidOwnTrialCredit() {
+      return signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.source == "trial_access"
+        && request.resource.data.approvedSupplierCount == 0
+        && request.resource.data.daysGranted is int
+        && request.resource.data.daysGranted >= 0
+        && request.resource.data.daysGranted <= 14
+        && request.resource.data.status == "applied";
+    }
+
+    function isValidOwnTrialAuditLog() {
+      return signedIn()
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.action == "user.trial_access_started"
+        && request.resource.data.targetType == "user"
+        && request.resource.data.targetId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow create: if isValidSelfRegistration(userId);
+      allow read: if isSelf(userId) || isAdmin();
+      allow update: if canAdminUpdateUser() || (isSelf(userId) && onlySelfEditableProfileFields());
+      allow delete: if isOwner() && userId != request.auth.uid;
+    }
+
+    match /suppliers/{supplierId} {
+      allow read: if isAdmin() || (isBuyer() && hasActiveAccess()) || isOwnSupplierProfile(supplierId);
+      allow create, update: if isAdmin();
+      allow delete: if isOwner();
+    }
+
+    match /supplierDuplicateIndex/{supplierId} {
+      allow read: if isSupplierAccount() || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /supplierSubmissions/{submissionId} {
+      allow create: if canSubmitCompany()
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.submissionStatus in ["draft", "pending_review", "possible_duplicate"];
+
+      allow read: if isAdmin() || (signedIn() && resource.data.submittedBy == request.auth.uid);
+
+      allow update: if isAdmin() || (
+        canSubmitCompany()
+        && resource.data.submittedBy == request.auth.uid
+        && resource.data.submissionStatus in ["draft", "needs_correction"]
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.submissionStatus in ["draft", "pending_review", "possible_duplicate"]
+      );
+
+      allow delete: if isAdmin() || (
+        canSubmitCompany()
+        && resource.data.submittedBy == request.auth.uid
+        && resource.data.submissionStatus == "draft"
+      );
+    }
+
+    match /reviews/{reviewId} {
+      allow create: if isBuyer()
+        && hasActiveAccess()
+        && request.resource.data.reviewedBy == request.auth.uid
+        && request.resource.data.status == "pending_review";
+
+      allow read: if isAdmin()
+        || (isBuyer() && hasActiveAccess() && resource.data.status == "approved")
+        || (isBuyer() && resource.data.reviewedBy == request.auth.uid)
+        || isOwnSupplierProfile(resource.data.supplierId);
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /supplierFeedback/{feedbackId} {
+      allow create: if isBuyer()
+        && hasActiveAccess()
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.status == "pending"
+        && request.resource.data.supplierId is string
+        && request.resource.data.supplierName is string
+        && request.resource.data.type in [
+          "incorrect_information",
+          "contact_issue",
+          "location_issue",
+          "category_issue",
+          "duplicate_supplier",
+          "business_closed",
+          "other"
+        ]
+        && request.resource.data.message is string
+        && request.resource.data.message.size() >= 10
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.suggestedCorrection is string
+        && request.resource.data.suggestedCorrection.size() <= 1000;
+
+      allow read: if isAdmin() || (signedIn() && resource.data.submittedBy == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /materialTerms/{termId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /termSuggestions/{suggestionId} {
+      allow create: if isBuyer()
+        && hasActiveAccess()
+        && request.resource.data.term is string
+        && request.resource.data.term.size() >= 2
+        && request.resource.data.term.size() <= 80
+        && request.resource.data.normalizedTerm is string
+        && request.resource.data.status == "pending"
+        && request.resource.data.count is int
+        && request.resource.data.sources is list
+        && request.resource.data.examples is list;
+
+      allow read: if isAdmin();
+
+      allow update: if isAdmin() || (
+        isBuyer()
+        && hasActiveAccess()
+        && resource.data.status == "pending"
+        && request.resource.data.status == "pending"
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "count",
+          "sources",
+          "examples",
+          "updatedAt",
+          "createdAt",
+          "term",
+          "normalizedTerm",
+          "status"
+        ])
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    match /accessCredits/{creditId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isAdmin() || isValidOwnTrialCredit();
+      allow update, delete: if isAdmin();
+    }
+
+    match /contributionLogs/{logId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin();
+      allow delete: if isOwner();
+    }
+
+    match /settings/{settingId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isOwner();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || isValidOwnTrialAuditLog();
+      allow update, delete: if false;
+    }
+  }
+}

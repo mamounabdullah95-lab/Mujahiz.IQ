@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Award, Building2, CalendarClock, CheckCircle2, ClipboardCheck, Plus, Search, Star, TrendingUp, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -9,8 +9,7 @@ import { badgeDefinitions, defaultSettings, labelFor } from "../data/constants";
 import { getPlatformSettings, listMySubmissions } from "../services/firestore";
 import type { PlatformSettings } from "../types/domain";
 import { formatDate, toDate } from "../utils/date";
-import heroMapContainerUrl from "../assets/brand/mujahiz-iq-brand-hero.png";
-
+import heroMapContainerUrl from "../assets/identity/hero-map-container.png";
 const dashboardCopy = {
   ar: {
     buyer: {
@@ -117,7 +116,7 @@ export function DashboardPage() {
       }
     >
       <div className="relative overflow-hidden rounded-[24px] border border-borderSoft bg-cream p-6 shadow-card">
-        <img className="absolute inset-0 h-full w-full object-contain object-left-bottom opacity-20" src={heroMapContainerUrl} alt="" />
+        <img className="absolute inset-0 h-full w-full object-contain object-left-bottom opacity-30" src={heroMapContainerUrl} alt="" />
         <div className="relative grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <div className="inline-flex items-center gap-2 rounded-2xl bg-white/86 px-4 py-2 text-sm font-black text-amber shadow-card">
@@ -209,3 +208,7 @@ export function DashboardPage() {
     </Section>
   );
 }
+
+
+
+
