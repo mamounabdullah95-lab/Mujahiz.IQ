@@ -57,7 +57,99 @@ service cloud.firestore {
     function canSubmitCompany() {
       return signedIn()
         && myUser().status != "suspended"
-        && (isSupplierAccount() || isAdmin());
+        && (isBuyer() || isSupplierAccount() || isAdmin());
+    }
+
+    function canImportSupplierExcel() {
+      return signedIn()
+        && myUser().status != "suspended"
+        && (isBuyer() || isAdmin());
+    }
+
+    function importerRoleMatches(role) {
+      return (isOwner() && role == "owner")
+        || (hasAnyRole(["admin"]) && role == "admin")
+        || (isBuyer() && role == "buyer");
+    }
+
+    function noStoredFileFields(data) {
+      return !("fileUrl" in data)
+        && !("downloadUrl" in data)
+        && !("storagePath" in data)
+        && !("fileContent" in data)
+        && !("base64" in data)
+        && !("attachmentUrl" in data)
+        && !("imageUrl" in data);
+    }
+
+    function validExcelImportSubmission(data, submissionId) {
+      return canImportSupplierExcel()
+        && data.source == "excel_import"
+        && data.submittedBy == request.auth.uid
+        && data.importedBy == request.auth.uid
+        && importerRoleMatches(data.importedByRole)
+        && data.importBatchId is string
+        && data.originalRowNumber is int
+        && data.originalRowNumber >= 2
+        && data.originalRowNumber <= 51
+        && data.profileCompleteness is int
+        && data.profileCompleteness >= 0
+        && data.profileCompleteness <= 100
+        && data.validationStatus in ["valid", "needs_review", "possible_duplicate"]
+        && data.idempotencyKey == submissionId
+        && data.submissionStatus in ["pending_review", "possible_duplicate"]
+        && data.countsForAccess == false
+        && data.creditConsumed == false
+        && (!(data.submissionStatus == "possible_duplicate")
+          || (isAdmin()
+            && data.duplicateOverrideReason is string
+            && data.duplicateOverrideReason.size() >= 10))
+        && noStoredFileFields(data)
+        && noStoredFileFields(data.supplierData);
+    }
+
+    function validSupplierImportBatch(data) {
+      return canImportSupplierExcel()
+        && data.source == "excel_import"
+        && data.importedBy == request.auth.uid
+        && importerRoleMatches(data.importedByRole)
+        && data.originalFileName is string
+        && data.originalFileName.size() > 0
+        && data.originalFileName.size() <= 140
+        && data.fileSizeBytes is int
+        && data.fileSizeBytes > 0
+        && data.fileSizeBytes <= 204800
+        && data.totalRowsDetected is int
+        && data.totalRowsDetected > 0
+        && data.totalRowsDetected <= 50
+        && data.acceptedRows is int
+        && data.acceptedRows > 0
+        && data.acceptedRows <= data.totalRowsDetected
+        && data.averageCompleteness is int
+        && data.averageCompleteness >= 0
+        && data.averageCompleteness <= 100
+        && data.status == "completed"
+        && noStoredFileFields(data);
+    }
+
+    function validPendingSubmissionIndex(data, indexId) {
+      return canSubmitCompany()
+        && data.submissionId == indexId
+        && data.submittedBy == request.auth.uid
+        && data.supplierName is string
+        && data.supplierName.size() > 0
+        && data.normalizedName is string
+        && data.normalizedPhones is list
+        && data.categories is list
+        && data.source == "pending_submission"
+        && noStoredFileFields(data);
+    }
+
+    function isValidOwnSupplierImportAudit() {
+      return canImportSupplierExcel()
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.action == "supplier_import.completed"
+        && request.resource.data.targetType == "supplierImportBatch";
     }
 
     function isOwnSupplierProfile(supplierId) {
@@ -147,14 +239,20 @@ service cloud.firestore {
     }
 
     match /supplierDuplicateIndex/{supplierId} {
-      allow read: if isSupplierAccount() || isAdmin();
+      allow read: if canSubmitCompany();
       allow create, update, delete: if isAdmin();
     }
 
     match /supplierSubmissions/{submissionId} {
-      allow create: if canSubmitCompany()
-        && request.resource.data.submittedBy == request.auth.uid
-        && request.resource.data.submissionStatus in ["draft", "pending_review", "possible_duplicate"];
+      allow create: if validExcelImportSubmission(request.resource.data, submissionId)
+        || (
+          canSubmitCompany()
+          && (!("source" in request.resource.data) || request.resource.data.source == "manual")
+          && request.resource.data.submittedBy == request.auth.uid
+          && request.resource.data.submissionStatus in ["draft", "pending_review", "possible_duplicate"]
+          && noStoredFileFields(request.resource.data)
+          && noStoredFileFields(request.resource.data.supplierData)
+        );
 
       allow read: if isAdmin() || (signedIn() && resource.data.submittedBy == request.auth.uid);
 
@@ -164,6 +262,8 @@ service cloud.firestore {
         && resource.data.submissionStatus in ["draft", "needs_correction"]
         && request.resource.data.submittedBy == request.auth.uid
         && request.resource.data.submissionStatus in ["draft", "pending_review", "possible_duplicate"]
+        && noStoredFileFields(request.resource.data)
+        && noStoredFileFields(request.resource.data.supplierData)
       );
 
       allow delete: if isAdmin() || (
@@ -171,6 +271,26 @@ service cloud.firestore {
         && resource.data.submittedBy == request.auth.uid
         && resource.data.submissionStatus == "draft"
       );
+    }
+
+    match /supplierImportBatches/{batchId} {
+      allow create: if validSupplierImportBatch(request.resource.data);
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.importedBy == request.auth.uid);
+      allow update, delete: if false;
+    }
+
+    match /supplierSubmissionDuplicateIndex/{indexId} {
+      allow read: if canSubmitCompany();
+      allow create: if validPendingSubmissionIndex(request.resource.data, indexId);
+      allow update: if isAdmin() || (
+        signedIn()
+        && resource.data.submittedBy == request.auth.uid
+        && request.resource.data.submittedBy == request.auth.uid
+        && validPendingSubmissionIndex(request.resource.data, indexId)
+      );
+      allow delete: if isAdmin()
+        || (signedIn() && resource.data.submittedBy == request.auth.uid);
     }
 
     match /reviews/{reviewId} {
@@ -276,7 +396,7 @@ service cloud.firestore {
 
     match /auditLogs/{logId} {
       allow read: if isAdmin();
-      allow create: if isAdmin() || isValidOwnTrialAuditLog();
+      allow create: if isAdmin() || isValidOwnTrialAuditLog() || isValidOwnSupplierImportAudit();
       allow update, delete: if false;
     }
   }

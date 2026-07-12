@@ -367,7 +367,10 @@ export async function submitSupplierDraft(userId: string, draft: SupplierDraft, 
   if (!isFirebaseConfigured) {
     return demo.demoSubmitSupplierDraft(userId, draft, duplicateCheck);
   }
-  await addDoc(submissionsRef, {
+  const submissionDoc = doc(submissionsRef);
+  const pendingIndexDoc = doc(db, "supplierSubmissionDuplicateIndex", submissionDoc.id);
+  const batch = writeBatch(db);
+  batch.set(submissionDoc, {
     submittedBy: userId,
     submissionStatus: duplicateCheck.hasPossibleDuplicate ? "possible_duplicate" : "pending_review",
     supplierData: withoutUndefinedFields(draft),
@@ -377,8 +380,24 @@ export async function submitSupplierDraft(userId: string, draft: SupplierDraft, 
     },
     countsForAccess: false,
     creditConsumed: false,
+    source: "manual",
     createdAt: serverTimestamp(),
   } satisfies Omit<SupplierSubmission, "id" | "createdAt"> & { createdAt: unknown });
+  batch.set(pendingIndexDoc, withoutUndefinedFields({
+    submissionId: submissionDoc.id,
+    submittedBy: userId,
+    supplierName: draft.nameOriginal,
+    normalizedName: draft.normalizedName,
+    normalizedPhones: draft.normalizedPhones,
+    normalizedEmail: draft.normalizedEmail,
+    website: draft.website,
+    googleMapsLink: draft.googleMapsLink,
+    governorate: draft.governorate,
+    categories: draft.categories,
+    source: "pending_submission",
+    createdAt: serverTimestamp(),
+  }));
+  await batch.commit();
 }
 
 export async function resubmitSupplierSubmission(
@@ -414,6 +433,20 @@ export async function resubmitSupplierSubmission(
       countsForAccess: false,
       creditConsumed: false,
     });
+    transaction.set(doc(db, "supplierSubmissionDuplicateIndex", submissionId), withoutUndefinedFields({
+      submissionId,
+      submittedBy: userId,
+      supplierName: draft.nameOriginal,
+      normalizedName: draft.normalizedName,
+      normalizedPhones: draft.normalizedPhones,
+      normalizedEmail: draft.normalizedEmail,
+      website: draft.website,
+      googleMapsLink: draft.googleMapsLink,
+      governorate: draft.governorate,
+      categories: draft.categories,
+      source: "pending_submission",
+      createdAt: serverTimestamp(),
+    }));
     transaction.set(auditDoc, {
       actorId: userId,
       action: "supplier_submission.resubmitted",
@@ -819,6 +852,7 @@ export async function approveSupplierSubmission(
       reviewedAt: serverTimestamp(),
       adminNotes: "",
     });
+    transaction.delete(doc(db, "supplierSubmissionDuplicateIndex", submission.id));
 
     transaction.update(userDocRef, {
       ...(user.accountType === "supplier" && !user.supplierProfileId
@@ -902,6 +936,7 @@ export async function decideSupplierSubmission(
       creditConsumed: false,
       reviewedAt: serverTimestamp(),
     });
+    transaction.delete(doc(db, "supplierSubmissionDuplicateIndex", submission.id));
 
     if (user) {
       transaction.update(userRef, {

@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "preview:static": "node scripts/preview-static.mjs"
+    "preview:static": "node scripts/preview-static.mjs",
+    "generate:supplier-template": "node scripts/generate-supplier-import-template.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

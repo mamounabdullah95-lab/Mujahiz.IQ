@@ -1,18 +1,11 @@
 import { defaultSettings } from "../data/constants";
 import type { AppUser, PlatformSettings, SupplierDraft } from "../types/domain";
+import { calculateSupplierProfileCompleteness } from "./supplierExcelCore.js";
 
 export function calculateCompletionScore(draft: Partial<SupplierDraft>) {
-  let score = 0;
-  if (draft.nameOriginal && draft.displayName && draft.businessType) score += 18;
-  if (draft.governorate && draft.city && draft.marketArea) score += 16;
-  if ((draft.phones?.length || 0) > 0 || draft.email || draft.website || draft.facebook) score += 18;
-  if ((draft.categories?.length || 0) > 0 && (draft.capabilityTags?.length || 0) > 0) score += 18;
-  if (draft.sourceType && draft.confidenceLevel && draft.hasDirectExperience) score += 18;
-  if (draft.address) score += 3;
-  if (draft.contactPerson) score += 3;
-  if (draft.shortDescription) score += 3;
-  if (draft.googleMapsLink || draft.website || draft.facebook) score += 3;
-  return Math.min(score, 100);
+  return calculateSupplierProfileCompleteness(
+    draft as Partial<SupplierDraft> & Record<string, unknown>,
+  ).percentage;
 }
 
 export function qualityRatio(approved: number, rejected: number, duplicates: number) {

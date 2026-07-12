@@ -584,37 +584,23 @@ export function AddSupplierPage() {
           void handleSubmit();
         }}
       >
-        {!isApprovedEditMode ? <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {!isApprovedEditMode && appUser?.accountType !== "supplier" ? (
+          <div className="flex flex-col gap-3 rounded-xl border border-amber/30 bg-amber/10 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="font-bold text-ink">{t("supplierImportTitle")}</h3>
-              <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">{t("supplierImportBody")}</p>
+              <h3 className="font-black text-ink">
+                {locale === "ar" ? "استيراد عدة مجهزين من Excel" : "Import multiple suppliers from Excel"}
+              </h3>
+              <p className="mt-1 text-sm text-muted">
+                {locale === "ar"
+                  ? "استخدم القالب الرسمي وراجع كل صف قبل الإرسال."
+                  : "Use the official template and review every row before submission."}
+              </p>
             </div>
-            <label className="inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:border-river hover:text-river">
-              <Upload className="h-4 w-4" aria-hidden="true" />
-              {importing ? t("loading") : t("supplierImportButton")}
-              <input
-                className="sr-only"
-                type="file"
-                accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
-                disabled={busy || importing}
-                onChange={(event) => void handleWorkbookUpload(event)}
-              />
-            </label>
+            <Button type="button" variant="secondary" onClick={() => navigate("/suppliers/import")}>
+              {locale === "ar" ? "فتح شاشة الاستيراد" : "Open import workspace"}
+            </Button>
           </div>
-          <div className="mt-2 text-xs font-semibold text-slate-500">{t("supplierImportLimit")}</div>
-          <div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold">
-            <a className="text-river hover:text-ink" href="/templates/supplier-single-template-ar.xlsx" download>{t("downloadSingleArabicTemplate")}</a>
-            <a className="text-river hover:text-ink" href="/templates/supplier-single-template-en.xlsx" download>{t("downloadSingleEnglishTemplate")}</a>
-            <a className="text-river hover:text-ink" href="/templates/supplier-bulk-template-ar.xlsx" download>{t("downloadBulkArabicTemplate")}</a>
-            <a className="text-river hover:text-ink" href="/templates/supplier-bulk-template-en.xlsx" download>{t("downloadBulkEnglishTemplate")}</a>
-          </div>
-          {importSummary ? (
-            <div className="mt-3 rounded-md border border-mint/30 bg-mint/10 px-3 py-2 text-sm font-semibold text-mint">
-              {importSummary}
-            </div>
-          ) : null}
-        </div> : null}
+        ) : null}
 
         {bulkItems.length && !isBulkEditing ? (
           <BulkImportPreview

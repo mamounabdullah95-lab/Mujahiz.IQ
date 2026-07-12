@@ -5,6 +5,7 @@ import { AuthLoadingScreen } from "./components/AuthLoadingScreen";
 import { RoleProtectedRoute } from "./components/RoleProtectedRoute";
 
 const AddSupplierPage = lazy(() => import("./pages/AddSupplierPage").then((module) => ({ default: module.AddSupplierPage })));
+const SupplierExcelImportPage = lazy(() => import("./pages/SupplierExcelImportPage").then((module) => ({ default: module.SupplierExcelImportPage })));
 const AdminApprovedSuppliersPage = lazy(() => import("./pages/admin/AdminApprovedSuppliersPage").then((module) => ({ default: module.AdminApprovedSuppliersPage })));
 const AdminAuditLogsPage = lazy(() => import("./pages/admin/AdminAuditLogsPage").then((module) => ({ default: module.AdminAuditLogsPage })));
 const AdminCategoriesPage = lazy(() => import("./pages/admin/AdminCategoriesPage").then((module) => ({ default: module.AdminCategoriesPage })));
@@ -36,6 +37,7 @@ const SupplierProfilePage = lazy(() => import("./pages/SupplierProfilePage").the
 
 const allRoles = ["buyer", "supplier", "admin", "super_admin"] as const;
 const buyerRoles = ["buyer", "admin", "super_admin"] as const;
+const supplierExcelImporterRoles = ["buyer", "admin", "super_admin"] as const;
 const supplierRoles = ["supplier"] as const;
 const adminRoles = ["admin", "super_admin"] as const;
 const superAdminRoles = ["super_admin"] as const;
@@ -82,6 +84,10 @@ export function AppV2() {
             <Route path="buyer/settings" element={soon("إعدادات الحساب", "Account settings")} />
             <Route path="my-access" element={<MyAccessPage />} />
             <Route path="my-reviews" element={<MyReviewsPage />} />
+          </Route>
+
+          <Route element={<RoleProtectedRoute allowedRoles={supplierExcelImporterRoles} allowPending />}>
+            <Route path="suppliers/import" element={<SupplierExcelImportPage />} />
           </Route>
 
           <Route element={<RoleProtectedRoute allowedRoles={buyerRoles} requireAccess />}>
