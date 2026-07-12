@@ -291,4 +291,762 @@ const resources = {
       landingDirectoryBody: "Search verified suppliers by category, city, products, and services.",
       landingReviewBody: "Supplier data is organized through clear criteria to help you reach more reliable options.",
       landingAccessBody: "A secure workspace for sharing information and communicating with verified suppliers.",
-      landingBadgesBody: "Compare quotations easily based on price, quali×_uÖÚ$z{-®éÜj×Æ–VE÷Gvó¢-Š­˜RŠ­Šİ˜]˜­˜B‹]˜˜­˜b˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢7WÆ–W$'VÆ´–×÷'DÆ–VEöfWs¢-Š­˜RŠ­Šİ˜]˜­˜B·¶6÷VçG×Ò‹]˜˜˜˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢7WÆ–W$'VÆ´–×÷'DÆ–VEöÖç“¢-Š­˜RŠ­Šİ˜]˜­˜B·¶6÷VçG×Ò‹]˜˜½Šr˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢7WÆ–W$'VÆ´–×÷'DÆ–VEö÷F†W#¢-Š­˜RŠ­Šİ˜]˜­˜B·¶6÷VçG×Ò‹]˜˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢7WÆ–W$'VÆµ&Wf–WuF—FÆS¢-˜]‹Š}ŠÍ‹Š’Š}˜M˜]ŠÍ˜}‹-˜­˜bŠı˜‹Š’˜Š}ŠİŠıŠ’"À¢7WÆ–W$'VÆµ&Wf–Wt&öG“¢'·¶6÷VçG×Ò‹]˜ŠÍŠ}˜}‹"˜M˜M˜]‹Š}ŠÍ‹Š’â˜­˜ŠÍŠò·¶–çfÆ–G×Ò‹]˜˜­ŠİŠ­Š}ŠÂŠ]˜M˜’Š]˜=˜]Š}˜BŠ}˜MŠİ˜-˜˜BŠ}˜M˜]‹}˜M˜ŠŠ’â"À¢7WÆ–W$'VÆµ7V&Ö—E÷¦W&ó¢-Š]‹‹=Š}˜BŠ}˜MŠı˜‹Š’"À¢7WÆ–W$'VÆµ7V&Ö—EööæS¢-Š]‹‹=Š}˜B˜]ŠÍ˜}‹"˜Š}ŠİŠò"À¢7WÆ–W$'VÆµ7V&Ö—E÷Gvó¢-Š]‹‹=Š}˜B˜]ŠÍ˜}‹-˜­˜b"À¢7WÆ–W$'VÆµ7V&Ö—EöfWs¢-Š]‹‹=Š}˜B·¶6÷VçG×Ò˜]ŠÍ˜}‹-˜­˜b"À¢7WÆ–W$'VÆµ7V&Ö—EöÖç“¢-Š]‹‹=Š}˜B·¶6÷VçG×Ò˜]ŠÍ˜}‹-˜½Šr"À¢7WÆ–W$'VÆµ7V&Ö—Eö÷F†W#¢-Š]‹‹=Š}˜B·¶6÷VçG×Ò˜]ŠÍ˜}‹""À¢7WÆ–W$'VÆµ7V&Ö—GFVE÷¦W&ó¢-˜M˜R˜­Š­˜RŠ]‹‹=Š}˜BŠ=˜¢‹}˜MŠ‚â"À¢7WÆ–W$'VÆµ7V&Ö—GFVEööæS¢-Š­˜RŠ]‹‹=Š}˜B‹}˜MŠ‚˜]ŠÍ˜}‹"˜Š}ŠİŠò˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢7WÆ–W$'VÆµ7V&Ö—GFVE÷Gvó¢-Š­˜RŠ]‹‹=Š}˜B‹}˜MŠ˜­˜b˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢7WÆ–W$'VÆµ7V&Ö—GFVEöfWs¢-Š­˜RŠ]‹‹=Š}˜B·¶6÷VçG×Ò‹}˜MŠŠ}Š¢˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢7WÆ–W$'VÆµ7V&Ö—GFVEöÖç“¢-Š­˜RŠ]‹‹=Š}˜B·¶6÷VçG×Ò‹}˜MŠ˜½Šr˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢7WÆ–W$'VÆµ7V&Ö—GFVEö÷F†W#¢-Š­˜RŠ]‹‹=Š}˜B·¶6÷VçG×Ò‹}˜MŠ‚˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢7WÆ–W$'VÆ´VF—EF—FÆS¢-Š­‹Šı˜­˜B˜]ŠÍ˜}‹"˜]‹=Š­˜‹Šò"À¢7WÆ–W$'VÆ´VF—D&öG“¢-Š=˜=˜]˜BŠ˜­Š}˜mŠ}Š¢Š}˜M‹]˜··&÷w×Ò˜}˜mŠ}ˆÂŠ½˜RŠ}Šİ˜‹˜rŠıŠ}Ší˜B˜-Š}Šm˜]Š’Š}˜M˜]‹Š}ŠÍ‹Š’Š}˜MŠÍ˜]Š}‹˜­Š’Š=˜‚Š=‹‹=˜B˜}‹ŠrŠ}˜M˜]ŠÍ˜}‹"˜]˜m˜‹ŠıŠ}˜²â"À¢6fTæE&WGW&ã¢-Šİ˜‹‚˜Š}˜M‹˜ŠıŠ’"À¢&6µFô'VÆµ&Wf–Ws¢-Š}˜M‹˜ŠıŠ’Š]˜M˜’˜]‹Š}ŠÍ‹Š’Š}˜MŠı˜‹Š’"À¢6VæEF†—57WÆ–W#¢-Š]‹‹=Š}˜B˜}‹ŠrŠ}˜M˜]ŠÍ˜}‹""À¢7WÆ–W$'VÆ´—FVÕ6fVC¢-Š­˜RŠİ˜‹‚‹]˜Š}˜M˜]ŠÍ˜}‹"ŠıŠ}Ší˜B˜-Š}Šm˜]Š’Š}˜M˜]‹Š}ŠÍ‹Š’Š}˜MŠÍ˜]Š}‹˜­Š’â"À¢7WÆ–W$'VÆ´—FVÕ7V&Ö—GFVC¢-Š­˜RŠ]‹‹=Š}˜B˜}‹ŠrŠ}˜M˜]ŠÍ˜}‹"˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢7WÆ–W$'VÆ´æô7F—fT—FVÓ¢-˜MŠr˜­˜ŠÍŠò˜]ŠÍ˜}‹"˜]‹=Š­˜‹Šò˜]˜Š­˜ŠÒŠİŠ}˜M˜­Š}˜²â"À¢FE7WÆ–W$G&gE&W7F÷&VC¢-Š­˜]Š¢Š}‹=Š­‹Š}ŠıŠ’Š}˜M˜]‹=˜ŠıŠ’Š}˜M˜]Šİ˜˜‹Š’Š­˜M˜-Š}Šm˜­Š}˜²â"À¢FE7WÆ–W$G&gE&W6WC¢-Š­˜]Š¢Š]‹Š}ŠıŠ’‹mŠ‹r‹]˜ŠİŠ’Š]‹mŠ}˜Š’˜]ŠÍ˜}‹"â"À¢6öæf—&Õ&W6WDFE7WÆ–W%vS¢-˜}˜BŠ­‹˜­Šò˜]‹=ŠÒ˜]‹=˜ŠıŠ’Š]‹mŠ}˜Š’Š}˜M˜]ŠÍ˜}‹"Š}˜MŠİŠ}˜M˜­Š’˜Š}˜M‹]˜˜˜Š}˜M˜]‹=Š­˜‹ŠıŠ‰ò"À¢&W6WDFE7WÆ–W%vS¢-Š]‹Š}ŠıŠ’‹mŠ‹rŠ}˜M‹]˜ŠİŠ’"À¢7WÆ–W$–×÷'EFöôÆ&vS¢-ŠİŠÍ˜RŠ}˜M˜]˜M˜Š=˜=Š‹˜]˜b˜=˜­˜M˜ŠŠ}˜­Š¢â"À¢7WÆ–W$–×÷'Dæôf–VÆG3¢-˜M˜R˜­Š­˜RŠ}˜M‹Š½˜‹‹˜M˜’Šİ˜-˜˜B˜]ŠÍ˜}‹"˜]‹}Š}Š˜-Š’˜˜¢˜}‹ŠrŠ}˜M˜]˜M˜â"À¢7WÆ–W$–×÷'Df–ÆVC¢-Š­‹‹‹Š¢˜-‹Š}ŠŠ’˜}‹ŠrŠ}˜M˜]˜M˜â"À¢Vç7W÷'FVE7WÆ–W$–×÷'Df–ÆS¢-˜­‹ŠÍ˜’‹˜‹’˜]˜M˜ç†Ç7‚Š=˜‚æ77bâ"À¢Vç7W÷'FVE7WÆ–W$–×÷'D'&÷w6W#¢-˜}‹ŠrŠ}˜M˜]Š­‹]˜ŠÒ˜MŠr˜­‹=Š­‹}˜­‹’˜-‹Š}ŠŠ’˜]˜M˜Š}Š¢W†6VÂŠ}˜M˜]‹m‹­˜‹}Š’âŠÍ‹™Š‚Š­‹]Šı˜­‹Š}˜M˜m˜]˜‹ŠÂŠ‹]˜­‹­Š’55bâ"À¢–çfÆ–E7WÆ–W$–×÷'Df–ÆS¢-Š}˜M˜]˜M˜Š}˜M˜]‹˜˜‹’˜MŠr˜­ŠŠı˜‚˜=˜m˜]˜‹ŠÂW†6VÂ‹]Š}˜MŠÒâ"À¢FÖ–äöæÇ“¢-˜M˜MŠ]ŠıŠ}‹Š’˜˜-‹r"À¢7F—fS¢-˜‹Š}˜B"À¢VæF–æs¢-˜-˜­ŠòŠ}˜MŠ}˜mŠ­‹Š}‹"À¢7W7VæFVC¢-˜]˜˜-˜˜"À¢FV×÷&'“¢-˜]ŠM˜-Š¢"À¢W‡—&VC¢-˜]˜mŠ­˜}˜¢"À¢7&VFVDC¢-Š­Š}‹˜­ŠâŠ}˜MŠ]˜m‹MŠ}Š"À¢WFFVDC¢-Š-Ší‹Š­ŠİŠı˜­Š²"À¢FÖ–äæ÷FW3¢-˜]˜MŠ}Šİ‹Š}Š¢Š}˜MŠ]ŠıŠ}‹Š’"À¢6öçG&–'WF÷#¢-Š}˜M˜]‹=Š}˜}˜R"À¢&Wf–WvW#¢-Š}˜M˜]‹Š}ŠÍ‹’"À¢VÆ—G•&F–ó¢-˜m‹=ŠŠ’Š}˜MŠÍ˜ŠıŠ’"À¢7VvvW7FVDFV6—6–öã¢-Š}˜M˜-‹Š}‹Š}˜M˜]˜-Š­‹ŠÒ"À¢&÷fUv—F„VF—G3¢-Š}‹Š­˜]Š}Šò˜]‹’Š­‹Šı˜­˜B"À¢FDæ÷F†W%7WÆ–W#¢-Š]‹mŠ}˜Š’˜]ŠÍ˜}‹"Š-Ší‹"À¢6VVDFVfVÇG3¢-Š]‹mŠ}˜Š’Š}˜MŠ˜­Š}˜mŠ}Š¢Š}˜MŠ}˜Š­‹Š}‹m˜­Š’"À¢WFFU6WGF–æw3¢-Š­ŠİŠı˜­Š²Š}˜MŠ]‹ŠıŠ}ŠıŠ}Š¢"À¢&WV—&VE7WÆ–W'5W$ÖöçFƒ¢-‹ŠıŠòŠ}˜M˜]ŠÍ˜}‹-˜­˜bŠ}˜M˜]‹}˜M˜Š‚‹M˜}‹˜­˜½Šr"À¢F—4w&çFVEW$&F6ƒ¢-Š}˜MŠ=˜­Š}˜RŠ}˜M˜]˜]˜m˜ŠİŠ’˜M˜=˜BŠı˜‹Š’"À¢Ö†–×VÕ7F6¶&ÆTÖöçF‡3¢-Š=˜-‹]˜’‹ŠıŠòŠ=‹M˜}‹˜-Š}Š˜MŠ’˜M˜MŠ­ŠÍ˜]˜­‹’"À¢w&6UW&–öDF—3¢-Š=˜­Š}˜RŠ}˜M‹=˜]Š}ŠÒ"À¢G&–Ä66W74F—3¢-Š=˜­Š}˜RŠ}˜MŠ­ŠÍ‹ŠŠ’Š}˜MŠ=˜˜M˜’"À¢&Wf–Ww4V&ä&öçW5ö–çG3¢-Š}˜M˜]‹Š}ŠÍ‹Š}Š¢Š­˜]˜mŠÒ˜m˜-Š}‹}˜½ŠrŠ]‹mŠ}˜˜­Š’"À¢WFFT6öçG&–'WF–öç46äV&ä66W74&öçW3¢-Š­ŠİŠı˜­Š²Š}˜MŠ˜­Š}˜mŠ}Š¢˜­˜]˜mŠÒ‹‹]˜­Šò˜‹]˜˜B"À¢6fVC¢-Š­˜RŠ}˜MŠİ˜‹‚â"À¢FVfVÇG56VVFVC¢-Š­˜]Š¢Š]‹mŠ}˜Š’Š}˜M˜-˜­˜RŠ}˜MŠ}˜Š­‹Š}‹m˜­Š’â"À¢÷væW$öæÇ•6WGF–æw3¢-Š­‹Šı˜­˜BŠ]‹ŠıŠ}ŠıŠ}Š¢Š}˜M˜]˜m‹]Š’˜]Š­Š}ŠÒ˜MŠİ‹=Š}Š‚Š}˜M˜]Š}˜M˜2˜˜-‹râ"À¢v÷fW&æ÷&FW3¢-Š}˜M˜]ŠİŠ}˜‹Š}Š¢"À¢7WÆ–W$6FVv÷'”Æ—7C¢-Š­‹]˜m˜­˜Š}Š¢Š}˜M˜]ŠÍ˜}‹-˜­˜b"À¢FD—FVÓ¢-Š]‹mŠ}˜Š’‹˜m‹]‹"À¢—FVÔ¶W“¢-Š}˜M˜]˜Š­Š}ŠÒ"À¢VævÆ—6„Æ&VÃ¢-Š}˜MŠ­‹=˜]˜­Š’ŠŠ}˜MŠ]˜m˜=˜M˜­‹-˜­Š’"À¢&&–4Æ&VÃ¢-Š}˜MŠ­‹=˜]˜­Š’ŠŠ}˜M‹‹Š˜­Š’"À¢6—G”÷$Ö&¶WD&V¢-Š}˜M˜]Šı˜­˜mŠ’Š=˜‚˜]˜m‹}˜-Š’Š}˜M‹=˜˜""À¢6öçF7DÖWF†öC¢-˜‹=˜­˜MŠ’Š}Š­‹]Š}˜B"À¢6&–Æ—G•Fs¢-˜‹=˜R˜-Šı‹Š’"À¢Ö—76–æu&WV—&VDf–VÆG3¢-Š}˜MŠİ˜-˜˜BŠ}˜M˜mŠ}˜-‹]Š“¢·¶f–VÆG7×Ò"À¢&VG”f÷$FÖ–å&Wf–Ws¢-ŠÍŠ}˜}‹"˜MŠ]‹‹=Š}˜M˜rŠ]˜M˜’˜]‹Š}ŠÍ‹Š’Š}˜MŠ]ŠıŠ}‹Š’â"À¢7WÆ–W%7V&Ö—Df–ÆVC¢-Š­‹‹‹Š]‹‹=Š}˜BŠ}˜M˜]ŠÍ˜}‹"â"À¢æôGWÆ–6FUv&æ–æs¢-˜MŠr˜­˜ŠÍŠòŠ­˜mŠ˜­˜rŠ­˜=‹Š}‹˜]˜b˜˜}‹‹2Š}˜M˜]ŠÍ˜}‹-˜­˜bŠ}˜M˜]‹Š­˜]Šı˜­˜bŠ}˜MŠİŠ}˜M˜¢â"À¢æô66W75&öw&W73¢-˜MŠı˜­˜2·¶f–Æ&ÆW×Ò˜]‹=Š}˜}˜]Š}Š¢˜]ŠÍ˜}‹-˜­˜b˜]‹Š­˜]ŠıŠ’˜‹­˜­‹˜]‹=Š­ŠíŠı˜]Š’â˜­Š­Š˜-˜’··&VÖ–æ–æw×Ò˜M˜Š­ŠÒ·¶F—7×Ò˜­˜˜]˜½ŠrŠ]‹mŠ}˜˜­˜½Šrâ"À¢7F'E7V&Ö—GF–æu7WÆ–W'3¢-Š}ŠŠıŠ2ŠŠ]‹‹=Š}˜B˜]ŠÍ˜}‹-˜­˜b˜M˜]‹Š}ŠÍ‹Š’Š}˜MŠ]ŠıŠ}‹Š’â"À¢æÖTÆæwVvT&&–3¢-‹‹Š˜¢"À¢æÖTÆæwVvTVævÆ—6ƒ¢-Š]˜m˜=˜M˜­‹-˜¢"À¢æÖTÆæwVvTÖ—†VC¢-˜]ŠíŠ­˜M‹r"À¢æÖTÆæwVvUö&&–3¢-‹‹Š˜¢"À¢æÖTÆæwVvUöVævÆ—6ƒ¢-Š]˜m˜=˜M˜­‹-˜¢"À¢æÖTÆæwVvUöÖ—†VC¢-˜]ŠíŠ­˜M‹r"À¢7V&Ö—GFVDC¢-Š­Š}‹˜­ŠâŠ}˜MŠ]‹‹=Š}˜B"À¢æôFW67&—F–öã¢-˜MŠr˜­˜ŠÍŠò˜‹]˜˜]‹mŠ}˜â"À¢7WÆ–W$–FVçF—G“¢-˜}˜˜­Š’Š}˜M˜]ŠÍ˜}‹""À¢æW‡E7FW¢-Š}˜MŠí‹}˜Š’Š}˜MŠ­Š}˜M˜­Š’"À¢6öÖÖVçEFöôÆöæs¢-˜­ŠÍŠ‚Š=˜MŠr˜­Š­ŠÍŠ}˜‹"Š}˜MŠ­‹˜M˜­˜"SŠİ‹˜â"À¢&öfW76–öæÅ&Wf–Wu&WV—&VC¢-˜­‹ŠÍ˜’˜=Š­Š}ŠŠ’˜]‹Š}ŠÍ‹Š’˜]˜}˜m˜­Š’˜˜]Š˜m˜­Š’‹˜M˜’Š­ŠÍ‹ŠŠ’˜Š}‹mŠİŠ’â"À¢&Wf–Wu6VçDf÷$ÖöFW&F–öã¢-Š­˜RŠ]‹‹=Š}˜BŠ}˜M˜]‹Š}ŠÍ‹Š’˜M˜M˜]˜Š}˜˜-Š’â"À¢7WÆ–W$fVVF&6³¢-Š}˜MŠ]Š˜MŠ}‹¢‹˜b˜]˜MŠ}Šİ‹Š’"À¢7WÆ–W$fVVF&6´FW67&—F–öã¢-Š=‹‹=˜BŠ­‹]Šİ˜­Šİ˜½ŠrŠ=˜‚˜]˜MŠ}Šİ‹Š’Šİ˜˜B˜]‹˜M˜˜]Š}Š¢˜}‹ŠrŠ}˜M˜]ŠÍ˜}‹"Š}˜M˜]˜m‹M˜‹Š’â‹=Š­‹Š}ŠÍ‹’Š}˜MŠ]ŠıŠ}‹Š’Š}˜M˜]˜MŠ}Šİ‹Š’˜-Š˜BŠ­‹Šı˜­˜BŠ}˜M‹=ŠÍ˜Bâ"À¢fVVF&6µG—S¢-˜m˜‹’Š}˜M˜]˜MŠ}Šİ‹Š’"À¢fVVF&6´ÖW76vS¢-˜]ŠrŠ}˜M˜]‹˜M˜˜]Š’‹­˜­‹Š}˜M‹]Šİ˜­ŠİŠ’Š=˜‚Š}˜MŠ­˜¢Š­ŠİŠ­Š}ŠÂŠ]˜M˜’˜]‹Š}ŠÍ‹Š‰ò"À¢fVVF&6´ÖW76vUÆ6V†öÆFW#¢-Š}‹M‹ŠÒŠ}˜M˜]˜MŠ}Šİ‹Š’Š˜‹m˜ŠÒ˜ŠİŠıŠòŠ}˜MŠİ˜-˜BŠ}˜M‹˜¢˜­ŠİŠ­Š}ŠÂŠ]˜M˜’˜]‹Š}ŠÍ‹Š’â"À¢7VvvW7FVD6÷'&V7F–öã¢-Š}˜MŠ­‹]Šİ˜­ŠÒŠ}˜M˜]˜-Š­‹ŠÒ"À¢7VvvW7FVD6÷'&V7F–öåÆ6V†öÆFW#¢-Š=‹m˜Š}˜M˜]‹˜M˜˜]Š’Š}˜M‹]Šİ˜­ŠİŠ’Š]‹Šr˜=Š}˜mŠ¢˜]Š­˜˜‹Š’˜MŠı˜­˜2â"À¢7V&Ö—DfVVF&6³¢-Š]‹‹=Š}˜BŠ}˜M˜]˜MŠ}Šİ‹Š’"À¢fVVF&6µ7V&Ö—GFVC¢-Š­˜RŠ]‹‹=Š}˜B˜]˜MŠ}Šİ‹Š­˜2Š]˜M˜’Š}˜MŠ]ŠıŠ}‹Š’˜M˜M˜]‹Š}ŠÍ‹Š’â"À¢fVVF&6µ7V&Ö—Df–ÆVC¢-Š­‹‹‹Š]‹‹=Š}˜BŠ}˜M˜]˜MŠ}Šİ‹Š’â"À¢fVVF&6´†—7F÷'“¢-˜]˜MŠ}Šİ‹Š}Š­˜2Šİ˜˜B˜}‹ŠrŠ}˜M˜]ŠÍ˜}‹""À¢fVVF&6µG—Uö–æ6÷'&V7Eö–æf÷&ÖF–öã¢-˜]‹˜M˜˜]Š}Š¢‹­˜­‹‹]Šİ˜­ŠİŠ’"À¢fVVF&6µG—Uö6öçF7Eö—77VS¢-Ší˜M˜B˜˜¢Š}˜M˜}Š}Š­˜Š=˜‚Š}˜MŠ‹˜­ŠòŠ=˜‚Š}˜M˜]˜˜-‹’"À¢fVVF&6µG—UöÆö6F–öåö—77VS¢-Ší˜M˜B˜˜¢Š}˜M˜]˜˜-‹’Š=˜‚Š}˜M˜‹˜‹’"À¢fVVF&6µG—Uö6FVv÷'•ö—77VS¢-Š­‹]˜m˜­˜‹­˜­‹‹]Šİ˜­ŠÒ"À¢fVVF&6µG—UöGWÆ–6FU÷7WÆ–W#¢-˜]ŠÍ˜}‹"˜]˜=‹‹"À¢fVVF&6µG—Uö'W6–æW75ö6Æ÷6VC¢-Š}˜M‹M‹˜=Š’˜]‹­˜M˜-Š’Š=˜‚‹­˜­‹˜‹Š}˜MŠ’"À¢fVVF&6µG—Uö÷F†W#¢-˜]˜MŠ}Šİ‹Š’Š=Ší‹˜’"À¢fVVF&6µ7FGW5÷VæF–æs¢-ŠŠ}˜mŠ­‹Š}‹Š}˜M˜]‹Š}ŠÍ‹Š’"À¢fVVF&6µ7FGW5ö–å÷&Wf–Ws¢-˜-˜­ŠòŠ}˜M˜]‹Š}ŠÍ‹Š’"À¢fVVF&6µ7FGW5÷&W6öÇfVC¢-Š­˜]Š¢Š}˜M˜]‹Š}˜MŠÍŠ’"À¢fVVF&6µ7FGW5÷&V¦V7FVC¢-Š=‹­˜M˜-Š¢Šı˜˜bŠ­‹Šı˜­˜B"À¢fVVF&6´FÖ–äFW67&—F–öã¢-‹Š}ŠÍ‹’Š}˜MŠ­‹]Šİ˜­ŠİŠ}Š¢˜Š}˜M˜]˜MŠ}Šİ‹Š}Š¢Š}˜MŠ­˜¢˜­‹‹=˜M˜}ŠrŠ}˜M˜]‹=Š­ŠíŠı˜]˜˜bŠİ˜˜B‹=ŠÍ˜MŠ}Š¢Š}˜M˜]ŠÍ˜}‹-˜­˜bŠ}˜M˜]‹Š­˜]Šı˜­˜bâ"À¢fVVF&6´FÖ–äæ÷FW3¢-‹ŠòŠ}˜MŠ]ŠıŠ}‹Š’"À¢fVVF&6´FV6—6–öåö–å÷&Wf–Ws¢-ŠŠıŠŠ}˜M˜]‹Š}ŠÍ‹Š’"À¢fVVF&6´FV6—6–öå÷&W6öÇfVC¢-Š­˜]Š¢Š}˜M˜]‹Š}˜MŠÍŠ’"À¢fVVF&6´FV6—6–öå÷&V¦V7FVC¢-Š]‹­˜MŠ}˜"Šı˜˜bŠ­‹Šı˜­˜B"À¢fVVF&6´FV6—6–öå6fVC¢-Š­˜RŠ­ŠİŠı˜­Š²ŠİŠ}˜MŠ’Š}˜M˜]˜MŠ}Šİ‹Š’â"À¢fVVF&6´÷Vå7WÆ–W#¢-˜Š­ŠÒŠ}˜M˜]ŠÍ˜}‹""À¢æõ7WÆ–W$fVVF&6³¢-˜MŠrŠ­˜ŠÍŠò˜]˜MŠ}Šİ‹Š}Š¢˜]ŠÍ˜}‹-˜­˜bŠŠ}˜mŠ­‹Š}‹Š}˜M˜]‹Š}ŠÍ‹Š’â"À¢&V¦V7FVD'•&Wf–WvW#¢-Š­˜RŠ}˜M‹˜‹b˜]˜bŠ}˜M˜]‹Š}ŠÍ‹’â"À¢F—46÷VçE÷¦W&ó¢'·¶6÷VçG×Ò˜­˜˜R"À¢F—46÷VçEööæS¢-˜­˜˜R˜Š}ŠİŠò"À¢F—46÷VçE÷Gvó¢-˜­˜˜]Š}˜b"À¢F—46÷VçEöfWs¢'·¶6÷VçG×ÒŠ=˜­Š}˜R"À¢F—46÷VçEöÖç“¢'·¶6÷VçG×Ò˜­˜˜]˜½Šr"À¢F—46÷VçEö÷F†W#¢'·¶6÷VçG×Ò˜­˜˜R"À¢F6†&ö&EvVÆ6öÖS¢-˜]‹ŠİŠŠ}˜²Š˜2˜˜¢˜]ŠÍ˜}‹-ˆÂ˜­˜]˜=˜m˜2Š]ŠıŠ}‹Š’˜‹]˜˜M˜2˜˜]Š­Š}Š‹Š’Š=ŠıŠ}Šm˜2Š‹=˜}˜˜MŠ’â"À¢F6†&ö&D7F—f—G”æ÷FS¢-˜­˜]˜=˜m˜2Š]ŠıŠ}‹Š’˜‹]˜˜M˜=ˆÂ˜]Š­Š}Š‹Š’˜m˜-Š}‹}˜=ˆÂ˜]‹Š}ŠÍ‹Š’Š}˜M‹}˜MŠŠ}Š­ˆÂ˜Š˜mŠ}ŠŠİ‹m˜‹˜2ŠıŠ}Ší˜B˜]ŠÍŠ­˜]‹’Š}˜M˜]‹MŠ­‹˜­Š}Š¢˜‹=˜M‹=˜MŠ’Š}˜MŠ­˜‹˜­Šòâ"À¢&V6VçD7F—f—G“¢-Š}˜M˜m‹MŠ}‹rŠ}˜MŠ=Ší˜­‹"À¢7F—f—G”66W75WFFVC¢-Š­˜RŠ­ŠİŠı˜­Š²ŠİŠ}˜MŠ’Š}˜M˜‹]˜˜B˜Š}ŠİŠ­‹=Š}Š‚Š}˜M˜m˜-Š}‹rŠ}˜MŠİŠ}˜M˜­Š’â"À¢7F—f—G•VæF–æu&WVW7G3¢'·¶6÷VçG×Ò‹}˜MŠ‚ŠŠ}˜mŠ­‹Š}‹Š}˜M˜]‹Š}ŠÍ‹Š’â"À¢VæF–æu&WVW7EVæ—C¢-‹}˜MŠ‚ŠŠ}˜mŠ­‹Š}‹Š}˜M˜]‹Š}ŠÍ‹Š’"À¢&VÖ–æ–ætF—5Væ—C¢-˜­˜˜]Š}˜²˜]Š­Š˜-˜­Š’"À¢&÷fVE&Wf–WuVæ—C¢-˜]‹Š}ŠÍ‹Š’˜]‹Š­˜]ŠıŠ’"ÂF6†&ö&D66W75&öw&W73¢-˜MŠı˜­˜2·¶f–Æ&ÆW×Ò˜]ŠÍ˜}‹-˜­˜b˜]‹Š­˜]Šı˜­˜bâŠ=‹m˜··&VÖ–æ–æw×Ò˜]ŠÍ˜}‹-˜­˜b˜]‹Š­˜]Šı˜­˜b˜M˜Š­ŠÒ·¶F—7×Ò˜­˜˜]˜½Šr˜]˜bŠ}˜M˜‹]˜˜Bâ"À¢F6†&ö&D66W74V&æVC¢-Šİ‹]˜MŠ¢‹˜M˜’·¶ÖöçF‡7×ÒŠı˜‹Š’˜‹]˜˜Bâ˜­Š­Š˜-˜’··&VÖ–æ–æw×Ò˜]ŠÍ˜}‹-˜­˜b˜]‹Š­˜]Šı˜­˜b˜M˜M˜‹]˜˜BŠ]˜M˜’Š}˜MŠı˜‹Š’Š}˜MŠ­Š}˜M˜­Š’â"À¢F6†&ö&D66W746÷fW&VC¢-˜‹]˜˜M˜2˜]‹­‹}˜’ŠİŠ­˜’·¶FFW×Òâ˜MŠı˜­˜2·¶F—7×Ò˜­˜˜]˜½Šr˜]Š­Š˜-˜­˜½Š}ˆÂ˜‹=˜­‹˜}‹Š­ŠİŠı˜¢Š}˜M˜]‹=Š}˜}˜]Š}Š¢Š}˜M˜-Š}Šı˜R‹˜mŠòŠ}˜-Š­‹Š}Š‚Š}˜MŠ­ŠÍŠı˜­Šòâ"À¢×”66W746÷fW&VDFW67&—F–öã¢-˜‹]˜˜M˜2Š}˜MŠİŠ}˜M˜¢˜]‹­‹}˜’˜M˜]ŠıŠ’·¶F—7×Ò˜­˜˜]˜½ŠrŠ]‹mŠ}˜˜­˜½Šrâ‹=˜­‹˜}‹Š­˜-Šı˜RŠ}˜M˜]‹=Š}˜}˜]Š}Š¢‹˜mŠòŠ}˜-Š­‹Š}Š‚˜]˜‹ŠòŠ}˜MŠ­ŠÍŠı˜­Šòâ"À¢ÖöçF†Ç”6†ÆÆVævTFW67&—F–öã¢-Š­ŠİŠı˜¢Š}˜MŠı˜‹Š“¢Š=‹m˜··&WV—&VG×Ò˜]ŠÍ˜}‹-˜­˜b˜]˜Š½˜-˜­˜bâ"À¢66W756÷W&6U÷7WÆ–W%ö6öçG&–'WF–öã¢-˜]‹=Š}˜}˜]Š’˜]ŠÍ˜}‹""À¢66W756÷W&6UöÖçVÅöw&6S¢-˜]˜mŠİŠ’˜­Šı˜˜­Š’"À¢66W756÷W&6U÷G&–Åö66W73¢-˜‹]˜˜BŠ­ŠÍ‹˜­Š˜¢"À¢GWÆ–6FU÷6ÖU÷†öæS¢-˜m˜‹2‹˜-˜RŠ}˜M˜}Š}Š­˜"À¢GWÆ–6FU÷6ÖUöVÖ–Ã¢-˜m˜‹2Š}˜MŠ‹˜­ŠòŠ}˜MŠ]˜M˜=Š­‹˜˜m˜¢"À¢GWÆ–6FU÷6ÖU÷vV'6—FS¢-˜m˜‹2Š}˜M˜]˜˜-‹’Š}˜MŠ]˜M˜=Š­‹˜˜m˜¢"À¢GWÆ–6FU÷6ÖUöf6V&öö³¢-˜m˜‹2‹]˜ŠİŠ’˜˜­‹=Š˜˜2"À¢GWÆ–6FU÷6–Ö–Æ%öæÖS¢-Š}‹=˜R˜]‹MŠ}Š˜r"À¢GWÆ–6FUö6öçF7E÷†öæS¢-Š­‹}Š}Š˜"˜}Š}Š­˜ŠÍ˜}Š’Š}˜MŠ}Š­‹]Š}˜B"À¢7FGW5ö÷væW#¢-˜]Š}˜M˜2"À¢7FGW5öFÖ–ã¢-˜]Šı˜­‹"À¢7FGW5ö6öçG&–'WF÷#¢-˜]‹=Š}˜}˜R"À¢7FGW5÷f–WvW#¢-˜]‹MŠ}˜}Šò"À¢7FGW5÷7W7VæFVC¢-˜]˜˜-˜˜"À¢7FGW5ö&÷fVC¢-˜]‹Š­˜]Šò"À¢7FGW5ö7F—fS¢-˜‹Š}˜B"À¢7FGW5÷VæF–æs¢-˜-˜­ŠòŠ}˜MŠ}˜mŠ­‹Š}‹"À¢7FGW5÷VæF–æuö&÷fÃ¢-ŠŠ}˜mŠ­‹Š}‹Š}˜MŠ}‹Š­˜]Š}Šò"À¢7FGW5÷VæF–æu÷&Wf–Ws¢-ŠŠ}˜mŠ­‹Š}‹Š}˜M˜]‹Š}ŠÍ‹Š’"À¢7FGW5÷÷76–&ÆUöGWÆ–6FS¢-Š­˜=‹Š}‹˜]ŠİŠ­˜]˜B"À¢7FGW5öæVVG5ö6÷'&V7F–öã¢-˜­ŠİŠ­Š}ŠÂŠ­‹]Šİ˜­ŠÒ"À¢7FGW5÷&V¦V7FVC¢-˜]‹˜˜‹b"À¢7FGW5÷FV×÷&'“¢-˜]ŠM˜-Š¢"À¢7FGW5öW‡—&VC¢-˜]˜mŠ­˜}˜¢"À¢7FGW5ö&6†—fVC¢-˜]ŠM‹‹M˜"À¢7FGW5öÖW&vVC¢-˜]Šı˜]ŠÂ"À¢7FGW5ö6öÖ×Væ—G•÷7V&Ö—GFVC¢-˜]‹mŠ}˜˜]˜bŠ}˜M˜]ŠÍŠ­˜]‹’"À¢7FGW5÷fW&–f–VC¢-˜]˜Š½˜""À¢7FGW5öæVVG5öÖ÷&Uö–æfó¢-˜­ŠİŠ­Š}ŠÂ˜]‹˜M˜˜]Š}Š¢Š]‹mŠ}˜˜­Š’"À¢7FGW5÷vF6†Æ—7C¢-˜-Š}Šm˜]Š’˜]Š­Š}Š‹Š’"À¢VF—EöFVÖõ÷W6W%÷&Vv—7FW&VC¢-Š­˜RŠ­‹=ŠÍ˜­˜B˜]‹=Š­ŠíŠı˜RŠ­ŠÍ‹˜­Š˜¢"À¢VF—E÷W6W%÷&Vv—7FW&VC¢-Š­˜RŠ­‹=ŠÍ˜­˜B˜]‹=Š­ŠíŠı˜R"À¢VF—E÷W6W%÷G&–Åö66W75÷7F'FVC¢-ŠŠıŠ2Š}˜M˜‹]˜˜BŠ}˜MŠ­ŠÍ‹˜­Š˜¢"À¢VF—E÷W6W%ö&÷fVC¢-Š­˜RŠ}‹Š­˜]Š}Šò˜]‹=Š­ŠíŠı˜R"À¢VF—E÷W6W%÷&öÆU÷7FGW5÷WFFVC¢-Š­˜RŠ­ŠİŠı˜­Š²Šı˜‹ıŠİŠ}˜MŠ’Š}˜M˜]‹=Š­ŠíŠı˜R"À¢VF—Eö66W75÷FV×÷&'•öw&çFVC¢-Š­˜R˜]˜mŠÒ˜‹]˜˜B˜]ŠM˜-Š¢"À¢VF—E÷6WGF–æw5÷WFFVC¢-Š­˜RŠ­ŠİŠı˜­Š²Š}˜MŠ]‹ŠıŠ}ŠıŠ}Š¢"À¢VF—E÷6VVEöFVfVÇG3¢-Š­˜]Š¢Š]‹mŠ}˜Š’Š}˜M˜-˜Š}Šm˜RŠ}˜MŠ}˜Š­‹Š}‹m˜­Š’"À¢VF—E÷7WÆ–W%÷7V&Ö—76–öåö&÷fVC¢-Š­˜RŠ}‹Š­˜]Š}ŠòŠ]‹‹=Š}˜B˜]ŠÍ˜}‹""À¢VF—E÷7WÆ–W%÷7V&Ö—76–öå÷&V¦V7FVC¢-Š­˜R‹˜‹bŠ]‹‹=Š}˜B˜]ŠÍ˜}‹""À¢VF—E÷7WÆ–W%÷7V&Ö—76–öåöæVVG5ö6÷'&V7F–öã¢-Š]‹‹=Š}˜B˜]ŠÍ˜}‹"˜­ŠİŠ­Š}ŠÂŠ­‹]Šİ˜­ŠÒ"À¢VF—E÷7WÆ–W%÷7V&Ö—76–öå÷÷76–&ÆUöGWÆ–6FS¢-Š­˜RŠ­‹˜M˜­˜RŠ]‹‹=Š}˜B˜]ŠÍ˜}‹"˜=Š­˜=‹Š}‹˜]ŠİŠ­˜]˜B"À¢VF—E÷7WÆ–W%÷7V&Ö—76–öåöÖW&vVC¢-Š­˜RŠı˜]ŠÂŠ]‹‹=Š}˜B˜]ŠÍ˜}‹""À¢VF—E÷7WÆ–W%÷7V&Ö—76–öå÷&W7V&Ö—GFVC¢-Š­˜RŠ]‹Š}ŠıŠ’Š]‹‹=Š}˜B‹}˜MŠ‚˜]ŠÍ˜}‹""À¢VF—E÷7WÆ–W%÷WFFVC¢-Š­˜RŠ­ŠİŠı˜­Š²˜]ŠÍ˜}‹"˜]‹Š­˜]Šò"À¢VF—E÷7WÆ–W%öFVÆWFVC¢-Š­˜RŠİ‹˜˜]ŠÍ˜}‹"˜]‹Š­˜]Šò"À¢VF—E÷&Wf–Wuö&÷fVC¢-Š­˜RŠ}‹Š­˜]Š}Šò˜]‹Š}ŠÍ‹Š’"À¢VF—E÷&Wf–Wu÷&V¦V7FVC¢-Š­˜R‹˜‹b˜]‹Š}ŠÍ‹Š’"À¢VF—E÷7WÆ–W%öfVVF&6µö–å÷&Wf–Ws¢-ŠŠıŠ=Š¢˜]‹Š}ŠÍ‹Š’˜]˜MŠ}Šİ‹Š’˜]ŠÍ˜}‹""À¢VF—E÷7WÆ–W%öfVVF&6µ÷&W6öÇfVC¢-Š­˜]Š¢˜]‹Š}˜MŠÍŠ’˜]˜MŠ}Šİ‹Š’˜]ŠÍ˜}‹""À¢VF—E÷7WÆ–W%öfVVF&6µ÷&V¦V7FVC¢-Š=‹­˜M˜-Š¢˜]˜MŠ}Šİ‹Š’˜]ŠÍ˜}‹"Šı˜˜bŠ­‹Šı˜­˜B"À¢VF—E÷FW&Õ÷7VvvW7F–öåö&÷fVC¢-Š­˜RŠ}‹Š­˜]Š}Šò˜]˜‹ŠıŠ’˜]˜-Š­‹ŠİŠ’"À¢VF—E÷FW&Õ÷7VvvW7F–öåö–væ÷&VC¢-Š­˜RŠ­ŠÍŠ}˜}˜B˜]˜‹ŠıŠ’˜]˜-Š­‹ŠİŠ’"À¢F&vWE÷W6W#¢-˜]‹=Š­ŠíŠı˜R"À¢F&vWE÷7WÆ–W%7V&Ö—76–öã¢-Š]‹‹=Š}˜B˜]ŠÍ˜}‹""À¢F&vWE÷7WÆ–W#¢-˜]ŠÍ˜}‹""À¢F&vWE÷6WGF–æw3¢-Š]‹ŠıŠ}ŠıŠ}Š¢"À¢F&vWE÷&Wf–Ws¢-˜]‹Š}ŠÍ‹Š’"À¢F&vWE÷7WÆ–W$fVVF&6³¢-˜]˜MŠ}Šİ‹Š’˜]ŠÍ˜}‹""À¢F&vWE÷FW&Õ7VvvW7F–öã¢-˜]˜‹ŠıŠ’˜]˜-Š­‹ŠİŠ’"À¢ÆöDÖ÷&S¢-‹‹‹bŠ}˜M˜]‹-˜­Šò"À¢ÖVçS¢-Š}˜M˜-Š}Šm˜]Š’"À¢6Æ÷6TÖVçS¢-Š]‹­˜MŠ}˜"Š}˜M˜-Š}Šm˜]Š’"À¢ÒÀ¢ÒÀ§Ó° ¦“†âçW6R†–æ—E&V7D“†æW‡B’æ–æ—B‡°¢&W6÷W&6W2À¢Ææs¢Æö6Å7F÷&vRævWD—FVÒ‚&×V¦†—¢Ö—ÖÆö6ÆR"’ÇÂ&Vâ"À¢fÆÆ&6´Ææs¢&Vâ"À¢–çFW'öÆF–öã¢°¢W66UfÇVS¢fÇ6RÀ¢ÒÀ§Ò“° ¦W‡÷'BFVfVÇB“†ã°    
+      landingBadgesBody: "Compare quotations easily based on price, quality, delivery time, and terms to make better decisions.",
+      landingProcurementFocusTitle: "Built for hard-to-source suppliers",
+      landingProcurementFocusBody: "Mujahiz IQ focuses on verified supplier knowledge for industrial, energy, oil and gas, and specialized project materials without turning the platform into a quotation or price marketplace.",
+      buildNotice: "Firebase environment variables are not configured yet. Add the required environment settings to enable authentication and database access.",
+      supplierImportTitle: "Import from Excel",
+      supplierImportBody: "Upload an Excel template to automatically fill supplier data for one or multiple suppliers. Matching fields will be filled in the form, and you can review everything before submitting.",
+      supplierImportButton: "Upload File",
+      supplierImportLimit: "Accepted formats: .xlsx or .csv â€” maximum file size: 100 KB.",
+      downloadSingleArabicTemplate: "Single Supplier â€“ Arabic",
+      downloadSingleEnglishTemplate: "Single Supplier â€“ English",
+      downloadBulkArabicTemplate: "Bulk Suppliers â€“ Arabic",
+      downloadBulkEnglishTemplate: "Bulk Suppliers â€“ English",
+      supplierImportApplied_one: "Imported {{count}} matching field.",
+      supplierImportApplied_other: "Imported {{count}} matching fields.",
+      supplierBulkImportApplied_one: "Loaded {{count}} supplier row for review.",
+      supplierBulkImportApplied_other: "Loaded {{count}} supplier rows for review.",
+      supplierBulkReviewTitle: "Bulk supplier review",
+      supplierBulkReviewBody: "{{count}} supplier rows are ready for review. {{invalid}} row(s) still need required fields.",
+      supplierBulkSubmit_one: "Submit {{count}} supplier",
+      supplierBulkSubmit_other: "Submit {{count}} suppliers",
+      supplierBulkSubmitted_one: "{{count}} supplier submission was sent for review.",
+      supplierBulkSubmitted_other: "{{count}} supplier submissions were sent for review.",
+      supplierBulkEditTitle: "Edit imported supplier",
+      supplierBulkEditBody: "Complete row {{row}} here, then save it back to the bulk review list or submit this supplier on its own.",
+      saveAndReturn: "Save and return",
+      backToBulkReview: "Back to bulk review",
+      sendThisSupplier: "Send this supplier",
+      supplierBulkItemSaved: "Supplier row was saved in the bulk review list.",
+      supplierBulkItemSubmitted: "This supplier was sent for review.",
+      supplierBulkNoActiveItem: "No imported supplier is currently open.",
+      addSupplierDraftRestored: "Your saved draft was restored automatically.",
+      addSupplierDraftReset: "The add supplier page was reset.",
+      confirmResetAddSupplierPage: "Clear the current add supplier draft and imported rows?",
+      resetAddSupplierPage: "Reset page",
+      supplierImportTooLarge: "The file is larger than 100 KB.",
+      supplierImportNoFields: "No matching supplier fields were found in this file.",
+      supplierImportFailed: "Could not read this file.",
+      unsupportedSupplierImportFile: "Please upload an .xlsx or .csv file.",
+      unsupportedSupplierImportBrowser: "This browser cannot read compressed Excel files. Try exporting the form as CSV.",
+      invalidSupplierImportFile: "The uploaded file does not look like a valid Excel form.",
+      adminOnly: "Admin only",
+      active: "Active",
+      pending: "Pending",
+      suspended: "Suspended",
+      temporary: "Temporary",
+      expired: "Expired",
+      createdAt: "Created",
+      updatedAt: "Updated",
+      adminNotes: "Admin notes",
+      contributor: "Contributor",
+      reviewer: "Reviewer",
+      qualityRatio: "Quality Score",
+      suggestedDecision: "Suggested decision",
+      approveWithEdits: "Approve with edits",
+      addAnotherSupplier: "Add another supplier",
+      seedDefaults: "Seed defaults",
+      updateSettings: "Update settings",
+      requiredSuppliersPerMonth: "Required suppliers per month",
+      daysGrantedPerBatch: "Days granted per batch",
+      maximumStackableMonths: "Maximum stackable months",
+      gracePeriodDays: "Grace period days",
+      trialAccessDays: "Trial access days",
+      reviewsEarnBonusPoints: "Reviews earn bonus points",
+      updateContributionsCanEarnAccessBonus: "Update contributions can earn access bonus",
+      saved: "Saved.",
+      defaultsSeeded: "Defaults seeded.",
+      ownerOnlySettings: "Only the owner account can change platform settings.",
+      governorates: "Governorates",
+      supplierCategoryList: "Supplier categories",
+      addItem: "Add item",
+      itemKey: "Key",
+      englishLabel: "English label",
+      arabicLabel: "Arabic label",
+      cityOrMarketArea: "City or market area",
+      contactMethod: "Contact method",
+      capabilityTag: "Capability tag",
+      missingRequiredFields: "Missing: {{fields}}",
+      readyForAdminReview: "Ready for admin review.",
+      supplierSubmitFailed: "Could not submit supplier.",
+      noDuplicateWarning: "No duplicate warning from the current approved index.",
+      noAccessProgress: "You have {{available}} approved unconsumed supplier contributions. {{remaining}} more unlock the next {{days}} days.",
+      startSubmittingSuppliers: "Start by submitting suppliers for admin review.",
+      nameLanguageArabic: "Arabic",
+      nameLanguageEnglish: "English",
+      nameLanguageMixed: "Mixed",
+      nameLanguage_arabic: "Arabic",
+      nameLanguage_english: "English",
+      nameLanguage_mixed: "Mixed",
+      submittedAt: "Submitted",
+      noDescription: "No description provided.",
+      supplierIdentity: "Supplier identity",
+      nextStep: "Next step",
+      commentTooLong: "Comment must be 500 characters or less.",
+      professionalReviewRequired: "Please keep the review professional and evidence-based.",
+      reviewSentForModeration: "Review sent for moderation.",
+      supplierFeedback: "Report an issue",
+      supplierFeedbackDescription: "Send a correction or note about this supplier's published information. The administration will review it before changing the record.",
+      feedbackType: "Issue type",
+      feedbackMessage: "What is incorrect or needs attention?",
+      feedbackMessagePlaceholder: "Describe the issue clearly and mention the field that should be reviewed.",
+      suggestedCorrection: "Suggested correction",
+      suggestedCorrectionPlaceholder: "Add the correct information if you know it.",
+      submitFeedback: "Send feedback",
+      feedbackSubmitted: "Your feedback was sent to the administration for review.",
+      feedbackSubmitFailed: "Could not send the feedback.",
+      feedbackHistory: "Your feedback about this supplier",
+      feedbackType_incorrect_information: "Incorrect information",
+      feedbackType_contact_issue: "Phone, email, or website issue",
+      feedbackType_location_issue: "Location or branch issue",
+      feedbackType_category_issue: "Incorrect category",
+      feedbackType_duplicate_supplier: "Duplicate supplier",
+      feedbackType_business_closed: "Business closed or inactive",
+      feedbackType_other: "Other note",
+      feedbackStatus_pending: "Pending review",
+      feedbackStatus_in_review: "In review",
+      feedbackStatus_resolved: "Resolved",
+      feedbackStatus_rejected: "Closed without change",
+      feedbackAdminDescription: "Review user corrections and notes about approved supplier records.",
+      feedbackAdminNotes: "Administration response",
+      feedbackDecision_in_review: "Start review",
+      feedbackDecision_resolved: "Resolve",
+      feedbackDecision_rejected: "Close without change",
+      feedbackDecisionSaved: "Feedback status was updated.",
+      feedbackOpenSupplier: "Open supplier",
+      noSupplierFeedback: "No supplier feedback is waiting for review.",
+      rejectedByReviewer: "Rejected by reviewer.",
+      daysCount_one: "{{count}} day",
+      daysCount_other: "{{count}} days",
+      dashboardWelcome: "Welcome to Mujahiz IQ. You can manage your access and track your performance easily.",
+      dashboardActivityNote: "You can manage your access, track your points, review submissions, and build your presence inside the procurement and supply chain community.",
+      recentActivity: "Recent Activity",
+      activityAccessUpdated: "Access status and current points were updated.",
+      activityPendingRequests: "{{count}} request(s) pending review.",
+      pendingRequestUnit: "request pending review",
+      remainingDaysUnit: "days remaining",
+      approvedReviewUnit: "approved review",      dashboardAccessProgress: "You have {{available}} approved suppliers. Add {{remaining}} more approved suppliers to unlock {{days}} days of access.",
+      dashboardAccessEarned: "You have earned {{months}} access batch(es). {{remaining}} approved suppliers remain toward your next batch.",
+      dashboardAccessCovered: "Your access is covered until {{date}}. You still have {{days}} day(s) remaining, so the next contribution challenge will appear closer to renewal.",
+      myAccessCoveredDescription: "Your current access is already covered for {{days}} more day(s). Contribution progress will reappear when renewal is close.",
+      monthlyChallengeDescription: "Monthly challenge: Add {{required}} verified suppliers this cycle.",
+      accessSource_supplier_contribution: "Supplier contribution",
+      accessSource_manual_grace: "Manual grace",
+      accessSource_trial_access: "Trial access",
+      duplicate_same_phone: "Same phone",
+      duplicate_same_email: "Same email",
+      duplicate_same_website: "Same website",
+      duplicate_same_facebook: "Same Facebook page",
+      duplicate_similar_name: "Similar name",
+      duplicate_contact_phone: "Contact phone match",
+      status_owner: "Owner",
+      status_admin: "Admin",
+      status_contributor: "Contributor",
+      status_viewer: "Viewer",
+      status_suspended: "Suspended",
+      status_approved: "Approved",
+      status_active: "Active",
+      status_pending: "Pending",
+      status_pending_approval: "Pending approval",
+      status_pending_review: "Pending review",
+      status_possible_duplicate: "Possible duplicate",
+      status_needs_correction: "Needs correction",
+      status_rejected: "Rejected",
+      status_temporary: "Temporary",
+      status_expired: "Expired",
+      status_archived: "Archived",
+      status_merged: "Merged",
+      status_community_submitted: "Community submitted",
+      status_verified: "Verified",
+      status_needs_more_info: "Needs more information",
+      status_watchlist: "Watchlist",
+      audit_demo_user_registered: "Demo user registered",
+      audit_user_registered: "User registered",
+      audit_user_trial_access_started: "Trial access started",
+      audit_user_approved: "User approved",
+      audit_user_role_status_updated: "User role/status updated",
+      audit_access_temporary_granted: "Temporary access granted",
+      audit_settings_updated: "Settings updated",
+      audit_seed_defaults: "Default lists seeded",
+      audit_supplier_submission_approved: "Supplier submission approved",
+      audit_supplier_submission_rejected: "Supplier submission rejected",
+      audit_supplier_submission_needs_correction: "Supplier submission needs correction",
+      audit_supplier_submission_possible_duplicate: "Supplier submission marked duplicate",
+      audit_supplier_submission_merged: "Supplier submission merged",
+      audit_supplier_submission_resubmitted: "Supplier submission resubmitted",
+      audit_supplier_updated: "Approved supplier updated",
+      audit_supplier_deleted: "Approved supplier deleted",
+      audit_review_approved: "Review approved",
+      audit_review_rejected: "Review rejected",
+      audit_supplier_feedback_in_review: "Supplier feedback review started",
+      audit_supplier_feedback_resolved: "Supplier feedback resolved",
+      audit_supplier_feedback_rejected: "Supplier feedback closed without change",
+      audit_term_suggestion_approved: "Term suggestion approved",
+      audit_term_suggestion_ignored: "Term suggestion ignored",
+      target_user: "User",
+      target_supplierSubmission: "Supplier submission",
+      target_supplier: "Supplier",
+      target_settings: "Settings",
+      target_review: "Review",
+      target_supplierFeedback: "Supplier feedback",
+      target_termSuggestion: "Term suggestion",
+      loadMore: "Load more",
+      menu: "Menu",
+      closeMenu: "Close menu",
+    },
+  },
+  ar: {
+    translation: {
+      appName: "Ù…Ø¬Ù‡Ø² IQ",
+      arabicName: "Ù…Ø¬Ù‡Ø² IQ",
+      tagline: "Ù…Ø¬Ù‡Ø².. Ù†Ù‚Ø·Ø© Ø§Ù„Ø¨Ø¯Ø§ÙŠØ© Ù„ØªÙˆÙÙŠØ± Ø­Ù‚ÙŠÙ‚ÙŠ.",
+      language: "Ø§Ù„Ù„ØºØ©",
+      ar: "Ø¹Ø±Ø¨ÙŠ",
+      en: "English",
+      loading: "Ø¬Ø§Ø± Ø§Ù„ØªØ­Ù…ÙŠÙ„",
+      save: "Ø­ÙØ¸",
+      edit: "ØªØ¹Ø¯ÙŠÙ„",
+      deleteSupplier: "Ø­Ø°Ù",
+      cancel: "Ø¥Ù„ØºØ§Ø¡",
+      back: "Ø§Ù„Ø³Ø§Ø¨Ù‚",
+      next: "Ø§Ù„ØªØ§Ù„ÙŠ",
+      actions: "Ø§Ù„Ø¥Ø¬Ø±Ø§Ø¡Ø§Øª",
+      submit: "Ø¥Ø±Ø³Ø§Ù„",
+      approve: "Ø§Ø¹ØªÙ…Ø§Ø¯",
+      reject: "Ø±ÙØ¶",
+      requestCorrection: "Ø·Ù„Ø¨ ØªØµØ­ÙŠØ­",
+      markDuplicate: "ØªØ­Ø¯ÙŠØ¯ ÙƒØªÙƒØ±Ø§Ø±",
+      merge: "Ø¯Ù…Ø¬",
+      search: "Ø¨Ø­Ø«",
+      navHome: "Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ©",
+      navAbout: "Ø¹Ù† Ù…Ø¬Ù‡Ø²",
+      navSuppliers: "Ø§Ù„Ù…Ø¬Ù‡Ø²ÙˆÙ†",
+      navBuyers: "Ø§Ù„Ù…Ø´ØªØ±ÙˆÙ†",
+      navHowItWorks: "ÙƒÙŠÙ ØªØ¹Ù…Ù„ Ø§Ù„Ù…Ù†ØµØ©",
+      navFaqs: "Ø§Ù„Ø£Ø³Ø¦Ù„Ø© Ø§Ù„Ø´Ø§Ø¦Ø¹Ø©",
+      navContact: "ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù†Ø§",
+      homepageSlogan: "Ù…Ø¬Ù‡Ø².. Ù†Ù‚Ø·Ø© Ø§Ù„Ø¨Ø¯Ø§ÙŠØ© Ù„ØªÙˆÙÙŠØ± Ø­Ù‚ÙŠÙ‚ÙŠ.",
+      homepageHeroText: "Ù…Ù†ØµØ© Ù…Ù‡Ù†ÙŠØ© Ø®Ø§ØµØ© Ù„Ù„Ø¹Ø§Ù…Ù„ÙŠÙ† ÙÙŠ Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª ÙˆØ³Ù„Ø³Ù„Ø© Ø§Ù„ØªÙˆØ±ÙŠØ¯ØŒ Ù†Ø³Ø§Ø¹Ø¯Ùƒ Ø¹Ù„Ù‰ Ø§Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…ÙˆØ«ÙˆÙ‚ÙŠÙ†ØŒ ÙˆØªÙ‚ÙŠÙŠÙ… ØªØ¬Ø§Ø±Ø¨ Ø§Ù„Ø³ÙˆÙ‚ØŒ ÙˆØ¨Ù†Ø§Ø¡ Ù‚Ø§Ø¹Ø¯Ø© Ù…Ø¹Ø±ÙÙŠØ© ØªØ´Ø§Ø±ÙƒÙŠØ© Ù‚Ø§Ø¨Ù„Ø© Ù„Ù„Ø¨Ø­Ø«.",
+      trustVerifiedSuppliers: "Ù…Ø¬Ù‡Ø²ÙˆÙ† Ù…ÙˆØ«ÙˆÙ‚ÙˆÙ† ÙˆÙ…Ø¹ØªÙ…Ø¯ÙˆÙ†",
+      trustSecureData: "Ø¨ÙŠØ§Ù†Ø§Øª Ø¢Ù…Ù†Ø© ÙˆØ³Ø±ÙŠØ©",
+      trustRealSavings: "ØªÙˆÙÙŠØ± Ø­Ù‚ÙŠÙ‚ÙŠ ÙˆØ±Ø¤ÙŠØ© Ø£ÙˆØ¶Ø­",
+      footerDescription: "Ù…Ù†ØµØ© Ù…Ù‡Ù†ÙŠØ© Ù…ØªØ®ØµØµØ© ÙÙŠ Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª ÙˆØ³Ù„Ø³Ù„Ø© Ø§Ù„ØªÙˆØ±ÙŠØ¯ Ù„Ø¨Ù†Ø§Ø¡ Ù…Ø¬ØªÙ…Ø¹ Ù…ÙˆØ«ÙˆÙ‚ØŒ Ø´ÙØ§ÙØŒ ÙˆØ°ÙƒÙŠ.",
+      quickLinks: "Ø±ÙˆØ§Ø¨Ø· Ø³Ø±ÙŠØ¹Ø©",
+      resources: "Ù…ÙˆØ§Ø±Ø¯",
+      userGuide: "Ø¯Ù„ÙŠÙ„ Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù…",
+      termsOfUse: "Ø´Ø±ÙˆØ· Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù…",
+      privacyPolicy: "Ø³ÙŠØ§Ø³Ø© Ø§Ù„Ø®ØµÙˆØµÙŠØ©",
+      securityPolicy: "Ø³ÙŠØ§Ø³Ø© Ø§Ù„Ø£Ù…Ø§Ù†",
+      contactUs: "ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù†Ø§",
+      iraq: "Ø§Ù„Ø¹Ø±Ø§Ù‚",
+      copyright: "Â© 2026 Ù…Ø¬Ù‡Ø². Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø­Ù‚ÙˆÙ‚ Ù…Ø­ÙÙˆØ¸Ø©.",
+      loginDescription: "Ù…Ù†ØµØ© Ù…Ù‡Ù†ÙŠØ© Ø®Ø§ØµØ© Ù„Ù„ÙØ§Ø¹Ù„ÙŠÙ† ÙÙŠ Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª ÙˆØ³Ù„Ø³Ù„Ø© Ø§Ù„ØªÙˆØ±ÙŠØ¯ØŒ ØªØ³Ø§Ø¹Ø¯Ùƒ Ø¹Ù„Ù‰ Ø§Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…ÙˆØ«ÙˆÙ‚ÙŠÙ† ÙˆØªÙ‚Ø¯ÙŠÙ… Ø·Ù„Ø¨Ø§ØªÙƒ Ø¨Ø³Ù‡ÙˆÙ„Ø© ÙˆØ£Ù…Ø§Ù†.",
+      registerDescription: "Ø£Ù†Ø´Ø¦ Ø­Ø³Ø§Ø¨Ùƒ Ø§Ù„Ø¢Ù† Ù„Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø² Ø§Ù„Ø°ÙƒÙŠØ©ØŒ ÙˆØ§ÙƒØªØ´Ù ÙØ±Øµ Ø§Ù„ØªÙˆÙÙŠØ± ÙˆØ§Ù„ØªÙˆØ§ØµÙ„ Ù…Ø¹ Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…ÙˆØ«ÙˆÙ‚ÙŠÙ† ÙÙŠ Ø¬Ù…ÙŠØ¹ Ø£Ù†Ø­Ø§Ø¡ Ø§Ù„Ø¹Ø±Ø§Ù‚.",
+      rememberMe: "ØªØ°ÙƒØ±Ù†ÙŠ",
+      forgotPassword: "Ù†Ø³ÙŠØª ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±ØŸ",
+      noAccount: "Ù„ÙŠØ³ Ù„Ø¯ÙŠÙƒ Ø­Ø³Ø§Ø¨ØŸ",
+      alreadyHaveAccount: "Ù„Ø¯ÙŠÙƒ Ø­Ø³Ø§Ø¨ØŸ",
+      publicSearchPlaceholder: "Ø§Ø¨Ø­Ø« Ø¹Ù† Ù…Ø¬Ù‡Ø²ØŒ Ù…Ù†ØªØ¬ØŒ Ø®Ø¯Ù…Ø©ØŒ Ø£Ùˆ Ù‚Ø·Ø§Ø¹...",
+      appSearchPlaceholder: "Ø§Ø¨Ø­Ø« Ø¹Ù† Ù…Ø¬Ù‡Ø²ØŒ Ù…Ù†ØªØ¬ØŒ Ø·Ù„Ø¨...",
+      directoryDescription: "Ø§Ø¨Ø­Ø« Ø¹Ù† Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ÙŠÙ† Ø­Ø³Ø¨ Ø§Ù„ØªØµÙ†ÙŠÙ ÙˆØ§Ù„Ù…ÙˆÙ‚Ø¹ ÙˆØ§Ù„Ù‚Ø¯Ø±Ø§Øª ÙˆØ§Ù„Ø®Ø¨Ø±Ø© Ø§Ù„Ø³ÙˆÙ‚ÙŠØ©.",
+      askSupplierDirectory: "Ø§Ø³Ø£Ù„ Ø¯Ù„ÙŠÙ„ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      askSupplierDirectoryDescription: "Ø§ÙƒØªØ¨ Ø§Ù„Ù…Ø§Ø¯Ø© Ø£Ùˆ Ø§Ù„Ø®Ø¯Ù…Ø© ÙˆØ§Ù„Ù…Ø­Ø§ÙØ¸Ø© ÙˆØ·Ø±ÙŠÙ‚Ø© Ø§Ù„Ø¯ÙØ¹ ÙˆØ´Ø±ÙˆØ· Ø§Ù„Ø¯ÙØ¹ Ø§Ù„Ø¢Ø¬Ù„ØŒ ÙˆØ³ÙŠÙ‚ØªØ±Ø­ Ø§Ù„Ù†Ø¸Ø§Ù… Ø£ÙØ¶Ù„ Ø®Ù…Ø³ Ø´Ø±ÙƒØ§Øª Ù…Ù† Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ÙŠÙ†.",
+      procurementRequest: "Ù…ØªØ·Ù„Ø¨ Ø§Ù„Ø´Ø±Ø§Ø¡",
+      procurementRequestPlaceholder: "Ù…Ø«Ø§Ù„: Ø£Ø±ÙŠØ¯ Ù…Ø¬Ù‡Ø² ØµÙ…Ø§Ù…Ø§Øª ÙÙŠ Ø§Ù„Ø¨ØµØ±Ø© Ø£Ùˆ Ø¨ØºØ¯Ø§Ø¯ ÙŠÙ‚Ø¨Ù„ Ø§Ù„ØªØ­ÙˆÙŠÙ„ Ø§Ù„Ù…ØµØ±ÙÙŠ ÙˆØ§Ù„Ø¯ÙØ¹ Ø¨Ø¹Ø¯ 30 ÙŠÙˆÙ…Ù‹Ø§ Ù…Ù† Ø§Ù„ÙØ§ØªÙˆØ±Ø©.",
+      recommendSuppliers: "ØªØ±Ø´ÙŠØ­ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      topSupplierRecommendations: "Ø£ÙØ¶Ù„ 5 Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…Ø·Ø§Ø¨Ù‚ÙŠÙ†",
+      recommendationCount: "{{count}} ØªØ±Ø´ÙŠØ­Ø§Øª",
+      matchScore: "Ù†Ø³Ø¨Ø© Ø§Ù„ØªØ·Ø§Ø¨Ù‚",
+      noMatchingRecommendations: "Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ø­Ø§Ù„ÙŠÙ‹Ø§ Ù…Ø¬Ù‡Ø² Ù…Ø¹ØªÙ…Ø¯ ÙŠØ·Ø§Ø¨Ù‚ Ø§Ù„Ù…Ø§Ø¯Ø© ÙˆØ§Ù„Ø´Ø±ÙˆØ· Ø§Ù„Ù…Ø·Ù„ÙˆØ¨Ø©.",
+      geminiSearchFallback: "ØªØ¹Ø°Ø± Ø§Ø³ØªØ®Ø¯Ø§Ù… GeminiØŒ Ù„Ø°Ù„Ùƒ Ø£ÙƒÙ…Ù„ Ù…Ø­Ø±Ùƒ Ø§Ù„ØªØ±Ø´ÙŠØ­ Ø§Ù„Ù…Ø­Ù„ÙŠ Ø¹Ù…Ù„ÙŠØ© Ø§Ù„Ø¨Ø­Ø«.",
+      recommendationReason_category: "Ù…Ø·Ø§Ø¨Ù‚Ø© Ø§Ù„ØªØµÙ†ÙŠÙ",
+      recommendationReason_text: "Ù…Ø·Ø§Ø¨Ù‚Ø© Ø§Ù„Ù…Ø§Ø¯Ø© Ø£Ùˆ Ø§Ù„Ø®Ø¯Ù…Ø©",
+      recommendationReason_location: "Ù…Ø·Ø§Ø¨Ù‚Ø© Ø§Ù„Ù…ÙˆÙ‚Ø¹",
+      recommendationReason_payment: "Ù…Ø·Ø§Ø¨Ù‚Ø© Ø·Ø±ÙŠÙ‚Ø© Ø§Ù„Ø¯ÙØ¹",
+      recommendationReason_credit: "Ù…Ø·Ø§Ø¨Ù‚Ø© Ø´Ø±ÙˆØ· Ø§Ù„Ø¯ÙØ¹ Ø§Ù„Ø¢Ø¬Ù„",
+      recommendationReason_quality: "Ø§Ù„ØªÙ‚ÙŠÙŠÙ… ÙˆÙ…Ø³ØªÙˆÙ‰ Ø§Ù„Ø«Ù‚Ø©",
+      recommendationReason_freshness: "Ø¨ÙŠØ§Ù†Ø§Øª Ù…Ø­Ø¯Ø«Ø© Ù…Ø¤Ø®Ø±Ù‹Ø§",
+      recommendationMatched: "Ù…Ø·Ø§Ø¨Ù‚",
+      recommendationUnconfirmed: "ØºÙŠØ± Ù…Ø¤ÙƒØ¯",
+      recommendationNotMatched: "ØºÙŠØ± Ù…Ø·Ø§Ø¨Ù‚",
+      filters: "ÙÙ„Ø§ØªØ±",
+      clear: "Ù…Ø³Ø­",
+      details: "Ø§Ù„ØªÙØ§ØµÙŠÙ„",
+      profile: "Ø§Ù„Ù…Ù„Ù Ø§Ù„Ø´Ø®ØµÙŠ",
+      dashboard: "Ù„ÙˆØ­Ø© Ø§Ù„ØªØ­ÙƒÙ…",
+      directory: "Ø¯Ù„ÙŠÙ„ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      addSupplier: "Ø¥Ø¶Ø§ÙØ© Ù…Ø¬Ù‡Ø²",
+      editApprovedSupplier: "ØªØ¹Ø¯ÙŠÙ„ Ø§Ù„Ù…Ø¬Ù‡Ø² Ø§Ù„Ù…Ø¹ØªÙ…Ø¯",
+      editApprovedSupplierDescription: "Ø­Ø¯Ù‘Ø« Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø² Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ Ù…Ø¹ Ø§Ù„Ø­ÙØ§Ø¸ Ø¹Ù„Ù‰ Ø§Ù„ØªÙ‚ÙŠÙŠÙ…Ø§Øª ÙˆØ§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø§Øª ÙˆØ³Ø¬Ù„ Ø§Ù„Ù…Ø³Ø§Ù‡Ù…Ø§Øª.",
+      approvedSupplierUpdated: "ØªÙ… ØªØ­Ø¯ÙŠØ« Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø² Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ Ø¨Ù†Ø¬Ø§Ø­.",
+      supplierDeleted: "ØªÙ… Ø­Ø°Ù Ø§Ù„Ù…Ø¬Ù‡Ø² Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ Ø¨Ù†Ø¬Ø§Ø­.",
+      supplierDeleteFailed: "ØªØ¹Ø°Ø± Ø­Ø°Ù Ø§Ù„Ù…Ø¬Ù‡Ø² Ø§Ù„Ù…Ø¹ØªÙ…Ø¯.",
+      confirmDeleteSupplier: "Ù‡Ù„ ØªØ±ÙŠØ¯ Ø­Ø°Ù {{name}} Ù…Ù† Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ÙŠÙ†ØŸ Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø§Ù„ØªØ±Ø§Ø¬Ø¹ Ø¹Ù† Ù‡Ø°Ù‡ Ø§Ù„Ø¹Ù…Ù„ÙŠØ©.",
+      supplierNotFound: "Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø³Ø¬Ù„ Ø§Ù„Ù…Ø¬Ù‡Ø².",
+      saveChanges: "Ø­ÙØ¸ Ø§Ù„ØªØºÙŠÙŠØ±Ø§Øª",
+      resetChanges: "Ø¥Ù„ØºØ§Ø¡ Ø§Ù„ØªØºÙŠÙŠØ±Ø§Øª",
+      confirmResetSupplierChanges: "Ù‡Ù„ ØªØ±ÙŠØ¯ Ø¥Ù„ØºØ§Ø¡ Ø§Ù„ØªØºÙŠÙŠØ±Ø§Øª ØºÙŠØ± Ø§Ù„Ù…Ø­ÙÙˆØ¸Ø© ÙˆØ§Ø³ØªØ¹Ø§Ø¯Ø© Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø² Ø§Ù„Ù…Ø¹ØªÙ…Ø¯Ø©ØŸ",
+      supplierChangesReset: "ØªÙ… Ø¥Ù„ØºØ§Ø¡ Ø§Ù„ØªØºÙŠÙŠØ±Ø§Øª ØºÙŠØ± Ø§Ù„Ù…Ø­ÙÙˆØ¸Ø©.",
+      readyToSave: "Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø² Ù…ÙƒØªÙ…Ù„Ø© ÙˆØ¬Ø§Ù‡Ø²Ø© Ù„Ù„Ø­ÙØ¸.",
+      mySubmissions: "Ø±Ø³Ø§Ø¦Ù„ÙŠ",
+      myAccess: "ÙˆØµÙˆÙ„ÙŠ",
+      myReviews: "Ù…Ø±Ø§Ø¬Ø¹Ø§ØªÙŠ",
+      admin: "Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©",
+      adminDashboard: "Ù„ÙˆØ­Ø© Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©",
+      users: "Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙˆÙ†",
+      pendingUsers: "Ù…Ø³ØªØ®Ø¯Ù…ÙˆÙ† Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯",
+      reviewQueue: "Ù‚Ø§Ø¦Ù…Ø© Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      reviewModeration: "Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„ØªÙ‚ÙŠÙŠÙ…Ø§Øª",
+      approvedSuppliers: "Ø§Ù„Ù…Ø¬Ù‡Ø²ÙˆÙ† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ÙˆÙ†",
+      categories: "Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª",
+      settings: "Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª",
+      auditLogs: "Ø³Ø¬Ù„ Ø§Ù„ØªØ¯Ù‚ÙŠÙ‚",
+      supplierFeedbackAdmin: "Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      materialDictionary: "Ù‚Ø§Ù…ÙˆØ³ Ø§Ù„Ù…ÙˆØ§Ø¯",
+      materialDictionaryDescription: "Ø±Ø§Ø¬Ø¹ Ù…ÙØ±Ø¯Ø§Øª Ø§Ù„Ù…ÙˆØ§Ø¯ ÙÙŠ Ø§Ù„Ù…Ù†ØµØ© ÙˆØ§Ø¹ØªÙ…Ø¯ Ø§Ù„ÙƒÙ„Ù…Ø§Øª Ø§Ù„Ø¬Ø¯ÙŠØ¯Ø© Ø§Ù„ØªÙŠ ØªØ¸Ù‡Ø± Ù…Ù† Ø¹Ù…Ù„ÙŠØ§Øª Ø§Ù„Ø¨Ø­Ø«.",
+      activeMaterialTerms: "Ø§Ù„Ù…ÙØ±Ø¯Ø§Øª Ø§Ù„Ù…Ø¹ØªÙ…Ø¯Ø©",
+      pendingTermSuggestions: "Ù…ÙØ±Ø¯Ø§Øª Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      pendingTermSuggestionsDescription: "Ù‡Ø°Ù‡ Ø§Ù„ÙƒÙ„Ù…Ø§Øª Ø§Ù„ØªÙ‚Ø·Ù‡Ø§ Ø§Ù„Ù†Ø¸Ø§Ù… Ù…Ù† Ø§Ù„Ø¨Ø­Ø« Ù„ÙƒÙ†Ù‡Ø§ Ù„Ù… ØªØ¯Ø®Ù„ Ø§Ù„Ù‚Ø§Ù…ÙˆØ³ Ø§Ù„Ø±Ø³Ù…ÙŠ Ø¨Ø¹Ø¯.",
+      noPendingTermSuggestions: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…ÙØ±Ø¯Ø§Øª Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      canonicalEn: "Ø§Ù„Ø§Ø³Ù… Ø§Ù„Ù‚ÙŠØ§Ø³ÙŠ Ø¨Ø§Ù„Ø¥Ù†ÙƒÙ„ÙŠØ²ÙŠ",
+      canonicalAr: "Ø§Ù„Ø§Ø³Ù… Ø§Ù„Ù‚ÙŠØ§Ø³ÙŠ Ø¨Ø§Ù„Ø¹Ø±Ø¨ÙŠ",
+      synonyms: "Ø§Ù„Ù…Ø±Ø§Ø¯ÙØ§Øª",
+      brands: "Ø§Ù„Ù…Ø§Ø±ÙƒØ§Øª",
+      standards: "Ø§Ù„Ù…Ø¹Ø§ÙŠÙŠØ±",
+      examples: "Ø£Ù…Ø«Ù„Ø©",
+      seenCount: "Ø¸Ù‡Ø±Øª {{count}} Ù…Ø±Ø©",
+      ignore: "ØªØ¬Ø§Ù‡Ù„",
+      termSuggestionApproved: "ØªÙ…Øª Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù…ÙØ±Ø¯Ø© Ø¥Ù„Ù‰ Ù‚Ø§Ù…ÙˆØ³ Ø§Ù„Ù…ÙˆØ§Ø¯.",
+      termSuggestionIgnored: "ØªÙ… ØªØ¬Ø§Ù‡Ù„ Ø§Ù„Ù…ÙØ±Ø¯Ø© Ø§Ù„Ù…Ù‚ØªØ±Ø­Ø©.",
+      materialDictionaryCategoryRequired: "Ø§Ø®ØªØ± Ø§Ù„ØªØµÙ†ÙŠÙ Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠ Ù‚Ø¨Ù„ Ø§Ø¹ØªÙ…Ø§Ø¯ Ù‡Ø°Ù‡ Ø§Ù„Ù…ÙØ±Ø¯Ø©.",
+      login: "ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„",
+      register: "Ø¥Ù†Ø´Ø§Ø¡ Ø­Ø³Ø§Ø¨",
+      logout: "Ø®Ø±ÙˆØ¬",
+      email: "Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ",
+      password: "ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±",
+      fullName: "Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ù…Ù„",
+      phone: "Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ",
+      jobTitle: "Ø§Ù„Ù…Ø³Ù…Ù‰ Ø§Ù„ÙˆØ¸ÙŠÙÙŠ",
+      organization: "Ø§Ù„Ø´Ø±ÙƒØ© / Ø§Ù„Ù…Ø¤Ø³Ø³Ø©",
+      governorate: "Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©",
+      city: "Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©",
+      sector: "Ù…Ø¬Ø§Ù„ Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª / Ø§Ù„Ù‚Ø·Ø§Ø¹",
+      reasonForJoining: "Ø³Ø¨Ø¨ Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù…",
+      createAccount: "Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ø­Ø³Ø§Ø¨",
+      fullNamePlaceholder: "Ø£Ø¯Ø®Ù„ Ø§Ø³Ù…Ùƒ Ø§Ù„ÙƒØ§Ù…Ù„",
+      passwordPlaceholder: "Ø£Ø¯Ø®Ù„ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±",
+      loginPasswordPlaceholder: "Ø£Ø¯Ø®Ù„ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± Ø§Ù„Ø®Ø§ØµØ© Ø¨Ùƒ",
+      phonePlaceholder: "7XXXXXXXX",
+      organizationPlaceholder: "Ø£Ø¯Ø®Ù„ Ø§Ø³Ù… Ø§Ù„Ø´Ø±ÙƒØ© Ø£Ùˆ Ø§Ù„Ù…Ø¤Ø³Ø³Ø©",
+      jobTitlePlaceholder: "Ø£Ø¯Ø®Ù„ Ø§Ù„Ù…Ø³Ù…Ù‰ Ø§Ù„ÙˆØ¸ÙŠÙÙŠ",
+      governoratePlaceholder: "Ø§Ø®ØªØ± Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©",
+      cityPlaceholder: "Ø§Ø®ØªØ± Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©",
+      sectorPlaceholder: "Ø§Ø®ØªØ± Ù…Ø¬Ø§Ù„ Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª Ø£Ùˆ Ø§Ù„Ù‚Ø·Ø§Ø¹",
+      reasonForJoiningPlaceholder: "Ø§ÙƒØªØ¨ Ø³Ø¨Ø¨ Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù…...",
+      dismiss: "Ø¥ØºÙ„Ø§Ù‚",
+      registrationSuccessMessage: "ØªÙ… Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù… Ø¨Ù†Ø¬Ø§Ø­. Ù„Ø¯ÙŠÙƒ 3 Ø£ÙŠØ§Ù… Ù…Ø¬Ø§Ù†ÙŠØ© Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…ÙˆÙ‚Ø¹. Ù„Ù„Ø­ØµÙˆÙ„ Ø¹Ù„Ù‰ ÙØªØ±Ø© Ø£Ø·ÙˆÙ„ ÙŠÙ…ÙƒÙ†Ùƒ Ø±ÙØ¹ Ø¨ÙŠØ§Ù†Ø§Øª 10 Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø¯Ø§Ø®Ù„ Ø§Ù„Ù…Ù†ØµØ© Ù„Ù„Ø­ØµÙˆÙ„ Ø¹Ù„Ù‰ Ø´Ù‡Ø± Ù…Ø¬Ø§Ù†ÙŠ. ÙƒÙ„Ù…Ø§ Ø±ÙØ¹Øª Ø¹Ø¯Ø¯Ù‹Ø§ Ø£ÙƒØ¨Ø± Ù…Ù† Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ÙŠÙ† Ø³ØªØ­ØµÙ„ Ø¹Ù„Ù‰ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ù…Ø¬Ø§Ù†ÙŠ Ù„ÙØªØ±Ø© Ø£Ø·ÙˆÙ„.",
+      completeProfile: "Ø¥ÙƒÙ…Ø§Ù„ Ø§Ù„Ù…Ù„Ù",
+      pendingApprovalTitle: "Ù…Ù„ÙÙƒ Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ø¹ØªÙ…Ø§Ø¯ Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©",
+      pendingApprovalBody: "ÙŠÙ…ÙƒÙ†Ùƒ Ø¥Ø±Ø³Ø§Ù„ Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ø¢Ù†. Ø§Ù„ÙˆØµÙˆÙ„ Ø§Ù„ÙƒØ§Ù…Ù„ ÙŠØ¨Ø¯Ø£ Ø¨Ø¹Ø¯ Ø§Ø¹ØªÙ…Ø§Ø¯ Ø§Ù„Ø¥Ø¯Ø§Ø±Ø© ÙˆØ§Ø­ØªØ³Ø§Ø¨ Ù…Ø³Ø§Ù‡Ù…Ø§ØªÙƒ Ø§Ù„Ù…Ø¹ØªÙ…Ø¯Ø©.",
+      noAccessTitle: "Ø§Ù„ÙˆØµÙˆÙ„ ØºÙŠØ± ÙØ¹Ø§Ù„ Ø¨Ø¹Ø¯",
+      noAccessBody: "ÙƒÙ„ 10 Ø³Ø¬Ù„Ø§Øª Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø¬Ø¯ÙŠØ¯Ø© ÙˆÙ…Ø¹ØªÙ…Ø¯Ø© ØªÙ…Ù†Ø­Ùƒ 30 ÙŠÙˆÙ…Ù‹Ø§ Ù„Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ø§Ù„Ø¯Ù„ÙŠÙ„.",
+      supplierName: "Ø§Ø³Ù… Ø§Ù„Ù…Ø¬Ù‡Ø²",
+      displayName: "Ø§Ù„Ø§Ø³Ù… Ø§Ù„Ø¸Ø§Ù‡Ø±",
+      companyNameLanguage: "Ù„ØºØ© Ø§Ø³Ù… Ø§Ù„Ø´Ø±ÙƒØ©",
+      businessType: "Ù†ÙˆØ¹ Ø§Ù„Ù†Ø´Ø§Ø·",
+      arabicCompanyName: "Ø§Ø³Ù… Ø§Ù„Ø´Ø±ÙƒØ© Ø¨Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©",
+      englishCompanyName: "Ø§Ø³Ù… Ø§Ù„Ø´Ø±ÙƒØ© Ø¨Ø§Ù„Ø¥Ù†Ø¬Ù„ÙŠØ²ÙŠØ©",
+      shortDescription: "ÙˆØµÙ Ù…Ø®ØªØµØ±",
+      location: "Ø§Ù„Ù…ÙˆÙ‚Ø¹",
+      marketArea: "Ø§Ù„Ø³ÙˆÙ‚ / Ø§Ù„Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ©",
+      address: "Ø§Ù„Ø¹Ù†ÙˆØ§Ù† Ø§Ù„ÙƒØ§Ù…Ù„",
+      googleMapsLink: "Ø±Ø§Ø¨Ø· Ø®Ø±Ø§Ø¦Ø· Google",
+      coverageAreas: "Ù†Ø·Ø§Ù‚ Ø§Ù„ØªØºØ·ÙŠØ©",
+      supplierBranches: "ÙØ±ÙˆØ¹ Ø§Ù„Ù…Ø¬Ù‡Ø²",
+      supplierBranchesDescription: "Ø£Ø¶Ù Ù…ÙˆØ§Ù‚Ø¹ Ø§Ù„ÙØ±ÙˆØ¹ Ø¹Ù†Ø¯Ù…Ø§ ØªÙƒÙˆÙ† Ù„Ù„Ø´Ø±ÙƒØ© Ù…ÙƒØ§ØªØ¨ Ø£Ùˆ Ø¬Ù‡Ø§Øª Ø§ØªØµØ§Ù„ Ù…Ø®ØªÙ„ÙØ© ÙÙŠ Ø¹Ø¯Ø© Ù…Ø¯Ù†.",
+      addBranch: "Ø¥Ø¶Ø§ÙØ© ÙØ±Ø¹",
+      removeBranch: "Ø­Ø°Ù Ø§Ù„ÙØ±Ø¹",
+      contactInfo: "Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„Ø§ØªØµØ§Ù„",
+      primaryPhone: "Ø§Ù„Ù‡Ø§ØªÙ Ø§Ù„Ø£Ø³Ø§Ø³ÙŠ",
+      secondaryPhone: "Ø§Ù„Ù‡Ø§ØªÙ Ø§Ù„Ø«Ø§Ù†ÙŠ",
+      whatsapp: "ÙˆØ§ØªØ³Ø§Ø¨",
+      website: "Ø§Ù„Ù…ÙˆÙ‚Ø¹ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ",
+      facebook: "ÙÙŠØ³Ø¨ÙˆÙƒ",
+      instagramLinkedin: "Ø¥Ù†Ø³ØªØºØ±Ø§Ù… / Ù„ÙŠÙ†ÙƒØ¯Ø¥Ù†",
+      contactPerson: "Ø§Ù„Ø´Ø®Øµ Ø§Ù„Ù…Ø³Ø¤ÙˆÙ„",
+      contactPersonRole: "ØµÙØ© Ø§Ù„Ø´Ø®Øµ Ø§Ù„Ù…Ø³Ø¤ÙˆÙ„",
+      capabilities: "Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª ÙˆØ§Ù„Ù‚Ø¯Ø±Ø§Øª",
+      mainCategory: "Ø§Ù„ØªØµÙ†ÙŠÙ Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠ",
+      subcategories: "Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª Ø§Ù„ÙØ±Ø¹ÙŠØ©",
+      subcategoriesPlaceholder: "Ù…Ø«Ø§Ù„: Ù…Ø¶Ø®Ø§ØªØŒ ØµÙ…Ø§Ù…Ø§ØªØŒ Ø­ÙˆØ§Ù…Ù„ ÙƒÙŠØ¨Ù„Ø§Øª",
+      capabilityTags: "ÙˆØ³ÙˆÙ… Ø§Ù„Ù‚Ø¯Ø±Ø§Øª",
+      operationalCapabilities: "Ù‚Ø¯Ø±Ø§Øª Ø§Ù„ØªØ¬Ù‡ÙŠØ²",
+      supplierDocumentation: "Ø§Ù„ÙˆØ«Ø§Ø¦Ù‚ ÙˆØ§Ù„Ø¬Ø§Ù‡Ø²ÙŠØ© Ø§Ù„Ù…Ù‡Ù†ÙŠØ©",
+      sectorExperience: "Ø§Ù„Ø®Ø¨Ø±Ø© Ø§Ù„Ù‚Ø·Ø§Ø¹ÙŠØ©",
+      paymentOptions: "Ø®ÙŠØ§Ø±Ø§Øª Ø§Ù„Ø¯ÙØ¹",
+      acceptsCredit: "ÙŠÙ‚Ø¨Ù„ Ø§Ù„Ø¯ÙØ¹ Ø§Ù„Ø¢Ø¬Ù„",
+      creditDays: "Ù…Ø¯Ø© Ø§Ù„Ø¯ÙØ¹ Ø§Ù„Ø¢Ø¬Ù„ Ø¨Ø§Ù„Ø£ÙŠØ§Ù…",
+      creditDaysPlaceholder: "Ù…Ø«Ø§Ù„: 30ØŒ 60ØŒ 90",
+      creditStart: "Ø¨Ø¯Ø§ÙŠØ© Ø§Ø­ØªØ³Ø§Ø¨ Ù…Ø¯Ø© Ø§Ù„Ø¯ÙØ¹",
+      creditTermsNote: "Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø´Ø±ÙˆØ· Ø§Ù„Ø¯ÙØ¹ Ø§Ù„Ø¢Ø¬Ù„",
+      sourceConfidence: "Ø§Ù„Ù…ØµØ¯Ø± ÙˆØ§Ù„Ø«Ù‚Ø©",
+      sourceType: "ÙƒÙŠÙ ØªØ¹Ø±Ù Ù‡Ø°Ø§ Ø§Ù„Ù…Ø¬Ù‡Ø²ØŸ",
+      confidenceLevel: "Ù…Ø³ØªÙˆÙ‰ Ø§Ù„Ø«Ù‚Ø©",
+      directExperience: "Ø®Ø¨Ø±Ø© Ù…Ø¨Ø§Ø´Ø±Ø© Ø³Ø§Ø¨Ù‚Ø©",
+      lastInteractionYear: "Ø³Ù†Ø© Ø¢Ø®Ø± ØªØ¹Ø§Ù…Ù„",
+      relatedMaterialService: "Ø§Ù„Ù…Ø§Ø¯Ø© / Ø§Ù„Ø®Ø¯Ù…Ø© Ø§Ù„Ù…Ø±ØªØ¨Ø·Ø©",
+      sourceNote: "Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø®ØªØµØ±Ø©",
+      duplicateWarning: "ØªÙ†Ø¨ÙŠÙ‡ ØªÙƒØ±Ø§Ø± Ù…Ø­ØªÙ…Ù„",
+      submitForReview: "Ø¥Ø±Ø³Ø§Ù„ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      submissionThanks: "Ø´ÙƒØ±Ù‹Ø§ Ù„Ùƒ. ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø² Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©. Ø³ØªÙØ­ØªØ³Ø¨ Ù„ÙˆØµÙˆÙ„Ùƒ Ø¨Ø¹Ø¯ Ø§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯ ÙÙ‚Ø·.",
+      completionScore: "Ø¯Ø±Ø¬Ø© Ø§Ù„Ø§ÙƒØªÙ…Ø§Ù„",
+      source: "Ø§Ù„Ù…ØµØ¯Ø±",
+      confidence: "Ø§Ù„Ø«Ù‚Ø©",
+      status: "Ø§Ù„Ø­Ø§Ù„Ø©",
+      role: "Ø§Ù„Ø¯ÙˆØ±",
+      access: "Ø§Ù„ÙˆØµÙˆÙ„",
+      accessExpires: "Ø§Ù†ØªÙ‡Ø§Ø¡ Ø§Ù„ÙˆØµÙˆÙ„",
+      points: "Ø§Ù„Ù†Ù‚Ø§Ø·",
+      badges: "Ø§Ù„Ø´Ø§Ø±Ø§Øª",
+      pendingSubmissions: "Ø¥Ø±Ø³Ø§Ù„Ø§Øª Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      needsCorrection: "ØªØ­ØªØ§Ø¬ ØªØµØ­ÙŠØ­",
+      rejected: "Ù…Ø±ÙÙˆØ¶",
+      approved: "Ù…Ø¹ØªÙ…Ø¯",
+      remainingForNextMonth: "Ø§Ù„Ù…ØªØ¨Ù‚ÙŠ Ù„Ù„Ø´Ù‡Ø± Ø§Ù„Ù‚Ø§Ø¯Ù…",
+      availableCredits: "Ø±ØµÙŠØ¯ Ø§Ù„Ù…Ø³Ø§Ù‡Ù…Ø§Øª Ø§Ù„Ù…ØªØ§Ø­",
+      accessDaysRemaining: "Ø§Ù„Ø£ÙŠØ§Ù… Ø§Ù„Ù…ØªØ¨Ù‚ÙŠØ© Ù„Ù„ÙˆØµÙˆÙ„",
+      accessCovered: "Ø§Ù„ÙˆØµÙˆÙ„ Ù…ØºØ·Ù‰",
+      monthlyChallenge: "ØªØ­Ø¯ÙŠ Ø§Ù„Ø´Ù‡Ø±",
+      rating: "Ø§Ù„ØªÙ‚ÙŠÙŠÙ…",
+      reviews: "Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø§Øª",
+      ratingOutOfFive: "{{rating}} Ù…Ù† 5",
+      lastUpdated: "Ø¢Ø®Ø± ØªØ­Ø¯ÙŠØ«",
+      submitReview: "Ø¥Ø±Ø³Ø§Ù„ Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      writeReview: "ÙƒØªØ§Ø¨Ø© Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      hideReviewForm: "Ø¥Ø®ÙØ§Ø¡ Ù†Ù…ÙˆØ°Ø¬ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      professionalCommentPlaceholder: "Ø§ÙƒØªØ¨ ØªØ¹Ù„ÙŠÙ‚Ù‹Ø§ Ù…Ù‡Ù†ÙŠÙ‹Ø§ Ø¨Ù†Ø§Ø¡Ù‹ Ø¹Ù„Ù‰ ØªØ¬Ø±Ø¨ØªÙƒ. ØªØ¬Ù†Ø¨ Ø§Ù„Ø¥Ø³Ø§Ø¡Ø§Øª Ø£Ùˆ Ø§Ù„Ø§ØªÙ‡Ø§Ù…Ø§Øª ØºÙŠØ± Ø§Ù„Ù…Ø¯Ø¹ÙˆÙ…Ø©.",
+      interactionType: "Ù†ÙˆØ¹ Ø§Ù„ØªØ¹Ø§Ù…Ù„",
+      relatedCategory: "Ø§Ù„ØªØµÙ†ÙŠÙ Ø§Ù„Ù…Ø±ØªØ¨Ø·",
+      positiveTags: "ÙˆØ³ÙˆÙ… Ø¥ÙŠØ¬Ø§Ø¨ÙŠØ©",
+      concernTags: "ÙˆØ³ÙˆÙ… Ù…Ù„Ø§Ø­Ø¸Ø§Øª",
+      comment: "ØªØ¹Ù„ÙŠÙ‚",
+      overall: "Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ",
+      responseSpeed: "Ø³Ø±Ø¹Ø© Ø§Ù„Ø§Ø³ØªØ¬Ø§Ø¨Ø©",
+      priceClarity: "ÙˆØ¶ÙˆØ­ Ø§Ù„Ø³Ø¹Ø±",
+      flexibility: "Ø§Ù„Ù…Ø±ÙˆÙ†Ø©",
+      technicalCompliance: "Ø§Ù„Ø§Ù„ØªØ²Ø§Ù… Ø§Ù„ÙÙ†ÙŠ",
+      technicalKnowledge: "Ø§Ù„Ù…Ø¹Ø±ÙØ© Ø§Ù„ÙÙ†ÙŠØ©",
+      deliveryCommitment: "Ø§Ù„Ø§Ù„ØªØ²Ø§Ù… Ø¨Ø§Ù„ØªØ³Ù„ÙŠÙ…",
+      contractCommitment: "Ø§Ù„Ø§Ù„ØªØ²Ø§Ù… Ø¨Ø§Ù„Ø§ØªÙØ§Ù‚",
+      quality: "Ø§Ù„Ø¬ÙˆØ¯Ø©",
+      communication: "Ø§Ù„ØªÙˆØ§ØµÙ„",
+      documentation: "Ø§Ù„ØªÙˆØ«ÙŠÙ‚",
+      duplicateReason: "Ø³Ø¨Ø¨ Ø§Ù„Ù…Ø·Ø§Ø¨Ù‚Ø©",
+      high: "Ø¹Ø§Ù„ÙŠØ©",
+      medium: "Ù…ØªÙˆØ³Ø·Ø©",
+      low: "Ù…Ù†Ø®ÙØ¶Ø©",
+      unknown: "ØºÙŠØ± Ù…Ø¹Ø±ÙˆÙ",
+      yes: "Ù†Ø¹Ù…",
+      no: "Ù„Ø§",
+      notSure: "ØºÙŠØ± Ù…ØªØ£ÙƒØ¯",
+      not_sure: "ØºÙŠØ± Ù…ØªØ£ÙƒØ¯",
+      noResults: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ù†ØªØ§Ø¦Ø¬",
+      all: "Ø¬Ù…ÙŠØ¹",
+      allIraq: "ÙƒÙ„ Ø§Ù„Ø¹Ø±Ø§Ù‚",
+      advancedSearch: "Ø¨Ø­Ø« Ù…ØªÙ‚Ø¯Ù…",
+      notifications: "Ø§Ù„Ø¥Ø´Ø¹Ø§Ø±Ø§Øª",
+      noNotifications: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¥Ø´Ø¹Ø§Ø±Ø§Øª",
+      notificationRejectedSubmissions_zero: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ø·Ù„Ø¨Ø§Øª Ù…Ø±ÙÙˆØ¶Ø©",
+      notificationRejectedSubmissions_one: "Ø·Ù„Ø¨ Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯ Ù…Ø±ÙÙˆØ¶",
+      notificationRejectedSubmissions_two: "Ø·Ù„Ø¨Ø§ Ù…Ø¬Ù‡Ø² Ù…Ø±ÙÙˆØ¶Ø§Ù†",
+      notificationRejectedSubmissions_few: "{{count}} Ø·Ù„Ø¨Ø§Øª Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…Ø±ÙÙˆØ¶Ø©",
+      notificationRejectedSubmissions_many: "{{count}} Ø·Ù„Ø¨ Ù…Ø¬Ù‡Ø² Ù…Ø±ÙÙˆØ¶",
+      notificationRejectedSubmissions_other: "{{count}} Ø·Ù„Ø¨ Ù…Ø¬Ù‡Ø² Ù…Ø±ÙÙˆØ¶",
+      notificationApprovedSubmissions_zero: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ø·Ù„Ø¨Ø§Øª Ù…Ø¹ØªÙ…Ø¯Ø©",
+      notificationApprovedSubmissions_one: "Ø·Ù„Ø¨ Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯ Ù…Ø¹ØªÙ…Ø¯",
+      notificationApprovedSubmissions_two: "Ø·Ù„Ø¨Ø§ Ù…Ø¬Ù‡Ø² Ù…Ø¹ØªÙ…Ø¯Ø§Ù†",
+      notificationApprovedSubmissions_few: "{{count}} Ø·Ù„Ø¨Ø§Øª Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…Ø¹ØªÙ…Ø¯Ø©",
+      notificationApprovedSubmissions_many: "{{count}} Ø·Ù„Ø¨ Ù…Ø¬Ù‡Ø² Ù…Ø¹ØªÙ…Ø¯",
+      notificationApprovedSubmissions_other: "{{count}} Ø·Ù„Ø¨ Ù…Ø¬Ù‡Ø² Ù…Ø¹ØªÙ…Ø¯",
+      notificationPendingSuppliers_zero: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ø·Ù„Ø¨Ø§Øª Ù…Ø±Ø§Ø¬Ø¹Ø© Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      notificationPendingSuppliers_one: "Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯ Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingSuppliers_two: "Ù…Ø¬Ù‡Ø²Ø§Ù† Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingSuppliers_few: "{{count}} Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingSuppliers_many: "{{count}} Ù…Ø¬Ù‡Ø²Ù‹Ø§ Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingSuppliers_other: "{{count}} Ù…Ø¬Ù‡Ø² Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingReviews_zero: "Ù„Ø§ ØªÙˆØ¬Ø¯ ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingReviews_one: "ØªÙ‚ÙŠÙŠÙ… ÙˆØ§Ø­Ø¯ Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingReviews_two: "ØªÙ‚ÙŠÙŠÙ…Ø§Ù† Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingReviews_few: "{{count}} ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingReviews_many: "{{count}} ØªÙ‚ÙŠÙŠÙ…Ù‹Ø§ Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingReviews_other: "{{count}} ØªÙ‚ÙŠÙŠÙ… Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingFeedback_zero: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingFeedback_one: "Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯Ø© Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingFeedback_two: "Ù…Ù„Ø§Ø­Ø¸ØªØ§ Ù…Ø¬Ù‡Ø² Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingFeedback_few: "{{count}} Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingFeedback_many: "{{count}} Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø¬Ù‡Ø² Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationPendingFeedback_other: "{{count}} Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø¬Ù‡Ø² Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      notificationFeedbackResolved_zero: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ù„Ø§Ø­Ø¸Ø§Øª ØªÙ…Øª Ù…Ø¹Ø§Ù„Ø¬ØªÙ‡Ø§",
+      notificationFeedbackResolved_one: "ØªÙ…Øª Ù…Ø¹Ø§Ù„Ø¬Ø© Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯Ø©",
+      notificationFeedbackResolved_two: "ØªÙ…Øª Ù…Ø¹Ø§Ù„Ø¬Ø© Ù…Ù„Ø§Ø­Ø¸ØªÙŠ Ù…Ø¬Ù‡Ø²",
+      notificationFeedbackResolved_few: "ØªÙ…Øª Ù…Ø¹Ø§Ù„Ø¬Ø© {{count}} Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      notificationFeedbackResolved_many: "ØªÙ…Øª Ù…Ø¹Ø§Ù„Ø¬Ø© {{count}} Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø¬Ù‡Ø²",
+      notificationFeedbackResolved_other: "ØªÙ…Øª Ù…Ø¹Ø§Ù„Ø¬Ø© {{count}} Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø¬Ù‡Ø²",
+      editCorrection: "ØªØµØ­ÙŠØ­ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª",
+      correctionResubmitted: "ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„ØªØµØ­ÙŠØ­ Ø¥Ù„Ù‰ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø© Ù…Ù† Ø¬Ø¯ÙŠØ¯.",
+      supplierSubmissionNotFound: "Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø·Ù„Ø¨ Ø§Ù„Ù…Ø¬Ù‡Ø².",
+      supplierSubmissionCannotEdit: "Ù„Ø§ ÙŠÙ…ÙƒÙ† ØªØ¹Ø¯ÙŠÙ„ Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨ Ø§Ù„Ø¢Ù†.",
+      row: "Ø§Ù„ØµÙ",
+      landingHeadline: "Ù…Ø¬Ù‡Ø²",
+      landingLead: "Ù…Ù†ØµØ© Ù…Ù‡Ù†ÙŠØ© Ø®Ø§ØµØ© Ù„Ù„Ø¹Ø§Ù…Ù„ÙŠÙ† ÙÙŠ Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª ÙˆØ³Ù„Ø³Ù„Ø© Ø§Ù„ØªÙˆØ±ÙŠØ¯ØŒ ØªØ³Ø§Ø¹Ø¯Ùƒ Ø¹Ù„Ù‰ Ø§Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…ÙˆØ«ÙˆÙ‚ÙŠÙ†ØŒ ÙˆØªÙ‚ÙŠÙŠÙ… ØªØ¬Ø§Ø±Ø¨ Ø§Ù„Ø³ÙˆÙ‚ØŒ ÙˆØ¨Ù†Ø§Ø¡ Ù‚Ø§Ø¹Ø¯Ø© Ù…Ø¹Ø±ÙÙŠØ© ØªØ´Ø§Ø±ÙƒÙŠØ© Ù‚Ø§Ø¨Ù„Ø© Ù„Ù„Ø¨Ø­Ø«.",
+      landingAction: "Ø¯Ø®ÙˆÙ„ Ø§Ù„Ù…Ù†ØµØ©",
+      requestAccess: "Ø·Ù„Ø¨ Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù…",
+      landingDirectoryTitle: "Ø¯Ù„ÙŠÙ„ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      landingReviewTitle: "ÙÙ„ØªØ±Ø© ÙˆØ§Ø¹ØªÙ…Ø§Ø¯",
+      landingAccessTitle: "Ù…Ø³Ø§Ø­Ø© Ø¹Ù…Ù„ Ù…ÙˆØ«ÙˆÙ‚Ø©",
+      landingBadgesTitle: "ØªØ­Ù„ÙŠÙ„ ÙˆÙ…Ù‚Ø§Ø±Ù†Ø© Ø§Ù„Ø¹Ø±ÙˆØ¶",
+      landingDirectoryBody: "Ø§Ø¨Ø­Ø« ÙÙŠ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ÙŠÙ† Ø­Ø³Ø¨ Ø§Ù„ØªØµÙ†ÙŠÙØŒ Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©ØŒ Ø§Ù„Ø³Ù„Ø¹ØŒ ÙˆØ§Ù„Ø®Ø¯Ù…Ø§Øª.",
+      landingReviewBody: "ÙŠØªÙ… ØªÙ†Ø¸ÙŠÙ… Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† ÙˆÙÙ‚ Ù…Ø¹Ø§ÙŠÙŠØ± ÙˆØ§Ø¶Ø­Ø© ØªØ³Ø§Ø¹Ø¯Ùƒ Ø¹Ù„Ù‰ Ø§Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ø®ÙŠØ§Ø±Ø§Øª Ø£ÙƒØ«Ø± Ù…ÙˆØ«ÙˆÙ‚ÙŠØ©.",
+      landingAccessBody: "Ø¨ÙŠØ¦Ø© Ø¹Ù…Ù„ Ø¢Ù…Ù†Ø© Ù„ØªØ¨Ø§Ø¯Ù„ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ÙˆØ§Ù„ØªÙˆØ§ØµÙ„ Ø¨ÙŠÙ† Ø§Ù„Ù…Ø´ØªØ±ÙŠÙ† ÙˆØ§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ÙŠÙ†.",
+      landingBadgesBody: "Ù‚Ø§Ø±Ù† Ø§Ù„Ø¹Ø±ÙˆØ¶ Ø¨Ø³Ù‡ÙˆÙ„Ø© Ø¨Ù†Ø§Ø¡Ù‹ Ø¹Ù„Ù‰ Ø§Ù„Ø³Ø¹Ø±ØŒ Ø§Ù„Ø¬ÙˆØ¯Ø©ØŒ Ø§Ù„Ù…Ø¯Ø©ØŒ ÙˆØ§Ù„Ø´Ø±ÙˆØ· Ù„Ø§ØªØ®Ø§Ø° Ù‚Ø±Ø§Ø± Ø£ÙØ¶Ù„.",
+      landingProcurementFocusTitle: "Ù…ØµÙ…Ù…Ø© Ù„Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† ØµØ¹Ø¨ÙŠ Ø§Ù„ÙˆØµÙˆÙ„",
+      landingProcurementFocusBody: "ÙŠØ±ÙƒØ² Ù…Ø¬Ù‡Ø² IQ Ø¹Ù„Ù‰ Ù…Ø¹Ø±ÙØ© Ù…ÙˆØ«ÙˆÙ‚Ø© Ø¹Ù† Ù…Ø¬Ù‡Ø²ÙŠ Ø§Ù„Ù…ÙˆØ§Ø¯ Ø§Ù„ØµÙ†Ø§Ø¹ÙŠØ© ÙˆÙ…Ø´Ø§Ø±ÙŠØ¹ Ø§Ù„Ø·Ø§Ù‚Ø© ÙˆØ§Ù„Ù†ÙØ· ÙˆØ§Ù„ØºØ§Ø² ÙˆØ§Ù„Ù…ÙˆØ§Ø¯ Ø§Ù„ØªØ®ØµØµÙŠØ©ØŒ Ø¯ÙˆÙ† ØªØ­ÙˆÙŠÙ„ Ø§Ù„Ù…Ù†ØµØ© Ø¥Ù„Ù‰ Ø³ÙˆÙ‚ Ø¹Ø±ÙˆØ¶ Ø£Ø³Ø¹Ø§Ø±.",
+      buildNotice: "Ù„Ù… ÙŠØªÙ… Ø±Ø¨Ø· Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Firebase Ø¨Ø¹Ø¯. Ø£Ø¶Ù Ù…ØªØºÙŠØ±Ø§Øª Ø§Ù„Ø¨ÙŠØ¦Ø© Ù„ØªÙØ¹ÙŠÙ„ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ ÙˆÙ‚Ø§Ø¹Ø¯Ø© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª.",
+      supplierImportTitle: "Ø§Ø³ØªÙŠØ±Ø§Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª Ù…Ù† Excel",
+      supplierImportBody: "ÙŠÙ…ÙƒÙ†Ùƒ Ø±ÙØ¹ Ù†Ù…ÙˆØ°Ø¬ Excel Ù„Ø¥Ø¯Ø®Ø§Ù„ Ø¨ÙŠØ§Ù†Ø§Øª Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯ Ø£Ùˆ Ø¹Ø¯Ø© Ù…Ø¬Ù‡Ø²ÙŠÙ† ØªÙ„Ù‚Ø§Ø¦ÙŠØ§Ù‹. Ø³ÙŠØªÙ… ØªØ¹Ø¨Ø¦Ø© Ø§Ù„Ø­Ù‚ÙˆÙ„ Ø§Ù„Ù…Ø·Ø§Ø¨Ù‚Ø© Ø¯Ø§Ø®Ù„ Ø§Ù„Ù†Ù…ÙˆØ°Ø¬ØŒ Ø«Ù… ÙŠÙ…ÙƒÙ†Ùƒ Ù…Ø±Ø§Ø¬Ø¹ØªÙ‡Ø§ Ù‚Ø¨Ù„ Ø§Ù„Ø¥Ø±Ø³Ø§Ù„.",
+      supplierImportButton: "Ø±ÙØ¹ Ù…Ù„Ù",
+      supplierImportLimit: "Ø§Ù„ØµÙŠØº Ø§Ù„Ù…Ù‚Ø¨ÙˆÙ„Ø©: .xlsx Ø£Ùˆ .csv â€” Ø§Ù„Ø­Ø¯ Ø§Ù„Ø£Ù‚ØµÙ‰ Ù„Ø­Ø¬Ù… Ø§Ù„Ù…Ù„Ù: 100 KB.",
+      downloadSingleArabicTemplate: "Ù†Ù…ÙˆØ°Ø¬ Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯ â€“ Ø¹Ø±Ø¨ÙŠ",
+      downloadSingleEnglishTemplate: "Ù†Ù…ÙˆØ°Ø¬ Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯ â€“ Ø¥Ù†ÙƒÙ„ÙŠØ²ÙŠ",
+      downloadBulkArabicTemplate: "Ù†Ù…ÙˆØ°Ø¬ Ø¹Ø¯Ø© Ù…Ø¬Ù‡Ø²ÙŠÙ† â€“ Ø¹Ø±Ø¨ÙŠ",
+      downloadBulkEnglishTemplate: "Ù†Ù…ÙˆØ°Ø¬ Ø¹Ø¯Ø© Ù…Ø¬Ù‡Ø²ÙŠÙ† â€“ Ø¥Ù†ÙƒÙ„ÙŠØ²ÙŠ",
+      supplierImportApplied_zero: "Ù„Ù… ÙŠØªÙ… Ø§Ø³ØªÙŠØ±Ø§Ø¯ Ø£ÙŠ Ø­Ù‚Ù„ Ù…Ø·Ø§Ø¨Ù‚.",
+      supplierImportApplied_one: "ØªÙ… Ø§Ø³ØªÙŠØ±Ø§Ø¯ Ø­Ù‚Ù„ Ù…Ø·Ø§Ø¨Ù‚ ÙˆØ§Ø­Ø¯.",
+      supplierImportApplied_two: "ØªÙ… Ø§Ø³ØªÙŠØ±Ø§Ø¯ Ø­Ù‚Ù„ÙŠÙ† Ù…Ø·Ø§Ø¨Ù‚ÙŠÙ†.",
+      supplierImportApplied_few: "ØªÙ… Ø§Ø³ØªÙŠØ±Ø§Ø¯ {{count}} Ø­Ù‚ÙˆÙ„ Ù…Ø·Ø§Ø¨Ù‚Ø©.",
+      supplierImportApplied_many: "ØªÙ… Ø§Ø³ØªÙŠØ±Ø§Ø¯ {{count}} Ø­Ù‚Ù„Ù‹Ø§ Ù…Ø·Ø§Ø¨Ù‚Ù‹Ø§.",
+      supplierImportApplied_other: "ØªÙ… Ø§Ø³ØªÙŠØ±Ø§Ø¯ {{count}} Ø­Ù‚Ù„ Ù…Ø·Ø§Ø¨Ù‚.",
+      supplierBulkImportApplied_zero: "Ù„Ù… ÙŠØªÙ… ØªØ­Ù…ÙŠÙ„ Ø£ÙŠ ØµÙ.",
+      supplierBulkImportApplied_one: "ØªÙ… ØªØ­Ù…ÙŠÙ„ ØµÙ Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkImportApplied_two: "ØªÙ… ØªØ­Ù…ÙŠÙ„ ØµÙÙŠÙ† Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkImportApplied_few: "ØªÙ… ØªØ­Ù…ÙŠÙ„ {{count}} ØµÙÙˆÙ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkImportApplied_many: "ØªÙ… ØªØ­Ù…ÙŠÙ„ {{count}} ØµÙÙ‹Ø§ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkImportApplied_other: "ØªÙ… ØªØ­Ù…ÙŠÙ„ {{count}} ØµÙ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkReviewTitle: "Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø¯ÙØ¹Ø© ÙˆØ§Ø­Ø¯Ø©",
+      supplierBulkReviewBody: "{{count}} ØµÙ Ø¬Ø§Ù‡Ø² Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©. ÙŠÙˆØ¬Ø¯ {{invalid}} ØµÙ ÙŠØ­ØªØ§Ø¬ Ø¥Ù„Ù‰ Ø¥ÙƒÙ…Ø§Ù„ Ø§Ù„Ø­Ù‚ÙˆÙ„ Ø§Ù„Ù…Ø·Ù„ÙˆØ¨Ø©.",
+      supplierBulkSubmit_zero: "Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¯ÙØ¹Ø©",
+      supplierBulkSubmit_one: "Ø¥Ø±Ø³Ø§Ù„ Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯",
+      supplierBulkSubmit_two: "Ø¥Ø±Ø³Ø§Ù„ Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      supplierBulkSubmit_few: "Ø¥Ø±Ø³Ø§Ù„ {{count}} Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      supplierBulkSubmit_many: "Ø¥Ø±Ø³Ø§Ù„ {{count}} Ù…Ø¬Ù‡Ø²Ù‹Ø§",
+      supplierBulkSubmit_other: "Ø¥Ø±Ø³Ø§Ù„ {{count}} Ù…Ø¬Ù‡Ø²",
+      supplierBulkSubmitted_zero: "Ù„Ù… ÙŠØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø£ÙŠ Ø·Ù„Ø¨.",
+      supplierBulkSubmitted_one: "ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø·Ù„Ø¨ Ù…Ø¬Ù‡Ø² ÙˆØ§Ø­Ø¯ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkSubmitted_two: "ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø·Ù„Ø¨ÙŠÙ† Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkSubmitted_few: "ØªÙ… Ø¥Ø±Ø³Ø§Ù„ {{count}} Ø·Ù„Ø¨Ø§Øª Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkSubmitted_many: "ØªÙ… Ø¥Ø±Ø³Ø§Ù„ {{count}} Ø·Ù„Ø¨Ù‹Ø§ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkSubmitted_other: "ØªÙ… Ø¥Ø±Ø³Ø§Ù„ {{count}} Ø·Ù„Ø¨ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkEditTitle: "ØªØ¹Ø¯ÙŠÙ„ Ù…Ø¬Ù‡Ø² Ù…Ø³ØªÙˆØ±Ø¯",
+      supplierBulkEditBody: "Ø£ÙƒÙ…Ù„ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØµÙ {{row}} Ù‡Ù†Ø§ØŒ Ø«Ù… Ø§Ø­ÙØ¸Ù‡ Ø¯Ø§Ø®Ù„ Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø¬Ù…Ø§Ø¹ÙŠØ© Ø£Ùˆ Ø£Ø±Ø³Ù„ Ù‡Ø°Ø§ Ø§Ù„Ù…Ø¬Ù‡Ø² Ù…Ù†ÙØ±Ø¯Ø§Ù‹.",
+      saveAndReturn: "Ø­ÙØ¸ ÙˆØ§Ù„Ø¹ÙˆØ¯Ø©",
+      backToBulkReview: "Ø§Ù„Ø¹ÙˆØ¯Ø© Ø¥Ù„Ù‰ Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø¯ÙØ¹Ø©",
+      sendThisSupplier: "Ø¥Ø±Ø³Ø§Ù„ Ù‡Ø°Ø§ Ø§Ù„Ù…Ø¬Ù‡Ø²",
+      supplierBulkItemSaved: "ØªÙ… Ø­ÙØ¸ ØµÙ Ø§Ù„Ù…Ø¬Ù‡Ø² Ø¯Ø§Ø®Ù„ Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø¬Ù…Ø§Ø¹ÙŠØ©.",
+      supplierBulkItemSubmitted: "ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ù‡Ø°Ø§ Ø§Ù„Ù…Ø¬Ù‡Ø² Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      supplierBulkNoActiveItem: "Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ù…Ø¬Ù‡Ø² Ù…Ø³ØªÙˆØ±Ø¯ Ù…ÙØªÙˆØ­ Ø­Ø§Ù„ÙŠØ§Ù‹.",
+      addSupplierDraftRestored: "ØªÙ…Øª Ø§Ø³ØªØ¹Ø§Ø¯Ø© Ø§Ù„Ù…Ø³ÙˆØ¯Ø© Ø§Ù„Ù…Ø­ÙÙˆØ¸Ø© ØªÙ„Ù‚Ø§Ø¦ÙŠØ§Ù‹.",
+      addSupplierDraftReset: "ØªÙ…Øª Ø¥Ø¹Ø§Ø¯Ø© Ø¶Ø¨Ø· ØµÙØ­Ø© Ø¥Ø¶Ø§ÙØ© Ù…Ø¬Ù‡Ø².",
+      confirmResetAddSupplierPage: "Ù‡Ù„ ØªØ±ÙŠØ¯ Ù…Ø³Ø­ Ù…Ø³ÙˆØ¯Ø© Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù…Ø¬Ù‡Ø² Ø§Ù„Ø­Ø§Ù„ÙŠØ© ÙˆØ§Ù„ØµÙÙˆÙ Ø§Ù„Ù…Ø³ØªÙˆØ±Ø¯Ø©ØŸ",
+      resetAddSupplierPage: "Ø¥Ø¹Ø§Ø¯Ø© Ø¶Ø¨Ø· Ø§Ù„ØµÙØ­Ø©",
+      supplierImportTooLarge: "Ø­Ø¬Ù… Ø§Ù„Ù…Ù„Ù Ø£ÙƒØ¨Ø± Ù…Ù† 100 ÙƒÙŠÙ„ÙˆØ¨Ø§ÙŠØª.",
+      supplierImportNoFields: "Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø­Ù‚ÙˆÙ„ Ù…Ø¬Ù‡Ø² Ù…Ø·Ø§Ø¨Ù‚Ø© ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„Ù…Ù„Ù.",
+      supplierImportFailed: "ØªØ¹Ø°Ø±Øª Ù‚Ø±Ø§Ø¡Ø© Ù‡Ø°Ø§ Ø§Ù„Ù…Ù„Ù.",
+      unsupportedSupplierImportFile: "ÙŠØ±Ø¬Ù‰ Ø±ÙØ¹ Ù…Ù„Ù .xlsx Ø£Ùˆ .csv.",
+      unsupportedSupplierImportBrowser: "Ù‡Ø°Ø§ Ø§Ù„Ù…ØªØµÙØ­ Ù„Ø§ ÙŠØ³ØªØ·ÙŠØ¹ Ù‚Ø±Ø§Ø¡Ø© Ù…Ù„ÙØ§Øª Excel Ø§Ù„Ù…Ø¶ØºÙˆØ·Ø©. Ø¬Ø±Ù‘Ø¨ ØªØµØ¯ÙŠØ± Ø§Ù„Ù†Ù…ÙˆØ°Ø¬ Ø¨ØµÙŠØºØ© CSV.",
+      invalidSupplierImportFile: "Ø§Ù„Ù…Ù„Ù Ø§Ù„Ù…Ø±ÙÙˆØ¹ Ù„Ø§ ÙŠØ¨Ø¯Ùˆ ÙƒÙ†Ù…ÙˆØ°Ø¬ Excel ØµØ§Ù„Ø­.",
+      adminOnly: "Ù„Ù„Ø¥Ø¯Ø§Ø±Ø© ÙÙ‚Ø·",
+      active: "ÙØ¹Ø§Ù„",
+      pending: "Ù‚ÙŠØ¯ Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø±",
+      suspended: "Ù…ÙˆÙ‚ÙˆÙ",
+      temporary: "Ù…Ø¤Ù‚Øª",
+      expired: "Ù…Ù†ØªÙ‡ÙŠ",
+      createdAt: "ØªØ§Ø±ÙŠØ® Ø§Ù„Ø¥Ù†Ø´Ø§Ø¡",
+      updatedAt: "Ø¢Ø®Ø± ØªØ­Ø¯ÙŠØ«",
+      adminNotes: "Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©",
+      contributor: "Ø§Ù„Ù…Ø³Ø§Ù‡Ù…",
+      reviewer: "Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹",
+      qualityRatio: "Ù†Ø³Ø¨Ø© Ø§Ù„Ø¬ÙˆØ¯Ø©",
+      suggestedDecision: "Ø§Ù„Ù‚Ø±Ø§Ø± Ø§Ù„Ù…Ù‚ØªØ±Ø­",
+      approveWithEdits: "Ø§Ø¹ØªÙ…Ø§Ø¯ Ù…Ø¹ ØªØ¹Ø¯ÙŠÙ„",
+      addAnotherSupplier: "Ø¥Ø¶Ø§ÙØ© Ù…Ø¬Ù‡Ø² Ø¢Ø®Ø±",
+      seedDefaults: "Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø§ÙØªØ±Ø§Ø¶ÙŠØ©",
+      updateSettings: "ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª",
+      requiredSuppliersPerMonth: "Ø¹Ø¯Ø¯ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ Ø´Ù‡Ø±ÙŠÙ‹Ø§",
+      daysGrantedPerBatch: "Ø§Ù„Ø£ÙŠØ§Ù… Ø§Ù„Ù…Ù…Ù†ÙˆØ­Ø© Ù„ÙƒÙ„ Ø¯ÙØ¹Ø©",
+      maximumStackableMonths: "Ø£Ù‚ØµÙ‰ Ø¹Ø¯Ø¯ Ø£Ø´Ù‡Ø± Ù‚Ø§Ø¨Ù„Ø© Ù„Ù„ØªØ¬Ù…ÙŠØ¹",
+      gracePeriodDays: "Ø£ÙŠØ§Ù… Ø§Ù„Ø³Ù…Ø§Ø­",
+      trialAccessDays: "Ø£ÙŠØ§Ù… Ø§Ù„ØªØ¬Ø±Ø¨Ø© Ø§Ù„Ø£ÙˆÙ„Ù‰",
+      reviewsEarnBonusPoints: "Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø§Øª ØªÙ…Ù†Ø­ Ù†Ù‚Ø§Ø·Ù‹Ø§ Ø¥Ø¶Ø§ÙÙŠØ©",
+      updateContributionsCanEarnAccessBonus: "ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ÙŠÙ…Ù†Ø­ Ø±ØµÙŠØ¯ ÙˆØµÙˆÙ„",
+      saved: "ØªÙ… Ø§Ù„Ø­ÙØ¸.",
+      defaultsSeeded: "ØªÙ…Øª Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù‚ÙŠÙ… Ø§Ù„Ø§ÙØªØ±Ø§Ø¶ÙŠØ©.",
+      ownerOnlySettings: "ØªØ¹Ø¯ÙŠÙ„ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§Ù„Ù…Ù†ØµØ© Ù…ØªØ§Ø­ Ù„Ø­Ø³Ø§Ø¨ Ø§Ù„Ù…Ø§Ù„Ùƒ ÙÙ‚Ø·.",
+      governorates: "Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø§Øª",
+      supplierCategoryList: "ØªØµÙ†ÙŠÙØ§Øª Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      addItem: "Ø¥Ø¶Ø§ÙØ© Ø¹Ù†ØµØ±",
+      itemKey: "Ø§Ù„Ù…ÙØªØ§Ø­",
+      englishLabel: "Ø§Ù„ØªØ³Ù…ÙŠØ© Ø¨Ø§Ù„Ø¥Ù†ÙƒÙ„ÙŠØ²ÙŠØ©",
+      arabicLabel: "Ø§Ù„ØªØ³Ù…ÙŠØ© Ø¨Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©",
+      cityOrMarketArea: "Ø§Ù„Ù…Ø¯ÙŠÙ†Ø© Ø£Ùˆ Ù…Ù†Ø·Ù‚Ø© Ø§Ù„Ø³ÙˆÙ‚",
+      contactMethod: "ÙˆØ³ÙŠÙ„Ø© Ø§ØªØµØ§Ù„",
+      capabilityTag: "ÙˆØ³Ù… Ù‚Ø¯Ø±Ø©",
+      missingRequiredFields: "Ø§Ù„Ø­Ù‚ÙˆÙ„ Ø§Ù„Ù†Ø§Ù‚ØµØ©: {{fields}}",
+      readyForAdminReview: "Ø¬Ø§Ù‡Ø² Ù„Ø¥Ø±Ø³Ø§Ù„Ù‡ Ø¥Ù„Ù‰ Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©.",
+      supplierSubmitFailed: "ØªØ¹Ø°Ø± Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ù…Ø¬Ù‡Ø².",
+      noDuplicateWarning: "Ù„Ø§ ÙŠÙˆØ¬Ø¯ ØªÙ†Ø¨ÙŠÙ‡ ØªÙƒØ±Ø§Ø± Ù…Ù† ÙÙ‡Ø±Ø³ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ÙŠÙ† Ø§Ù„Ø­Ø§Ù„ÙŠ.",
+      noAccessProgress: "Ù„Ø¯ÙŠÙƒ {{available}} Ù…Ø³Ø§Ù‡Ù…Ø§Øª Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…Ø¹ØªÙ…Ø¯Ø© ÙˆØºÙŠØ± Ù…Ø³ØªØ®Ø¯Ù…Ø©. ÙŠØªØ¨Ù‚Ù‰ {{remaining}} Ù„ÙØªØ­ {{days}} ÙŠÙˆÙ…Ù‹Ø§ Ø¥Ø¶Ø§ÙÙŠÙ‹Ø§.",
+      startSubmittingSuppliers: "Ø§Ø¨Ø¯Ø£ Ø¨Ø¥Ø±Ø³Ø§Ù„ Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù„Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©.",
+      nameLanguageArabic: "Ø¹Ø±Ø¨ÙŠ",
+      nameLanguageEnglish: "Ø¥Ù†ÙƒÙ„ÙŠØ²ÙŠ",
+      nameLanguageMixed: "Ù…Ø®ØªÙ„Ø·",
+      nameLanguage_arabic: "Ø¹Ø±Ø¨ÙŠ",
+      nameLanguage_english: "Ø¥Ù†ÙƒÙ„ÙŠØ²ÙŠ",
+      nameLanguage_mixed: "Ù…Ø®ØªÙ„Ø·",
+      submittedAt: "ØªØ§Ø±ÙŠØ® Ø§Ù„Ø¥Ø±Ø³Ø§Ù„",
+      noDescription: "Ù„Ø§ ÙŠÙˆØ¬Ø¯ ÙˆØµÙ Ù…Ø¶Ø§Ù.",
+      supplierIdentity: "Ù‡ÙˆÙŠØ© Ø§Ù„Ù…Ø¬Ù‡Ø²",
+      nextStep: "Ø§Ù„Ø®Ø·ÙˆØ© Ø§Ù„ØªØ§Ù„ÙŠØ©",
+      commentTooLong: "ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² Ø§Ù„ØªØ¹Ù„ÙŠÙ‚ 500 Ø­Ø±Ù.",
+      professionalReviewRequired: "ÙŠØ±Ø¬Ù‰ ÙƒØªØ§Ø¨Ø© Ù…Ø±Ø§Ø¬Ø¹Ø© Ù…Ù‡Ù†ÙŠØ© ÙˆÙ…Ø¨Ù†ÙŠØ© Ø¹Ù„Ù‰ ØªØ¬Ø±Ø¨Ø© ÙˆØ§Ø¶Ø­Ø©.",
+      reviewSentForModeration: "ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø© Ù„Ù„Ù…ÙˆØ§ÙÙ‚Ø©.",
+      supplierFeedback: "Ø§Ù„Ø¥Ø¨Ù„Ø§Øº Ø¹Ù† Ù…Ù„Ø§Ø­Ø¸Ø©",
+      supplierFeedbackDescription: "Ø£Ø±Ø³Ù„ ØªØµØ­ÙŠØ­Ù‹Ø§ Ø£Ùˆ Ù…Ù„Ø§Ø­Ø¸Ø© Ø­ÙˆÙ„ Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ù‡Ø°Ø§ Ø§Ù„Ù…Ø¬Ù‡Ø² Ø§Ù„Ù…Ù†Ø´ÙˆØ±Ø©. Ø³ØªØ±Ø§Ø¬Ø¹ Ø§Ù„Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø© Ù‚Ø¨Ù„ ØªØ¹Ø¯ÙŠÙ„ Ø§Ù„Ø³Ø¬Ù„.",
+      feedbackType: "Ù†ÙˆØ¹ Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø©",
+      feedbackMessage: "Ù…Ø§ Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø© ØºÙŠØ± Ø§Ù„ØµØ­ÙŠØ­Ø© Ø£Ùˆ Ø§Ù„ØªÙŠ ØªØ­ØªØ§Ø¬ Ø¥Ù„Ù‰ Ù…Ø±Ø§Ø¬Ø¹Ø©ØŸ",
+      feedbackMessagePlaceholder: "Ø§Ø´Ø±Ø­ Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø© Ø¨ÙˆØ¶ÙˆØ­ ÙˆØ­Ø¯Ø¯ Ø§Ù„Ø­Ù‚Ù„ Ø§Ù„Ø°ÙŠ ÙŠØ­ØªØ§Ø¬ Ø¥Ù„Ù‰ Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      suggestedCorrection: "Ø§Ù„ØªØµØ­ÙŠØ­ Ø§Ù„Ù…Ù‚ØªØ±Ø­",
+      suggestedCorrectionPlaceholder: "Ø£Ø¶Ù Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø© Ø§Ù„ØµØ­ÙŠØ­Ø© Ø¥Ø°Ø§ ÙƒØ§Ù†Øª Ù…ØªÙˆÙØ±Ø© Ù„Ø¯ÙŠÙƒ.",
+      submitFeedback: "Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø©",
+      feedbackSubmitted: "ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ù…Ù„Ø§Ø­Ø¸ØªÙƒ Ø¥Ù„Ù‰ Ø§Ù„Ø¥Ø¯Ø§Ø±Ø© Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      feedbackSubmitFailed: "ØªØ¹Ø°Ø± Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø©.",
+      feedbackHistory: "Ù…Ù„Ø§Ø­Ø¸Ø§ØªÙƒ Ø­ÙˆÙ„ Ù‡Ø°Ø§ Ø§Ù„Ù…Ø¬Ù‡Ø²",
+      feedbackType_incorrect_information: "Ù…Ø¹Ù„ÙˆÙ…Ø§Øª ØºÙŠØ± ØµØ­ÙŠØ­Ø©",
+      feedbackType_contact_issue: "Ø®Ù„Ù„ ÙÙŠ Ø§Ù„Ù‡Ø§ØªÙ Ø£Ùˆ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø£Ùˆ Ø§Ù„Ù…ÙˆÙ‚Ø¹",
+      feedbackType_location_issue: "Ø®Ù„Ù„ ÙÙŠ Ø§Ù„Ù…ÙˆÙ‚Ø¹ Ø£Ùˆ Ø§Ù„ÙØ±ÙˆØ¹",
+      feedbackType_category_issue: "ØªØµÙ†ÙŠÙ ØºÙŠØ± ØµØ­ÙŠØ­",
+      feedbackType_duplicate_supplier: "Ù…Ø¬Ù‡Ø² Ù…ÙƒØ±Ø±",
+      feedbackType_business_closed: "Ø§Ù„Ø´Ø±ÙƒØ© Ù…ØºÙ„Ù‚Ø© Ø£Ùˆ ØºÙŠØ± ÙØ¹Ø§Ù„Ø©",
+      feedbackType_other: "Ù…Ù„Ø§Ø­Ø¸Ø© Ø£Ø®Ø±Ù‰",
+      feedbackStatus_pending: "Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      feedbackStatus_in_review: "Ù‚ÙŠØ¯ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      feedbackStatus_resolved: "ØªÙ…Øª Ø§Ù„Ù…Ø¹Ø§Ù„Ø¬Ø©",
+      feedbackStatus_rejected: "Ø£ØºÙ„Ù‚Øª Ø¯ÙˆÙ† ØªØ¹Ø¯ÙŠÙ„",
+      feedbackAdminDescription: "Ø±Ø§Ø¬Ø¹ Ø§Ù„ØªØµØ­ÙŠØ­Ø§Øª ÙˆØ§Ù„Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø§Ù„ØªÙŠ ÙŠØ±Ø³Ù„Ù‡Ø§ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙˆÙ† Ø­ÙˆÙ„ Ø³Ø¬Ù„Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ÙŠÙ†.",
+      feedbackAdminNotes: "Ø±Ø¯ Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©",
+      feedbackDecision_in_review: "Ø¨Ø¯Ø¡ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      feedbackDecision_resolved: "ØªÙ…Øª Ø§Ù„Ù…Ø¹Ø§Ù„Ø¬Ø©",
+      feedbackDecision_rejected: "Ø¥ØºÙ„Ø§Ù‚ Ø¯ÙˆÙ† ØªØ¹Ø¯ÙŠÙ„",
+      feedbackDecisionSaved: "ØªÙ… ØªØ­Ø¯ÙŠØ« Ø­Ø§Ù„Ø© Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø©.",
+      feedbackOpenSupplier: "ÙØªØ­ Ø§Ù„Ù…Ø¬Ù‡Ø²",
+      noSupplierFeedback: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      rejectedByReviewer: "ØªÙ… Ø§Ù„Ø±ÙØ¶ Ù…Ù† Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹.",
+      daysCount_zero: "{{count}} ÙŠÙˆÙ…",
+      daysCount_one: "ÙŠÙˆÙ… ÙˆØ§Ø­Ø¯",
+      daysCount_two: "ÙŠÙˆÙ…Ø§Ù†",
+      daysCount_few: "{{count}} Ø£ÙŠØ§Ù…",
+      daysCount_many: "{{count}} ÙŠÙˆÙ…Ù‹Ø§",
+      daysCount_other: "{{count}} ÙŠÙˆÙ…",
+      dashboardWelcome: "Ù…Ø±Ø­Ø¨Ø§Ù‹ Ø¨Ùƒ ÙÙŠ Ù…Ø¬Ù‡Ø²ØŒ ÙŠÙ…ÙƒÙ†Ùƒ Ø¥Ø¯Ø§Ø±Ø© ÙˆØµÙˆÙ„Ùƒ ÙˆÙ…ØªØ§Ø¨Ø¹Ø© Ø£Ø¯Ø§Ø¦Ùƒ Ø¨Ø³Ù‡ÙˆÙ„Ø©.",
+      dashboardActivityNote: "ÙŠÙ…ÙƒÙ†Ùƒ Ø¥Ø¯Ø§Ø±Ø© ÙˆØµÙˆÙ„ÙƒØŒ Ù…ØªØ§Ø¨Ø¹Ø© Ù†Ù‚Ø§Ø·ÙƒØŒ Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø·Ù„Ø¨Ø§ØªØŒ ÙˆØ¨Ù†Ø§Ø¡ Ø­Ø¶ÙˆØ±Ùƒ Ø¯Ø§Ø®Ù„ Ù…Ø¬ØªÙ…Ø¹ Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª ÙˆØ³Ù„Ø³Ù„Ø© Ø§Ù„ØªÙˆØ±ÙŠØ¯.",
+      recentActivity: "Ø§Ù„Ù†Ø´Ø§Ø· Ø§Ù„Ø£Ø®ÙŠØ±",
+      activityAccessUpdated: "ØªÙ… ØªØ­Ø¯ÙŠØ« Ø­Ø§Ù„Ø© Ø§Ù„ÙˆØµÙˆÙ„ ÙˆØ§Ø­ØªØ³Ø§Ø¨ Ø§Ù„Ù†Ù‚Ø§Ø· Ø§Ù„Ø­Ø§Ù„ÙŠØ©.",
+      activityPendingRequests: "{{count}} Ø·Ù„Ø¨ Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+      pendingRequestUnit: "Ø·Ù„Ø¨ Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      remainingDaysUnit: "ÙŠÙˆÙ…Ø§Ù‹ Ù…ØªØ¨Ù‚ÙŠØ©",
+      approvedReviewUnit: "Ù…Ø±Ø§Ø¬Ø¹Ø© Ù…Ø¹ØªÙ…Ø¯Ø©",      dashboardAccessProgress: "Ù„Ø¯ÙŠÙƒ {{available}} Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…Ø¹ØªÙ…Ø¯ÙŠÙ†. Ø£Ø¶Ù {{remaining}} Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…Ø¹ØªÙ…Ø¯ÙŠÙ† Ù„ÙØªØ­ {{days}} ÙŠÙˆÙ…Ù‹Ø§ Ù…Ù† Ø§Ù„ÙˆØµÙˆÙ„.",
+      dashboardAccessEarned: "Ø­ØµÙ„Øª Ø¹Ù„Ù‰ {{months}} Ø¯ÙØ¹Ø© ÙˆØµÙˆÙ„. ÙŠØªØ¨Ù‚Ù‰ {{remaining}} Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…Ø¹ØªÙ…Ø¯ÙŠÙ† Ù„Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ø§Ù„Ø¯ÙØ¹Ø© Ø§Ù„ØªØ§Ù„ÙŠØ©.",
+      dashboardAccessCovered: "ÙˆØµÙˆÙ„Ùƒ Ù…ØºØ·Ù‰ Ø­ØªÙ‰ {{date}}. Ù„Ø¯ÙŠÙƒ {{days}} ÙŠÙˆÙ…Ù‹Ø§ Ù…ØªØ¨Ù‚ÙŠÙ‹Ø§ØŒ ÙˆØ³ÙŠØ¸Ù‡Ø± ØªØ­Ø¯ÙŠ Ø§Ù„Ù…Ø³Ø§Ù‡Ù…Ø§Øª Ø§Ù„Ù‚Ø§Ø¯Ù… Ø¹Ù†Ø¯ Ø§Ù‚ØªØ±Ø§Ø¨ Ø§Ù„ØªØ¬Ø¯ÙŠØ¯.",
+      myAccessCoveredDescription: "ÙˆØµÙˆÙ„Ùƒ Ø§Ù„Ø­Ø§Ù„ÙŠ Ù…ØºØ·Ù‰ Ù„Ù…Ø¯Ø© {{days}} ÙŠÙˆÙ…Ù‹Ø§ Ø¥Ø¶Ø§ÙÙŠÙ‹Ø§. Ø³ÙŠØ¸Ù‡Ø± ØªÙ‚Ø¯Ù… Ø§Ù„Ù…Ø³Ø§Ù‡Ù…Ø§Øª Ø¹Ù†Ø¯ Ø§Ù‚ØªØ±Ø§Ø¨ Ù…ÙˆØ¹Ø¯ Ø§Ù„ØªØ¬Ø¯ÙŠØ¯.",
+      monthlyChallengeDescription: "ØªØ­Ø¯ÙŠ Ø§Ù„Ø¯ÙˆØ±Ø©: Ø£Ø¶Ù {{required}} Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…ÙˆØ«Ù‚ÙŠÙ†.",
+      accessSource_supplier_contribution: "Ù…Ø³Ø§Ù‡Ù…Ø© Ù…Ø¬Ù‡Ø²",
+      accessSource_manual_grace: "Ù…Ù†Ø­Ø© ÙŠØ¯ÙˆÙŠØ©",
+      accessSource_trial_access: "ÙˆØµÙˆÙ„ ØªØ¬Ø±ÙŠØ¨ÙŠ",
+      duplicate_same_phone: "Ù†ÙØ³ Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ",
+      duplicate_same_email: "Ù†ÙØ³ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ",
+      duplicate_same_website: "Ù†ÙØ³ Ø§Ù„Ù…ÙˆÙ‚Ø¹ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ",
+      duplicate_same_facebook: "Ù†ÙØ³ ØµÙØ­Ø© ÙÙŠØ³Ø¨ÙˆÙƒ",
+      duplicate_similar_name: "Ø§Ø³Ù… Ù…Ø´Ø§Ø¨Ù‡",
+      duplicate_contact_phone: "ØªØ·Ø§Ø¨Ù‚ Ù‡Ø§ØªÙ Ø¬Ù‡Ø© Ø§Ù„Ø§ØªØµØ§Ù„",
+      status_owner: "Ù…Ø§Ù„Ùƒ",
+      status_admin: "Ù…Ø¯ÙŠØ±",
+      status_contributor: "Ù…Ø³Ø§Ù‡Ù…",
+      status_viewer: "Ù…Ø´Ø§Ù‡Ø¯",
+      status_suspended: "Ù…ÙˆÙ‚ÙˆÙ",
+      status_approved: "Ù…Ø¹ØªÙ…Ø¯",
+      status_active: "ÙØ¹Ø§Ù„",
+      status_pending: "Ù‚ÙŠØ¯ Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø±",
+      status_pending_approval: "Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ø§Ø¹ØªÙ…Ø§Ø¯",
+      status_pending_review: "Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      status_possible_duplicate: "ØªÙƒØ±Ø§Ø± Ù…Ø­ØªÙ…Ù„",
+      status_needs_correction: "ÙŠØ­ØªØ§Ø¬ ØªØµØ­ÙŠØ­",
+      status_rejected: "Ù…Ø±ÙÙˆØ¶",
+      status_temporary: "Ù…Ø¤Ù‚Øª",
+      status_expired: "Ù…Ù†ØªÙ‡ÙŠ",
+      status_archived: "Ù…Ø¤Ø±Ø´Ù",
+      status_merged: "Ù…Ø¯Ù…Ø¬",
+      status_community_submitted: "Ù…Ø¶Ø§Ù Ù…Ù† Ø§Ù„Ù…Ø¬ØªÙ…Ø¹",
+      status_verified: "Ù…ÙˆØ«Ù‚",
+      status_needs_more_info: "ÙŠØ­ØªØ§Ø¬ Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø¥Ø¶Ø§ÙÙŠØ©",
+      status_watchlist: "Ù‚Ø§Ø¦Ù…Ø© Ù…ØªØ§Ø¨Ø¹Ø©",
+      audit_demo_user_registered: "ØªÙ… ØªØ³Ø¬ÙŠÙ„ Ù…Ø³ØªØ®Ø¯Ù… ØªØ¬Ø±ÙŠØ¨ÙŠ",
+      audit_user_registered: "ØªÙ… ØªØ³Ø¬ÙŠÙ„ Ù…Ø³ØªØ®Ø¯Ù…",
+      audit_user_trial_access_started: "Ø¨Ø¯Ø£ Ø§Ù„ÙˆØµÙˆÙ„ Ø§Ù„ØªØ¬Ø±ÙŠØ¨ÙŠ",
+      audit_user_approved: "ØªÙ… Ø§Ø¹ØªÙ…Ø§Ø¯ Ù…Ø³ØªØ®Ø¯Ù…",
+      audit_user_role_status_updated: "ØªÙ… ØªØ­Ø¯ÙŠØ« Ø¯ÙˆØ±/Ø­Ø§Ù„Ø© Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…",
+      audit_access_temporary_granted: "ØªÙ… Ù…Ù†Ø­ ÙˆØµÙˆÙ„ Ù…Ø¤Ù‚Øª",
+      audit_settings_updated: "ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª",
+      audit_seed_defaults: "ØªÙ…Øª Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù‚ÙˆØ§Ø¦Ù… Ø§Ù„Ø§ÙØªØ±Ø§Ø¶ÙŠØ©",
+      audit_supplier_submission_approved: "ØªÙ… Ø§Ø¹ØªÙ…Ø§Ø¯ Ø¥Ø±Ø³Ø§Ù„ Ù…Ø¬Ù‡Ø²",
+      audit_supplier_submission_rejected: "ØªÙ… Ø±ÙØ¶ Ø¥Ø±Ø³Ø§Ù„ Ù…Ø¬Ù‡Ø²",
+      audit_supplier_submission_needs_correction: "Ø¥Ø±Ø³Ø§Ù„ Ù…Ø¬Ù‡Ø² ÙŠØ­ØªØ§Ø¬ ØªØµØ­ÙŠØ­",
+      audit_supplier_submission_possible_duplicate: "ØªÙ… ØªØ¹Ù„ÙŠÙ… Ø¥Ø±Ø³Ø§Ù„ Ù…Ø¬Ù‡Ø² ÙƒØªÙƒØ±Ø§Ø± Ù…Ø­ØªÙ…Ù„",
+      audit_supplier_submission_merged: "ØªÙ… Ø¯Ù…Ø¬ Ø¥Ø±Ø³Ø§Ù„ Ù…Ø¬Ù‡Ø²",
+      audit_supplier_submission_resubmitted: "ØªÙ… Ø¥Ø¹Ø§Ø¯Ø© Ø¥Ø±Ø³Ø§Ù„ Ø·Ù„Ø¨ Ù…Ø¬Ù‡Ø²",
+      audit_supplier_updated: "ØªÙ… ØªØ­Ø¯ÙŠØ« Ù…Ø¬Ù‡Ø² Ù…Ø¹ØªÙ…Ø¯",
+      audit_supplier_deleted: "ØªÙ… Ø­Ø°Ù Ù…Ø¬Ù‡Ø² Ù…Ø¹ØªÙ…Ø¯",
+      audit_review_approved: "ØªÙ… Ø§Ø¹ØªÙ…Ø§Ø¯ Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      audit_review_rejected: "ØªÙ… Ø±ÙØ¶ Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      audit_supplier_feedback_in_review: "Ø¨Ø¯Ø£Øª Ù…Ø±Ø§Ø¬Ø¹Ø© Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø¬Ù‡Ø²",
+      audit_supplier_feedback_resolved: "ØªÙ…Øª Ù…Ø¹Ø§Ù„Ø¬Ø© Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø¬Ù‡Ø²",
+      audit_supplier_feedback_rejected: "Ø£ØºÙ„Ù‚Øª Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø¬Ù‡Ø² Ø¯ÙˆÙ† ØªØ¹Ø¯ÙŠÙ„",
+      audit_term_suggestion_approved: "ØªÙ… Ø§Ø¹ØªÙ…Ø§Ø¯ Ù…ÙØ±Ø¯Ø© Ù…Ù‚ØªØ±Ø­Ø©",
+      audit_term_suggestion_ignored: "ØªÙ… ØªØ¬Ø§Ù‡Ù„ Ù…ÙØ±Ø¯Ø© Ù…Ù‚ØªØ±Ø­Ø©",
+      target_user: "Ù…Ø³ØªØ®Ø¯Ù…",
+      target_supplierSubmission: "Ø¥Ø±Ø³Ø§Ù„ Ù…Ø¬Ù‡Ø²",
+      target_supplier: "Ù…Ø¬Ù‡Ø²",
+      target_settings: "Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª",
+      target_review: "Ù…Ø±Ø§Ø¬Ø¹Ø©",
+      target_supplierFeedback: "Ù…Ù„Ø§Ø­Ø¸Ø© Ù…Ø¬Ù‡Ø²",
+      target_termSuggestion: "Ù…ÙØ±Ø¯Ø© Ù…Ù‚ØªØ±Ø­Ø©",
+      loadMore: "Ø¹Ø±Ø¶ Ø§Ù„Ù…Ø²ÙŠØ¯",
+      menu: "Ø§Ù„Ù‚Ø§Ø¦Ù…Ø©",
+      closeMenu: "Ø¥ØºÙ„Ø§Ù‚ Ø§Ù„Ù‚Ø§Ø¦Ù…Ø©",
+    },
+  },
+};
+
+i18n.use(initReactI18next).init({
+  resources,
+  lng: localStorage.getItem("mujahiz-iq-locale") || "en",
+  fallbackLng: "en",
+  interpolation: {
+    escapeValue: false,
+  },
+});
+
+export default i18n;
+
+
+
+

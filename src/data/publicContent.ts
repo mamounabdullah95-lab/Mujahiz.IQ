@@ -236,4 +236,570 @@ export const publicPages = {
       "ar": "Ø®Ø·ÙˆØ§Øª ÙˆØ§Ø¶Ø­Ø© ØªØ³Ø§Ø¹Ø¯ Ø§Ù„Ù…Ø´ØªØ±ÙŠÙ† ÙˆØ§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø¹Ù„Ù‰ Ø§Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ø¨Ø¹Ø¶Ù‡Ù… Ø¨Ø·Ø±ÙŠÙ‚Ø© Ø£ÙƒØ«Ø± ØªÙ†Ø¸ÙŠÙ…Ø§Ù‹ ÙˆØ§Ø­ØªØ±Ø§ÙÙŠØ©.",
       "en": "Clear steps that help buyers and suppliers reach each other in a more organized and professional way."
     },
-    "ãŞº¶‰ËkºwµçSbÏf#f¸ˆ°(€€€€€€€€€€‰•¸ˆè€‰Q¡”ÕÍ•È¥ÌÉ•ÍÁ½¹Í¥‰±”™½ÈÑ¡”…ÕÉ…ä½˜Ñ¡”¥¹™½Éµ…Ñ¥½¸ÁÉ½Ù¥‘•…¹µÕÍĞ¹½ĞÕÍ”Ñ¡”Á±…Ñ™½É´™½È…¹äÕ¹±…İ™Õ°ÁÕÉÁ½Í”½È…¹ä…Ñ¥Ù¥ÑäÑ¡…Ğ¡…ÉµÌ½Ñ¡•ÈÕÍ•ÉÌ½Èµ…É­•ĞÑÉÕÍĞ¸ˆ(€€€€€€€ô(€€€€€ô°(€€€€€ì(€€€€€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€€€€€‰…Èˆè€‹bßb£f+bçb¤ƒbŸfffb×b¤ˆ°(€€€€€€€€€€‰•¸ˆè€‰9…ÑÕÉ”½˜Ñ¡”A±…Ñ™½É´ˆ(€€€€€€€ô°(€€€€€€€€‰‰½‘äˆèì(€€€€€€€€€€‰…Èˆè€‹fb³fbÈƒb«f#fbÄƒfbÏbŸb·b¤ƒffb£b·b¬ƒf#bŸfb«fbãf+fƒf#bŸfb«f#bŸb×fƒbŸfffff(¸ƒfbœƒb«fb¯fƒbŸfffb×b¤ƒbÛfbŸfbŸf,ƒfb³f#b¿b¤ƒffƒfb³fbÈƒbf ƒbŸfb«bËbŸfbŸf,ƒb£bŸfb«bçbŸfb¿b0ƒf#f+b³b ƒbçff$ƒbŸffbÏb«b»b¿ff+fƒb—b³bÇbŸb„ƒbŸfb«b·ffƒf#bŸfbçfbŸf+b¤ƒbŸff#bŸb³b£b¤ƒfb£fƒbf(ƒfbÇbŸbÄƒbÓbÇbŸb„¸ˆ°(€€€€€€€€€€‰•¸ˆè€‰5Õ©…¡¥è%DÁÉ½Ù¥‘•Ì„İ½É­ÍÁ…”™½È‘¥Í½Ù•Éä°½É…¹¥é…Ñ¥½¸°…¹ÁÉ½™•ÍÍ¥½¹…°½µµÕ¹¥…Ñ¥½¸¸Q¡”Á±…Ñ™½É´‘½•Ì¹½ĞÕ…É…¹Ñ•”•Ù•ÉäÍÕÁÁ±¥•ËŠeÌÅÕ…±¥Ñä½ÈÕ…É…¹Ñ•”½¹ÑÉ…Ñ¥¹œ¸UÍ•ÉÌµÕÍĞÁ•É™½É´Ñ¡•¥È½İ¸Ù•É¥™¥…Ñ¥½¸…¹‘Õ”‘¥±¥•¹”‰•™½É”ÁÕÉ¡…Í¥¹œ‘•¥Í¥½¹Ì¸ˆ(€€€€€€€ô(€€€€€ô°(€€€€€ì(€€€€€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€€€€€‰…Èˆè€‹b«b·b¿f+b¬ƒbŸfbÓbÇf#bÜˆ°(€€€€€€€€€€‰•¸ˆè€‰UÁ‘…Ñ•ÌÑ¼Q•ÉµÌˆ(€€€€€€€ô°(€€€€€€€€‰‰½‘äˆèì(€€€€€€€€€€‰…Èˆè€‹fb¼ƒf+b«fƒb«b·b¿f+b¬ƒfbÃfƒbŸfbÓbÇf#bÜƒffƒf#fb¨ƒfb‹b»bÄƒb£fbœƒf+b«fbŸbÏb ƒfbäƒb«bßf#f+bÄƒbŸfffb×b§b0ƒf#bÏf+b«fƒfbÓbÄƒbŸffbÏb»b¤ƒbŸfbb·b¿b¬ƒb¿bŸb»fƒfbÃfƒbŸfb×fb·b¤¸ˆ°(€€€€€€€€€€‰•¸ˆè€‰Q¡•Í”Ñ•ÉµÌµ…ä‰”ÕÁ‘…Ñ•™É½´Ñ¥µ”Ñ¼Ñ¥µ”…ÌÑ¡”Á±…Ñ™½É´•Ù½±Ù•Ì¸Q¡”±…Ñ•ÍĞÙ•ÉÍ¥½¸İ¥±°‰”ÁÕ‰±¥Í¡•½¸Ñ¡¥ÌÁ…”¸ˆ(€€€€€€€ô(€€€€€ô(€€€t(€ô°(€€‰ÁÉ¥Ù…äˆèì(€€€€‰­•äˆè€‰ÁÉ¥Ù…äˆ°(€€€€‰Í±Õœˆè€ˆ½ÁÉ¥Ù…äˆ°(€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€‰…Èˆè€‹bÏf+bŸbÏb¤ƒbŸfb»b×f#b×f+b¤ˆ°(€€€€€€‰•¸ˆè€‰AÉ¥Ù…äA½±¥äˆ(€€€ô°(€€€€‰ÍÕ‰Ñ¥Ñ±”ˆèì(€€€€€€‰…Èˆè€‹fb·b«bÇfƒb»b×f#b×f+b¤ƒbŸffbÏb«b»b¿ff+fƒf#fbçffƒbçff$ƒbŸfb«bçbŸffƒfbäƒbŸfb£f+bŸfbŸb¨ƒb£fbÏb“f#ff+b¤ƒf#f#bÛf#b´¸ˆ°(€€€€€€‰•¸ˆè€‰]”É•ÍÁ•ĞÕÍ•ÈÁÉ¥Ù…ä…¹…¥´Ñ¼¡…¹‘±”‘…Ñ„É•ÍÁ½¹Í¥‰±ä…¹ÑÉ…¹ÍÁ…É•¹Ñ±ä¸ˆ(€€€ô°(€€€€‰µ•Ñ…Q¥Ñ±”ˆèì(€€€€€€‰…Èˆè€‹bÏf+bŸbÏb¤ƒbŸfb»b×f#b×f+b¤ğƒfb³fbÈˆ°(€€€€€€‰•¸ˆè€‰AÉ¥Ù…äA½±¥äğ5Õ©…¡¥è%Dˆ(€€€ô°(€€€€‰µ•Ñ…•ÍÉ¥ÁÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹b«f#bÛb´ƒbÏf+bŸbÏb¤ƒbŸfb»b×f#b×f+b¤ƒff+ff+b¤ƒb³fbäƒf#bŸbÏb«b»b¿bŸfƒf#b·fbŸf+b¤ƒbŸfb£f+bŸfbŸb¨ƒb¿bŸb»fƒffb×b¤ƒfb³fbÈ¸ˆ°(€€€€€€‰•¸ˆè€‰Q¡¥ÌÁÉ¥Ù…äÁ½±¥ä•áÁ±…¥¹Ì¡½Ü‘…Ñ„¥Ì½±±•Ñ•°ÕÍ•°…¹ÁÉ½Ñ•Ñ•¥¹Í¥‘”5Õ©…¡¥è%D¸ˆ(€€€ô°(€€€€‰Ñ„ˆèì(€€€€€€‰…Èˆè€‹fbf(ƒbÏb“bŸfƒb·f#fƒbŸfb»b×f#b×f+b§b0ƒf+bÇb³f$ƒbŸfb«f#bŸb×fƒfbäƒfbÇf+fƒbŸfffb×b¤¸ˆ°(€€€€€€‰•¸ˆè€‰½È…¹äÁÉ¥Ù…äµÉ•±…Ñ•ÅÕ•ÍÑ¥½¸°Á±•…Í”½¹Ñ…ĞÑ¡”Á±…Ñ™½É´Ñ•…´¸ˆ(€€€ô°(€€€€‰Í•Ñ¥½¹Ìˆèl(€€€€€ì(€€€€€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€€€€€‰…Èˆè€‹bŸfb£f+bŸfbŸb¨ƒbŸfb«f(ƒfb³fbçfbœˆ°(€€€€€€€€€€‰•¸ˆè€‰…Ñ„]”½±±•Ğˆ(€€€€€€€ô°(€€€€€€€€‰‰½‘äˆèì(€€€€€€€€€€‰…Èˆè€‹fb¼ƒfb³fbäƒb£f+bŸfbŸb¨ƒfb¯fƒbŸfbŸbÏfb0ƒbŸfb£bÇf+b¼ƒbŸfb—ffb«bÇf#ff+b0ƒbÇffƒbŸffbŸb«fb0ƒbŸbÏfƒbŸfbÓbÇfb¤ƒbf ƒbŸffb“bÏbÏb§b0ƒbŸfff#fbçb0ƒbŸfb«b»b×b×bŸb«b0ƒf#b£f+bŸfbŸb¨ƒbŸfbŸbÏb«b»b¿bŸfƒbŸffbŸbËfb¤ƒfb«bÓbëf+fƒf#b«b·bÏf+fƒbŸfffb×b¤¸ˆ°(€€€€€€€€€€‰•¸ˆè€‰]”µ…ä½±±•Ğ‘…Ñ„ÍÕ …Ì¹…µ”°•µ…¥°…‘‘É•ÍÌ°Á¡½¹”¹Õµ‰•È°½µÁ…¹ä½È½É…¹¥é…Ñ¥½¸¹…µ”°±½…Ñ¥½¸°ÍÁ•¥…±¥é…Ñ¥½¹Ì°…¹ÕÍ…”‘…Ñ„¹••ÍÍ…ÉäÑ¼½Á•É…Ñ”…¹¥µÁÉ½Ù”Ñ¡”Á±…Ñ™½É´¸ˆ(€€€€€€€ô(€€€€€ô°(€€€€€ì(€€€€€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€€€€€‰…Èˆè€‹ff+fƒfbÏb«b»b¿fƒbŸfb£f+bŸfbŸb¨ˆ°(€€€€€€€€€€‰•¸ˆè€‰!½Ü]”UÍ”…Ñ„ˆ(€€€€€€€ô°(€€€€€€€€‰‰½‘äˆèì(€€€€€€€€€€‰…Èˆè€‹fbÏb«b»b¿fƒbŸfb£f+bŸfbŸb¨ƒfb—fbÓbŸb„ƒbŸfb·bÏbŸb£bŸb«b0ƒb—b¿bŸbÇb¤ƒfffbŸb¨ƒbŸffb³fbËf+fb0ƒb«b·bÏf+fƒbŸfb£b·b¯b0ƒbŸfb«f#bŸb×fƒfbäƒbŸffbÏb«b»b¿ff+fb0ƒfbÇbŸb³bçb¤ƒbŸfbßfb£bŸb«b0ƒf#b«bßf#f+bÄƒb»b¿fbŸb¨ƒbŸfffb×b¤¸ˆ°(€€€€€€€€€€‰•¸ˆè€‰]”ÕÍ”‘…Ñ„Ñ¼É•…Ñ”…½Õ¹ÑÌ°µ…¹…”ÍÕÁÁ±¥•ÈÁÉ½™¥±•Ì°¥µÁÉ½Ù”Í•…É °½µµÕ¹¥…Ñ”İ¥Ñ ÕÍ•ÉÌ°É•Ù¥•ÜÉ•ÅÕ•ÍÑÌ°…¹‘•Ù•±½ÀÁ±…Ñ™½É´Í•ÉÙ¥•Ì¸ˆ(€€€€€€€ô(€€€€€ô°(€€€€€ì(€€€€€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€€€€€‰…Èˆè€‹fbÓbŸbÇfb¤ƒbŸfb£f+bŸfbŸb¨ˆ°(€€€€€€€€€€‰•¸ˆè€‰…Ñ„M¡…É¥¹œˆ(€€€€€€€ô°(€€€€€€€€‰‰½‘äˆèì(€€€€€€€€€€‰…Èˆè€‹fbœƒfb£f+bäƒb£f+bŸfbŸb¨ƒbŸffbÏb«b»b¿ff+f¸ƒfb¼ƒb«bãfbÄƒb£bçbØƒb£f+bŸfbŸb¨ƒbŸffb³fbËf+fƒffbËf#bŸbÄƒbf ƒbŸffbÏb«b»b¿ff+fƒb£b·bÏb ƒb—bçb¿bŸb¿bŸb¨ƒbŸffffƒf#bŸfbëbÇbØƒffƒbŸfb¿ff+fb0ƒb£f+ffbœƒb«b£ff$ƒbŸfb£f+bŸfbŸb¨ƒbŸfb·bÏbŸbÏb¤ƒfb·ff+b¤ƒf#fbœƒf+b«fƒfbÓbŸbÇfb«fbœƒb—fbœƒf#ffƒbŸfb·bŸb³b¤ƒbf ƒbŸffb«bßfb£bŸb¨ƒbŸffbŸff#ff+b¤¸ˆ°(€€€€€€€€€€‰•¸ˆè€‰]”‘¼¹½ĞÍ•±°ÕÍ•È‘…Ñ„¸M½µ”ÍÕÁÁ±¥•ÈÁÉ½™¥±”¥¹™½Éµ…Ñ¥½¸µ…ä…ÁÁ•…ÈÑ¼Ù¥Í¥Ñ½ÉÌ½ÈÕÍ•ÉÌ‘•Á•¹‘¥¹œ½¸ÁÉ½™¥±”Í•ÑÑ¥¹Ì…¹‘¥É•Ñ½ÉäÁÕÉÁ½Í”°İ¡¥±”Í•¹Í¥Ñ¥Ù”‘…Ñ„É•µ…¥¹ÌÁÉ½Ñ•Ñ•…¹¥Ì¹½ĞÍ¡…É••á•ÁĞ…Ì¹••‘•½ÈÉ•ÅÕ¥É•‰ä±…Ü¸ˆ(€€€€€€€ô(€€€€€ô°(€€€€€ì(€€€€€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€€€€€‰…Èˆè€‹b·ff#fƒbŸffbÏb«b»b¿fˆ°(€€€€€€€€€€‰•¸ˆè€‰UÍ•ÈI¥¡ÑÌˆ(€€€€€€€ô°(€€€€€€€€‰‰½‘äˆèì(€€€€€€€€€€‰…Èˆè€‹f+fffƒfffbÏb«b»b¿fƒbßfb ƒb«b·b¿f+b¬ƒb£f+bŸfbŸb«fƒbf ƒb«b×b·f+b·fbœƒbf ƒb·bÃffbœƒf#ffƒb‹ff+b¤ƒbŸfffb×b¤ƒf#bŸfbÏf+bŸbÏbŸb¨ƒbŸffbçb«fb¿b¤¸ˆ°(€€€€€€€€€€‰•¸ˆè€‰UÍ•ÉÌµ…äÉ•ÅÕ•ÍĞÑ¼ÕÁ‘…Ñ”°½ÉÉ•Ğ°½È‘•±•Ñ”Ñ¡•¥È¥¹™½Éµ…Ñ¥½¸…½É‘¥¹œÑ¼Ñ¡”Á±…Ñ™½É´İ½É­™±½Ü…¹…ÁÁ±¥…‰±”Á½±¥¥•Ì¸ˆ(€€€€€€€ô(€€€€€ô(€€€t(€ô°(€€‰Í•ÕÉ¥Ñäˆèì(€€€€‰­•äˆè€‰Í•ÕÉ¥Ñäˆ°(€€€€‰Í±Õœˆè€ˆ½Í•ÕÉ¥Ñäˆ°(€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€‰…Èˆè€‹bÏf+bŸbÏb¤ƒbŸfbfbŸfˆ°(€€€€€€‰•¸ˆè€‰M•ÕÉ¥ÑäA½±¥äˆ(€€€ô°(€€€€‰ÍÕ‰Ñ¥Ñ±”ˆèì(€€€€€€‰…Èˆè€‹bŸfbfbŸfƒfbÏb“f#ff+b¤ƒfbÓb«bÇfb¤ƒb£f+fƒbŸfffb×b¤ƒf#bŸffbÏb«b»b¿ff+fƒfbÛfbŸfƒb£f+b›b¤ƒbçffƒff#b¯f#fb¤¸ˆ°(€€€€€€‰•¸ˆè€‰M•ÕÉ¥Ñä¥Ì„Í¡…É•É•ÍÁ½¹Í¥‰¥±¥Ñä‰•Ñİ••¸Ñ¡”Á±…Ñ™½É´…¹ÕÍ•ÉÌÑ¼µ…¥¹Ñ…¥¸„ÑÉÕÍÑ•İ½É­ÍÁ…”¸ˆ(€€€ô°(€€€€‰µ•Ñ…Q¥Ñ±”ˆèì(€€€€€€‰…Èˆè€‹bÏf+bŸbÏb¤ƒbŸfbfbŸfğƒfb³fbÈˆ°(€€€€€€‰•¸ˆè€‰M•ÕÉ¥ÑäA½±¥äğ5Õ©…¡¥è%Dˆ(€€€ô°(€€€€‰µ•Ñ…•ÍÉ¥ÁÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹b—bÇbÓbŸb¿bŸb¨ƒbŸfbfbŸfƒff(ƒffb×b¤ƒfb³fbÈƒfb·fbŸf+b¤ƒbŸfb·bÏbŸb£bŸb¨ƒf#bŸfb£f+bŸfbŸb¨ƒf#b«fff+fƒbŸfbŸbÏb«b»b¿bŸfƒbëf+bÄƒbŸffb×bÇb´ƒb£f¸ˆ°(€€€€€€‰•¸ˆè€‰M•ÕÉ¥ÑäÕ¥‘…¹”™½È5Õ©…¡¥è%DÑ¼ÁÉ½Ñ•Ğ…½Õ¹ÑÌ°‘…Ñ„°…¹É•‘Õ”Õ¹…ÕÑ¡½É¥é•ÕÍ”¸ˆ(€€€ô°(€€€€‰Ñ„ˆèì(€€€€€€‰…Èˆè€‹bÏbŸbçb¿fbœƒff(ƒbŸfb·fbŸbàƒbçff$ƒffb×b¤ƒb‹ffb¤ƒf#ff#b¯f#fb¤ƒffb³ff+bä¸ˆ°(€€€€€€‰•¸ˆè€‰!•±ÀÕÌµ…¥¹Ñ…¥¸„Í•ÕÉ”…¹ÑÉÕÍÑ•Á±…Ñ™½É´™½È•Ù•Éå½¹”¸ˆ(€€€ô°(€€€€‰Í•Ñ¥½¹Ìˆèl(€€€€€ì(€€€€€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€€€€€‰…Èˆè€‹b·fbŸf+b¤ƒbŸfb·bÏbŸb ˆ°(€€€€€€€€€€‰•¸ˆè€‰½Õ¹ĞAÉ½Ñ•Ñ¥½¸ˆ(€€€€€€€ô°(€€€€€€€€‰‰½‘äˆèì(€€€€€€€€€€‰…Èˆè€‹f+b³b ƒbŸbÏb«b»b¿bŸfƒfffb¤ƒfbÇf#bÄƒff#f+b¤ƒf#bçb¿fƒfbÓbŸbÇfb«fbœƒfbäƒbŸfb‹b»bÇf+f¸ƒf+b«b·ffƒbŸffbÏb«b»b¿fƒfbÏb“f#ff+b¤ƒbf(ƒbŸbÏb«b»b¿bŸfƒf+b«fƒffƒb»fbŸfƒb·bÏbŸb£fƒb—bÃbœƒfb«b°ƒbçfƒfbÓbŸbÇfb¤ƒb£f+bŸfbŸb¨ƒbŸfb¿b»f#fƒbf ƒb—ffbŸffbœ¸ˆ°(€€€€€€€€€€‰•¸ˆè€‰UÍ•ÉÌÍ¡½Õ±ÕÍ”„ÍÑÉ½¹œÁ…ÍÍİ½É…¹µÕÍĞ¹½ĞÍ¡…É”¥Ğİ¥Ñ ½Ñ¡•ÉÌ¸Q¡”ÕÍ•È¥ÌÉ•ÍÁ½¹Í¥‰±”™½È…½Õ¹Ğ…Ñ¥Ù¥ÑäÉ•ÍÕ±Ñ¥¹œ™É½´Í¡…É•½È¹•±•Ñ•±½¥¸É•‘•¹Ñ¥…±Ì¸ˆ(€€€€€€€ô(€€€€€ô°(€€€€€ì(€€€€€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€€€€€‰…Èˆè€‹bŸff#b×f#fƒb—ff$ƒbŸfb£f+bŸfbŸb¨ˆ°(€€€€€€€€€€‰•¸ˆè€‰…Ñ„•ÍÌˆ(€€€€€€€ô°(€€€€€€€€‰‰½‘äˆèì(€€€€€€€€€€‰…Èˆè€‹f+b«fƒb«fbãf+fƒb×fbŸb·f+bŸb¨ƒbŸff#b×f#fƒb£b·bÏb ƒff#bäƒbŸffbÏb«b»b¿fƒf#bŸfb¿f#bÄƒb¿bŸb»fƒbŸfffb×b§b0ƒfbäƒbŸfb·fbŸbàƒbçff$ƒbŸfb£f+bŸfbŸb¨ƒbŸfb·bÏbŸbÏb¤ƒf#ffƒbÛf#bŸb£bÜƒbŸfbfbŸfƒbŸfffbŸbÏb£b¤¸ˆ°(€€€€€€€€€€‰•¸ˆè€‰…Ñ„…•ÍÌ¥Ìµ…¹…•‰…Í•½¸ÕÍ•ÈÑåÁ”…¹É½±”¥¹Í¥‘”Ñ¡”Á±…Ñ™½É´°İ¡¥±”Í•¹Í¥Ñ¥Ù”‘…Ñ„¥ÌÁÉ½Ñ•Ñ•Ñ¡É½Õ …ÁÁÉ½ÁÉ¥…Ñ”Í•ÕÉ¥Ñä½¹ÑÉ½±Ì¸ˆ(€€€€€€€ô(€€€€€ô°(€€€€€ì(€€€€€€€€‰Ñ¥Ñ±”ˆèì(€€€€€€€€€€‰…Èˆè€‹bŸfb—b£fbŸbèƒbçfƒfbÓffb¤ƒbfff+b¤ˆ°(€€€€€€€€€€‰•¸ˆè€‰I•Á½ÉÑ¥¹œ„M•ÕÉ¥Ñä%ÍÍÕ”ˆ(€€€€€€€ô°(€€€€€€€€‰‰½‘äˆèì(€€€€€€€€€€‰…Èˆè€‹b—bÃbœƒfbŸb·bãb¨ƒfbÓbŸbßbŸf,ƒfbÓb£f#fbŸf,ƒbf ƒfbÓffb¤ƒbfff+b§b0ƒf+bÇb³f$ƒbŸfb«f#bŸb×fƒff#bÇbŸf,ƒfbäƒfbÇf+fƒbŸfffb×b¤ƒf#b«bËf#f+b¿fbœƒb£bŸfb«fbŸb×f+fƒbŸffbŸbËfb¤ƒffb«b·ffƒf#bŸffbçbŸfb³b¤¸ˆ°(€€€€€€€€€€‰•¸ˆè€‰%˜å½Ô¹½Ñ¥”ÍÕÍÁ¥¥½ÕÌ…Ñ¥Ù¥Ñä½È„Í•ÕÉ¥Ñä¥ÍÍÕ”°Á±•…Í”½¹Ñ…ĞÑ¡”Á±…Ñ™½É´Ñ•…´¥µµ•‘¥…Ñ•±ä…¹ÁÉ½Ù¥‘”Ñ¡”¹••ÍÍ…Éä‘•Ñ…¥±Ì™½È¥¹Ù•ÍÑ¥…Ñ¥½¸…¹É•Í½±ÕÑ¥½¸¸ˆ(€€€€€€€ô(€€€€€ô(€€€t(€ô)ô…Ì½¹ÍĞÍ…Ñ¥Í™¥•ÌI•½ÉñÍÑÉ¥¹œ°AÕ‰±¥½¹Ñ•¹ÑA…”øì()•áÁ½ÉĞÑåÁ”AÕ‰±¥A…•-•ä€ô­•å½˜ÑåÁ•½˜ÁÕ‰±¥A…•Ìì()•áÁ½ÉĞ½¹ÍĞÁÕ‰±¥…Å%Ñ•µÌ€ôl(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹fbœƒff(ƒffb×b¤ƒfb³fbËb|ˆ°(€€€€€€‰•¸ˆè€‰]¡…Ğ¥Ì5Õ©…¡¥è%Düˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹fb³fbÈƒff(ƒffb×b¤ƒbÇfff+b¤ƒffff+b¤ƒb«bÇb£bÜƒbŸfbçbŸfff+fƒff(ƒbŸffbÓb«bÇf+bŸb¨ƒf#bÏfbÏfb¤ƒbŸfb«f#bÇf+b¼ƒb£bŸffb³fbËf+fƒf#bŸffbçff#fbŸb¨ƒbŸfbÏf#ff+b¤ƒb£b×f#bÇb¤ƒffbãfb¤ƒf#fbŸb£fb¤ƒffb£b·b¬¸ˆ°(€€€€€€‰•¸ˆè€‰5Õ©…¡¥è%D¥Ì„ÁÉ½™•ÍÍ¥½¹…°‘¥¥Ñ…°Á±…Ñ™½É´Ñ¡…Ğ½¹¹•ÑÌÁÉ½ÕÉ•µ•¹Ğ…¹ÍÕÁÁ±ä¡…¥¸ÁÉ½™•ÍÍ¥½¹…±Ìİ¥Ñ ÍÕÁÁ±¥•ÉÌ…¹µ…É­•Ğ¥¹™½Éµ…Ñ¥½¸¥¸…¸½É…¹¥é•°Í•…É¡…‰±”İ…ä¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹ffƒfb³fbÈƒfb«b³bÄƒb—ffb«bÇf#ff+b|ˆ°(€€€€€€‰•¸ˆè€‰%Ì5Õ©…¡¥è%D…¸½¹±¥¹”ÍÑ½É”üˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹fbœ¸ƒfb³fbÈƒff+bÏb¨ƒfb«b³bÇbŸf,ƒb—ffb«bÇf#ff+bŸf,ƒfb£f+bäƒbŸfffb«b³bŸb¨ƒfb£bŸbÓbÇb§b0ƒb£fƒffb×b¤ƒfbŸfb«bÓbŸfƒbŸffb³fbËf+fƒf#b«fbãf+fƒbŸffbçff#fbŸb¨ƒf#b«bÏff+fƒbŸfb«f#bŸb×fƒbŸfffff(¸ˆ°(€€€€€€‰•¸ˆè€‰9¼¸5Õ©…¡¥è%D¥Ì¹½Ğ…¸½¹±¥¹”ÍÑ½É”™½È‘¥É•ĞÁÉ½‘ÕĞÍ…±•Ì¸%Ğ¥Ì„Á±…Ñ™½É´™½ÈÍÕÁÁ±¥•È‘¥Í½Ù•Éä°¥¹™½Éµ…Ñ¥½¸½É…¹¥é…Ñ¥½¸°…¹ÁÉ½™•ÍÍ¥½¹…°½µµÕ¹¥…Ñ¥½¸¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹ffƒf+ffffƒbŸbÏb«b»b¿bŸfƒbŸfffb×b§b|ˆ°(€€€€€€‰•¸ˆè€‰]¡¼…¸ÕÍ”Ñ¡”Á±…Ñ™½É´üˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹f+fffƒbfƒf+bÏb«b»b¿ffbœƒff#bãff ƒbŸffbÓb«bÇf+bŸb«b0ƒfbÏb“f#ff ƒbÏfbÏfb¤ƒbŸfb«f#bÇf+b¿b0ƒbŸfbÓbÇfbŸb«b0ƒbŸfffbãfbŸb«b0ƒbb×b·bŸb ƒbŸfbbçfbŸfb0ƒf#bŸffb³fbËf#fƒbŸfbÃf+fƒf+fb¿ff#fƒffb«b³bŸb¨ƒbf ƒb»b¿fbŸb¨ƒff(ƒbŸfbÏf#fƒbŸfbçbÇbŸff(¸ˆ°(€€€€€€‰•¸ˆè€‰AÉ½ÕÉ•µ•¹Ğ½™™¥•ÉÌ°ÍÕÁÁ±ä¡…¥¸Ñ•…µÌ°½µÁ…¹¥•Ì°½É…¹¥é…Ñ¥½¹Ì°‰ÕÍ¥¹•ÍÌ½İ¹•ÉÌ°…¹ÍÕÁÁ±¥•ÉÌÁÉ½Ù¥‘¥¹œÁÉ½‘ÕÑÌ½ÈÍ•ÉÙ¥•Ì¥¸Ñ¡”%É…Å¤µ…É­•Ğ…¸ÕÍ”Ñ¡”Á±…Ñ™½É´¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹ff+fƒbb£b·b¬ƒbçfƒfb³fbËb|ˆ°(€€€€€€‰•¸ˆè€‰!½Ü‘¼$Í•…É ™½È„ÍÕÁÁ±¥•Èüˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹f+ffffƒbŸfb£b·b¬ƒb£bŸfbŸbÏfƒbf ƒbŸfb«b×ff+fƒbf ƒbŸffb·bŸfbãb¤ƒbf ƒbŸffb¿f+fb¤ƒbf ƒbŸfffb«b°ƒbf ƒbŸfb»b¿fb¤ƒbf ƒbŸffffbŸb¨ƒbŸfffb«bŸb·f+b§b0ƒb¯fƒbŸbÏb«b»b¿bŸfƒbŸfffbŸb«bÄƒfff#b×f#fƒb—ff$ƒfb«bŸb›b°ƒbfb¯bÄƒb¿fb¤¸ˆ°(€€€€€€‰•¸ˆè€‰e½Ô…¸Í•…É ‰ä¹…µ”°…Ñ•½Éä°½Ù•É¹½É…Ñ”°¥Ñä°ÁÉ½‘ÕĞ°Í•ÉÙ¥”°½È­•åİ½É°Ñ¡•¸ÕÍ”™¥±Ñ•ÉÌÑ¼É•… µ½É”…ÕÉ…Ñ”É•ÍÕ±ÑÌ¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹ffƒb³ff+bäƒbŸffb³fbËf+fƒfbçb«fb¿f#fb|ˆ°(€€€€€€‰•¸ˆè€‰É”…±°ÍÕÁÁ±¥•ÉÌÙ•É¥™¥•üˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹b«bçffƒbŸfffb×b¤ƒbçff$ƒb«fbãf+fƒf#b«b×ff+b¤ƒbŸfb£f+bŸfbŸb¨ƒf#ffƒfbçbŸf+f+bÄƒf#bŸbÛb·b¤¸ƒf#fbäƒbÃffb0ƒf+b³b ƒbçff$ƒbŸffbÓb«bÇf(ƒb—b³bÇbŸb„ƒbŸfbçfbŸf+b¤ƒbŸff#bŸb³b£b¤ƒf#bŸfb«b·ffƒbŸfffbŸb›f(ƒfb£fƒbf(ƒb«bçbŸffƒb«b³bŸbÇf(¸ˆ°(€€€€€€‰•¸ˆè€‰Q¡”Á±…Ñ™½É´½É…¹¥é•Ì…¹™¥±Ñ•ÉÌ‘…Ñ„…½É‘¥¹œÑ¼±•…ÈÉ¥Ñ•É¥„¸!½İ•Ù•È°‰Õå•ÉÌÍ¡½Õ±½¹‘ÕĞ‘Õ”‘¥±¥•¹”…¹™¥¹…°Ù•É¥™¥…Ñ¥½¸‰•™½É”…¹ä½µµ•É¥…°ÑÉ…¹Í…Ñ¥½¸¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹ff+fƒf+fffff(ƒbŸfbŸfbÛfbŸfƒffb³fbËb|ˆ°(€€€€€€‰•¸ˆè€‰!½Ü…¸$©½¥¸…Ì„ÍÕÁÁ±¥•Èüˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹bŸbÛbëbÜƒbçff$ƒbßfb ƒbŸfbŸfbÛfbŸfb0ƒbb¿b»fƒfbçff#fbŸb«fƒbŸfbbÏbŸbÏf+b¤ƒf#b«fbŸb×f+fƒbŸffbÓbŸbßb0ƒb¯fƒbbÇbÏfƒbŸfbßfb ƒfffbÇbŸb³bçb¤ƒbf ƒbŸfbŸbÏb«ffbŸfƒb·bÏb ƒb‹ff+b¤ƒbŸfffb×b¤¸ˆ°(€€€€€€‰•¸ˆè€‰±¥¬I•ÅÕ•ÍĞÑ¼)½¥¸°•¹Ñ•Èå½ÕÈ‰…Í¥Œ¥¹™½Éµ…Ñ¥½¸…¹‰ÕÍ¥¹•ÍÌ‘•Ñ…¥±Ì°Ñ¡•¸ÍÕ‰µ¥ĞÑ¡”É•ÅÕ•ÍĞ™½ÈÉ•Ù¥•Ü½È½µÁ±•Ñ¥½¸…½É‘¥¹œÑ¼Ñ¡”Á±…Ñ™½É´İ½É­™±½Ü¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹ffƒf+fffƒb«b·b¿f+b¬ƒb£f+bŸfbŸb¨ƒbŸffb³fbËb|ˆ°(€€€€€€‰•¸ˆè€‰…¸ÍÕÁÁ±¥•È¥¹™½Éµ…Ñ¥½¸‰”ÕÁ‘…Ñ•üˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹fbçfb0ƒf+fffƒfffb³fbÈƒb«b·b¿f+b¬ƒb£f+bŸfbŸb«fƒbçfb¼ƒbŸfb·bŸb³b¤ƒffƒb»fbŸfƒbŸfb·bÏbŸb ƒbf ƒbçb£bÄƒbŸfb«f#bŸb×fƒfbäƒfbÇf+fƒbŸfffb×b¤ƒb£b·bÏb ƒbŸfb×fbŸb·f+bŸb¨ƒbŸffb«bŸb·b¤¸ˆ°(€€€€€€‰•¸ˆè€‰e•Ì¸MÕÁÁ±¥•ÉÌ…¸ÕÁ‘…Ñ”Ñ¡•¥È¥¹™½Éµ…Ñ¥½¸İ¡•¸¹••‘•Ñ¡É½Õ Ñ¡•¥È…½Õ¹Ğ½È‰ä½¹Ñ…Ñ¥¹œÑ¡”Á±…Ñ™½É´Ñ•…´°‘•Á•¹‘¥¹œ½¸…Ù…¥±…‰±”Á•Éµ¥ÍÍ¥½¹Ì¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹ffƒbŸfffb×b¤ƒb«bÛffƒbŸfbbÏbçbŸbÄƒbf ƒbŸfb«bçbŸfb¿b|ˆ°(€€€€€€‰•¸ˆè€‰½•ÌÑ¡”Á±…Ñ™½É´Õ…É…¹Ñ•”ÁÉ¥•Ì½È½¹ÑÉ…ÑÌüˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹fbœƒb«bÛffƒbŸfffb×b¤ƒbŸfbbÏbçbŸbÄƒbf ƒbŸfb«bçbŸfb¿bŸb¨¸ƒb¿f#bÇfbœƒff ƒb«bÏff+fƒbŸff#b×f#fƒb—ff$ƒbŸffbçff#fbŸb¨ƒf#bŸffb³fbËf+fb0ƒb£f+ffbœƒb«b£ff$ƒfbÇbŸbÇbŸb¨ƒbŸfbÓbÇbŸb„ƒf#bŸfb«bçbŸfb¼ƒfbÏb“f#ff+b¤ƒbŸfbbßbÇbŸfƒbŸffbçff+b¤¸ˆ°(€€€€€€‰•¸ˆè€‰9¼¸Q¡”Á±…Ñ™½É´‘½•Ì¹½ĞÕ…É…¹Ñ•”ÁÉ¥•Ì½È½¹ÑÉ…ÑÌ¸%ÑÌÉ½±”¥ÌÑ¼™…¥±¥Ñ…Ñ”…•ÍÌÑ¼¥¹™½Éµ…Ñ¥½¸…¹ÍÕÁÁ±¥•ÉÌ°İ¡¥±”ÁÕÉ¡…Í¥¹œ…¹½¹ÑÉ…Ñ¥¹œ‘•¥Í¥½¹ÌÉ•µ…¥¸Ñ¡”É•ÍÁ½¹Í¥‰¥±¥Ñä½˜Ñ¡”Á…ÉÑ¥•Ì¥¹Ù½±Ù•¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹ffƒb£f+bŸfbŸb«f(ƒb‹ffb§b|ˆ°(€€€€€€‰•¸ˆè€‰%Ìµä‘…Ñ„Í•ÕÉ”üˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹b«b«bçbŸffƒbŸfffb×b¤ƒfbäƒbŸfb£f+bŸfbŸb¨ƒb£fbÏb“f#ff+b§b0ƒf#b«bçffƒbçff$ƒb·fbŸf+b¤ƒbŸfb£f+bŸfbŸb¨ƒbŸfb·bÏbŸbÏb¤ƒf#ffƒbÏf+bŸbÏbŸb¨ƒbŸfb»b×f#b×f+b¤ƒf#bŸfbfbŸfƒbŸffbçb«fb¿b¤¸ˆ°(€€€€€€‰•¸ˆè€‰Q¡”Á±…Ñ™½É´¡…¹‘±•Ì‘…Ñ„É•ÍÁ½¹Í¥‰±ä…¹…¥µÌÑ¼ÁÉ½Ñ•ĞÍ•¹Í¥Ñ¥Ù”¥¹™½Éµ…Ñ¥½¸…½É‘¥¹œÑ¼¥ÑÌÁÉ¥Ù…ä…¹Í•ÕÉ¥ÑäÁ½±¥¥•Ì¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹ff+fƒbb«f#bŸb×fƒfbäƒfbÇf+fƒbŸfffb×b§b|ˆ°(€€€€€€‰•¸ˆè€‰!½Ü…¸$½¹Ñ…ĞÑ¡”Á±…Ñ™½É´Ñ•…´üˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹f+ffffƒbŸbÏb«b»b¿bŸfƒb×fb·b¤ƒb«f#bŸb×fƒfbçfbœƒbf ƒbŸfb£bÇf+b¼ƒbŸfb—ffb«bÇf#ff(ƒbŸffbçb«fb¼ƒb¿bŸb»fƒbŸfff#b«bÄƒfb—bÇbÏbŸfƒbŸbÏb«fbÏbŸbÇfƒbf ƒffbŸb·bãb«f¸ˆ°(€€€€€€‰•¸ˆè€‰e½Ô…¸ÕÍ”Ñ¡”½¹Ñ…ĞUÌÁ…”½ÈÑ¡”•µ…¥°±¥ÍÑ•¥¸Ñ¡”™½½Ñ•ÈÑ¼Í•¹å½ÕÈ¥¹ÅÕ¥Éä½È™••‘‰…¬¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹ffƒf+fffƒfffbÓb«bÇf(ƒb«ff+f+fƒb«b³bÇb£b¤ƒfb³fbËb|ˆ°(€€€€€€‰•¸ˆè€‰…¸‰Õå•ÉÌÉ•Ù¥•ÜÍÕÁÁ±¥•È•áÁ•É¥•¹•Ìüˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹b£b·bÏb ƒb×fbŸb·f+bŸb¨ƒbŸfffb×b§b0ƒf+fffƒb—bÛbŸfb¤ƒffbŸb·bãbŸb¨ƒbf ƒfbÇbŸb³bçbŸb¨ƒb«bÏbŸbçb¼ƒbçff$ƒb£fbŸb„ƒfbŸbçb¿b¤ƒfbçbÇff+b¤ƒb«bÓbŸbÇff+b¤ƒbfb¯bÄƒfbŸb›b¿b¤ƒfffbÏb«b»b¿ff+f¸ˆ°(€€€€€€‰•¸ˆè€‰•Á•¹‘¥¹œ½¸Á±…Ñ™½É´Á•Éµ¥ÍÍ¥½¹Ì°ÕÍ•ÉÌµ…ä…‘¹½Ñ•Ì½ÈÉ•Ù¥•İÌÑ¡…Ğ¡•±À‰Õ¥±„µ½É”ÕÍ•™Õ°Í¡…É•­¹½İ±•‘”‰…Í”¸ˆ(€€€ô(€ô°(€ì(€€€€‰ÅÕ•ÍÑ¥½¸ˆèì(€€€€€€‰…Èˆè€‹fbœƒbŸffbÇfƒb£f+fƒbŸffb³fbÈƒf#bŸffbÓb«bÇf+b|ˆ°(€€€€€€‰•¸ˆè€‰]¡…Ğ¥ÌÑ¡”‘¥™™•É•¹”‰•Ñİ••¸„ÍÕÁÁ±¥•È…¹„‰Õå•Èüˆ(€€€ô°(€€€€‰…¹Íİ•Èˆèì(€€€€€€‰…Èˆè€‹bŸffb³fbÈƒff ƒb³fb¤ƒb«fb¿fƒffb«b³bŸb¨ƒbf ƒb»b¿fbŸb¨¸ƒbŸffbÓb«bÇf(ƒff ƒfbÏb«b»b¿fƒf+b£b·b¬ƒbçfƒfb³fbËf+fƒbf ƒfbçff#fbŸb¨ƒbÏf#ff+b¤ƒfb¿bçfƒbŸb·b«f+bŸb³bŸb¨ƒbŸfbÓbÇbŸb„ƒbf ƒbŸfb«f#bÇf+b¼¸ˆ°(€€€€€€‰•¸ˆè€‰ÍÕÁÁ±¥•ÈÁÉ½Ù¥‘•ÌÁÉ½‘ÕÑÌ½ÈÍ•ÉÙ¥•Ì¸‰Õå•È¥Ì„ÕÍ•ÈÍ•…É¡¥¹œ™½ÈÍÕÁÁ±¥•ÉÌ½Èµ…É­•Ğ¥¹™½Éµ…Ñ¥½¸Ñ¼ÍÕÁÁ½ÉĞÁÕÉ¡…Í¥¹œ½ÈÍÕÁÁ±ä¹••‘Ì¸ˆ(€€€ô(€ô)t…Ì½¹ÍĞì
+    "metaTitle": {
+      "ar": "ÙƒÙŠÙ ØªØ¹Ù…Ù„ Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø² | Ø®Ø·ÙˆØ§Øª Ø¨Ø³ÙŠØ·Ø© Ù„Ø§ÙƒØªØ´Ø§Ù Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      "en": "How Mujahiz IQ Works | Simple Steps to Discover Suppliers"
+    },
+    "metaDescription": {
+      "ar": "ØªØ¹Ø±Ù Ø¹Ù„Ù‰ Ø®Ø·ÙˆØ§Øª Ø§Ø³ØªØ®Ø¯Ø§Ù… Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø² Ù…Ù† Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ø­Ø³Ø§Ø¨ Ø¥Ù„Ù‰ Ø§Ù„Ø¨Ø­Ø« Ø¹Ù† Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† ÙˆØªÙˆØ«ÙŠÙ‚ Ø§Ù„ØªØ¬Ø§Ø±Ø¨ ÙˆØªØ­Ø³ÙŠÙ† Ù‚Ø±Ø§Ø±Ø§Øª Ø§Ù„Ø´Ø±Ø§Ø¡.",
+      "en": "Learn how to use Mujahiz IQ, from account creation to supplier discovery, experience documentation, and improved purchasing decisions."
+    },
+    "cta": {
+      "ar": "Ø§Ø¨Ø¯Ø£ Ø¨Ø®Ø·ÙˆØ© Ø¨Ø³ÙŠØ·Ø©: Ø§Ø¨Ø­Ø« Ø¹Ù† Ù…Ø¬Ù‡Ø² Ø£Ùˆ Ù‚Ø¯Ù‘Ù… Ø·Ù„Ø¨ Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù….",
+      "en": "Start with one simple step: search for a supplier or submit a join request."
+    },
+    "sections": []
+  },
+  "supplier_directory": {
+    "key": "supplier_directory",
+    "slug": "/supplier-directory",
+    "title": {
+      "ar": "Ø¯Ù„ÙŠÙ„ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      "en": "Supplier Directory"
+    },
+    "subtitle": {
+      "ar": "Ø§Ø¨Ø­Ø«ØŒ ÙÙ„ØªØ±ØŒ ÙˆØ§Ø¨Ø¯Ø£ Ù…Ù† Ù‚Ø§Ø¦Ù…Ø© Ø£ÙƒØ«Ø± ÙˆØ¶ÙˆØ­Ø§Ù‹ Ù„Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø§Ù„Ù…Ù†Ø§Ø³Ø¨ÙŠÙ† Ù„Ø§Ø­ØªÙŠØ§Ø¬Ùƒ.",
+      "en": "Search, filter, and start from a clearer list of suppliers suitable for your needs."
+    },
+    "metaTitle": {
+      "ar": "Ø¯Ù„ÙŠÙ„ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† | Ø§Ø¨Ø­Ø« Ø¹Ù† Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø­Ø³Ø¨ Ø§Ù„ØªØµÙ†ÙŠÙ ÙˆØ§Ù„Ù…ÙˆÙ‚Ø¹",
+      "en": "Supplier Directory | Search Suppliers by Category and Location"
+    },
+    "metaDescription": {
+      "ar": "Ø¯Ù„ÙŠÙ„ Ù…Ù†Ø¸Ù… ÙŠØ³Ø§Ø¹Ø¯Ùƒ Ø¹Ù„Ù‰ Ø§Ù„Ø¨Ø­Ø« Ø¹Ù† Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† ÙÙŠ Ø§Ù„Ø¹Ø±Ø§Ù‚ Ø­Ø³Ø¨ Ø§Ù„ØªØ®ØµØµØŒ Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©ØŒ Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©ØŒ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª ÙˆØ§Ù„Ø®Ø¯Ù…Ø§Øª.",
+      "en": "An organized directory that helps you search suppliers in Iraq by specialization, governorate, city, products, and services."
+    },
+    "cta": {
+      "ar": "Ø§Ø³ØªØ®Ø¯Ù… Ø§Ù„ÙÙ„Ø§ØªØ± Ù„Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ø§Ù„Ù…Ø¬Ù‡Ø² Ø§Ù„Ø£Ù†Ø³Ø¨ Ù„Ø·Ù„Ø¨Ùƒ.",
+      "en": "Use filters to reach the supplier most relevant to your request."
+    },
+    "sections": [
+      {
+        "title": {
+          "ar": "Ù…Ø§Ø°Ø§ ÙŠÙ…ÙƒÙ†Ùƒ Ø£Ù† ØªØ¨Ø­Ø«ØŸ",
+          "en": "What Can You Search For?"
+        },
+        "body": {
+          "ar": "ÙŠÙ…ÙƒÙ† Ø§Ù„Ø¨Ø­Ø« Ø¹Ù† Ù…Ø¬Ù‡Ø² Ø­Ø³Ø¨ Ø§Ù„Ø§Ø³Ù…ØŒ Ø§Ù„ØªØµÙ†ÙŠÙØŒ Ø§Ù„ØªØ®ØµØµØŒ Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©ØŒ Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©ØŒ Ø§Ù„Ù…Ù†ØªØ¬ØŒ Ø§Ù„Ø®Ø¯Ù…Ø©ØŒ Ø§Ù„ÙƒÙ„Ù…Ø§Øª Ø§Ù„Ù…ÙØªØ§Ø­ÙŠØ©ØŒ ÙˆÙ…Ù†Ø§Ø·Ù‚ Ø§Ù„ØªØºØ·ÙŠØ©.",
+          "en": "You can search suppliers by name, category, specialization, governorate, city, product, service, keywords, and coverage areas."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ù…Ø¹Ù„ÙˆÙ…Ø§Øª ØªØ¸Ù‡Ø± ÙÙŠ Ø§Ù„Ù†ØªØ§Ø¦Ø¬",
+          "en": "Information Shown in Results"
+        },
+        "body": {
+          "ar": "ØªØ¸Ù‡Ø± Ø¨Ø·Ø§Ù‚Ø© Ø§Ù„Ù…Ø¬Ù‡Ø² Ù…Ø¹ Ø§Ù„Ø§Ø³Ù…ØŒ Ù†ÙˆØ¹ Ø§Ù„Ù†Ø´Ø§Ø·ØŒ Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©ØŒ Ø§Ù„ØªØ®ØµØµØ§ØªØŒ ÙˆØ³ÙˆÙ… Ø§Ù„Ù‚Ø¯Ø±Ø§ØªØŒ ÙˆÙ…Ø¤Ø´Ø±Ø§Øª ØªØ³Ø§Ø¹Ø¯ Ø¹Ù„Ù‰ ØªÙ‚ÙŠÙŠÙ… Ø§Ù„Ù…Ù„Ø§Ø¡Ù…Ø© Ù‚Ø¨Ù„ ÙØªØ­ Ø§Ù„Ù…Ù„Ù Ø§Ù„ÙƒØ§Ù…Ù„.",
+          "en": "The supplier card shows the name, business type, governorate, specializations, capability tags, and indicators that help assess fit before opening the full profile."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ù‡Ø¯Ù Ø§Ù„Ø¯Ù„ÙŠÙ„",
+          "en": "Purpose of the Directory"
+        },
+        "body": {
+          "ar": "Ø§Ù„Ù‡Ø¯Ù Ù…Ù† Ø§Ù„Ø¯Ù„ÙŠÙ„ Ù‡Ùˆ ØªÙ‚Ù„ÙŠÙ„ ÙˆÙ‚Øª Ø§Ù„Ø¨Ø­Ø« Ø§Ù„Ø£ÙˆÙ„ÙŠ ÙˆØªÙ‚Ø¯ÙŠÙ… Ù†Ù‚Ø·Ø© Ø¨Ø¯Ø§ÙŠØ© Ù…Ù†Ø¸Ù…Ø© Ù„Ù„Ù…Ù‚Ø§Ø±Ù†Ø©ØŒ ÙˆÙ„ÙŠØ³ Ø¶Ù…Ø§Ù† Ø§Ù„ØªØ¹Ø§Ù‚Ø¯ Ø£Ùˆ ØªÙ…Ø«ÙŠÙ„ ØªÙˆØµÙŠØ© Ù†Ù‡Ø§Ø¦ÙŠØ© Ø¨Ø§Ù„Ø´Ø±Ø§Ø¡.",
+          "en": "The directory aims to reduce initial search time and provide an organized starting point for comparison. It does not guarantee contracting or represent a final purchasing recommendation."
+        }
+      }
+    ]
+  },
+  "join_request": {
+    "key": "join_request",
+    "slug": "/join",
+    "title": {
+      "ar": "Ø·Ù„Ø¨ Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù…",
+      "en": "Request to Join"
+    },
+    "subtitle": {
+      "ar": "Ø§Ù…Ù„Ø£ Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ© ÙˆØ³Ù†Ø³Ø§Ø¹Ø¯Ùƒ Ø¹Ù„Ù‰ Ø§Ø®ØªÙŠØ§Ø± Ø§Ù„Ù…Ø³Ø§Ø± Ø§Ù„Ù…Ù†Ø§Ø³Ø¨ Ø¯Ø§Ø®Ù„ Ø§Ù„Ù…Ù†ØµØ©.",
+      "en": "Fill in the basic information and we will help you choose the right path inside the platform."
+    },
+    "metaTitle": {
+      "ar": "Ø·Ù„Ø¨ Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù… Ø¥Ù„Ù‰ Ù…Ø¬Ù‡Ø²",
+      "en": "Request to Join Mujahiz IQ"
+    },
+    "metaDescription": {
+      "ar": "Ù‚Ø¯Ù‘Ù… Ø·Ù„Ø¨ Ø§Ù†Ø¶Ù…Ø§Ù… Ø¥Ù„Ù‰ Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø² ÙƒÙ…Ø´ØªØ±ÙŠ Ø£Ùˆ Ù…Ø¬Ù‡Ø² ÙˆØ§Ø¨Ø¯Ø£ Ø¨Ù†Ø§Ø¡ Ø­Ø¶ÙˆØ± Ù…Ù‡Ù†ÙŠ Ø¯Ø§Ø®Ù„ Ø´Ø¨ÙƒØ© Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª ÙˆØ§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† ÙÙŠ Ø§Ù„Ø¹Ø±Ø§Ù‚.",
+      "en": "Submit a join request to Mujahiz IQ as a buyer or supplier and start building a professional presence in Iraqâ€™s procurement and supplier network."
+    },
+    "cta": {
+      "ar": "Ø£Ø±Ø³Ù„ Ø·Ù„Ø¨Ùƒ Ø§Ù„Ø¢Ù† ÙˆØ§Ø¨Ø¯Ø£ Ø±Ø­Ù„ØªÙƒ Ù…Ø¹ Ù…Ø¬Ù‡Ø².",
+      "en": "Submit your request now and start your journey with Mujahiz IQ."
+    },
+    "sections": [
+      {
+        "title": {
+          "ar": "Ù‚Ø¨Ù„ Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø·Ù„Ø¨",
+          "en": "Before Submitting"
+        },
+        "body": {
+          "ar": "ÙŠØ±Ø¬Ù‰ Ø¥Ø¯Ø®Ø§Ù„ Ù…Ø¹Ù„ÙˆÙ…Ø§Øª ØµØ­ÙŠØ­Ø© ÙˆÙˆØ§Ø¶Ø­Ø©ØŒ ÙˆØ§Ø®ØªÙŠØ§Ø± Ù†ÙˆØ¹ Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø¨Ø¯Ù‚Ø©ØŒ Ù„Ø£Ù† Ù‡Ø°Ù‡ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ØªØ³Ø§Ø¹Ø¯ Ø¹Ù„Ù‰ Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø·Ù„Ø¨ ÙˆØªØµÙ†ÙŠÙ Ø§Ù„Ø­Ø³Ø§Ø¨ Ø¨Ø§Ù„Ø´ÙƒÙ„ Ø§Ù„Ù…Ù†Ø§Ø³Ø¨.",
+          "en": "Please enter accurate and clear information and choose the correct usage type, as this helps review the request and classify the account properly."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ø¨Ø¹Ø¯ Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø·Ù„Ø¨",
+          "en": "After Submission"
+        },
+        "body": {
+          "ar": "Ø³ÙŠØªÙ… Ø§Ø³ØªÙ„Ø§Ù… Ø·Ù„Ø¨Ùƒ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©ØŒ ÙˆÙ‚Ø¯ ÙŠØªÙ… Ø§Ù„ØªÙˆØ§ØµÙ„ Ù…Ø¹Ùƒ Ù„Ø§Ø³ØªÙƒÙ…Ø§Ù„ Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø¥Ø¶Ø§ÙÙŠØ© Ø£Ùˆ ØªÙˆØ¶ÙŠØ­ Ø¨Ø¹Ø¶ Ø§Ù„ØªÙØ§ØµÙŠÙ„ Ù‚Ø¨Ù„ ØªÙØ¹ÙŠÙ„ Ø§Ù„Ø­Ø³Ø§Ø¨ Ø£Ùˆ Ø¥Ø¯Ø±Ø§Ø¬ Ù…Ù„Ù Ø§Ù„Ù…Ø¬Ù‡Ø².",
+          "en": "Your request will be received for review, and you may be contacted to complete additional information or clarify details before account activation or supplier profile listing."
+        }
+      }
+    ]
+  },
+  "contact": {
+    "key": "contact",
+    "slug": "/contact",
+    "title": {
+      "ar": "ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù†Ø§",
+      "en": "Contact Us"
+    },
+    "subtitle": {
+      "ar": "ÙŠØ³Ø¹Ø¯Ù†Ø§ Ø§Ø³ØªÙ‚Ø¨Ø§Ù„ Ø§Ø³ØªÙØ³Ø§Ø±Ø§ØªÙƒ ÙˆÙ…Ù„Ø§Ø­Ø¸Ø§ØªÙƒ Ù„ØªØ­Ø³ÙŠÙ† ØªØ¬Ø±Ø¨Ø© Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª ÙˆØ§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† ÙÙŠ Ø§Ù„Ø¹Ø±Ø§Ù‚.",
+      "en": "We welcome your questions and feedback to improve the procurement and supplier experience in Iraq."
+    },
+    "metaTitle": {
+      "ar": "ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù†Ø§ | Ù…Ø¬Ù‡Ø²",
+      "en": "Contact Us | Mujahiz IQ"
+    },
+    "metaDescription": {
+      "ar": "ØªÙˆØ§ØµÙ„ Ù…Ø¹ ÙØ±ÙŠÙ‚ Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø² Ù„Ù„Ø§Ø³ØªÙØ³Ø§Ø±Ø§ØªØŒ Ø§Ù„Ø¯Ø¹Ù…ØŒ Ø§Ù„Ø´Ø±Ø§ÙƒØ§ØªØŒ Ø£Ùˆ Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø§Ù„Ù…ØªØ¹Ù„Ù‚Ø© Ø¨Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† ÙˆØ§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª.",
+      "en": "Contact the Mujahiz IQ team for inquiries, support, partnerships, or feedback related to suppliers and procurement."
+    },
+    "cta": {
+      "ar": "Ø£Ø±Ø³Ù„ Ø±Ø³Ø§Ù„ØªÙƒ ÙˆØ³Ù†Ø±Ø¯ Ø¹Ù„ÙŠÙƒ ÙÙŠ Ø£Ù‚Ø±Ø¨ ÙˆÙ‚Øª Ù…Ù…ÙƒÙ†.",
+      "en": "Send your message and we will respond as soon as possible."
+    },
+    "sections": [
+      {
+        "title": {
+          "ar": "Ù„Ù„Ø§Ø³ØªÙØ³Ø§Ø±Ø§Øª Ø§Ù„Ø¹Ø§Ù…Ø©",
+          "en": "General Inquiries"
+        },
+        "body": {
+          "ar": "Ø§Ø³ØªØ®Ø¯Ù… Ù†Ù…ÙˆØ°Ø¬ Ø§Ù„ØªÙˆØ§ØµÙ„ Ù„Ø¥Ø±Ø³Ø§Ù„ Ø£ÙŠ Ø³Ø¤Ø§Ù„ Ø­ÙˆÙ„ Ø§Ù„Ù…Ù†ØµØ©ØŒ Ø§Ù„ØªØ³Ø¬ÙŠÙ„ØŒ Ø¢Ù„ÙŠØ© Ø§Ù„Ø¹Ù…Ù„ØŒ Ø£Ùˆ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø¯Ù„ÙŠÙ„ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†.",
+          "en": "Use the contact form to send any question about the platform, registration, workflow, or using the supplier directory."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ù„Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+          "en": "For Suppliers"
+        },
+        "body": {
+          "ar": "Ø¥Ø°Ø§ ÙƒÙ†Øª ØªØ±ØºØ¨ Ø¨Ø¥Ø¶Ø§ÙØ© Ø´Ø±ÙƒØªÙƒ Ø£Ùˆ ØªØ­Ø¯ÙŠØ« Ø¨ÙŠØ§Ù†Ø§Øª Ù…Ù„ÙÙƒØŒ ÙŠØ±Ø¬Ù‰ Ø°ÙƒØ± Ø§Ø³Ù… Ø§Ù„Ù†Ø´Ø§Ø·ØŒ Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©ØŒ Ø§Ù„ØªØ®ØµØµØŒ ÙˆØ±Ù‚Ù… Ø§Ù„ØªÙˆØ§ØµÙ„.",
+          "en": "If you want to add your business or update your profile, please mention the business name, governorate, specialization, and contact number."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ù„Ù„Ù…Ø´ØªØ±ÙŠÙ†",
+          "en": "For Buyers"
+        },
+        "body": {
+          "ar": "Ø¥Ø°Ø§ ÙƒÙ†Øª ØªØ¨Ø­Ø« Ø¹Ù† Ù…Ø¬Ù‡Ø² Ø¶Ù…Ù† ØªØ®ØµØµ Ù…Ø¹ÙŠÙ† Ø£Ùˆ ØªØ­ØªØ§Ø¬ Ù…Ø³Ø§Ø¹Ø¯Ø© ÙÙŠ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„ÙÙ„Ø§ØªØ±ØŒ Ø£Ø±Ø³Ù„ ØªÙØ§ØµÙŠÙ„ Ù…Ø®ØªØµØ±Ø© Ø¹Ù† Ø§Ø­ØªÙŠØ§Ø¬Ùƒ.",
+          "en": "If you are searching for a supplier in a specific field or need help using filters, send a brief description of your requirement."
+        }
+      }
+    ]
+  },
+  "faq": {
+    "key": "faq",
+    "slug": "/faq",
+    "title": {
+      "ar": "Ø§Ù„Ø£Ø³Ø¦Ù„Ø© Ø§Ù„Ø´Ø§Ø¦Ø¹Ø©",
+      "en": "Frequently Asked Questions"
+    },
+    "subtitle": {
+      "ar": "Ø¥Ø¬Ø§Ø¨Ø§Øª Ù…Ø®ØªØµØ±Ø© Ø¹Ù„Ù‰ Ø£ÙƒØ«Ø± Ø§Ù„Ø£Ø³Ø¦Ù„Ø© Ø§Ù„ØªÙŠ Ù‚Ø¯ ØªØ­ØªØ§Ø¬Ù‡Ø§ Ù‚Ø¨Ù„ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…Ù†ØµØ©.",
+      "en": "Short answers to the most common questions you may need before using the platform."
+    },
+    "metaTitle": {
+      "ar": "Ø§Ù„Ø£Ø³Ø¦Ù„Ø© Ø§Ù„Ø´Ø§Ø¦Ø¹Ø© | Ù…Ø¬Ù‡Ø²",
+      "en": "FAQs | Mujahiz IQ"
+    },
+    "metaDescription": {
+      "ar": "Ø¥Ø¬Ø§Ø¨Ø§Øª ÙˆØ§Ø¶Ø­Ø© Ø­ÙˆÙ„ Ø§Ù„ØªØ³Ø¬ÙŠÙ„ØŒ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†ØŒ Ø§Ù„Ø¨Ø­Ø«ØŒ Ø§Ù„ØªØ­Ù‚Ù‚ØŒ Ø§Ù„Ø®ØµÙˆØµÙŠØ©ØŒ ÙˆØ¢Ù„ÙŠØ© Ø§Ø³ØªØ®Ø¯Ø§Ù… Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø².",
+      "en": "Clear answers about registration, suppliers, search, verification, privacy, and how to use Mujahiz IQ."
+    },
+    "cta": {
+      "ar": "Ù„Ù… ØªØ¬Ø¯ Ø¥Ø¬Ø§Ø¨ØªÙƒØŸ ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù†Ø§ ÙˆØ³Ù†Ø³Ø§Ø¹Ø¯Ùƒ.",
+      "en": "Did not find your answer? Contact us and we will help."
+    },
+    "sections": []
+  },
+  "resources": {
+    "key": "resources",
+    "slug": "/resources",
+    "title": {
+      "ar": "Ø§Ù„Ù…ÙˆØ§Ø±Ø¯",
+      "en": "Resources"
+    },
+    "subtitle": {
+      "ar": "Ø£Ø¯Ù„Ø© Ù…Ø®ØªØµØ±Ø© ÙˆÙ†ØµØ§Ø¦Ø­ Ø¹Ù…Ù„ÙŠØ© Ù„Ø¯Ø¹Ù… Ø§Ù„Ù…Ø´ØªØ±ÙŠÙ† ÙˆØ§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† ÙÙŠ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…Ù†ØµØ© Ø¨ÙØ¹Ø§Ù„ÙŠØ©.",
+      "en": "Short guides and practical tips to support buyers and suppliers in using the platform effectively."
+    },
+    "metaTitle": {
+      "ar": "Ø§Ù„Ù…ÙˆØ§Ø±Ø¯ | Ø£Ø¯Ù„Ø© ÙˆÙ†ØµØ§Ø¦Ø­ Ù„Ù„Ù…Ø´ØªØ±ÙŠØ§Øª ÙˆØ§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+      "en": "Resources | Guides and Tips for Procurement and Suppliers"
+    },
+    "metaDescription": {
+      "ar": "Ù…ÙˆØ§Ø±Ø¯ Ø¹Ù…Ù„ÙŠØ© ØªØ³Ø§Ø¹Ø¯ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† Ø¹Ù„Ù‰ ÙÙ‡Ù… Ø£ÙØ¶Ù„ Ù„Ù„Ù…Ø´ØªØ±ÙŠØ§ØªØŒ Ø¥Ø¹Ø¯Ø§Ø¯ Ø·Ù„Ø¨Ø§Øª ÙˆØ§Ø¶Ø­Ø©ØŒ Ø§Ù„ØªØ¹Ø§Ù…Ù„ Ù…Ø¹ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†ØŒ ÙˆØªØ­Ø³ÙŠÙ† Ø¬ÙˆØ¯Ø© Ø§Ù„Ù‚Ø±Ø§Ø±.",
+      "en": "Practical resources that help users understand procurement, prepare clear requests, deal with suppliers, and improve decision quality."
+    },
+    "cta": {
+      "ar": "Ø§Ø³ØªØ®Ø¯Ù… Ø§Ù„Ù…ÙˆØ§Ø±Ø¯ Ù„ØªØ­Ø³ÙŠÙ† Ø·Ø±ÙŠÙ‚Ø© Ø§Ù„Ø¨Ø­Ø« ÙˆØ§Ù„ØªÙˆØ§ØµÙ„ Ø¯Ø§Ø®Ù„ Ø§Ù„Ù…Ù†ØµØ©.",
+      "en": "Use the resources to improve searching and communication inside the platform."
+    },
+    "sections": [
+      {
+        "title": {
+          "ar": "Ø¯Ù„ÙŠÙ„ Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù…",
+          "en": "User Guide"
+        },
+        "body": {
+          "ar": "Ø´Ø±Ø­ Ù…Ø¨Ø³Ø· Ù„ÙƒÙŠÙÙŠØ© Ø§Ù„ØªØ³Ø¬ÙŠÙ„ØŒ Ø§Ù„Ø¨Ø­Ø«ØŒ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„ÙÙ„Ø§ØªØ±ØŒ ÙØªØ­ Ù…Ù„ÙØ§Øª Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†ØŒ ÙˆØ¥Ø¯Ø§Ø±Ø© Ø§Ù„Ø­Ø³Ø§Ø¨ Ø¯Ø§Ø®Ù„ Ø§Ù„Ù…Ù†ØµØ©.",
+          "en": "A simple guide explaining how to register, search, use filters, open supplier profiles, and manage the account inside the platform."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ù†ØµØ§Ø¦Ø­ Ù„Ù„Ù…Ø´ØªØ±ÙŠÙ†",
+          "en": "Tips for Buyers"
+        },
+        "body": {
+          "ar": "Ø§ÙƒØªØ¨ Ø§Ø­ØªÙŠØ§Ø¬Ùƒ Ø¨ÙˆØ¶ÙˆØ­ØŒ Ø­Ø¯Ø¯ Ø§Ù„ÙƒÙ…ÙŠØ© ÙˆØ§Ù„Ù…ÙˆØ§ØµÙØ§ØªØŒ Ù‚Ø§Ø±Ù† Ø£ÙƒØ«Ø± Ù…Ù† Ø®ÙŠØ§Ø±ØŒ ÙˆÙ„Ø§ ØªØ¹ØªÙ…Ø¯ Ø¹Ù„Ù‰ Ø§Ù„Ø³Ø¹Ø± ÙÙ‚Ø· Ø¹Ù†Ø¯ ØªÙ‚ÙŠÙŠÙ… Ø§Ù„Ø¹Ø±ÙˆØ¶.",
+          "en": "Write your requirement clearly, define quantity and specifications, compare multiple options, and do not rely on price alone when evaluating offers."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ù†ØµØ§Ø¦Ø­ Ù„Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†",
+          "en": "Tips for Suppliers"
+        },
+        "body": {
+          "ar": "Ø­Ø¯Ù‘Ø« Ø¨ÙŠØ§Ù†Ø§ØªÙƒ Ø¨Ø§Ø³ØªÙ…Ø±Ø§Ø±ØŒ Ø§ÙƒØªØ¨ ÙˆØµÙØ§Ù‹ ÙˆØ§Ø¶Ø­Ø§Ù‹ Ù„Ù‚Ø¯Ø±Ø§ØªÙƒØŒ Ø£Ø¶Ù ØªØ®ØµØµØ§Øª Ø¯Ù‚ÙŠÙ‚Ø©ØŒ ÙˆØ§Ø¬Ø¹Ù„ ÙˆØ³Ø§Ø¦Ù„ Ø§Ù„ØªÙˆØ§ØµÙ„ ØµØ­ÙŠØ­Ø© ÙˆØ³Ù‡Ù„Ø© Ø§Ù„ÙˆØµÙˆÙ„.",
+          "en": "Keep your information updated, write a clear description of your capabilities, add accurate specializations, and make contact channels correct and easy to access."
+        }
+      }
+    ]
+  },
+  "terms": {
+    "key": "terms",
+    "slug": "/terms",
+    "title": {
+      "ar": "Ø´Ø±ÙˆØ· Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù…",
+      "en": "Terms of Use"
+    },
+    "subtitle": {
+      "ar": "ØªÙˆØ¶Ø­ Ù‡Ø°Ù‡ Ø§Ù„Ø´Ø±ÙˆØ· Ø§Ù„Ù‚ÙˆØ§Ø¹Ø¯ Ø§Ù„Ø¹Ø§Ù…Ø© Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…Ù†ØµØ© ÙˆÙ…Ø³Ø¤ÙˆÙ„ÙŠØ§Øª Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ†.",
+      "en": "These terms explain the general rules for using the platform and user responsibilities."
+    },
+    "metaTitle": {
+      "ar": "Ø´Ø±ÙˆØ· Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù… | Ù…Ø¬Ù‡Ø²",
+      "en": "Terms of Use | Mujahiz IQ"
+    },
+    "metaDescription": {
+      "ar": "Ø´Ø±ÙˆØ· Ø¹Ø§Ù…Ø© Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù… Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø²ØŒ ØªØ´Ù…Ù„ Ù…Ø³Ø¤ÙˆÙ„ÙŠØ§Øª Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† ÙˆØ­Ø¯ÙˆØ¯ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ÙˆØ§Ù„Ù…Ø­ØªÙˆÙ‰.",
+      "en": "General terms for using Mujahiz IQ, including user responsibilities and limits on data and content use."
+    },
+    "cta": {
+      "ar": "ÙŠØ±Ø¬Ù‰ Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø´Ø±ÙˆØ· Ù‚Ø¨Ù„ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…Ù†ØµØ© Ø£Ùˆ ØªÙ‚Ø¯ÙŠÙ… Ø¨ÙŠØ§Ù†Ø§ØªÙƒ.",
+      "en": "Please review the terms before using the platform or submitting your data."
+    },
+    "sections": [
+      {
+        "title": {
+          "ar": "Ù‚Ø¨ÙˆÙ„ Ø§Ù„Ø´Ø±ÙˆØ·",
+          "en": "Acceptance of Terms"
+        },
+        "body": {
+          "ar": "Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù…Ùƒ Ù„Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø²ØŒ ÙØ¥Ù†Ùƒ ØªÙˆØ§ÙÙ‚ Ø¹Ù„Ù‰ Ø§Ù„Ø§Ù„ØªØ²Ø§Ù… Ø¨Ø´Ø±ÙˆØ· Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù… ÙˆØ§Ù„Ø³ÙŠØ§Ø³Ø§Øª Ø§Ù„Ù…Ø±ØªØ¨Ø·Ø© Ø¨Ù‡Ø§. Ø¥Ø°Ø§ ÙƒÙ†Øª Ù„Ø§ ØªÙˆØ§ÙÙ‚ Ø¹Ù„Ù‰ Ù‡Ø°Ù‡ Ø§Ù„Ø´Ø±ÙˆØ·ØŒ ÙŠØ±Ø¬Ù‰ Ø¹Ø¯Ù… Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…Ù†ØµØ©.",
+          "en": "By using Mujahiz IQ, you agree to comply with these Terms of Use and related policies. If you do not agree, please do not use the platform."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ù…Ø³Ø¤ÙˆÙ„ÙŠØ© Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…",
+          "en": "User Responsibility"
+        },
+        "body": {
+          "ar": "ÙŠØªØ­Ù…Ù„ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…Ø³Ø¤ÙˆÙ„ÙŠØ© ØµØ­Ø© Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„ØªÙŠ ÙŠÙ‚Ø¯Ù…Ù‡Ø§ØŒ ÙˆØ¹Ø¯Ù… Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…Ù†ØµØ© Ù„Ø£ÙŠ ØºØ±Ø¶ Ù…Ø®Ø§Ù„Ù Ù„Ù„Ù‚Ø§Ù†ÙˆÙ† Ø£Ùˆ ÙŠØ³ÙŠØ¡ Ø¥Ù„Ù‰ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† Ø§Ù„Ø¢Ø®Ø±ÙŠÙ† Ø£Ùˆ ÙŠØ¶Ø± Ø¨Ø³Ù…Ø¹Ø© Ø§Ù„Ø³ÙˆÙ‚.",
+          "en": "The user is responsible for the accuracy of the information provided and must not use the platform for any unlawful purpose or any activity that harms other users or market trust."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ø·Ø¨ÙŠØ¹Ø© Ø§Ù„Ù…Ù†ØµØ©",
+          "en": "Nature of the Platform"
+        },
+        "body": {
+          "ar": "Ù…Ø¬Ù‡Ø² ØªÙˆÙØ± Ù…Ø³Ø§Ø­Ø© Ù„Ù„Ø¨Ø­Ø« ÙˆØ§Ù„ØªÙ†Ø¸ÙŠÙ… ÙˆØ§Ù„ØªÙˆØ§ØµÙ„ Ø§Ù„Ù…Ù‡Ù†ÙŠ. Ù„Ø§ ØªÙ…Ø«Ù„ Ø§Ù„Ù…Ù†ØµØ© Ø¶Ù…Ø§Ù†Ø§Ù‹ Ù„Ø¬ÙˆØ¯Ø© ÙƒÙ„ Ù…Ø¬Ù‡Ø² Ø£Ùˆ Ø§Ù„ØªØ²Ø§Ù…Ø§Ù‹ Ø¨Ø§Ù„ØªØ¹Ø§Ù‚Ø¯ØŒ ÙˆÙŠØ¬Ø¨ Ø¹Ù„Ù‰ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† Ø¥Ø¬Ø±Ø§Ø¡ Ø§Ù„ØªØ­Ù‚Ù‚ ÙˆØ§Ù„Ø¹Ù†Ø§ÙŠØ© Ø§Ù„ÙˆØ§Ø¬Ø¨Ø© Ù‚Ø¨Ù„ Ø£ÙŠ Ù‚Ø±Ø§Ø± Ø´Ø±Ø§Ø¡.",
+          "en": "Mujahiz IQ provides a workspace for discovery, organization, and professional communication. The platform does not guarantee every supplierâ€™s quality or guarantee contracting. Users must perform their own verification and due diligence before purchasing decisions."
+        }
+      },
+      {
+        "title": {
+          "ar": "ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø´Ø±ÙˆØ·",
+          "en": "Updates to Terms"
+        },
+        "body": {
+          "ar": "Ù‚Ø¯ ÙŠØªÙ… ØªØ­Ø¯ÙŠØ« Ù‡Ø°Ù‡ Ø§Ù„Ø´Ø±ÙˆØ· Ù…Ù† ÙˆÙ‚Øª Ù„Ø¢Ø®Ø± Ø¨Ù…Ø§ ÙŠØªÙ†Ø§Ø³Ø¨ Ù…Ø¹ ØªØ·ÙˆÙŠØ± Ø§Ù„Ù…Ù†ØµØ©ØŒ ÙˆØ³ÙŠØªÙ… Ù†Ø´Ø± Ø§Ù„Ù†Ø³Ø®Ø© Ø§Ù„Ø£Ø­Ø¯Ø« Ø¯Ø§Ø®Ù„ Ù‡Ø°Ù‡ Ø§Ù„ØµÙØ­Ø©.",
+          "en": "These terms may be updated from time to time as the platform evolves. The latest version will be published on this page."
+        }
+      }
+    ]
+  },
+  "privacy": {
+    "key": "privacy",
+    "slug": "/privacy",
+    "title": {
+      "ar": "Ø³ÙŠØ§Ø³Ø© Ø§Ù„Ø®ØµÙˆØµÙŠØ©",
+      "en": "Privacy Policy"
+    },
+    "subtitle": {
+      "ar": "Ù†Ø­ØªØ±Ù… Ø®ØµÙˆØµÙŠØ© Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† ÙˆÙ†Ø¹Ù…Ù„ Ø¹Ù„Ù‰ Ø§Ù„ØªØ¹Ø§Ù…Ù„ Ù…Ø¹ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø¨Ù…Ø³Ø¤ÙˆÙ„ÙŠØ© ÙˆÙˆØ¶ÙˆØ­.",
+      "en": "We respect user privacy and aim to handle data responsibly and transparently."
+    },
+    "metaTitle": {
+      "ar": "Ø³ÙŠØ§Ø³Ø© Ø§Ù„Ø®ØµÙˆØµÙŠØ© | Ù…Ø¬Ù‡Ø²",
+      "en": "Privacy Policy | Mujahiz IQ"
+    },
+    "metaDescription": {
+      "ar": "ØªÙˆØ¶Ø­ Ø³ÙŠØ§Ø³Ø© Ø§Ù„Ø®ØµÙˆØµÙŠØ© ÙƒÙŠÙÙŠØ© Ø¬Ù…Ø¹ ÙˆØ§Ø³ØªØ®Ø¯Ø§Ù… ÙˆØ­Ù…Ø§ÙŠØ© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø¯Ø§Ø®Ù„ Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø².",
+      "en": "This privacy policy explains how data is collected, used, and protected inside Mujahiz IQ."
+    },
+    "cta": {
+      "ar": "Ù„Ø£ÙŠ Ø³Ø¤Ø§Ù„ Ø­ÙˆÙ„ Ø§Ù„Ø®ØµÙˆØµÙŠØ©ØŒ ÙŠØ±Ø¬Ù‰ Ø§Ù„ØªÙˆØ§ØµÙ„ Ù…Ø¹ ÙØ±ÙŠÙ‚ Ø§Ù„Ù…Ù†ØµØ©.",
+      "en": "For any privacy-related question, please contact the platform team."
+    },
+    "sections": [
+      {
+        "title": {
+          "ar": "Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªÙŠ Ù†Ø¬Ù…Ø¹Ù‡Ø§",
+          "en": "Data We Collect"
+        },
+        "body": {
+          "ar": "Ù‚Ø¯ Ù†Ø¬Ù…Ø¹ Ø¨ÙŠØ§Ù†Ø§Øª Ù…Ø«Ù„ Ø§Ù„Ø§Ø³Ù…ØŒ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØŒ Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙØŒ Ø§Ø³Ù… Ø§Ù„Ø´Ø±ÙƒØ© Ø£Ùˆ Ø§Ù„Ù…Ø¤Ø³Ø³Ø©ØŒ Ø§Ù„Ù…ÙˆÙ‚Ø¹ØŒ Ø§Ù„ØªØ®ØµØµØ§ØªØŒ ÙˆØ¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù„Ø§Ø²Ù…Ø© Ù„ØªØ´ØºÙŠÙ„ ÙˆØªØ­Ø³ÙŠÙ† Ø§Ù„Ù…Ù†ØµØ©.",
+          "en": "We may collect data such as name, email address, phone number, company or organization name, location, specializations, and usage data necessary to operate and improve the platform."
+        }
+      },
+      {
+        "title": {
+          "ar": "ÙƒÙŠÙ Ù†Ø³ØªØ®Ø¯Ù… Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª",
+          "en": "How We Use Data"
+        },
+        "body": {
+          "ar": "Ù†Ø³ØªØ®Ø¯Ù… Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ù„Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ø­Ø³Ø§Ø¨Ø§ØªØŒ Ø¥Ø¯Ø§Ø±Ø© Ù…Ù„ÙØ§Øª Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†ØŒ ØªØ­Ø³ÙŠÙ† Ø§Ù„Ø¨Ø­Ø«ØŒ Ø§Ù„ØªÙˆØ§ØµÙ„ Ù…Ø¹ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ†ØŒ Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø·Ù„Ø¨Ø§ØªØŒ ÙˆØªØ·ÙˆÙŠØ± Ø®Ø¯Ù…Ø§Øª Ø§Ù„Ù…Ù†ØµØ©.",
+          "en": "We use data to create accounts, manage supplier profiles, improve search, communicate with users, review requests, and develop platform services."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ù…Ø´Ø§Ø±ÙƒØ© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª",
+          "en": "Data Sharing"
+        },
+        "body": {
+          "ar": "Ù„Ø§ Ù†Ø¨ÙŠØ¹ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ†. Ù‚Ø¯ ØªØ¸Ù‡Ø± Ø¨Ø¹Ø¶ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù„Ù„Ø²ÙˆØ§Ø± Ø£Ùˆ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† Ø¨Ø­Ø³Ø¨ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§Ù„Ù…Ù„Ù ÙˆØ§Ù„ØºØ±Ø¶ Ù…Ù† Ø§Ù„Ø¯Ù„ÙŠÙ„ØŒ Ø¨ÙŠÙ†Ù…Ø§ ØªØ¨Ù‚Ù‰ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø­Ø³Ø§Ø³Ø© Ù…Ø­Ù…ÙŠØ© ÙˆÙ„Ø§ ÙŠØªÙ… Ù…Ø´Ø§Ø±ÙƒØªÙ‡Ø§ Ø¥Ù„Ø§ ÙˆÙÙ‚ Ø§Ù„Ø­Ø§Ø¬Ø© Ø£Ùˆ Ø§Ù„Ù…ØªØ·Ù„Ø¨Ø§Øª Ø§Ù„Ù‚Ø§Ù†ÙˆÙ†ÙŠØ©.",
+          "en": "We do not sell user data. Some supplier profile information may appear to visitors or users depending on profile settings and directory purpose, while sensitive data remains protected and is not shared except as needed or required by law."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ø­Ù‚ÙˆÙ‚ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…",
+          "en": "User Rights"
+        },
+        "body": {
+          "ar": "ÙŠÙ…ÙƒÙ† Ù„Ù„Ù…Ø³ØªØ®Ø¯Ù… Ø·Ù„Ø¨ ØªØ­Ø¯ÙŠØ« Ø¨ÙŠØ§Ù†Ø§ØªÙ‡ Ø£Ùˆ ØªØµØ­ÙŠØ­Ù‡Ø§ Ø£Ùˆ Ø­Ø°ÙÙ‡Ø§ ÙˆÙÙ‚ Ø¢Ù„ÙŠØ© Ø§Ù„Ù…Ù†ØµØ© ÙˆØ§Ù„Ø³ÙŠØ§Ø³Ø§Øª Ø§Ù„Ù…Ø¹ØªÙ…Ø¯Ø©.",
+          "en": "Users may request to update, correct, or delete their information according to the platform workflow and applicable policies."
+        }
+      }
+    ]
+  },
+  "security": {
+    "key": "security",
+    "slug": "/security",
+    "title": {
+      "ar": "Ø³ÙŠØ§Ø³Ø© Ø§Ù„Ø£Ù…Ø§Ù†",
+      "en": "Security Policy"
+    },
+    "subtitle": {
+      "ar": "Ø§Ù„Ø£Ù…Ø§Ù† Ù…Ø³Ø¤ÙˆÙ„ÙŠØ© Ù…Ø´ØªØ±ÙƒØ© Ø¨ÙŠÙ† Ø§Ù„Ù…Ù†ØµØ© ÙˆØ§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ† Ù„Ø¶Ù…Ø§Ù† Ø¨ÙŠØ¦Ø© Ø¹Ù…Ù„ Ù…ÙˆØ«ÙˆÙ‚Ø©.",
+      "en": "Security is a shared responsibility between the platform and users to maintain a trusted workspace."
+    },
+    "metaTitle": {
+      "ar": "Ø³ÙŠØ§Ø³Ø© Ø§Ù„Ø£Ù…Ø§Ù† | Ù…Ø¬Ù‡Ø²",
+      "en": "Security Policy | Mujahiz IQ"
+    },
+    "metaDescription": {
+      "ar": "Ø¥Ø±Ø´Ø§Ø¯Ø§Øª Ø§Ù„Ø£Ù…Ø§Ù† ÙÙŠ Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø² Ù„Ø­Ù…Ø§ÙŠØ© Ø§Ù„Ø­Ø³Ø§Ø¨Ø§Øª ÙˆØ§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ÙˆØªÙ‚Ù„ÙŠÙ„ Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù… ØºÙŠØ± Ø§Ù„Ù…ØµØ±Ø­ Ø¨Ù‡.",
+      "en": "Security guidance for Mujahiz IQ to protect accounts, data, and reduce unauthorized use."
+    },
+    "cta": {
+      "ar": "Ø³Ø§Ø¹Ø¯Ù†Ø§ ÙÙŠ Ø§Ù„Ø­ÙØ§Ø¸ Ø¹Ù„Ù‰ Ù…Ù†ØµØ© Ø¢Ù…Ù†Ø© ÙˆÙ…ÙˆØ«ÙˆÙ‚Ø© Ù„Ù„Ø¬Ù…ÙŠØ¹.",
+      "en": "Help us maintain a secure and trusted platform for everyone."
+    },
+    "sections": [
+      {
+        "title": {
+          "ar": "Ø­Ù…Ø§ÙŠØ© Ø§Ù„Ø­Ø³Ø§Ø¨",
+          "en": "Account Protection"
+        },
+        "body": {
+          "ar": "ÙŠØ¬Ø¨ Ø§Ø³ØªØ®Ø¯Ø§Ù… ÙƒÙ„Ù…Ø© Ù…Ø±ÙˆØ± Ù‚ÙˆÙŠØ© ÙˆØ¹Ø¯Ù… Ù…Ø´Ø§Ø±ÙƒØªÙ‡Ø§ Ù…Ø¹ Ø§Ù„Ø¢Ø®Ø±ÙŠÙ†. ÙŠØªØ­Ù…Ù„ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…Ø³Ø¤ÙˆÙ„ÙŠØ© Ø£ÙŠ Ø§Ø³ØªØ®Ø¯Ø§Ù… ÙŠØªÙ… Ù…Ù† Ø®Ù„Ø§Ù„ Ø­Ø³Ø§Ø¨Ù‡ Ø¥Ø°Ø§ Ù†ØªØ¬ Ø¹Ù† Ù…Ø´Ø§Ø±ÙƒØ© Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø¯Ø®ÙˆÙ„ Ø£Ùˆ Ø¥Ù‡Ù…Ø§Ù„Ù‡Ø§.",
+          "en": "Users should use a strong password and must not share it with others. The user is responsible for account activity resulting from shared or neglected login credentials."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ø§Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª",
+          "en": "Data Access"
+        },
+        "body": {
+          "ar": "ÙŠØªÙ… ØªÙ†Ø¸ÙŠÙ… ØµÙ„Ø§Ø­ÙŠØ§Øª Ø§Ù„ÙˆØµÙˆÙ„ Ø¨Ø­Ø³Ø¨ Ù†ÙˆØ¹ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ÙˆØ§Ù„Ø¯ÙˆØ± Ø¯Ø§Ø®Ù„ Ø§Ù„Ù…Ù†ØµØ©ØŒ Ù…Ø¹ Ø§Ù„Ø­ÙØ§Ø¸ Ø¹Ù„Ù‰ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø­Ø³Ø§Ø³Ø© ÙˆÙÙ‚ Ø¶ÙˆØ§Ø¨Ø· Ø§Ù„Ø£Ù…Ø§Ù† Ø§Ù„Ù…Ù†Ø§Ø³Ø¨Ø©.",
+          "en": "Data access is managed based on user type and role inside the platform, while sensitive data is protected through appropriate security controls."
+        }
+      },
+      {
+        "title": {
+          "ar": "Ø§Ù„Ø¥Ø¨Ù„Ø§Øº Ø¹Ù† Ù…Ø´ÙƒÙ„Ø© Ø£Ù…Ù†ÙŠØ©",
+          "en": "Reporting a Security Issue"
+        },
+        "body": {
+          "ar": "Ø¥Ø°Ø§ Ù„Ø§Ø­Ø¸Øª Ù†Ø´Ø§Ø·Ø§Ù‹ Ù…Ø´Ø¨ÙˆÙ‡Ø§Ù‹ Ø£Ùˆ Ù…Ø´ÙƒÙ„Ø© Ø£Ù…Ù†ÙŠØ©ØŒ ÙŠØ±Ø¬Ù‰ Ø§Ù„ØªÙˆØ§ØµÙ„ ÙÙˆØ±Ø§Ù‹ Ù…Ø¹ ÙØ±ÙŠÙ‚ Ø§Ù„Ù…Ù†ØµØ© ÙˆØªØ²ÙˆÙŠØ¯Ù†Ø§ Ø¨Ø§Ù„ØªÙØ§ØµÙŠÙ„ Ø§Ù„Ù„Ø§Ø²Ù…Ø© Ù„Ù„ØªØ­Ù‚Ù‚ ÙˆØ§Ù„Ù…Ø¹Ø§Ù„Ø¬Ø©.",
+          "en": "If you notice suspicious activity or a security issue, please contact the platform team immediately and provide the necessary details for investigation and resolution."
+        }
+      }
+    ]
+  }
+} as const satisfies Record<string, PublicContentPage>;
+
+export type PublicPageKey = keyof typeof publicPages;
+
+export const publicFaqItems = [
+  {
+    "question": {
+      "ar": "Ù…Ø§ Ù‡ÙŠ Ù…Ù†ØµØ© Ù…Ø¬Ù‡Ø²ØŸ",
+      "en": "What is Mujahiz IQ?"
+    },
+    "answer": {
+      "ar": "Ù…Ø¬Ù‡Ø² Ù‡ÙŠ Ù…Ù†ØµØ© Ø±Ù‚Ù…ÙŠØ© Ù…Ù‡Ù†ÙŠØ© ØªØ±Ø¨Ø· Ø§Ù„Ø¹Ø§Ù…Ù„ÙŠÙ† ÙÙŠ Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§Øª ÙˆØ³Ù„Ø³Ù„Ø© Ø§Ù„ØªÙˆØ±ÙŠØ¯ Ø¨Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† ÙˆØ§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„Ø³ÙˆÙ‚ÙŠØ© Ø¨ØµÙˆØ±Ø© Ù…Ù†Ø¸Ù…Ø© ÙˆÙ‚Ø§Ø¨Ù„Ø© Ù„Ù„Ø¨Ø­Ø«.",
+      "en": "Mujahiz IQ is a professional digital platform that connects procurement and supply chain professionals with suppliers and market information in an organized, searchable way."
+    }
+  },
+  {
+    "question": {
+      "ar": "Ù‡Ù„ Ù…Ø¬Ù‡Ø² Ù…ØªØ¬Ø± Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØŸ",
+      "en": "Is Mujahiz IQ an online store?"
+    },
+    "answer": {
+      "ar": "Ù„Ø§. Ù…Ø¬Ù‡Ø² Ù„ÙŠØ³Øª Ù…ØªØ¬Ø±Ø§Ù‹ Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØ§Ù‹ Ù„Ø¨ÙŠØ¹ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª Ù…Ø¨Ø§Ø´Ø±Ø©ØŒ Ø¨Ù„ Ù…Ù†ØµØ© Ù„Ø§ÙƒØªØ´Ø§Ù Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† ÙˆØªÙ†Ø¸ÙŠÙ… Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª ÙˆØªØ³Ù‡ÙŠÙ„ Ø§Ù„ØªÙˆØ§ØµÙ„ Ø§Ù„Ù…Ù‡Ù†ÙŠ.",
+      "en": "No. Mujahiz IQ is not an online store for direct product sales. It is a platform for supplier discovery, information organization, and professional communication."
+    }
+  },
+  {
+    "question": {
+      "ar": "Ù…Ù† ÙŠÙ…ÙƒÙ†Ù‡ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…Ù†ØµØ©ØŸ",
+      "en": "Who can use the platform?"
+    },
+    "answer": {
+      "ar": "ÙŠÙ…ÙƒÙ† Ø£Ù† ÙŠØ³ØªØ®Ø¯Ù…Ù‡Ø§ Ù…ÙˆØ¸ÙÙˆ Ø§Ù„Ù…Ø´ØªØ±ÙŠØ§ØªØŒ Ù…Ø³Ø¤ÙˆÙ„Ùˆ Ø³Ù„Ø³Ù„Ø© Ø§Ù„ØªÙˆØ±ÙŠØ¯ØŒ Ø§Ù„Ø´Ø±ÙƒØ§ØªØŒ Ø§Ù„Ù…Ù†Ø¸Ù…Ø§ØªØŒ Ø£ØµØ­Ø§Ø¨ Ø§Ù„Ø£Ø¹Ù…Ø§Ù„ØŒ ÙˆØ§Ù„Ù…Ø¬Ù‡Ø²ÙˆÙ† Ø§Ù„Ø°ÙŠÙ† ÙŠÙ‚Ø¯Ù…ÙˆÙ† Ù…Ù†ØªØ¬Ø§Øª Ø£Ùˆ Ø®Ø¯Ù…Ø§Øª ÙÙŠ Ø§Ù„Ø³ÙˆÙ‚ Ø§Ù„Ø¹Ø±Ø§Ù‚ÙŠ.",
+      "en": "Procurement officers, supply chain teams, companies, organizations, business owners, and suppliers providing products or services in the Iraqi market can use the platform."
+    }
+  },
+  {
+    "question": {
+      "ar": "ÙƒÙŠÙ Ø£Ø¨Ø­Ø« Ø¹Ù† Ù…Ø¬Ù‡Ø²ØŸ",
+      "en": "How do I search for a supplier?"
+    },
+    "answer": {
+      "ar": "ÙŠÙ…ÙƒÙ†Ùƒ Ø§Ù„Ø¨Ø­Ø« Ø¨Ø§Ù„Ø§Ø³Ù… Ø£Ùˆ Ø§Ù„ØªØµÙ†ÙŠÙ Ø£Ùˆ Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø© Ø£Ùˆ Ø§Ù„Ù…Ø¯ÙŠÙ†Ø© Ø£Ùˆ Ø§Ù„Ù…Ù†ØªØ¬ Ø£Ùˆ Ø§Ù„Ø®Ø¯Ù…Ø© Ø£Ùˆ Ø§Ù„ÙƒÙ„Ù…Ø§Øª Ø§Ù„Ù…ÙØªØ§Ø­ÙŠØ©ØŒ Ø«Ù… Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„ÙÙ„Ø§ØªØ± Ù„Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ù†ØªØ§Ø¦Ø¬ Ø£ÙƒØ«Ø± Ø¯Ù‚Ø©.",
+      "en": "You can search by name, category, governorate, city, product, service, or keyword, then use filters to reach more accurate results."
+    }
+  },
+  {
+    "question": {
+      "ar": "Ù‡Ù„ Ø¬Ù…ÙŠØ¹ Ø§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ† Ù…Ø¹ØªÙ…Ø¯ÙˆÙ†ØŸ",
+      "en": "Are all suppliers verified?"
+    },
+    "answer": {
+      "ar": "ØªØ¹Ù…Ù„ Ø§Ù„Ù…Ù†ØµØ© Ø¹Ù„Ù‰ ØªÙ†Ø¸ÙŠÙ… ÙˆØªØµÙÙŠØ© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ÙˆÙÙ‚ Ù…Ø¹Ø§ÙŠÙŠØ± ÙˆØ§Ø¶Ø­Ø©. ÙˆÙ…Ø¹ Ø°Ù„ÙƒØŒ ÙŠØ¬Ø¨ Ø¹Ù„Ù‰ Ø§Ù„Ù…Ø´ØªØ±ÙŠ Ø¥Ø¬Ø±Ø§Ø¡ Ø§Ù„Ø¹Ù†Ø§ÙŠØ© Ø§Ù„ÙˆØ§Ø¬Ø¨Ø© ÙˆØ§Ù„ØªØ­Ù‚Ù‚ Ø§Ù„Ù†Ù‡Ø§Ø¦ÙŠ Ù‚Ø¨Ù„ Ø£ÙŠ ØªØ¹Ø§Ù…Ù„ ØªØ¬Ø§Ø±ÙŠ.",
+      "en": "The platform organizes and filters data according to clear criteria. However, buyers should conduct due diligence and final verification before any commercial transaction."
+    }
+  },
+  {
+    "question": {
+      "ar": "ÙƒÙŠÙ ÙŠÙ…ÙƒÙ†Ù†ÙŠ Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù… ÙƒÙ…Ø¬Ù‡Ø²ØŸ",
+      "en": "How can I join as a supplier?"
+    },
+    "answer": {
+      "ar": "Ø§Ø¶ØºØ· Ø¹Ù„Ù‰ Ø·Ù„Ø¨ Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù…ØŒ Ø£Ø¯Ø®Ù„ Ù…Ø¹Ù„ÙˆÙ…Ø§ØªÙƒ Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ© ÙˆØªÙØ§ØµÙŠÙ„ Ø§Ù„Ù†Ø´Ø§Ø·ØŒ Ø«Ù… Ø£Ø±Ø³Ù„ Ø§Ù„Ø·Ù„Ø¨ Ù„Ù„Ù…Ø±Ø§Ø¬Ø¹Ø© Ø£Ùˆ Ø§Ù„Ø§Ø³ØªÙƒÙ…Ø§Ù„ Ø­Ø³Ø¨ Ø¢Ù„ÙŠØ© Ø§Ù„Ù…Ù†ØµØ©.",
+      "en": "Click Request to Join, enter your basic information and business details, then submit the request for review or completion according to the platform workflow."
+    }
+  },
+  {
+    "question": {
+      "ar": "Ù‡Ù„ ÙŠÙ…ÙƒÙ† ØªØ­Ø¯ÙŠØ« Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¬Ù‡Ø²ØŸ",
+      "en": "Can supplier information be updated?"
+    },
+    "answer": {
+      "ar": "Ù†Ø¹Ù…ØŒ ÙŠÙ…ÙƒÙ† Ù„Ù„Ù…Ø¬Ù‡Ø² ØªØ­Ø¯ÙŠØ« Ø¨ÙŠØ§Ù†Ø§ØªÙ‡ Ø¹Ù†Ø¯ Ø§Ù„Ø­Ø§Ø¬Ø© Ù…Ù† Ø®Ù„Ø§Ù„ Ø§Ù„Ø­Ø³Ø§Ø¨ Ø£Ùˆ Ø¹Ø¨Ø± Ø§Ù„ØªÙˆØ§ØµÙ„ Ù…Ø¹ ÙØ±ÙŠÙ‚ Ø§Ù„Ù…Ù†ØµØ© Ø¨Ø­Ø³Ø¨ Ø§Ù„ØµÙ„Ø§Ø­ÙŠØ§Øª Ø§Ù„Ù…ØªØ§Ø­Ø©.",
+      "en": "Yes. Suppliers can update their information when needed through their account or by contacting the platform team, depending on available permissions."
+    }
+  },
+  {
+    "question": {
+      "ar": "Ù‡Ù„ Ø§Ù„Ù…Ù†ØµØ© ØªØ¶Ù…Ù† Ø§Ù„Ø£Ø³Ø¹Ø§Ø± Ø£Ùˆ Ø§Ù„ØªØ¹Ø§Ù‚Ø¯ØŸ",
+      "en": "Does the platform guarantee prices or contracts?"
+    },
+    "answer": {
+      "ar": "Ù„Ø§ ØªØ¶Ù…Ù† Ø§Ù„Ù…Ù†ØµØ© Ø§Ù„Ø£Ø³Ø¹Ø§Ø± Ø£Ùˆ Ø§Ù„ØªØ¹Ø§Ù‚Ø¯Ø§Øª. Ø¯ÙˆØ±Ù‡Ø§ Ù‡Ùˆ ØªØ³Ù‡ÙŠÙ„ Ø§Ù„ÙˆØµÙˆÙ„ Ø¥Ù„Ù‰ Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª ÙˆØ§Ù„Ù…Ø¬Ù‡Ø²ÙŠÙ†ØŒ Ø¨ÙŠÙ†Ù…Ø§ ØªØ¨Ù‚Ù‰ Ù‚Ø±Ø§Ø±Ø§Øª Ø§Ù„Ø´Ø±Ø§Ø¡ ÙˆØ§Ù„ØªØ¹Ø§Ù‚Ø¯ Ù…Ø³Ø¤ÙˆÙ„ÙŠØ© Ø§Ù„Ø£Ø·Ø±Ø§Ù Ø§Ù„Ù…Ø¹Ù†ÙŠØ©.",
+      "en": "No. The platform does not guarantee prices or contracts. Its role is to facilitate access to information and suppliers, while purchasing and contracting decisions remain the responsibility of the parties involved."
+    }
+  },
+  {
+    "question": {
+      "ar": "Ù‡Ù„ Ø¨ÙŠØ§Ù†Ø§ØªÙŠ Ø¢Ù…Ù†Ø©ØŸ",
+      "en": "Is my data secure?"
+    },
+    "answer": {
+      "ar": "ØªØªØ¹Ø§Ù…Ù„ Ø§Ù„Ù…Ù†ØµØ© Ù…Ø¹ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø¨Ù…Ø³Ø¤ÙˆÙ„ÙŠØ©ØŒ ÙˆØªØ¹Ù…Ù„ Ø¹Ù„Ù‰ Ø­Ù…Ø§ÙŠØ© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø­Ø³Ø§Ø³Ø© ÙˆÙÙ‚ Ø³ÙŠØ§Ø³Ø§Øª Ø§Ù„Ø®ØµÙˆØµÙŠØ© ÙˆØ§Ù„Ø£Ù…Ø§Ù† Ø§Ù„Ù…Ø¹ØªÙ…Ø¯Ø©.",
+      "en": "The platform handles data responsibly and aims to protect sensitive information according to its privacy and security policies."
+    }
+  },
+  {
+    "question": {
+      "ar": "ÙƒÙŠÙ Ø£ØªÙˆØ§ØµÙ„ Ù…Ø¹ ÙØ±ÙŠÙ‚ Ø§Ù„Ù…Ù†ØµØ©ØŸ",
+      "en": "How can I contact the platform team?"
+    },
+    "answer": {
+      "ar": "ÙŠÙ…ÙƒÙ†Ùƒ Ø§Ø³ØªØ®Ø¯Ø§Ù… ØµÙØ­Ø© ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù†Ø§ Ø£Ùˆ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø§Ù„Ù…Ø¹ØªÙ…Ø¯ Ø¯Ø§Ø®Ù„ Ø§Ù„ÙÙˆØªØ± Ù„Ø¥Ø±Ø³Ø§Ù„ Ø§Ø³ØªÙØ³Ø§Ø±Ùƒ Ø£Ùˆ Ù…Ù„Ø§Ø­Ø¸ØªÙƒ.",
+      "en": "You can use the Contact Us page or the email listed in the footer to send your inquiry or feedback."
+    }
+  },
+  {
+    "question": {
+      "ar": "Ù‡Ù„ ÙŠÙ…ÙƒÙ† Ù„Ù„Ù…Ø´ØªØ±ÙŠ ØªÙ‚ÙŠÙŠÙ… ØªØ¬Ø±Ø¨Ø© Ù…Ø¬Ù‡Ø²ØŸ",
+      "en": "Can buyers review supplier experiences?"
+    },
+    "answer": {
+      "ar": "Ø¨Ø­Ø³Ø¨ ØµÙ„Ø§Ø­ÙŠØ§Øª Ø§Ù„Ù…Ù†ØµØ©ØŒ ÙŠÙ…ÙƒÙ† Ø¥Ø¶Ø§ÙØ© Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø£Ùˆ Ù…Ø±Ø§Ø¬Ø¹Ø§Øª ØªØ³Ø§Ø¹Ø¯ Ø¹Ù„Ù‰ Ø¨Ù†Ø§Ø¡ Ù‚Ø§Ø¹Ø¯Ø© Ù…Ø¹Ø±ÙÙŠØ© ØªØ´Ø§Ø±ÙƒÙŠØ© Ø£ÙƒØ«Ø± ÙØ§Ø¦Ø¯Ø© Ù„Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ†.",
+      "en": "Depending on platform permissions, users may add notes or reviews that help build a more useful shared knowledge base."
+    }
+  },
+  {
+    "question": {
+      "ar": "Ù…Ø§ Ø§Ù„ÙØ±Ù‚ Ø¨ÙŠÙ† Ø§Ù„Ù…Ø¬Ù‡Ø² ÙˆØ§Ù„Ù…Ø´ØªØ±ÙŠØŸ",
+      "en": "What is the difference between a supplier and a buyer?"
+    },
+    "answer": {
+      "ar": "Ø§Ù„Ù…Ø¬Ù‡Ø² Ù‡Ùˆ Ø¬Ù‡Ø© ØªÙ‚Ø¯Ù… Ù…Ù†ØªØ¬Ø§Øª Ø£Ùˆ Ø®Ø¯Ù…Ø§Øª. Ø§Ù„Ù…Ø´ØªØ±ÙŠ Ù‡Ùˆ Ù…Ø³ØªØ®Ø¯Ù… ÙŠØ¨Ø­Ø« Ø¹Ù† Ù…Ø¬Ù‡Ø²ÙŠÙ† Ø£Ùˆ Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø³ÙˆÙ‚ÙŠØ© Ù„Ø¯Ø¹Ù… Ø§Ø­ØªÙŠØ§Ø¬Ø§Øª Ø§Ù„Ø´Ø±Ø§Ø¡ Ø£Ùˆ Ø§Ù„ØªÙˆØ±ÙŠØ¯.",
+      "en": "A supplier provides products or services. A buyer is a user searching for suppliers or market information to support purchasing or supply needs."
+    }
+  }
+] as const;

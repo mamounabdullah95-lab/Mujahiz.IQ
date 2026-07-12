@@ -471,4 +471,740 @@ export async function resubmitSupplierSubmission(
       targetId: submissionId,
       details: {},
       createdAt: serverTimestamp(),
-    } satisfies Omit<AuditLßß7¶‰žËkºwµçUÝUÍ•È€ôì(€€€€€€¸¸¹ÕÍ•È°(€€€€€…ÁÁÉ½Ù•‘MÕ‰µ¥ÍÍ¥½¹Ì°(€€€€€É•©•Ñ•‘MÕ‰µ¥ÍÍ¥½¹Ì°(€€€€€‘ÕÁ±¥…Ñ•MÕ‰µ¥ÍÍ¥½¹Ì°(€€€€€…ÁÁÉ½Ù•‘9•ÝMÕÁÁ±¥•É½¹ÑÉ¥‰ÕÑ¥½¹Ì°(€€€ôì(€€€½¹ÍÐ…•ÍÍÉ…¹Ð€ô…±Õ±…Ñ••ÍÍÉ…¹Ð¡ÁÉ•Ù¥•ÝUÍ•È°Í•ÑÑ¥¹Ì¤ì(€€€½¹ÍÐ•á¥ÍÑ¥¹•ÍÍ…Ñ”€ôÑ½…Ñ”¡ÕÍ•È¹…•ÍÍáÁ¥É•ÍÐ¤ì(€€€½¹ÍÐ¹½Ü€ô¹•Ü…Ñ” ¤ì(€€€½¹ÍÐ‰…Í••ÍÍ…Ñ”€ô•á¥ÍÑ¥¹•ÍÍ…Ñ”€üµ…á…Ñ”¡¹½Ü°•á¥ÍÑ¥¹•ÍÍ…Ñ”¤€è¹½Üì(€€€½¹ÍÐµ…áMÑ…­…Ñ”€ô…‘‘…åÌ¡¹½Ü°Í•ÑÑ¥¹Ì¹µ…á¥µÕµMÑ…­…‰±•5½¹Ñ¡Ì€¨Í•ÑÑ¥¹Ì¹‘…åÍÉ…¹Ñ•‘A•É	…Ñ ¤ì(€€€±•Ð‘…åÍQ½É…¹Ð€ô…•ÍÍÉ…¹Ð¹‘…åÍQ½É…¹Ðì(€€€±•Ð½¹ÍÕµ•‘½É•ÍÌ€ô…•ÍÍÉ…¹Ð¹½¹ÍÕµ•ì(€€€¥˜€¡‘…åÍQ½É…¹Ð€ø€À€˜˜…‘‘…åÌ¡‰…Í••ÍÍ…Ñ”°‘…åÍQ½É…¹Ð¤¹•ÑQ¥µ” ¤€øµ…áMÑ…­…Ñ”¹•ÑQ¥µ” ¤¤ì(€€€€€½¹ÍÐ…±±½Ý•‘…åÌ€ô5…Ñ ¹µ…à À°5…Ñ ¹™±½½È ¡µ…áMÑ…­…Ñ”¹•ÑQ¥µ” ¤€´‰…Í••ÍÍ…Ñ”¹•ÑQ¥µ” ¤¤€¼€àÙ|ÐÀÁ|ÀÀÀ¤¤ì(€€€€€½¹ÍÐ…±±½Ý•‘5½¹Ñ¡Ì€ô5…Ñ ¹™±½½È¡…±±½Ý•‘…åÌ€¼Í•ÑÑ¥¹Ì¹‘…åÍÉ…¹Ñ•‘A•É	…Ñ ¤ì(€€€€€‘…åÍQ½É…¹Ð€ô…±±½Ý•‘5½¹Ñ¡Ì€¨Í•ÑÑ¥¹Ì¹‘…åÍÉ…¹Ñ•‘A•É	…Ñ ì(€€€€€½¹ÍÕµ•‘½É•ÍÌ€ô…±±½Ý•‘5½¹Ñ¡Ì€¨Í•ÑÑ¥¹Ì¹É•ÅÕ¥É•‘ÁÁÉ½Ù•‘MÕÁÁ±¥•ÉÍA•É5½¹Ñ ì(€€€ô(€€€½¹ÍÐ¹•Ý•ÍÍáÁ¥É•ÍÐ€ô(€€€€€‘…åÍQ½É…¹Ð€ø€À€ü…‘‘…åÌ¡‰…Í••ÍÍ…Ñ”°‘…åÍQ½É…¹Ð¤€èÕÍ•È¹…•ÍÍáÁ¥É•ÍÐñð¹Õ±°ì(€€€½¹ÍÐ¹•áÑEÕ…±¥ÑåI…Ñ¥¼€ôÅÕ…±¥ÑåI…Ñ¥¼¡…ÁÁÉ½Ù•‘MÕ‰µ¥ÍÍ¥½¹Ì°É•©•Ñ•‘MÕ‰µ¥ÍÍ¥½¹Ì°‘ÕÁ±¥…Ñ•MÕ‰µ¥ÍÍ¥½¹Ì¤ì(€€€½¹ÍÐ¹•áÑ	…‘•Ì€ô‘•É¥Ù•	…‘•Ì¡ì(€€€€€€¸¸¹ÁÉ•Ù¥•ÝUÍ•È°(€€€€€ÅÕ…±¥ÑåI…Ñ¥¼è¹•áÑEÕ…±¥ÑåI…Ñ¥¼°(€€€€€‰…‘•ÌèÕÍ•È¹‰…‘•Ìñðmt°(€€€€€…ÁÁÉ½Ù•‘I•Ù¥•ÝÌèÕÍ•È¹…ÁÁÉ½Ù•‘I•Ù¥•ÝÌñð€À°(€€€ô¤ì((€€€ÑÉ…¹Í…Ñ¥½¸¹Í•Ð¡ÍÕÁÁ±¥•É½Œ°ì(€€€€€€¸¸¹ÍÕÁÁ±¥•É…Ñ„°(€€€€€¥èÍÕÁÁ±¥•É½Œ¹¥°(€€€€€ÍÑ…ÑÕÌè€‰…ÁÁÉ½Ù•ˆ°(€€€€€Ù•É¥™¥…Ñ¥½¹MÑ…ÑÕÌè€‰½µµÕ¹¥Ñå}ÍÕ‰µ¥ÑÑ•ˆ°(€€€€€Í½ÕÉ•MÕµµ…ÉäèÍÕÁÁ±¥•É…Ñ„¹Í½ÕÉ•9½Ñ”ñðÍÕÁÁ±¥•É…Ñ„¹Í½ÕÉ•QåÁ”°(€€€€€…Ù•É…•I…Ñ¥¹œè€À°(€€€€€É•Ù¥•Ý½Õ¹Ðè€À°(€€€€€É•…Ñ•‘	äèÍÕ‰µ¥ÍÍ¥½¸¹ÍÕ‰µ¥ÑÑ•‘	ä°(€€€€€…½Õ¹Ñ=Ý¹•É%èÕÍ•È¹…½Õ¹ÑQåÁ”€ôôô€‰ÍÕÁÁ±¥•Èˆ€üÍÕ‰µ¥ÍÍ¥½¸¹ÍÕ‰µ¥ÑÑ•‘	ä€è€ˆˆ°(€€€€€…¹I••¥Ù•I™ÅÌèÕÍ•È¹…½Õ¹ÑQåÁ”€ôôô€‰ÍÕÁÁ±¥•Èˆ°(€€€€€…ÁÁÉ½Ù•‘	äè…Ñ½É%°(€€€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€€€ÕÁ‘…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€ôÍ…Ñ¥Í™¥•ÌMÕÁÁ±¥•È¤ì((€€€ÑÉ…¹Í…Ñ¥½¸¹Í•Ð¡‘ÕÁ±¥…Ñ•½Œ°ì(€€€€€ÍÕÁÁ±¥•É%èÍÕÁÁ±¥•É½Œ¹¥°(€€€€€ÍÕÁÁ±¥•É9…µ”èÍÕÁÁ±¥•É…Ñ„¹‘¥ÍÁ±…å9…µ”ñðÍÕÁÁ±¥•É…Ñ„¹¹…µ•=É¥¥¹…°°(€€€€€¹½Éµ…±¥é•‘9…µ”èÍÕÁÁ±¥•É…Ñ„¹¹½Éµ…±¥é•‘9…µ”°(€€€€€¹½Éµ…±¥é•‘A¡½¹•ÌèÍÕÁÁ±¥•É…Ñ„¹¹½Éµ…±¥é•‘A¡½¹•Ì°(€€€€€¹½Éµ…±¥é•‘µ…¥°è¹½Éµ…±¥é•µ…¥°¡ÍÕÁÁ±¥•É…Ñ„¹•µ…¥°¤°(€€€€€Ý•‰Í¥Ñ”è¹½Éµ…±¥é•UÉ°¡ÍÕÁÁ±¥•É…Ñ„¹Ý•‰Í¥Ñ”¤°(€€€€€™…•‰½½¬è¹½Éµ…±¥é•UÉ°¡ÍÕÁÁ±¥•É…Ñ„¹™…•‰½½¬¤°(€€€€€½¹Ñ…ÑA•ÉÍ½¸èÍÕÁÁ±¥•É…Ñ„¹½¹Ñ…ÑA•ÉÍ½¸ñð€ˆˆ°(€€€€€½Ù•É¹½É…Ñ”èÍÕÁÁ±¥•É…Ñ„¹½Ù•É¹½É…Ñ”°(€€€€€½Ù•É¹½É…Ñ•ÌèÍÕÁÁ±¥•É…Ñ„¹½Ù•É¹½É…Ñ•Ìñð€¡ÍÕÁÁ±¥•É…Ñ„¹½Ù•É¹½É…Ñ”€ümÍÕÁÁ±¥•É…Ñ„¹½Ù•É¹½É…Ñ•t€èmt¤°(€€€€€…Ñ•½É¥•ÌèÍÕÁÁ±¥•É…Ñ„¹…Ñ•½É¥•Ì°(€€€ôÍ…Ñ¥Í™¥•ÌMÕÁÁ±¥•ÉÕÁ±¥…Ñ•%¹‘•à¤ì((€€€ÑÉ…¹Í…Ñ¥½¸¹ÕÁ‘…Ñ”¡ÍÕ‰µ¥ÍÍ¥½¹½Œ°ì(€€€€€ÍÕ‰µ¥ÍÍ¥½¹MÑ…ÑÕÌè€‰…ÁÁÉ½Ù•ˆ°(€€€€€…‘µ¥¹•¥Í¥½¸è€‰…ÁÁÉ½Ù•ˆ°(€€€€€½Õ¹ÑÍ½É•ÍÌèÑÉÕ”°(€€€€€É•‘¥Ñ½¹ÍÕµ•è½¹ÍÕµ•‘½É•ÍÌ€ø€À°(€€€€€É•Ù¥•Ý•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€€€…‘µ¥¹9½Ñ•Ìè€ˆˆ°(€€€ô¤ì(€€€ÑÉ…¹Í…Ñ¥½¸¹‘•±•Ñ”¡‘½Œ¡‘ˆ°€‰ÍÕÁÁ±¥•ÉMÕ‰µ¥ÍÍ¥½¹ÕÁ±¥…Ñ•%¹‘•àˆ°ÍÕ‰µ¥ÍÍ¥½¸¹¥¤¤ì((€€€ÑÉ…¹Í…Ñ¥½¸¹ÕÁ‘…Ñ”¡ÕÍ•É½I•˜°ì(€€€€€€¸¸¸¡ÕÍ•È¹…½Õ¹ÑQåÁ”€ôôô€‰ÍÕÁÁ±¥•Èˆ€˜˜€…ÕÍ•È¹ÍÕÁÁ±¥•ÉAÉ½™¥±•%(€€€€€€€€üìÍÕÁÁ±¥•ÉAÉ½™¥±•%èÍÕÁÁ±¥•É½Œ¹¥ô(€€€€€€€€èíô¤°(€€€€€…ÁÁÉ½Ù•‘MÕ‰µ¥ÍÍ¥½¹Ì°(€€€€€…ÁÁÉ½Ù•‘9•ÝMÕÁÁ±¥•É½¹ÑÉ¥‰ÕÑ¥½¹Ì°(€€€€€½¹ÍÕµ•‘ÁÁÉ½Ù•‘MÕÁÁ±¥•É½¹ÑÉ¥‰ÕÑ¥½¹Ìè(€€€€€€€€¡ÕÍ•È¹½¹ÍÕµ•‘ÁÁÉ½Ù•‘MÕÁÁ±¥•É½¹ÑÉ¥‰ÕÑ¥½¹Ìñð€À¤€¬½¹ÍÕµ•‘½É•ÍÌ°(€€€€€Õ¹½¹ÍÕµ•‘ÁÁÉ½Ù•‘MÕ‰µ¥ÍÍ¥½¹%‘Ìè½¹ÍÕµ•‘½É•ÍÌ€ø€À€üÁ•¹‘¥¹MÕ‰µ¥ÍÍ¥½¹%‘Ì¹Í±¥”¡5…Ñ ¹µ¥¸¡½¹ÍÕµ•‘½É•ÍÌ°Á•¹‘¥¹MÕ‰µ¥ÍÍ¥½¹%‘Ì¹±•¹Ñ ¤¤€èÁ•¹‘¥¹MÕ‰µ¥ÍÍ¥½¹%‘Ì°(€€€€€…•ÍÍMÑ…ÑÕÌè‘…åÍQ½É…¹Ð€ø€Àñð€¡•á¥ÍÑ¥¹•ÍÍ…Ñ”€˜˜•á¥ÍÑ¥¹•ÍÍ…Ñ”€ø¹½Ü¤€ü€‰…Ñ¥Ù”ˆ€èÕÍ•È¹…•ÍÍMÑ…ÑÕÌ°(€€€€€…•ÍÍáÁ¥É•ÍÐè¹•Ý•ÍÍáÁ¥É•ÍÐ°(€€€€€Á½¥¹ÑÌè€¡ÕÍ•È¹Á½¥¹ÑÌñð€À¤€¬€ÄÀ€¬€¡ÍÕÁÁ±¥•É…Ñ„¹Á¡½¹•Ì¹±•¹Ñ ñðÍÕÁÁ±¥•É…Ñ„¹•µ…¥°€ü€È€è€À¤€¬€¡ÍÕÁÁ±¥•É…Ñ„¹…Ñ•½É¥•Ì¹±•¹Ñ €˜˜ÍÕÁÁ±¥•É…Ñ„¹…Á…‰¥±¥ÑåQ…Ì¹±•¹Ñ €ü€È€è€À¤°(€€€€€ÅÕ…±¥ÑåI…Ñ¥¼è¹•áÑEÕ…±¥ÑåI…Ñ¥¼°(€€€€€‰…‘•Ìè¹•áÑ	…‘•Ì°(€€€€€ÕÁ‘…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€ô¤ì((€€€ÑÉ…¹Í…Ñ¥½¸¹Í•Ð¡½¹ÑÉ¥‰ÕÑ¥½¹1½½Œ°ì(€€€€€ÕÍ•É%èÍÕ‰µ¥ÍÍ¥½¸¹ÍÕ‰µ¥ÑÑ•‘	ä°(€€€€€ÑåÁ”è€‰¹•Ý}ÍÕÁÁ±¥•Èˆ°(€€€€€ÍÕÁÁ±¥•ÉMÕ‰µ¥ÍÍ¥½¹%èÍÕ‰µ¥ÍÍ¥½¸¹¥°(€€€€€ÍÕÁÁ±¥•É%èÍÕÁÁ±¥•É½Œ¹¥°(€€€€€Á½¥¹ÑÌè€ÄÀ°(€€€€€½Õ¹ÑÍ½É•ÍÌèÑÉÕ”°(€€€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€ô¤ì((€€€¥˜€¡‘…åÍQ½É…¹Ð€ø€À¤ì(€€€€€ÑÉ…¹Í…Ñ¥½¸¹Í•Ð¡…•ÍÍÉ•‘¥Ñ½Œ°ì(€€€€€€€ÕÍ•É%èÍÕ‰µ¥ÍÍ¥½¸¹ÍÕ‰µ¥ÑÑ•‘	ä°(€€€€€€€Í½ÕÉ”è€‰ÍÕÁÁ±¥•É}½¹ÑÉ¥‰ÕÑ¥½¸ˆ°(€€€€€€€…ÁÁÉ½Ù•‘MÕÁÁ±¥•É½Õ¹Ðè½¹ÍÕµ•‘½É•ÍÌ°(€€€€€€€‘…åÍÉ…¹Ñ•è‘…åÍQ½É…¹Ð°(€€€€€€€ÍÑ…ÑÕÌè€‰…ÁÁ±¥•ˆ°(€€€€€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€€€€€…ÁÁ±¥•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€€€ôÍ…Ñ¥Í™¥•Ì=µ¥Ðñ•ÍÍÉ•‘¥Ð°€‰¥ˆø¤ì(€€€€€ÑÉ…¹Í…Ñ¥½¸¹Í•Ð¡…•ÍÍÉ…¹Ñ½Œ°ì(€€€€€€€ÕÍ•É%èÍÕ‰µ¥ÍÍ¥½¸¹ÍÕ‰µ¥ÑÑ•‘	ä°(€€€€€€€É…¹ÑQåÁ”è€‰ÍÕÁÁ±¥•É}½¹ÑÉ¥‰ÕÑ¥½¸ˆ°(€€€€€€€…ÁÁÉ½Ù•‘MÕ‰µ¥ÍÍ¥½¹%‘ÌèÁ•¹‘¥¹MÕ‰µ¥ÍÍ¥½¹%‘Ì¹Í±¥” À°5…Ñ ¹µ¥¸¡½¹ÍÕµ•‘½É•ÍÌ°Á•¹‘¥¹MÕ‰µ¥ÍÍ¥½¹%‘Ì¹±•¹Ñ ¤¤°(€€€€€€€…ÁÁÉ½Ù•‘MÕÁÁ±¥•É½Õ¹Ðè½¹ÍÕµ•‘½É•ÍÌ°(€€€€€€€‘…åÍÉ…¹Ñ•è‘…åÍQ½É…¹Ð°(€€€€€€€É…¹Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€€€€€ÁÉ•Ù¥½ÕÍáÁ¥Éäè•á¥ÍÑ¥¹•ÍÍ…Ñ”ñð¹Õ±°°(€€€€€€€¹•ÝáÁ¥Éäè¹•Ý•ÍÍáÁ¥É•ÍÐ°(€€€€€€€É•…Ñ•‘	äè…Ñ½É%°(€€€€€€€…Õ‘¥ÑI•™•É•¹”è…Õ‘¥Ñ½Œ¹¥°(€€€€€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€€€ô¤ì(€€€ô((€€€ÑÉ…¹Í…Ñ¥½¸¹Í•Ð¡¹½Ñ¥™¥…Ñ¥½¹½Œ°ì(€€€€€ÕÍ•É%èÍÕ‰µ¥ÍÍ¥½¸¹ÍÕ‰µ¥ÑÑ•‘	ä°(€€€€€ÑåÁ”è€‰ÍÕ‰µ¥ÍÍ¥½¸ˆ°(€€€€€Ñ¥Ñ±•Èè€‹b«fƒbŸbçb«fbŸb¼ƒbŸffb³fbÈˆ°(€€€€€Ñ¥Ñ±•¸è€‰MÕÁÁ±¥•ÈÍÕ‰µ¥ÍÍ¥½¸…ÁÁÉ½Ù•ˆ°(€€€€€‰½‘åÈè‘…åÍQ½É…¹Ð€ø€À€ü€‹b«fƒbŸbçb«fbŸb¼ƒbŸfbÏb³fƒf#ffb´ƒfb«bÇb¤ƒf#b×f#fƒb—bÛbŸff+b¤¸ˆ€è€‹b«fƒbŸbçb«fbŸb¼ƒbÏb³fƒbŸffb³fbÈƒf#b—bÛbŸfb«fƒb—ff$ƒbŸfb¿ff+f¸ˆ°(€€€€€‰½‘å¸è‘…åÍQ½É…¹Ð€ø€À€ü€‰Q¡”É•½ÉÝ…Ì…ÁÁÉ½Ù•…¹…‘‘¥Ñ¥½¹…°…•ÍÌÝ…ÌÉ…¹Ñ•¸ˆ€è€‰Q¡”ÍÕÁÁ±¥•ÈÉ•½ÉÝ…Ì…ÁÁÉ½Ù•…¹…‘‘•Ñ¼Ñ¡”‘¥É•Ñ½Éä¸ˆ°(€€€€€±¥¹¬è€ˆ½‰Õå•È½ÍÕÁÁ±¥•ÉÌ½ÍÕ‰µ¥ÍÍ¥½¹Ìˆ°(€€€€€É•…è™…±Í”°(€€€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€ô¤ì((€€€ÑÉ…¹Í…Ñ¥½¸¹Í•Ð¡…Õ‘¥Ñ½Œ°ì(€€€€€…Ñ½É%°(€€€€€…Ñ¥½¸è€‰ÍÕÁÁ±¥•É}ÍÕ‰µ¥ÍÍ¥½¸¹…ÁÁÉ½Ù•ˆ°(€€€€€Ñ…É•ÑQåÁ”è€‰ÍÕÁÁ±¥•ÉMÕ‰µ¥ÍÍ¥½¸ˆ°(€€€€€Ñ…É•Ñ%èÍÕ‰µ¥ÍÍ¥½¸¹¥°(€€€€€‘•Ñ…¥±Ìèì(€€€€€€€ÍÕÁÁ±¥•É%èÍÕÁÁ±¥•É½Œ¹¥°(€€€€€€€½¹ÑÉ¥‰ÕÑ½É%èÍÕ‰µ¥ÍÍ¥½¸¹ÍÕ‰µ¥ÑÑ•‘	ä°(€€€€€€€‘…åÍÉ…¹Ñ•è‘…åÍQ½É…¹Ð°(€€€€€ô°(€€€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€ôÍ…Ñ¥Í™¥•Ì=µ¥ÐñÕ‘¥Ñ1½œ°€‰¥ˆø¤ì(€ô¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸‘•¥‘•MÕÁÁ±¥•ÉMÕ‰µ¥ÍÍ¥½¸ (€ÍÕ‰µ¥ÍÍ¥½¸èMÕÁÁ±¥•ÉMÕ‰µ¥ÍÍ¥½¸°(€…Ñ½É%èÍÑÉ¥¹œ°(€‘•¥Í¥½¸è€‰¹••‘Í}½ÉÉ•Ñ¥½¸ˆð€‰É•©•Ñ•ˆð€‰Á½ÍÍ¥‰±•}‘ÕÁ±¥…Ñ”ˆð€‰µ•É•ˆð€‰…É¡¥Ù•ˆ°(€…‘µ¥¹9½Ñ•ÌèÍÑÉ¥¹œ°(¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½•¥‘•MÕÁÁ±¥•ÉMÕ‰µ¥ÍÍ¥½¸¡ÍÕ‰µ¥ÍÍ¥½¸°…Ñ½É%°‘•¥Í¥½¸°…‘µ¥¹9½Ñ•Ì¤ì(€ô(€½¹ÍÐÕÍ•ÉI•˜€ô‘½Œ¡ÕÍ•ÉÍI•˜°ÍÕ‰µ¥ÍÍ¥½¸¹ÍÕ‰µ¥ÑÑ•‘	ä¤ì(€½¹ÍÐÍÕ‰µ¥ÍÍ¥½¹I•˜€ô‘½Œ¡ÍÕ‰µ¥ÍÍ¥½¹ÍI•˜°ÍÕ‰µ¥ÍÍ¥½¸¹¥¤ì(€…Ý…¥ÐÉÕ¹QÉ…¹Í…Ñ¥½¸¡‘ˆ°…Íå¹Œ€¡ÑÉ…¹Í…Ñ¥½¸¤€ôøì(€€€½¹ÍÐÕÍ•ÉM¹…ÁÍ¡½Ð€ô…Ý…¥ÐÑÉ…¹Í…Ñ¥½¸¹•Ð¡ÕÍ•ÉI•˜¤ì(€€€½¹ÍÐÕÍ•È€ôÕÍ•ÉM¹…ÁÍ¡½Ð¹•á¥ÍÑÌ ¤€ü€¡ÕÍ•ÉM¹…ÁÍ¡½Ð¹‘…Ñ„ ¤…ÌÁÁUÍ•È¤€è¹Õ±°ì(€€€½¹ÍÐÉ•©•Ñ•‘MÕ‰µ¥ÍÍ¥½¹Ì€ô‘•¥Í¥½¸€ôôô€‰É•©•Ñ•ˆ€ü€¡ÕÍ•Èü¹É•©•Ñ•‘MÕ‰µ¥ÍÍ¥½¹Ìñð€À¤€¬€Ä€èÕÍ•Èü¹É•©•Ñ•‘MÕ‰µ¥ÍÍ¥½¹Ìñð€Àì(€€€½¹ÍÐ‘ÕÁ±¥…Ñ•MÕ‰µ¥ÍÍ¥½¹Ì€ô(€€€€€‘•¥Í¥½¸€ôôô€‰Á½ÍÍ¥‰±•}‘ÕÁ±¥…Ñ”ˆñð‘•¥Í¥½¸€ôôô€‰µ•É•ˆ(€€€€€€€€ü€¡ÕÍ•Èü¹‘ÕÁ±¥…Ñ•MÕ‰µ¥ÍÍ¥½¹Ìñð€À¤€¬€Ä(€€€€€€€€èÕÍ•Èü¹‘ÕÁ±¥…Ñ•MÕ‰µ¥ÍÍ¥½¹Ìñð€Àì(€€€½¹ÍÐ…ÁÁÉ½Ù•‘MÕ‰µ¥ÍÍ¥½¹Ì€ôÕÍ•Èü¹…ÁÁÉ½Ù•‘MÕ‰µ¥ÍÍ¥½¹Ìñð€Àì((€€€ÑÉ…¹Í…Ñ¥½¸¹ÕÁ‘…Ñ”¡ÍÕ‰µ¥ÍÍ¥½¹I•˜°ì(€€€€€ÍÕ‰µ¥ÍÍ¥½¹MÑ…ÑÕÌè‘•¥Í¥½¸°(€€€€€…‘µ¥¹•¥Í¥½¸è‘•¥Í¥½¸°(€€€€€…‘µ¥¹9½Ñ•Ì°(€€€€€½Õ¹ÑÍ½É•ÍÌè™…±Í”°(€€€€€É•‘¥Ñ½¹ÍÕµ•è™…±Í”°(€€€€€É•Ù¥•Ý•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€ô¤ì(€€€ÑÉ…¹Í…Ñ¥½¸¹‘•±•Ñ”¡‘½Œ¡‘ˆ°€‰ÍÕÁÁ±¥•ÉMÕ‰µ¥ÍÍ¥½¹ÕÁ±¥…Ñ•%¹‘•àˆ°ÍÕ‰µ¥ÍÍ¥½¸¹¥¤¤ì((€€€¥˜€¡ÕÍ•È¤ì(€€€€€ÑÉ…¹Í…Ñ¥½¸¹ÕÁ‘…Ñ”¡ÕÍ•ÉI•˜°ì(€€€€€€€É•©•Ñ•‘MÕ‰µ¥ÍÍ¥½¹Ì°(€€€€€€€‘ÕÁ±¥…Ñ•MÕ‰µ¥ÍÍ¥½¹Ì°(€€€€€€€Á½¥¹ÑÌè‘•¥Í¥½¸€ôôô€‰É•©•Ñ•ˆ€ü5…Ñ ¹µ…à À°€¡ÕÍ•È¹Á½¥¹ÑÌñð€À¤€´€È¤€èÕÍ•È¹Á½¥¹ÑÌñð€À°(€€€€€€€ÅÕ…±¥ÑåI…Ñ¥¼èÅÕ…±¥ÑåI…Ñ¥¼¡…ÁÁÉ½Ù•‘MÕ‰µ¥ÍÍ¥½¹Ì°É•©•Ñ•‘MÕ‰µ¥ÍÍ¥½¹Ì°‘ÕÁ±¥…Ñ•MÕ‰µ¥ÍÍ¥½¹Ì¤°(€€€€€€€ÕÁ‘…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€€€ô¤ì(€€€ô((€€€ÑÉ…¹Í…Ñ¥½¸¹Í•Ð¡‘½Œ¡…Õ‘¥Ñ1½ÍI•˜¤°ì(€€€€€…Ñ½É%°(€€€€€…Ñ¥½¸èÍÕÁÁ±¥•É}ÍÕ‰µ¥ÍÍ¥½¸¸‘í‘•¥Í¥½¹õ€°(€€€€€Ñ…É•ÑQåÁ”è€‰ÍÕÁÁ±¥•ÉMÕ‰µ¥ÍÍ¥½¸ˆ°(€€€€€Ñ…É•Ñ%èÍÕ‰µ¥ÍÍ¥½¸¹¥°(€€€€€‘•Ñ…¥±Ìèì…‘µ¥¹9½Ñ•Ìô°(€€€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€ôÍ…Ñ¥Í™¥•Ì=µ¥ÐñÕ‘¥Ñ1½œ°€‰¥ˆø¤ì(€ô¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸±¥ÍÑMÕÁÁ±¥•ÉI•Ù¥•ÝÌ¡ÍÕÁÁ±¥•É%èÍÑÉ¥¹œ°¥¹±Õ‘•A•¹‘¥¹œ€ô™…±Í”¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½1¥ÍÑMÕÁÁ±¥•ÉI•Ù¥•ÝÌ¡ÍÕÁÁ±¥•É%°¥¹±Õ‘•A•¹‘¥¹œ¤ì(€ô(€½¹ÍÐÍ¹…ÁÍ¡½Ð€ô…Ý…¥Ð•Ñ½Ì (€€€¥¹±Õ‘•A•¹‘¥¹œ(€€€€€€üÅÕ•Éä¡É•Ù¥•ÝÍI•˜°Ý¡•É” ‰ÍÕÁÁ±¥•É%ˆ°€ˆôôˆ°ÍÕÁÁ±¥•É%¤¤(€€€€€€èÅÕ•Éä¡É•Ù¥•ÝÍI•˜°Ý¡•É” ‰ÍÕÁÁ±¥•É%ˆ°€ˆôôˆ°ÍÕÁÁ±¥•É%¤°Ý¡•É” ‰ÍÑ…ÑÕÌˆ°€ˆôôˆ°€‰…ÁÁÉ½Ù•ˆ¤¤°(€€¤ì(€É•ÑÕÉ¸Í½ÉÑ	åÉ•…Ñ•‘Ñ•ÍŒ (€€€Í¹…ÁÍ¡½Ð¹‘½Ì¹µ…À ¡¥Ñ•´¤€ôøÝ¥Ñ¡%ñMÕÁÁ±¥•ÉI•Ù¥•Üø¡¥Ñ•´¤¤°(€€€€ÔÀ°(€€¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸±¥ÍÑ5åI•Ù¥•ÝÌ¡ÕÍ•É%èÍÑÉ¥¹œ¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½1¥ÍÑ5åI•Ù¥•ÝÌ¡ÕÍ•É%¤ì(€ô(€½¹ÍÐÍ¹…ÁÍ¡½Ð€ô…Ý…¥Ð•Ñ½Ì¡ÅÕ•Éä¡É•Ù¥•ÝÍI•˜°Ý¡•É” ‰É•Ù¥•Ý•‘	äˆ°€ˆôôˆ°ÕÍ•É%¤¤¤ì(€É•ÑÕÉ¸Í½ÉÑ	åÉ•…Ñ•‘Ñ•ÍŒ (€€€Í¹…ÁÍ¡½Ð¹‘½Ì¹µ…À ¡¥Ñ•´¤€ôøÝ¥Ñ¡%ñMÕÁÁ±¥•ÉI•Ù¥•Üø¡¥Ñ•´¤¤°(€€€€ÄÀÀ°(€€¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸ÍÕ‰µ¥ÑMÕÁÁ±¥•ÉI•Ù¥•Ü¡É•Ù¥•Üè=µ¥ÐñMÕÁÁ±¥•ÉI•Ù¥•Ü°€‰¥ˆð€‰ÍÑ…ÑÕÌˆð€‰É•…Ñ•‘Ðˆø¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½MÕ‰µ¥ÑMÕÁÁ±¥•ÉI•Ù¥•Ü¡É•Ù¥•Ü¤ì(€ô(€…Ý…¥Ð…‘‘½Œ¡É•Ù¥•ÝÍI•˜°ì(€€€€¸¸¹É•Ù¥•Ü°(€€€ÍÑ…ÑÕÌè€‰Á•¹‘¥¹}É•Ù¥•Üˆ°(€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€ô¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸±¥ÍÑA•¹‘¥¹I•Ù¥•ÝÌ ¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½1¥ÍÑA•¹‘¥¹I•Ù¥•ÝÌ ¤ì(€ô(€½¹ÍÐÍ¹…ÁÍ¡½Ð€ô…Ý…¥Ð•Ñ½Ì¡ÅÕ•Éä¡É•Ù¥•ÝÍI•˜°Ý¡•É” ‰ÍÑ…ÑÕÌˆ°€ˆôôˆ°€‰Á•¹‘¥¹}É•Ù¥•Üˆ¤¤¤ì(€É•ÑÕÉ¸Í½ÉÑ	åÉ•…Ñ•‘Ñ•ÍŒ (€€€Í¹…ÁÍ¡½Ð¹‘½Ì¹µ…À ¡¥Ñ•´¤€ôøÝ¥Ñ¡%ñMÕÁÁ±¥•ÉI•Ù¥•Üø¡¥Ñ•´¤¤°(€€€€ÄÀÀ°(€€¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸µ½‘•É…Ñ•I•Ù¥•Ü¡É•Ù¥•ÜèMÕÁÁ±¥•ÉI•Ù¥•Ü°…Ñ½É%èÍÑÉ¥¹œ°‘•¥Í¥½¸è€‰…ÁÁÉ½Ù•ˆð€‰É•©•Ñ•ˆ¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½5½‘•É…Ñ•I•Ù¥•Ü¡É•Ù¥•Ü°…Ñ½É%°‘•¥Í¥½¸¤ì(€ô(€½¹ÍÐÉ•Ù¥•Ý½Œ€ô‘½Œ¡É•Ù¥•ÝÍI•˜°É•Ù¥•Ü¹¥¤ì(€½¹ÍÐÍÕÁÁ±¥•É½Œ€ô‘½Œ¡ÍÕÁÁ±¥•ÉÍI•˜°É•Ù¥•Ü¹ÍÕÁÁ±¥•É%¤ì(€½¹ÍÐÕÍ•É½I•˜€ô‘½Œ¡ÕÍ•ÉÍI•˜°É•Ù¥•Ü¹É•Ù¥•Ý•‘	ä¤ì(€½¹ÍÐÍ•ÑÑ¥¹Ì€ô…Ý…¥Ð•ÑA±…Ñ™½ÉµM•ÑÑ¥¹Ì ¤ì((€…Ý…¥ÐÉÕ¹QÉ…¹Í…Ñ¥½¸¡‘ˆ°…Íå¹Œ€¡ÑÉ…¹Í…Ñ¥½¸¤€ôøì(€€€½¹ÍÐÍÕÁÁ±¥•ÉM¹…ÁÍ¡½Ð€ô…Ý…¥ÐÑÉ…¹Í…Ñ¥½¸¹•Ð¡ÍÕÁÁ±¥•É½Œ¤ì(€€€½¹ÍÐÕÍ•ÉM¹…ÁÍ¡½Ð€ô…Ý…¥ÐÑÉ…¹Í…Ñ¥½¸¹•Ð¡ÕÍ•É½I•˜¤ì(€€€½¹ÍÐÍÕÁÁ±¥•È€ôÍÕÁÁ±¥•ÉM¹…ÁÍ¡½Ð¹•á¥ÍÑÌ ¤€ü€¡ÍÕÁÁ±¥•ÉM¹…ÁÍ¡½Ð¹‘…Ñ„ ¤…ÌMÕÁÁ±¥•È¤€è¹Õ±°ì(€€€½¹ÍÐÕÍ•È€ôÕÍ•ÉM¹…ÁÍ¡½Ð¹•á¥ÍÑÌ ¤€ü€¡ÕÍ•ÉM¹…ÁÍ¡½Ð¹‘…Ñ„ ¤…ÌÁÁUÍ•È¤€è¹Õ±°ì((€€€ÑÉ…¹Í…Ñ¥½¸¹ÕÁ‘…Ñ”¡É•Ù¥•Ý½Œ°ì(€€€€€ÍÑ…ÑÕÌè‘•¥Í¥½¸°(€€€€€…ÁÁÉ½Ù•‘Ðè‘•¥Í¥½¸€ôôô€‰…ÁÁÉ½Ù•ˆ€üÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤€è¹Õ±°°(€€€ô¤ì((€€€¥˜€¡‘•¥Í¥½¸€ôôô€‰…ÁÁÉ½Ù•ˆ€˜˜ÍÕÁÁ±¥•È¤ì(€€€€€½¹ÍÐ½Õ¹Ð€ôÍÕÁÁ±¥•È¹É•Ù¥•Ý½Õ¹Ðñð€Àì(€€€€€½¹ÍÐ…Ù•É…•I…Ñ¥¹œ€ô9Õµ‰•È   ¡ÍÕÁÁ±¥•È¹…Ù•É…•I…Ñ¥¹œñð€À¤€¨½Õ¹Ð€¬É•Ù¥•Ü¹½Ù•É…±°¤€¼€¡½Õ¹Ð€¬€Ä¤¤¹Ñ½¥á• È¤¤ì(€€€€€ÑÉ…¹Í…Ñ¥½¸¹ÕÁ‘…Ñ”¡ÍÕÁÁ±¥•É½Œ°ì(€€€€€€€É•Ù¥•Ý½Õ¹Ðè½Õ¹Ð€¬€Ä°(€€€€€€€…Ù•É…•I…Ñ¥¹œ°(€€€€€€€ÕÁ‘…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€€€ô¤ì(€€€ô((€€€¥˜€¡‘•¥Í¥½¸€ôôô€‰…ÁÁÉ½Ù•ˆ€˜˜ÕÍ•È¤ì(€€€€€ÑÉ…¹Í…Ñ¥½¸¹ÕÁ‘…Ñ”¡ÕÍ•É½I•˜°ì(€€€€€€€…ÁÁÉ½Ù•‘I•Ù¥•ÝÌè€¡ÕÍ•È¹…ÁÁÉ½Ù•‘I•Ù¥•ÝÌñð€À¤€¬€Ä°(€€€€€€€Á½¥¹ÑÌè€¡ÕÍ•È¹Á½¥¹ÑÌñð€À¤€¬€¡Í•ÑÑ¥¹Ì¹É•Ù¥•ÝÍ…É¹	½¹ÕÍA½¥¹ÑÌ€ü€Ð€è€À¤°(€€€€€€€ÕÁ‘…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€€€ô¤ì(€€€ô((€€€ÑÉ…¹Í…Ñ¥½¸¹Í•Ð¡‘½Œ¡…Õ‘¥Ñ1½ÍI•˜¤°ì(€€€€€…Ñ½É%°(€€€€€…Ñ¥½¸èÉ•Ù¥•Ü¸‘í‘•¥Í¥½¹õ€°(€€€€€Ñ…É•ÑQåÁ”è€‰É•Ù¥•Üˆ°(€€€€€Ñ…É•Ñ%èÉ•Ù¥•Ü¹¥°(€€€€€‘•Ñ…¥±ÌèìÍÕÁÁ±¥•É%èÉ•Ù¥•Ü¹ÍÕÁÁ±¥•É%ô°(€€€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€ôÍ…Ñ¥Í™¥•Ì=µ¥ÐñÕ‘¥Ñ1½œ°€‰¥ˆø¤ì(€ô¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸±¥ÍÑÕ‘¥Ñ1½Ì ¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½1¥ÍÑÕ‘¥Ñ1½Ì ¤ì(€ô(€½¹ÍÐÍ¹…ÁÍ¡½Ð€ô…Ý…¥Ð•Ñ½Ì¡ÅÕ•Éä¡…Õ‘¥Ñ1½ÍI•˜°½É‘•É	ä ‰É•…Ñ•‘Ðˆ°€‰‘•ÍŒˆ¤°±¥µ¥Ð ÄÀÀ¤¤¤ì(€É•ÑÕÉ¸Í¹…ÁÍ¡½Ð¹‘½Ì¹µ…À ¡¥Ñ•´¤€ôøÝ¥Ñ¡%ñÕ‘¥Ñ1½œø¡¥Ñ•´¤¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸±¥ÍÑ•ÍÍÉ•‘¥ÑÌ¡ÕÍ•É%èÍÑÉ¥¹œ¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½1¥ÍÑ•ÍÍÉ•‘¥ÑÌ¡ÕÍ•É%¤ì(€ô(€½¹ÍÐÍ¹…ÁÍ¡½Ð€ô…Ý…¥Ð•Ñ½Ì¡ÅÕ•Éä¡…•ÍÍÉ•‘¥ÑÍI•˜°Ý¡•É” ‰ÕÍ•É%ˆ°€ˆôôˆ°ÕÍ•É%¤¤¤ì(€É•ÑÕÉ¸Í½ÉÑ	åÉ•…Ñ•‘Ñ•ÍŒ (€€€Í¹…ÁÍ¡½Ð¹‘½Ì¹µ…À ¡¥Ñ•´¤€ôøÝ¥Ñ¡%ñ•ÍÍÉ•‘¥Ðø¡¥Ñ•´¤¤°(€€€€ÔÀ°(€€¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸ÍÕ‰µ¥ÑMÕÁÁ±¥•É••‘‰…¬ (€ÕÍ•É%èÍÑÉ¥¹œ°(€ÍÕÁÁ±¥•ÈèA¥¬ñMÕÁÁ±¥•È°€‰¥ˆð€‰‘¥ÍÁ±…å9…µ”ˆð€‰¹…µ•=É¥¥¹…°ˆð€‰¹…µ•Èˆð€‰¹…µ•¸ˆø°(€ÑåÁ”èMÕÁÁ±¥•É••‘‰…­QåÁ”°(€µ•ÍÍ…”èÍÑÉ¥¹œ°(€ÍÕ•ÍÑ•‘½ÉÉ•Ñ¥½¸èÍÑÉ¥¹œ°(¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½MÕ‰µ¥ÑMÕÁÁ±¥•É••‘‰…¬¡ÕÍ•É%°ÍÕÁÁ±¥•È°ÑåÁ”°µ•ÍÍ…”°ÍÕ•ÍÑ•‘½ÉÉ•Ñ¥½¸¤ì(€ô(€…Ý…¥Ð…‘‘½Œ¡ÍÕÁÁ±¥•É••‘‰…­I•˜°ì(€€€ÍÕÁÁ±¥•É%èÍÕÁÁ±¥•È¹¥°(€€€ÍÕÁÁ±¥•É9…µ”èÍÕÁÁ±¥•È¹‘¥ÍÁ±…å9…µ”ñðÍÕÁÁ±¥•È¹¹…µ•=É¥¥¹…°°(€€€ÍÕÁÁ±¥•É9…µ•ÈèÍÕÁÁ±¥•È¹¹…µ•Èñð€ˆˆ°(€€€ÍÕÁÁ±¥•É9…µ•¸èÍÕÁÁ±¥•È¹¹…µ•¸ñð€ˆˆ°(€€€ÍÕ‰µ¥ÑÑ•‘	äèÕÍ•É%°(€€€ÑåÁ”°(€€€µ•ÍÍ…”èµ•ÍÍ…”¹ÑÉ¥´ ¤°(€€€ÍÕ•ÍÑ•‘½ÉÉ•Ñ¥½¸èÍÕ•ÍÑ•‘½ÉÉ•Ñ¥½¸¹ÑÉ¥´ ¤°(€€€ÍÑ…ÑÕÌè€‰Á•¹‘¥¹œˆ°(€€€…‘µ¥¹9½Ñ•Ìè€ˆˆ°(€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€ôÍ…Ñ¥Í™¥•Ì=µ¥ÐñMÕÁÁ±¥•É••‘‰…¬°€‰¥ˆð€‰É•…Ñ•‘Ðˆø€˜ìÉ•…Ñ•‘ÐèÕ¹­¹½Ý¸ô¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸±¥ÍÑ5åMÕÁÁ±¥•É••‘‰…¬¡ÕÍ•É%èÍÑÉ¥¹œ¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½1¥ÍÑ5åMÕÁÁ±¥•É••‘‰…¬¡ÕÍ•É%¤ì(€ô(€½¹ÍÐÍ¹…ÁÍ¡½Ð€ô…Ý…¥Ð•Ñ½Ì¡ÅÕ•Éä¡ÍÕÁÁ±¥•É••‘‰…­I•˜°Ý¡•É” ‰ÍÕ‰µ¥ÑÑ•‘	äˆ°€ˆôôˆ°ÕÍ•É%¤¤¤ì(€É•ÑÕÉ¸Í½ÉÑ	åÉ•…Ñ•‘Ñ•ÍŒ (€€€Í¹…ÁÍ¡½Ð¹‘½Ì¹µ…À ¡¥Ñ•´¤€ôøÝ¥Ñ¡%ñMÕÁÁ±¥•É••‘‰…¬ø¡¥Ñ•´¤¤°(€€€€ÄÀÀ°(€€¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸±¥ÍÑMÕÁÁ±¥•É••‘‰…¬ (€ÍÑ…ÑÕÍ•ÌèMÕÁÁ±¥•É••‘‰…­MÑ…ÑÕÍmt€ôl‰Á•¹‘¥¹œˆ°€‰¥¹}É•Ù¥•Ü‰t°(¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½1¥ÍÑMÕÁÁ±¥•É••‘‰…¬¡ÍÑ…ÑÕÍ•Ì¤ì(€ô(€½¹ÍÐÍ¹…ÁÍ¡½Ð€ô…Ý…¥Ð•Ñ½Ì (€€€ÍÑ…ÑÕÍ•Ì¹±•¹Ñ €ôôô€Ä(€€€€€€üÅÕ•Éä¡ÍÕÁÁ±¥•É••‘‰…­I•˜°Ý¡•É” ‰ÍÑ…ÑÕÌˆ°€ˆôôˆ°ÍÑ…ÑÕÍ•ÍlÁt¤¤(€€€€€€èÅÕ•Éä¡ÍÕÁÁ±¥•É••‘‰…­I•˜°Ý¡•É” ‰ÍÑ…ÑÕÌˆ°€‰¥¸ˆ°ÍÑ…ÑÕÍ•Ì¤¤°(€€¤ì(€É•ÑÕÉ¸Í½ÉÑ	åÉ•…Ñ•‘Ñ•ÍŒ (€€€Í¹…ÁÍ¡½Ð¹‘½Ì¹µ…À ¡¥Ñ•´¤€ôøÝ¥Ñ¡%ñMÕÁÁ±¥•É••‘‰…¬ø¡¥Ñ•´¤¤°(€€€€ÄÀÀ°(€€¤ì)ô()•áÁ½ÉÐ…Íå¹Œ™Õ¹Ñ¥½¸ÕÁ‘…Ñ•MÕÁÁ±¥•É••‘‰…­MÑ…ÑÕÌ (€™••‘‰…¬èMÕÁÁ±¥•É••‘‰…¬°(€…Ñ½É%èÍÑÉ¥¹œ°(€ÍÑ…ÑÕÌèá±Õ‘”ñMÕÁÁ±¥•É••‘‰…­MÑ…ÑÕÌ°€‰Á•¹‘¥¹œˆø°(€…‘µ¥¹9½Ñ•ÌèÍÑÉ¥¹œ°(¤ì(€¥˜€ …¥Í¥É•‰…Í•½¹™¥ÕÉ•¤ì(€€€É•ÑÕÉ¸‘•µ¼¹‘•µ½UÁ‘…Ñ•MÕÁÁ±¥•É••‘‰…­MÑ…ÑÕÌ¡™••‘‰…¬°…Ñ½É%°ÍÑ…ÑÕÌ°…‘µ¥¹9½Ñ•Ì¤ì(€ô(€½¹ÍÐ™••‘‰…­½Œ€ô‘½Œ¡ÍÕÁÁ±¥•É••‘‰…­I•˜°™••‘‰…¬¹¥¤ì(€…Ý…¥ÐÉÕ¹QÉ…¹Í…Ñ¥½¸¡‘ˆ°…Íå¹Œ€¡ÑÉ…¹Í…Ñ¥½¸¤€ôøì(€€€ÑÉ…¹Í…Ñ¥½¸¹ÕÁ‘…Ñ”¡™••‘‰…­½Œ°ì(€€€€€ÍÑ…ÑÕÌ°(€€€€€…‘µ¥¹9½Ñ•Ìè…‘µ¥¹9½Ñ•Ì¹ÑÉ¥´ ¤°(€€€€€É•Ù¥•Ý•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€€€É•Ù¥•Ý•‘	äè…Ñ½É%°(€€€ô¤ì(€€€ÑÉ…¹Í…Ñ¥½¸¹Í•Ð¡‘½Œ¡…Õ‘¥Ñ1½ÍI•˜¤°ì(€€€€€…Ñ½É%°(€€€€€…Ñ¥½¸èÍÕÁÁ±¥•É}™••‘‰…¬¸‘íÍÑ…ÑÕÍõ€°(€€€€€Ñ…É•ÑQåÁ”è€‰ÍÕÁÁ±¥•É••‘‰…¬ˆ°(€€€€€Ñ…É•Ñ%è™••‘‰…¬¹¥°(€€€€€‘•Ñ…¥±Ìèì(€€€€€€€ÍÕÁÁ±¥•É%è™••‘‰…¬¹ÍÕÁÁ±¥•É%°(€€€€€€€™••‘‰…­QåÁ”è™••‘‰…¬¹ÑåÁ”°(€€€€€ô°(€€€€€É•…Ñ•‘ÐèÍ•ÉÙ•ÉQ¥µ•ÍÑ…µÀ ¤°(€€€ôÍ…Ñ¥Í™¥•Ì=µ¥ÐñÕ‘¥Ñ1½œ°€‰¥ˆø¤ì(€ô¤ì)ô(((
+    } satisfies Omit<AuditLog, "id">);
+  });
+}
+
+export async function listMySubmissions(userId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListMySubmissions(userId);
+  }
+  const snapshot = await getDocs(query(submissionsRef, where("submittedBy", "==", userId)));
+  return sortByCreatedAtDesc(
+    snapshot.docs.map((item) => withId<SupplierSubmission>(item)),
+    100,
+  );
+}
+
+export async function listSupplierSubmissions(statuses: SupplierSubmissionStatus[] = ["pending_review", "possible_duplicate"]) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListSupplierSubmissions(statuses);
+  }
+  const snapshot = await getDocs(query(submissionsRef, where("submissionStatus", "in", statuses)));
+  return sortByCreatedAtDesc(
+    snapshot.docs.map((item) => withId<SupplierSubmission>(item)),
+    100,
+  );
+}
+
+export async function getSupplierSubmission(submissionId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoGetSupplierSubmission(submissionId);
+  }
+  const snapshot = await getDoc(doc(submissionsRef, submissionId));
+  return snapshot.exists() ? withId<SupplierSubmission>(snapshot) : null;
+}
+
+export async function listSuppliers() {
+  if (!isFirebaseConfigured) {
+    return demo.demoListSuppliers();
+  }
+  const snapshot = await getDocs(query(suppliersRef, where("status", "==", "approved")));
+  return snapshot.docs.map((item) => withId<Supplier>(item));
+}
+
+export type SupplierPageCursor = QueryDocumentSnapshot<DocumentData> | number | null;
+
+export async function listSuppliersPage(pageSize = 50, cursor: SupplierPageCursor = null) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListSuppliersPage(pageSize, typeof cursor === "number" ? cursor : 0);
+  }
+  const baseQuery = [
+    where("status", "==", "approved"),
+    ...(cursor && typeof cursor !== "number" ? [startAfter(cursor)] : []),
+    limit(pageSize),
+  ];
+  const snapshot = await getDocs(query(suppliersRef, ...baseQuery));
+  return {
+    items: snapshot.docs.map((item) => withId<Supplier>(item)),
+    cursor: snapshot.docs.length ? snapshot.docs[snapshot.docs.length - 1] : null,
+    hasMore: snapshot.docs.length === pageSize,
+  };
+}
+
+export async function listSupplierCandidates(categories: string[]) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListSupplierCandidates(categories);
+  }
+  if (!categories.length) {
+    return [];
+  }
+  const snapshot = await getDocs(query(
+    suppliersRef,
+    where("categories", "array-contains-any", categories.slice(0, 10)),
+    limit(100),
+  ));
+  return snapshot.docs
+    .map((item) => withId<Supplier>(item))
+    .filter((item) => item.status === "approved" && item.canReceiveRfqs === true);
+}
+
+export async function listMaterialTerms() {
+  if (!isFirebaseConfigured) {
+    return demo.demoListMaterialTerms();
+  }
+  const snapshot = await getDocs(query(materialTermsRef, where("status", "==", "active"), limit(500)));
+  return mergeMaterialTerms(snapshot.docs.map((item) => withId<MaterialTerm>(item)));
+}
+
+export async function recordTermSuggestions(
+  terms: string[],
+  options: {
+    source: TermSuggestionSource;
+    queryText: string;
+    userId?: string;
+  },
+) {
+  const uniqueTerms = Array.from(new Set(terms.map((term) => term.trim()).filter(Boolean))).slice(0, 8);
+  if (!uniqueTerms.length) {
+    return;
+  }
+  if (!isFirebaseConfigured) {
+    return demo.demoRecordTermSuggestions(uniqueTerms, options);
+  }
+  const batch = writeBatch(db);
+  const seenAt = new Date().toISOString();
+  uniqueTerms.forEach((term) => {
+    const normalizedTerm = normalizeDictionaryText(term);
+    if (!normalizedTerm) return;
+    const suggestionDoc = doc(termSuggestionsRef, stableSuggestionId(normalizedTerm));
+    batch.set(
+      suggestionDoc,
+      {
+        term,
+        normalizedTerm,
+        status: "pending",
+        count: increment(1),
+        sources: arrayUnion(options.source),
+        examples: arrayUnion({
+          queryText: options.queryText.slice(0, 280),
+          source: options.source,
+          createdBy: options.userId || "",
+          seenAt,
+        }),
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+  });
+  await batch.commit();
+}
+
+export async function listTermSuggestions(status: TermSuggestion["status"] = "pending") {
+  if (!isFirebaseConfigured) {
+    return demo.demoListTermSuggestions(status);
+  }
+  const snapshot = await getDocs(query(termSuggestionsRef, where("status", "==", status), limit(120)));
+  return snapshot.docs
+    .map((item) => withId<TermSuggestion>(item))
+    .sort((a, b) => (b.count || 0) - (a.count || 0));
+}
+
+export async function approveTermSuggestion(
+  suggestion: TermSuggestion,
+  actorId: string,
+  material: Pick<MaterialTerm, "canonicalEn" | "canonicalAr" | "category" | "subcategories" | "synonyms" | "brands" | "standards">,
+) {
+  if (!isFirebaseConfigured) {
+    return demo.demoApproveTermSuggestion(suggestion, actorId, material);
+  }
+  const materialDoc = doc(materialTermsRef);
+  const suggestionDoc = doc(termSuggestionsRef, suggestion.id);
+  const auditDoc = doc(auditLogsRef);
+  const normalizedSynonyms = Array.from(new Set([suggestion.term, ...material.synonyms].map((item) => item.trim()).filter(Boolean)));
+  const payload: MaterialTerm = {
+    id: materialDoc.id,
+    canonicalEn: material.canonicalEn.trim(),
+    canonicalAr: material.canonicalAr.trim(),
+    category: material.category,
+    subcategories: material.subcategories,
+    synonyms: normalizedSynonyms,
+    brands: material.brands,
+    standards: material.standards,
+    status: "active",
+    createdBy: actorId,
+    updatedBy: actorId,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  const batch = writeBatch(db);
+  batch.set(materialDoc, payload);
+  batch.update(suggestionDoc, {
+    status: "approved",
+    materialTermId: materialDoc.id,
+    reviewedAt: serverTimestamp(),
+    reviewedBy: actorId,
+    updatedAt: serverTimestamp(),
+  });
+  batch.set(auditDoc, {
+    actorId,
+    action: "term_suggestion.approved",
+    targetType: "termSuggestion",
+    targetId: suggestion.id,
+    details: { term: suggestion.term, materialTermId: materialDoc.id },
+    createdAt: serverTimestamp(),
+  } satisfies Omit<AuditLog, "id">);
+  await batch.commit();
+}
+
+export async function ignoreTermSuggestion(suggestion: TermSuggestion, actorId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoIgnoreTermSuggestion(suggestion, actorId);
+  }
+  await updateDoc(doc(termSuggestionsRef, suggestion.id), {
+    status: "ignored",
+    reviewedAt: serverTimestamp(),
+    reviewedBy: actorId,
+    updatedAt: serverTimestamp(),
+  });
+  await addDoc(auditLogsRef, {
+    actorId,
+    action: "term_suggestion.ignored",
+    targetType: "termSuggestion",
+    targetId: suggestion.id,
+    details: { term: suggestion.term },
+    createdAt: serverTimestamp(),
+  } satisfies Omit<AuditLog, "id">);
+}
+
+function stableSuggestionId(normalizedTerm: string) {
+  let hash = 0;
+  for (let index = 0; index < normalizedTerm.length; index += 1) {
+    hash = (hash * 31 + normalizedTerm.charCodeAt(index)) | 0;
+  }
+  const suffix = normalizedTerm.replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 28);
+  return `term_${Math.abs(hash)}${suffix ? `_${suffix}` : ""}`;
+}
+
+export async function getSupplier(supplierId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoGetSupplier(supplierId);
+  }
+  const snapshot = await getDoc(doc(suppliersRef, supplierId));
+  return snapshot.exists() ? withId<Supplier>(snapshot) : null;
+}
+
+export async function updateApprovedSupplier(supplierId: string, actorId: string, supplierData: SupplierDraft) {
+  if (!isFirebaseConfigured) {
+    return demo.demoUpdateApprovedSupplier(supplierId, actorId, supplierData);
+  }
+  const supplierDoc = doc(suppliersRef, supplierId);
+  const duplicateDoc = doc(duplicateIndexRef, supplierId);
+  const auditDoc = doc(auditLogsRef);
+
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(supplierDoc);
+    if (!snapshot.exists()) {
+      throw new Error("supplierNotFound");
+    }
+
+    transaction.update(supplierDoc, {
+      ...withoutUndefinedFields(supplierData),
+      ...(supplierData.acceptsCredit === undefined ? { acceptsCredit: deleteField() } : {}),
+      ...(supplierData.creditStart === undefined ? { creditStart: deleteField() } : {}),
+      sourceSummary: supplierData.sourceNote || supplierData.sourceType,
+      updatedAt: serverTimestamp(),
+    });
+    transaction.set(
+      duplicateDoc,
+      {
+        supplierId,
+        supplierName: supplierData.displayName || supplierData.nameOriginal,
+        normalizedName: supplierData.normalizedName,
+        normalizedPhones: supplierData.normalizedPhones,
+        normalizedEmail: normalizeEmail(supplierData.email),
+        website: normalizeUrl(supplierData.website),
+        facebook: normalizeUrl(supplierData.facebook),
+        contactPerson: supplierData.contactPerson || "",
+        governorate: supplierData.governorate,
+        governorates: supplierData.governorates || (supplierData.governorate ? [supplierData.governorate] : []),
+        categories: supplierData.categories,
+      } satisfies SupplierDuplicateIndex,
+      { merge: true },
+    );
+    transaction.set(auditDoc, {
+      actorId,
+      action: "supplier.updated",
+      targetType: "supplier",
+      targetId: supplierId,
+      details: {
+        supplierName: supplierData.displayName || supplierData.nameOriginal,
+      },
+      createdAt: serverTimestamp(),
+    } satisfies Omit<AuditLog, "id">);
+  });
+}
+
+export async function deleteApprovedSupplier(supplierId: string, actorId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoDeleteApprovedSupplier(supplierId, actorId);
+  }
+  const supplierDoc = doc(suppliersRef, supplierId);
+  const duplicateDoc = doc(duplicateIndexRef, supplierId);
+  const auditDoc = doc(auditLogsRef);
+  const snapshot = await getDoc(supplierDoc);
+  if (!snapshot.exists()) {
+    throw new Error("supplierNotFound");
+  }
+  const supplier = snapshot.data() as Supplier;
+  const batch = writeBatch(db);
+  batch.delete(supplierDoc);
+  batch.delete(duplicateDoc);
+  batch.set(auditDoc, {
+    actorId,
+    action: "supplier.deleted",
+    targetType: "supplier",
+    targetId: supplierId,
+    details: {
+      supplierName: supplier.displayName || supplier.nameOriginal,
+    },
+    createdAt: serverTimestamp(),
+  } satisfies Omit<AuditLog, "id">);
+  await batch.commit();
+}
+
+export async function approveSupplierSubmission(
+  submission: SupplierSubmission,
+  actorId: string,
+  settings: PlatformSettings,
+  editedSupplierData?: SupplierDraft,
+) {
+  if (!isFirebaseConfigured) {
+    return demo.demoApproveSupplierSubmission(submission, actorId, settings, editedSupplierData);
+  }
+  const supplierData = editedSupplierData || submission.supplierData;
+  const supplierDoc = doc(suppliersRef);
+  const submissionDoc = doc(submissionsRef, submission.id);
+  const userDocRef = doc(usersRef, submission.submittedBy);
+  const duplicateDoc = doc(duplicateIndexRef, supplierDoc.id);
+  const accessCreditDoc = doc(accessCreditsRef);
+  const accessGrantDoc = doc(accessGrantsRef);
+  const notificationDoc = doc(notificationsRef);
+  const contributionLogDoc = doc(contributionLogsRef);
+  const auditDoc = doc(auditLogsRef);
+
+  await runTransaction(db, async (transaction) => {
+    const userSnapshot = await transaction.get(userDocRef);
+    if (!userSnapshot.exists()) {
+      throw new Error("Contributor profile was not found.");
+    }
+
+    const user = userSnapshot.data() as AppUser;
+    const approvedSubmissions = (user.approvedSubmissions || 0) + 1;
+    const rejectedSubmissions = user.rejectedSubmissions || 0;
+    const duplicateSubmissions = user.duplicateSubmissions || 0;
+    const approvedNewSupplierContributions = (user.approvedNewSupplierContributions || 0) + 1;
+    const pendingSubmissionIds = [...(user.unconsumedApprovedSubmissionIds || []), submission.id];
+    const previewUser = {
+      ...user,
+      approvedSubmissions,
+      rejectedSubmissions,
+      duplicateSubmissions,
+      approvedNewSupplierContributions,
+    };
+    const accessGrant = calculateAccessGrant(previewUser, settings);
+    const existingAccessDate = toDate(user.accessExpiresAt);
+    const now = new Date();
+    const baseAccessDate = existingAccessDate ? maxDate(now, existingAccessDate) : now;
+    const maxStackDate = addDays(now, settings.maximumStackableMonths * settings.daysGrantedPerBatch);
+    let daysToGrant = accessGrant.daysToGrant;
+    let consumedForAccess = accessGrant.consumed;
+    if (daysToGrant > 0 && addDays(baseAccessDate, daysToGrant).getTime() > maxStackDate.getTime()) {
+      const allowedDays = Math.max(0, Math.floor((maxStackDate.getTime() - baseAccessDate.getTime()) / 86_400_000));
+      const allowedMonths = Math.floor(allowedDays / settings.daysGrantedPerBatch);
+      daysToGrant = allowedMonths * settings.daysGrantedPerBatch;
+      consumedForAccess = allowedMonths * settings.requiredApprovedSuppliersPerMonth;
+    }
+    const newAccessExpiresAt =
+      daysToGrant > 0 ? addDays(baseAccessDate, daysToGrant) : user.accessExpiresAt || null;
+    const nextQualityRatio = qualityRatio(approvedSubmissions, rejectedSubmissions, duplicateSubmissions);
+    const nextBadges = deriveBadges({
+      ...previewUser,
+      qualityRatio: nextQualityRatio,
+      badges: user.badges || [],
+      approvedReviews: user.approvedReviews || 0,
+    });
+
+    transaction.set(supplierDoc, {
+      ...supplierData,
+      id: supplierDoc.id,
+      status: "approved",
+      verificationStatus: "community_submitted",
+      sourceSummary: supplierData.sourceNote || supplierData.sourceType,
+      averageRating: 0,
+      reviewCount: 0,
+      createdBy: submission.submittedBy,
+      accountOwnerId: user.accountType === "supplier" ? submission.submittedBy : "",
+      canReceiveRfqs: user.accountType === "supplier",
+      approvedBy: actorId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    } satisfies Supplier);
+
+    transaction.set(duplicateDoc, {
+      supplierId: supplierDoc.id,
+      supplierName: supplierData.displayName || supplierData.nameOriginal,
+      normalizedName: supplierData.normalizedName,
+      normalizedPhones: supplierData.normalizedPhones,
+      normalizedEmail: normalizeEmail(supplierData.email),
+      website: normalizeUrl(supplierData.website),
+      facebook: normalizeUrl(supplierData.facebook),
+      contactPerson: supplierData.contactPerson || "",
+      governorate: supplierData.governorate,
+      governorates: supplierData.governorates || (supplierData.governorate ? [supplierData.governorate] : []),
+      categories: supplierData.categories,
+    } satisfies SupplierDuplicateIndex);
+
+    transaction.update(submissionDoc, {
+      submissionStatus: "approved",
+      adminDecision: "approved",
+      countsForAccess: true,
+      creditConsumed: consumedForAccess > 0,
+      reviewedAt: serverTimestamp(),
+      adminNotes: "",
+    });
+    transaction.delete(doc(db, "supplierSubmissionDuplicateIndex", submission.id));
+
+    transaction.update(userDocRef, {
+      ...(user.accountType === "supplier" && !user.supplierProfileId
+        ? { supplierProfileId: supplierDoc.id }
+        : {}),
+      approvedSubmissions,
+      approvedNewSupplierContributions,
+      consumedApprovedSupplierContributions:
+        (user.consumedApprovedSupplierContributions || 0) + consumedForAccess,
+      unconsumedApprovedSubmissionIds: consumedForAccess > 0 ? pendingSubmissionIds.slice(Math.min(consumedForAccess, pendingSubmissionIds.length)) : pendingSubmissionIds,
+      accessStatus: daysToGrant > 0 || (existingAccessDate && existingAccessDate > now) ? "active" : user.accessStatus,
+      accessExpiresAt: newAccessExpiresAt,
+      points: (user.points || 0) + 10 + (supplierData.phones.length || supplierData.email ? 2 : 0) + (supplierData.categories.length && supplierData.capabilityTags.length ? 2 : 0),
+      qualityRatio: nextQualityRatio,
+      badges: nextBadges,
+      updatedAt: serverTimestamp(),
+    });
+
+    transaction.set(contributionLogDoc, {
+      userId: submission.submittedBy,
+      type: "new_supplier",
+      supplierSubmissionId: submission.id,
+      supplierId: supplierDoc.id,
+      points: 10,
+      countsForAccess: true,
+      createdAt: serverTimestamp(),
+    });
+
+    if (daysToGrant > 0) {
+      transaction.set(accessCreditDoc, {
+        userId: submission.submittedBy,
+        source: "supplier_contribution",
+        approvedSupplierCount: consumedForAccess,
+        daysGranted: daysToGrant,
+        status: "applied",
+        createdAt: serverTimestamp(),
+        appliedAt: serverTimestamp(),
+      } satisfies Omit<AccessCredit, "id">);
+      transaction.set(accessGrantDoc, {
+        userId: submission.submittedBy,
+        grantType: "supplier_contribution",
+        approvedSubmissionIds: pendingSubmissionIds.slice(0, Math.min(consumedForAccess, pendingSubmissionIds.length)),
+        approvedSupplierCount: consumedForAccess,
+        daysGranted: daysToGrant,
+        grantedAt: serverTimestamp(),
+        previousExpiry: existingAccessDate || null,
+        newExpiry: newAccessExpiresAt,
+        createdBy: actorId,
+        auditReference: auditDoc.id,
+        createdAt: serverTimestamp(),
+      });
+    }
+
+    transaction.set(notificationDoc, {
+      userId: submission.submittedBy,
+      type: "submission",
+      titleAr: "ØªÙ… Ø§Ø¹ØªÙ…Ø§Ø¯ Ø§Ù„Ù…Ø¬Ù‡Ø²",
+      titleEn: "Supplier submission approved",
+      bodyAr: daysToGrant > 0 ? "ØªÙ… Ø§Ø¹ØªÙ…Ø§Ø¯ Ø§Ù„Ø³Ø¬Ù„ ÙˆÙ…Ù†Ø­ ÙØªØ±Ø© ÙˆØµÙˆÙ„ Ø¥Ø¶Ø§ÙÙŠØ©." : "ØªÙ… Ø§Ø¹ØªÙ…Ø§Ø¯ Ø³Ø¬Ù„ Ø§Ù„Ù…Ø¬Ù‡Ø² ÙˆØ¥Ø¶Ø§ÙØªÙ‡ Ø¥Ù„Ù‰ Ø§Ù„Ø¯Ù„ÙŠÙ„.",
+      bodyEn: daysToGrant > 0 ? "The record was approved and additional access was granted." : "The supplier record was approved and added to the directory.",
+      link: "/buyer/suppliers/submissions",
+      read: false,
+      createdAt: serverTimestamp(),
+    });
+
+    transaction.set(auditDoc, {
+      actorId,
+      action: "supplier_submission.approved",
+      targetType: "supplierSubmission",
+      targetId: submission.id,
+      details: {
+        supplierId: supplierDoc.id,
+        contributorId: submission.submittedBy,
+        daysGranted: daysToGrant,
+      },
+      createdAt: serverTimestamp(),
+    } satisfies Omit<AuditLog, "id">);
+  });
+}
+
+export async function decideSupplierSubmission(
+  submission: SupplierSubmission,
+  actorId: string,
+  decision: "needs_correction" | "rejected" | "possible_duplicate" | "merged" | "archived",
+  adminNotes: string,
+) {
+  if (!isFirebaseConfigured) {
+    return demo.demoDecideSupplierSubmission(submission, actorId, decision, adminNotes);
+  }
+  const userRef = doc(usersRef, submission.submittedBy);
+  const submissionRef = doc(submissionsRef, submission.id);
+  await runTransaction(db, async (transaction) => {
+    const userSnapshot = await transaction.get(userRef);
+    const user = userSnapshot.exists() ? (userSnapshot.data() as AppUser) : null;
+    const rejectedSubmissions = decision === "rejected" ? (user?.rejectedSubmissions || 0) + 1 : user?.rejectedSubmissions || 0;
+    const duplicateSubmissions =
+      decision === "possible_duplicate" || decision === "merged"
+        ? (user?.duplicateSubmissions || 0) + 1
+        : user?.duplicateSubmissions || 0;
+    const approvedSubmissions = user?.approvedSubmissions || 0;
+
+    transaction.update(submissionRef, {
+      submissionStatus: decision,
+      adminDecision: decision,
+      adminNotes,
+      countsForAccess: false,
+      creditConsumed: false,
+      reviewedAt: serverTimestamp(),
+    });
+    transaction.delete(doc(db, "supplierSubmissionDuplicateIndex", submission.id));
+
+    if (user) {
+      transaction.update(userRef, {
+        rejectedSubmissions,
+        duplicateSubmissions,
+        points: decision === "rejected" ? Math.max(0, (user.points || 0) - 2) : user.points || 0,
+        qualityRatio: qualityRatio(approvedSubmissions, rejectedSubmissions, duplicateSubmissions),
+        updatedAt: serverTimestamp(),
+      });
+    }
+
+    transaction.set(doc(auditLogsRef), {
+      actorId,
+      action: `supplier_submission.${decision}`,
+      targetType: "supplierSubmission",
+      targetId: submission.id,
+      details: { adminNotes },
+      createdAt: serverTimestamp(),
+    } satisfies Omit<AuditLog, "id">);
+  });
+}
+
+export async function listSupplierReviews(supplierId: string, includePending = false) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListSupplierReviews(supplierId, includePending);
+  }
+  const snapshot = await getDocs(
+    includePending
+      ? query(reviewsRef, where("supplierId", "==", supplierId))
+      : query(reviewsRef, where("supplierId", "==", supplierId), where("status", "==", "approved")),
+  );
+  return sortByCreatedAtDesc(
+    snapshot.docs.map((item) => withId<SupplierReview>(item)),
+    50,
+  );
+}
+
+export async function listMyReviews(userId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListMyReviews(userId);
+  }
+  const snapshot = await getDocs(query(reviewsRef, where("reviewedBy", "==", userId)));
+  return sortByCreatedAtDesc(
+    snapshot.docs.map((item) => withId<SupplierReview>(item)),
+    100,
+  );
+}
+
+export async function submitSupplierReview(review: Omit<SupplierReview, "id" | "status" | "createdAt">) {
+  if (!isFirebaseConfigured) {
+    return demo.demoSubmitSupplierReview(review);
+  }
+  await addDoc(reviewsRef, {
+    ...review,
+    status: "pending_review",
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function listPendingReviews() {
+  if (!isFirebaseConfigured) {
+    return demo.demoListPendingReviews();
+  }
+  const snapshot = await getDocs(query(reviewsRef, where("status", "==", "pending_review")));
+  return sortByCreatedAtDesc(
+    snapshot.docs.map((item) => withId<SupplierReview>(item)),
+    100,
+  );
+}
+
+export async function moderateReview(review: SupplierReview, actorId: string, decision: "approved" | "rejected") {
+  if (!isFirebaseConfigured) {
+    return demo.demoModerateReview(review, actorId, decision);
+  }
+  const reviewDoc = doc(reviewsRef, review.id);
+  const supplierDoc = doc(suppliersRef, review.supplierId);
+  const userDocRef = doc(usersRef, review.reviewedBy);
+  const settings = await getPlatformSettings();
+
+  await runTransaction(db, async (transaction) => {
+    const supplierSnapshot = await transaction.get(supplierDoc);
+    const userSnapshot = await transaction.get(userDocRef);
+    const supplier = supplierSnapshot.exists() ? (supplierSnapshot.data() as Supplier) : null;
+    const user = userSnapshot.exists() ? (userSnapshot.data() as AppUser) : null;
+
+    transaction.update(reviewDoc, {
+      status: decision,
+      approvedAt: decision === "approved" ? serverTimestamp() : null,
+    });
+
+    if (decision === "approved" && supplier) {
+      const count = supplier.reviewCount || 0;
+      const averageRating = Number((((supplier.averageRating || 0) * count + review.overall) / (count + 1)).toFixed(2));
+      transaction.update(supplierDoc, {
+        reviewCount: count + 1,
+        averageRating,
+        updatedAt: serverTimestamp(),
+      });
+    }
+
+    if (decision === "approved" && user) {
+      transaction.update(userDocRef, {
+        approvedReviews: (user.approvedReviews || 0) + 1,
+        points: (user.points || 0) + (settings.reviewsEarnBonusPoints ? 4 : 0),
+        updatedAt: serverTimestamp(),
+      });
+    }
+
+    transaction.set(doc(auditLogsRef), {
+      actorId,
+      action: `review.${decision}`,
+      targetType: "review",
+      targetId: review.id,
+      details: { supplierId: review.supplierId },
+      createdAt: serverTimestamp(),
+    } satisfies Omit<AuditLog, "id">);
+  });
+}
+
+export async function listAuditLogs() {
+  if (!isFirebaseConfigured) {
+    return demo.demoListAuditLogs();
+  }
+  const snapshot = await getDocs(query(auditLogsRef, orderBy("createdAt", "desc"), limit(100)));
+  return snapshot.docs.map((item) => withId<AuditLog>(item));
+}
+
+export async function listAccessCredits(userId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListAccessCredits(userId);
+  }
+  const snapshot = await getDocs(query(accessCreditsRef, where("userId", "==", userId)));
+  return sortByCreatedAtDesc(
+    snapshot.docs.map((item) => withId<AccessCredit>(item)),
+    50,
+  );
+}
+
+export async function submitSupplierFeedback(
+  userId: string,
+  supplier: Pick<Supplier, "id" | "displayName" | "nameOriginal" | "nameAr" | "nameEn">,
+  type: SupplierFeedbackType,
+  message: string,
+  suggestedCorrection: string,
+) {
+  if (!isFirebaseConfigured) {
+    return demo.demoSubmitSupplierFeedback(userId, supplier, type, message, suggestedCorrection);
+  }
+  await addDoc(supplierFeedbackRef, {
+    supplierId: supplier.id,
+    supplierName: supplier.displayName || supplier.nameOriginal,
+    supplierNameAr: supplier.nameAr || "",
+    supplierNameEn: supplier.nameEn || "",
+    submittedBy: userId,
+    type,
+    message: message.trim(),
+    suggestedCorrection: suggestedCorrection.trim(),
+    status: "pending",
+    adminNotes: "",
+    createdAt: serverTimestamp(),
+  } satisfies Omit<SupplierFeedback, "id" | "createdAt"> & { createdAt: unknown });
+}
+
+export async function listMySupplierFeedback(userId: string) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListMySupplierFeedback(userId);
+  }
+  const snapshot = await getDocs(query(supplierFeedbackRef, where("submittedBy", "==", userId)));
+  return sortByCreatedAtDesc(
+    snapshot.docs.map((item) => withId<SupplierFeedback>(item)),
+    100,
+  );
+}
+
+export async function listSupplierFeedback(
+  statuses: SupplierFeedbackStatus[] = ["pending", "in_review"],
+) {
+  if (!isFirebaseConfigured) {
+    return demo.demoListSupplierFeedback(statuses);
+  }
+  const snapshot = await getDocs(
+    statuses.length === 1
+      ? query(supplierFeedbackRef, where("status", "==", statuses[0]))
+      : query(supplierFeedbackRef, where("status", "in", statuses)),
+  );
+  return sortByCreatedAtDesc(
+    snapshot.docs.map((item) => withId<SupplierFeedback>(item)),
+    100,
+  );
+}
+
+export async function updateSupplierFeedbackStatus(
+  feedback: SupplierFeedback,
+  actorId: string,
+  status: Exclude<SupplierFeedbackStatus, "pending">,
+  adminNotes: string,
+) {
+  if (!isFirebaseConfigured) {
+    return demo.demoUpdateSupplierFeedbackStatus(feedback, actorId, status, adminNotes);
+  }
+  const feedbackDoc = doc(supplierFeedbackRef, feedback.id);
+  await runTransaction(db, async (transaction) => {
+    transaction.update(feedbackDoc, {
+      status,
+      adminNotes: adminNotes.trim(),
+      reviewedAt: serverTimestamp(),
+      reviewedBy: actorId,
+    });
+    transaction.set(doc(auditLogsRef), {
+      actorId,
+      action: `supplier_feedback.${status}`,
+      targetType: "supplierFeedback",
+      targetId: feedback.id,
+      details: {
+        supplierId: feedback.supplierId,
+        feedbackType: feedback.type,
+      },
+      createdAt: serverTimestamp(),
+    } satisfies Omit<AuditLog, "id">);
+  });
+}
+
+
