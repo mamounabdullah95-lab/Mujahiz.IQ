@@ -154,6 +154,7 @@ export interface SupplierDraft {
   governorate: string;
   governorates?: string[];
   branches?: SupplierBranch[];
+  branchDetails?: string;
   city: string;
   marketArea: string;
   address?: string;
@@ -216,6 +217,16 @@ export interface SupplierSubmission {
   creditConsumed: boolean;
   createdAt: TimestampLike;
   reviewedAt?: TimestampLike;
+  source?: "manual" | "excel_import";
+  importBatchId?: string;
+  originalRowNumber?: number;
+  importedBy?: string;
+  importedByRole?: "buyer" | "admin" | "owner";
+  importedAt?: TimestampLike;
+  profileCompleteness?: number;
+  validationStatus?: string;
+  idempotencyKey?: string;
+  duplicateOverrideReason?: string;
 }
 
 export interface SupplierDuplicateIndex {

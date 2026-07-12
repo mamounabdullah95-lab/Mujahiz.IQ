@@ -15,7 +15,9 @@ test("accountType is not self editable", () => {
 
 test("company submission creation supports buyers, suppliers, and admins", () => {
   assert.match(rules, /function canSubmitCompany\(\)[\s\S]*?\(isBuyer\(\) \|\| isSupplierAccount\(\) \|\| isAdmin\(\)\)/);
-  assert.match(rules, /match \/supplierSubmissions\/\{submissionId\}[\s\S]*?allow create: if canSubmitCompany\(\)/);
+  const submissionRules = rules.match(/match \/supplierSubmissions\/\{submissionId\}[\s\S]*?(?=\n    match \/)/)?.[0] || "";
+  assert.match(submissionRules, /canSubmitCompany\(\)/);
+  assert.match(submissionRules, /validExcelImportSubmission/);
 });
 
 test("review creation is buyer only", () => {

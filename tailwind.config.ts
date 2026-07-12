@@ -5,14 +5,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: "#06284f",
-        river: "#0b4778",
-        mint: "#16a34a",
-        amber: "#ff6b00",
-        clay: "#c94f17",
+        ink: "#0B2F4E",
+        navy: "#062B4D",
+        navy900: "#042542",
+        river: "#083A62",
+        mint: "#22A35A",
+        successBg: "#DDF7E8",
+        amber: "#F37021",
+        golden: "#FF8A00",
+        clay: "#D35400",
+        cream: "#FFF6EA",
+        creamLight: "#FFF9F1",
+        borderSoft: "#EBDCCB",
+        muted: "#64748B",
       },
       fontFamily: {
         sans: [
+          "Cairo",
+          "Tajawal",
           "Inter",
           "Noto Sans Arabic",
           "system-ui",
@@ -23,7 +33,8 @@ export default {
         ],
       },
       boxShadow: {
-        soft: "0 18px 45px -30px rgba(6, 40, 79, 0.36)",
+        soft: "0 14px 40px rgba(6, 43, 77, 0.08)",
+        card: "0 10px 28px rgba(6, 43, 77, 0.06)",
       },
     },
   },
