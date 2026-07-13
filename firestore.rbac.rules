@@ -355,7 +355,7 @@ service cloud.firestore {
     }
 
     match /accessCredits/{creditId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create: if isAdmin() || isValidOwnTrialCredit(creditId); allow update, delete: if isAdmin(); }
-    match /accessGrants/{grantId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create: if isAdmin() || isValidOwnTrialCredit(grantId); allow update, delete: if false; }
+    match /accessGrants/{grantId} { allow read: if isAdmin() || (signedIn() && (grantId == "trial-" + request.auth.uid || resource.data.userId == request.auth.uid)); allow create: if isAdmin() || isValidOwnTrialCredit(grantId); allow update, delete: if false; }
     match /contributionLogs/{logId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create, update, delete: if isAdmin(); }
     match /categories/{categoryId} { allow read: if signedIn(); allow create, update: if isAdmin(); allow delete: if isOwner(); }
     match /settings/{settingId} {
