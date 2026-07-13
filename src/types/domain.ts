@@ -83,6 +83,10 @@ export interface AppUser {
   status: UserStatus;
   accessStatus: AccessStatus;
   accessExpiresAt: TimestampLike;
+  emailVerified?: boolean;
+  emailVerifiedAt?: TimestampLike;
+  trialStartedAt?: TimestampLike;
+  trialEndsAt?: TimestampLike;
   trustScore: number;
   points: number;
   qualityRatio: number;

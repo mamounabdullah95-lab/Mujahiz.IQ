@@ -71,21 +71,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadProfile = useCallback(async (user: User | null) => {
     setFirebaseUser(user);
-    setVerified(!isFirebaseConfigured || Boolean(user?.emailVerified));
     if (!user) {
+      setVerified(!isFirebaseConfigured);
       setAppUser(null);
       setLoading(false);
       return;
     }
+
     let profile = await getUserProfile(user.uid);
+    let verificationSynchronized = !isFirebaseConfigured || Boolean(user.emailVerified);
     if (user.emailVerified && profile) {
+      verificationSynchronized = false;
       try {
+        await user.getIdToken(true);
         await activateVerifiedUser(user.uid);
         profile = await getUserProfile(user.uid);
+        verificationSynchronized = Boolean(profile?.emailVerified);
       } catch {
-        // Existing approved accounts may already be active; route guards still rely on Auth verification.
+        // Keep protected routes on the verification screen until Auth and Firestore agree.
       }
     }
+
+    setVerified(verificationSynchronized);
     setAppUser(profile);
     if (profile?.language) localStorage.setItem("mujahiz-iq-locale", profile.language);
     setLoading(false);
@@ -187,15 +194,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshEmailVerification: async () => {
         const current = auth?.currentUser;
         if (!current) return false;
+
         await current.reload();
         const refreshed = auth?.currentUser;
-        const isVerified = Boolean(refreshed?.emailVerified);
-        setVerified(isVerified);
-        if (isVerified && refreshed) {
-          await activateVerifiedUser(refreshed.uid);
-          await loadProfile(refreshed);
+        if (!refreshed?.emailVerified) {
+          setVerified(false);
+          return false;
         }
-        return isVerified;
+
+        await refreshed.getIdToken(true);
+        await activateVerifiedUser(refreshed.uid);
+        const profile = await getUserProfile(refreshed.uid);
+        const verificationSynchronized = Boolean(profile?.emailVerified);
+        setFirebaseUser(refreshed);
+        setAppUser(profile);
+        setVerified(verificationSynchronized);
+        if (profile?.language) localStorage.setItem("mujahiz-iq-locale", profile.language);
+        return verificationSynchronized;
       },
       logout: async () => {
         if (!auth || !isFirebaseConfigured) demoClearSession();

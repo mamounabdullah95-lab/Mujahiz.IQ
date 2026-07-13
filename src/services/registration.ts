@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, runTransaction, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, runTransaction, serverTimestamp, setDoc } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "../config/firebase";
 import { defaultSettings } from "../data/constants";
 import type { AccountType, AppUser, Locale } from "../types/domain";
@@ -65,15 +65,54 @@ export async function createUserProfileSafely(uid: string, email: string, profil
 export async function activateVerifiedUser(uid: string) {
   if (!isFirebaseConfigured) return;
   const userRef = doc(db, "users", uid);
-  const creditRef = doc(collection(db, "accessCredits"));
-  const grantRef = doc(collection(db, "accessGrants"));
-  const auditRef = doc(collection(db, "auditLogs"));
+  const verificationAuditRef = doc(db, "auditLogs", `email-verification-${uid}`);
+  const trialCreditRef = doc(db, "accessCredits", `trial-${uid}`);
+  const trialGrantRef = doc(db, "accessGrants", `trial-${uid}`);
+
   await runTransaction(db, async (transaction) => {
     const snapshot = await transaction.get(userRef);
     if (!snapshot.exists()) throw new Error("profile_setup_incomplete");
-    const profile = snapshot.data() as AppUser & { emailVerified?: boolean; trialStartedAt?: unknown };
-    if (profile.accessStatus !== "pending" || profile.accessExpiresAt) return;
-    if (profile.emailVerified && profile.trialStartedAt) return;
+
+    const profile = snapshot.data() as AppUser & {
+      emailVerified?: boolean;
+      trialStartedAt?: unknown;
+      trialEndsAt?: unknown;
+    };
+    if (profile.emailVerified === true) return;
+
+    const isNewBuyer =
+      profile.accountType === "buyer"
+      && profile.accessStatus === "pending"
+      && !profile.accessExpiresAt
+      && !profile.trialStartedAt
+      && !profile.trialEndsAt;
+
+    let trialAlreadyGranted = false;
+    if (isNewBuyer) {
+      const existingGrant = await transaction.get(trialGrantRef);
+      trialAlreadyGranted = existingGrant.exists();
+    }
+
+    if (!isNewBuyer || trialAlreadyGranted) {
+      transaction.update(userRef, {
+        emailVerified: true,
+        emailVerifiedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      transaction.set(verificationAuditRef, {
+        actorId: uid,
+        action: "user.email_verified",
+        targetType: "user",
+        targetId: uid,
+        details: {
+          accountType: profile.accountType || null,
+          trialStarted: false,
+        },
+        createdAt: serverTimestamp(),
+      });
+      return;
+    }
+
     const now = new Date();
     const trialEndsAt = addDays(now, defaultSettings.trialAccessDays);
     transaction.update(userRef, {
@@ -85,7 +124,7 @@ export async function activateVerifiedUser(uid: string) {
       accessExpiresAt: trialEndsAt,
       updatedAt: serverTimestamp(),
     });
-    transaction.set(creditRef, {
+    transaction.set(trialCreditRef, {
       userId: uid,
       grantType: "trial_access",
       source: "trial_access",
@@ -100,7 +139,7 @@ export async function activateVerifiedUser(uid: string) {
       appliedAt: serverTimestamp(),
       createdBy: uid,
     });
-    transaction.set(grantRef, {
+    transaction.set(trialGrantRef, {
       userId: uid,
       source: "trial_access",
       grantType: "trial_access",
@@ -112,15 +151,19 @@ export async function activateVerifiedUser(uid: string) {
       previousExpiry: null,
       newExpiry: trialEndsAt,
       createdBy: uid,
-      auditReference: auditRef.id,
+      auditReference: verificationAuditRef.id,
       createdAt: serverTimestamp(),
     });
-    transaction.set(auditRef, {
+    transaction.set(verificationAuditRef, {
       actorId: uid,
       action: "user.email_verified_trial_started",
       targetType: "user",
       targetId: uid,
-      details: { days: defaultSettings.trialAccessDays },
+      details: {
+        accountType: "buyer",
+        days: defaultSettings.trialAccessDays,
+        trialStarted: true,
+      },
       createdAt: serverTimestamp(),
     });
   });
