@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayoutV2 } from "./components/AppLayoutV2";
 import { AuthLoadingScreen } from "./components/AuthLoadingScreen";
 import { RoleProtectedRoute } from "./components/RoleProtectedRoute";
+import { features } from "./config/features";
 
 const AddSupplierPage = lazy(() => import("./pages/AddSupplierPage").then((m) => ({ default: m.AddSupplierPage })));
 const SupplierExcelImportPage = lazy(() => import("./pages/SupplierExcelImportPage").then((m) => ({ default: m.SupplierExcelImportPage })));
@@ -98,9 +99,11 @@ export function AppV2() {
       <Route path="suppliers/submissions/:submissionId/edit" element={<AddSupplierPage />} />
     </Route>
 
-    <Route element={<RoleProtectedRoute allowedRoles={supplierExcelImporterRoles} allowPending />}>
-      <Route path="suppliers/import" element={<SupplierExcelImportPage />} />
-    </Route>
+    {features.supplierExcelImport ? (
+      <Route element={<RoleProtectedRoute allowedRoles={supplierExcelImporterRoles} allowPending />}>
+        <Route path="suppliers/import" element={<SupplierExcelImportPage />} />
+      </Route>
+    ) : null}
 
     <Route element={<RoleProtectedRoute allowedRoles={["buyer"]} allowPending />}>
       <Route path="buyer" element={<BuyerDashboardPage />} />
@@ -150,6 +153,7 @@ export function AppV2() {
       <Route path="admin/material-dictionary" element={<AdminMaterialDictionaryPage />} />
       <Route path="admin/settings" element={<AdminOperationalSettingsPage />} />
       <Route path="admin/reports" element={<AdminReportsPage />} />
+      <Route path="admin/audit-logs" element={<AdminAuditLogsPage />} />
     </Route>
 
     <Route element={<RoleProtectedRoute allowedRoles={superAdminRoles} />}>

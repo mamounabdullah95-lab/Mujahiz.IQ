@@ -21,5 +21,12 @@ test("public pages use local taxonomy without protected Firestore reads", () => 
 test("linked supplier migration is dry-run by default and requires --apply", () => {
   assert.match(migration, /const apply = process\.argv\.includes\("--apply"\)/);
   assert.match(migration, /No Firestore documents were changed/);
+  assert.match(migration, /LINKABLE=/);
+  assert.match(migration, /UNLINKABLE=/);
+  assert.match(migration, /DUPLICATES=/);
+  assert.match(migration, /WOULD_UPDATE=/);
+  assert.match(migration, /WRITES_EXECUTED=0/);
+  assert.match(migration, /multiple_accounts_claim_same_profile/);
+  assert.match(migration, /supplier_profile_owned_by_another_account/);
   assert.match(migration, /canReceiveRfqs: \{ booleanValue: candidate\.desiredEligibility \}/);
 });

@@ -1,0 +1,51 @@
+name: PR gate
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_FILE_UPLOADS_ENABLED: "false"
+      VITE_SUPPLIER_EXCEL_IMPORT_ENABLED: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Set up Java for Firebase Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run repository tests
+        run: npm test
+
+      - name: TypeScript and production build
+        run: npm run build
+
+      - name: Run Firestore Emulator tests
+        run: npm run test:firestore-emulator
+
+      - name: Regenerate supplier template
+        run: npm run generate:supplier-template
+
+      - name: Verify generated template is unchanged
+        shell: bash
+        run: |
+          git diff --exit-code -- public/templates/supplier-import-template.xlsx
+          test "$(git hash-object public/templates/supplier-import-template.xlsx)" = "$(git rev-parse HEAD:public/templates/supplier-import-template.xlsx)"

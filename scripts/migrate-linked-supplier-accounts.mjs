@@ -57,43 +57,106 @@ const queryResult = await api(`${databasePath}:runQuery`, {
   }),
 });
 
-const candidates = [];
-for (const row of queryResult) {
+const supplierAccounts = queryResult.flatMap((row) => {
   const userDocument = row.document;
-  if (!userDocument) continue;
-  const userId = documentId(userDocument.name);
-  const supplierProfileId = stringField(userDocument.fields, "supplierProfileId");
-  if (!supplierProfileId) continue;
-  const status = stringField(userDocument.fields, "status");
-  const desiredEligibility = status === "approved";
+  if (!userDocument) return [];
+  return [{
+    userId: documentId(userDocument.name),
+    email: stringField(userDocument.fields, "email"),
+    supplierProfileId: stringField(userDocument.fields, "supplierProfileId"),
+    status: stringField(userDocument.fields, "status"),
+  }];
+});
+
+const claimsByProfile = new Map();
+for (const account of supplierAccounts) {
+  if (!account.supplierProfileId) continue;
+  const claims = claimsByProfile.get(account.supplierProfileId) || [];
+  claims.push(account);
+  claimsByProfile.set(account.supplierProfileId, claims);
+}
+
+const linkable = [];
+const unlinkable = [];
+const duplicates = [];
+
+for (const account of supplierAccounts) {
+  if (!account.supplierProfileId) {
+    unlinkable.push({ ...account, reason: "missing_supplier_profile_id" });
+    continue;
+  }
+
+  const claims = claimsByProfile.get(account.supplierProfileId) || [];
+  if (claims.length > 1) {
+    duplicates.push({
+      ...account,
+      reason: "multiple_accounts_claim_same_profile",
+      conflictingUserIds: claims.map((item) => item.userId).filter((id) => id !== account.userId),
+    });
+    continue;
+  }
+
   let supplierDocument;
   try {
-    supplierDocument = await api(`${databasePath}/suppliers/${encodeURIComponent(supplierProfileId)}`);
+    supplierDocument = await api(`${databasePath}/suppliers/${encodeURIComponent(account.supplierProfileId)}`);
   } catch (error) {
     if (error.status === 404) {
-      candidates.push({ userId, supplierProfileId, status, action: "missing_supplier_profile" });
+      unlinkable.push({ ...account, reason: "missing_supplier_profile" });
       continue;
     }
     throw error;
   }
+
   const currentOwner = stringField(supplierDocument.fields, "accountOwnerId");
   const currentEligibility = booleanField(supplierDocument.fields, "canReceiveRfqs");
-  if (currentOwner === userId && currentEligibility === desiredEligibility) continue;
-  candidates.push({
-    userId,
-    supplierProfileId,
-    status,
+  const desiredEligibility = account.status === "approved";
+
+  if (currentOwner && currentOwner !== account.userId) {
+    duplicates.push({
+      ...account,
+      reason: "supplier_profile_owned_by_another_account",
+      currentOwner,
+    });
+    continue;
+  }
+
+  linkable.push({
+    ...account,
     currentOwner,
     currentEligibility,
     desiredEligibility,
-    action: "update_link",
+    requiresUpdate: currentOwner !== account.userId || currentEligibility !== desiredEligibility,
   });
 }
 
-console.log(`PROJECT=${projectId}`);
-console.log(`MODE=${apply ? "apply" : "dry-run"}`);
-console.log(`CANDIDATES=${candidates.length}`);
-console.table(candidates);
+const wouldUpdate = linkable.filter((item) => item.requiresUpdate);
+const summary = {
+  projectId,
+  mode: apply ? "apply" : "dry-run",
+  supplierAccounts: supplierAccounts.length,
+  linkable: linkable.length,
+  unlinkable: unlinkable.length,
+  duplicates: duplicates.length,
+  wouldUpdate: wouldUpdate.length,
+  updated: 0,
+  writesExecuted: 0,
+};
+
+console.log(`PROJECT=${summary.projectId}`);
+console.log(`MODE=${summary.mode}`);
+console.log(`SUPPLIER_ACCOUNTS=${summary.supplierAccounts}`);
+console.log(`LINKABLE=${summary.linkable}`);
+console.log(`UNLINKABLE=${summary.unlinkable}`);
+console.log(`DUPLICATES=${summary.duplicates}`);
+console.log(`WOULD_UPDATE=${summary.wouldUpdate}`);
+console.log("UPDATED=0");
+console.log("WRITES_EXECUTED=0");
+console.log("LINKABLE_ACCOUNTS");
+console.table(linkable);
+console.log("UNLINKABLE_ACCOUNTS");
+console.table(unlinkable);
+console.log("DUPLICATE_OR_CONFLICTING_ACCOUNTS");
+console.table(duplicates);
 
 if (!apply) {
   console.log("No Firestore documents were changed. Run again with --apply only after reviewing this report.");
@@ -101,8 +164,7 @@ if (!apply) {
 }
 
 let updated = 0;
-for (const candidate of candidates) {
-  if (candidate.action !== "update_link") continue;
+for (const candidate of wouldUpdate) {
   const query = new URLSearchParams();
   for (const field of ["accountOwnerId", "canReceiveRfqs", "updatedAt"]) query.append("updateMask.fieldPaths", field);
   await api(`${databasePath}/suppliers/${encodeURIComponent(candidate.supplierProfileId)}?${query}`, {
@@ -119,3 +181,4 @@ for (const candidate of candidates) {
 }
 
 console.log(`UPDATED=${updated}`);
+console.log(`WRITES_EXECUTED=${updated}`);

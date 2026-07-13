@@ -14,7 +14,9 @@ function sourceFiles(directory) {
 
 test("file uploads default to disabled and require an explicit true flag", () => {
   assert.match(read("src/config/features.ts"), /VITE_FILE_UPLOADS_ENABLED === "true"/);
-  assert.match(read("src/config/features.ts"), /VITE_SUPPLIER_EXCEL_IMPORT_ENABLED !== "false"/);
+  assert.match(read("src/config/features.ts"), /VITE_SUPPLIER_EXCEL_IMPORT_ENABLED === "true"/);
+  assert.match(read(".env.example"), /VITE_FILE_UPLOADS_ENABLED=false/);
+  assert.match(read(".env.example"), /VITE_SUPPLIER_EXCEL_IMPORT_ENABLED=true/);
   assert.match(read("src/services/uploadService.ts"), /throw new FileUploadsDisabledError/);
   assert.match(read("src/services/uploadService.ts"), /No Storage adapter is bundled/);
 });
@@ -41,4 +43,25 @@ test("Firestore rejects file payloads in Excel import metadata and supplier reco
   assert.match(rules, /!\("workbook" in data\)/);
   assert.match(rules, /!\("blob" in data\)/);
   assert.match(rules, /!\("rawData" in data\)/);
+});
+
+test("Excel import is gated in navigation, routing, UI, and service layers", () => {
+  assert.match(read("src/AppV2.tsx"), /features\.supplierExcelImport \? \(/);
+  assert.match(read("src/config/portalNavigation.ts"), /features\.supplierExcelImport \? \[/);
+  assert.match(read("src/pages/AddSupplierPage.tsx"), /features\.supplierExcelImport &&/);
+  assert.match(read("src/services/supplierExcelImport.ts"), /if \(!features\.supplierExcelImport\) throw new Error\("SUPPLIER_EXCEL_IMPORT_DISABLED"\)/);
+});
+
+test("Excel import does not persist or transmit workbook contents", () => {
+  const importerFiles = [
+    "src/pages/SupplierExcelImportPage.tsx",
+    "src/services/supplierExcelImport.ts",
+    "src/utils/supplierWorkbookReader.ts",
+  ];
+  const importer = importerFiles.map(read).join("\n");
+  assert.doesNotMatch(importer, /localStorage|sessionStorage|indexedDB|sendBeacon|logEvent|firebase\/analytics/i);
+  assert.doesNotMatch(importer, /console\.(?:log|info|warn|error)|fetch\s*\(/);
+  assert.match(importer, /arrayBuffer\s*\(/);
+  assert.match(read("src/services/supplierExcelImport.ts"), /originalFileName: preview\.fileName/);
+  assert.doesNotMatch(read("src/services/supplierExcelImport.ts"), /workbook\s*:|blob\s*:|base64\s*:|arrayBuffer\s*:/i);
 });
