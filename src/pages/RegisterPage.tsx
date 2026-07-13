@@ -7,6 +7,7 @@ import { Button, SelectField, TextAreaField, TextField } from "../components/ui"
 import { useAuth } from "../contexts/AuthContext";
 import { useTaxonomy } from "../contexts/TaxonomyContext";
 import { labelFor } from "../data/constants";
+import { defaultRegistrationSectors } from "../data/registrationSectors";
 import { listRegistrationSectors } from "../services/workspace";
 import type { RegistrationSector } from "../types/workspace";
 import { friendlyAuthError, isValidEmailAddress, isValidIraqiPhone } from "../utils/accountValidation";
@@ -35,11 +36,17 @@ export function RegisterPage() {
   const { register } = useAuth();
   const { taxonomy } = useTaxonomy();
   const navigate = useNavigate();
-  const [sectors, setSectors] = useState<RegistrationSector[]>([]);
+  const [sectors, setSectors] = useState<RegistrationSector[]>(() =>
+    defaultRegistrationSectors.filter((item) => item.active).sort((a, b) => a.order - b.order),
+  );
   const [form, setForm] = useState({ accountType: "buyer" as AccountTypeChoice, email: "", password: "", fullName: "", phone: "", jobTitle: "", organization: "", governorate: "", city: "", sector: "", otherSector: "", reasonForJoining: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  useEffect(() => { void listRegistrationSectors().then(setSectors); }, []);
+  useEffect(() => {
+    void listRegistrationSectors().then((items) => {
+      if (items.length) setSectors(items);
+    });
+  }, []);
   const isSupplier = form.accountType === "supplier";
   async function handleSubmit(event: FormEvent) {
     event.preventDefault(); setError("");
