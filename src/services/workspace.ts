@@ -368,13 +368,20 @@ export async function saveAdminOperationsSettings(settings: AdminOperationsSetti
 }
 
 export async function listRegistrationSectors() {
+  const fallback = () => defaultRegistrationSectors.filter((item) => item.active).sort((a, b) => a.order - b.order);
   if (!isFirebaseConfigured) {
     const configured = localRead<RegistrationSector>("registrationSectors");
-    return (configured.length ? configured : defaultRegistrationSectors).filter((item) => item.active).sort((a, b) => a.order - b.order);
+    const sectors = configured.filter((item) => item.active).sort((a, b) => a.order - b.order);
+    return sectors.length ? sectors : fallback();
   }
-  const snapshot = await getDoc(doc(db, "publicConfig", "registration"));
-  const sectors = snapshot.exists() && Array.isArray(snapshot.data().sectors) ? snapshot.data().sectors as RegistrationSector[] : defaultRegistrationSectors;
-  return sectors.filter((item) => item.active).sort((a, b) => a.order - b.order);
+  try {
+    const snapshot = await getDoc(doc(db, "publicConfig", "registration"));
+    const configured = snapshot.exists() && Array.isArray(snapshot.data().sectors) ? snapshot.data().sectors as RegistrationSector[] : [];
+    const sectors = configured.filter((item) => item.active).sort((a, b) => a.order - b.order);
+    return sectors.length ? sectors : fallback();
+  } catch {
+    return fallback();
+  }
 }
 
 export async function saveRegistrationSectors(sectors: RegistrationSector[], actorId: string) {
