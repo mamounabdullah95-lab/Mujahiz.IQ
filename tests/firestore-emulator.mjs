@@ -164,7 +164,8 @@ async function synchronizeVerification(key, emailVerified = true) {
 }
 
 async function readVerificationState(uid) {
-  return environment.withSecurityRulesDisabled(async (context) => {
+  let state;
+  await environment.withSecurityRulesDisabled(async (context) => {
     const database = context.firestore();
     const [profile, credits, grants, audits] = await Promise.all([
       getDoc(doc(database, "users", uid)),
@@ -172,13 +173,14 @@ async function readVerificationState(uid) {
       getDocs(collection(database, "accessGrants")),
       getDocs(collection(database, "auditLogs")),
     ]);
-    return {
+    state = {
       profile: profile.data(),
       credits: credits.docs.filter((item) => item.data().userId === uid),
       grants: grants.docs.filter((item) => item.data().userId === uid),
       audits: audits.docs.filter((item) => item.data().actorId === uid),
     };
   });
+  return state;
 }
 
 function importBatchData(user, role, suffix, overrides = {}) {
