@@ -4,16 +4,25 @@ declare const _default: {
         extend: {
             colors: {
                 ink: string;
+                navy: string;
+                navy900: string;
                 river: string;
                 mint: string;
+                successBg: string;
                 amber: string;
+                golden: string;
                 clay: string;
+                cream: string;
+                creamLight: string;
+                borderSoft: string;
+                muted: string;
             };
             fontFamily: {
-                sans: [string, string, string, string, string, string, string];
+                sans: [string, string, string, string, string, string, string, string, string];
             };
             boxShadow: {
                 soft: string;
+                card: string;
             };
         };
     };

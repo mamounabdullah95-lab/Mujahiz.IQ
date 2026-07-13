@@ -1,48 +1,18 @@
-import {
-  BarChart3,
-  Bell,
-  BookOpen,
-  Boxes,
-  Building2,
-  ClipboardCheck,
-  FileClock,
-  FileText,
-  Gauge,
-  History,
-  Inbox,
-  LifeBuoy,
-  MessageSquare,
-  PackageSearch,
-  Settings,
-  ShieldCheck,
-  SlidersHorizontal,
-  Star,
-  Tags,
-  UserCog,
-  UserRound,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { BarChart3, Bell, BookOpen, Boxes, Building2, ClipboardCheck, FileClock, FilePlus2, FileSpreadsheet, FileText, Gauge, History, Inbox, LifeBuoy, ListChecks, MessageSquare, PackageSearch, Settings, ShieldCheck, SlidersHorizontal, Star, Tags, UserCog, UserRound, Users, type LucideIcon } from "lucide-react";
+import { features } from "./features";
 import type { PortalRole } from "../utils/authorization";
 
-export interface PortalNavItem {
-  to: string;
-  label: { ar: string; en: string };
-  icon: LucideIcon;
-  end?: boolean;
-}
-
+export interface PortalNavItem { to: string; label: { ar: string; en: string }; icon: LucideIcon; end?: boolean; }
 export const portalRoleLabels: Record<PortalRole, { ar: string; en: string }> = {
-  buyer: { ar: "حساب مشتري", en: "Buyer account" },
-  supplier: { ar: "حساب مجهز", en: "Supplier account" },
-  admin: { ar: "مدير النظام", en: "Platform admin" },
-  super_admin: { ar: "الحساب الرئيسي", en: "Super admin" },
+  buyer: { ar: "حساب مشتري", en: "Buyer account" }, supplier: { ar: "حساب مجهز", en: "Supplier account" }, admin: { ar: "مدير النظام", en: "Platform admin" }, super_admin: { ar: "الحساب الرئيسي", en: "Super admin" },
 };
-
 export const portalNavigation: Record<PortalRole, PortalNavItem[]> = {
   buyer: [
     { to: "/buyer", label: { ar: "نظرة عامة", en: "Overview" }, icon: Gauge, end: true },
     { to: "/directory", label: { ar: "دليل المجهزين", en: "Supplier directory" }, icon: BookOpen },
+    { to: "/buyer/suppliers/submit", label: { ar: "إضافة مجهز", en: "Add supplier" }, icon: FilePlus2 },
+    ...(features.supplierExcelImport ? [{ to: "/suppliers/import", label: { ar: "استيراد مجهزين", en: "Import suppliers" }, icon: FileSpreadsheet }] : []),
+    { to: "/buyer/suppliers/submissions", label: { ar: "إرسالاتي", en: "My submissions" }, icon: ListChecks },
     { to: "/buyer/categories", label: { ar: "التصنيفات", en: "Categories" }, icon: Tags },
     { to: "/buyer/favorites", label: { ar: "المفضلة", en: "Favorites" }, icon: Star },
     { to: "/buyer/rfqs", label: { ar: "طلبات عروض الأسعار", en: "RFQ requests" }, icon: FileClock },
@@ -66,6 +36,8 @@ export const portalNavigation: Record<PortalRole, PortalNavItem[]> = {
   admin: [
     { to: "/admin", label: { ar: "نظرة عامة", en: "Overview" }, icon: Gauge, end: true },
     { to: "/admin/suppliers", label: { ar: "إدارة المجهزين", en: "Suppliers" }, icon: Building2 },
+    { to: "/admin/suppliers/new", label: { ar: "إضافة مجهز", en: "Add supplier" }, icon: FilePlus2 },
+    ...(features.supplierExcelImport ? [{ to: "/suppliers/import", label: { ar: "استيراد مجهزين", en: "Import suppliers" }, icon: FileSpreadsheet }] : []),
     { to: "/admin/submissions", label: { ar: "طلبات اعتماد الشركات", en: "Company approvals" }, icon: ClipboardCheck },
     { to: "/admin/buyers", label: { ar: "إدارة المشترين", en: "Buyers" }, icon: Users },
     { to: "/admin/users", label: { ar: "إدارة المستخدمين", en: "Users" }, icon: UserCog },
@@ -73,16 +45,21 @@ export const portalNavigation: Record<PortalRole, PortalNavItem[]> = {
     { to: "/admin/material-dictionary", label: { ar: "قاموس المواد", en: "Material dictionary" }, icon: PackageSearch },
     { to: "/admin/reviews", label: { ar: "مراجعة التقييمات", en: "Review moderation" }, icon: Star },
     { to: "/admin/supplier-feedback", label: { ar: "البلاغات والدعم", en: "Reports & support" }, icon: LifeBuoy },
+    { to: "/admin/audit-logs", label: { ar: "\u0633\u062c\u0644 \u0627\u0644\u0625\u062c\u0631\u0627\u0621\u0627\u062a", en: "Audit log" }, icon: History },
     { to: "/admin/reports", label: { ar: "التقارير", en: "Reports" }, icon: BarChart3 },
     { to: "/admin/settings", label: { ar: "الإعدادات", en: "Settings" }, icon: Settings },
   ],
   super_admin: [
     { to: "/super-admin", label: { ar: "نظرة عامة", en: "Overview" }, icon: ShieldCheck, end: true },
+    { to: "/admin/suppliers", label: { ar: "إدارة المجهزين", en: "Suppliers" }, icon: Building2 },
+    { to: "/admin/suppliers/new", label: { ar: "إضافة مجهز", en: "Add supplier" }, icon: FilePlus2 },
+    ...(features.supplierExcelImport ? [{ to: "/suppliers/import", label: { ar: "استيراد مجهزين", en: "Import suppliers" }, icon: FileSpreadsheet }] : []),
     { to: "/super-admin/admins", label: { ar: "حسابات المديرين", en: "Admin accounts" }, icon: UserCog },
     { to: "/super-admin/users", label: { ar: "جميع المستخدمين", en: "All users" }, icon: Users },
     { to: "/super-admin/roles", label: { ar: "الأدوار والصلاحيات", en: "Roles & permissions" }, icon: SlidersHorizontal },
     { to: "/super-admin/audit-logs", label: { ar: "سجل الإجراءات", en: "Audit log" }, icon: History },
     { to: "/super-admin/settings", label: { ar: "إعدادات المنصة", en: "Platform settings" }, icon: Settings },
+    { to: "/super-admin/registration-sectors", label: { ar: "قطاعات التسجيل", en: "Registration sectors" }, icon: Tags },
     { to: "/super-admin/branding", label: { ar: "الهوية البصرية", en: "Branding" }, icon: Building2 },
     { to: "/super-admin/content", label: { ar: "الصفحات والمحتوى", en: "Pages & content" }, icon: FileText },
     { to: "/super-admin/categories", label: { ar: "التصنيفات الرئيسية", en: "Main categories" }, icon: Tags },

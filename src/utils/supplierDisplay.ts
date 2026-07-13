@@ -142,12 +142,8 @@ export function localizedSupplierText(value: string | undefined, locale: Locale)
     return "";
   }
 
-  const readableText = text.replaceAll("_", " ");
-  if (locale === "ar") {
-    return hasLatin(readableText) ? translateEnglishLikeText(readableText) : readableText;
-  }
-
-  return hasArabic(readableText) ? translateArabicLikeText(readableText) : readableText;
+  // Supplier content is never machine-translated by word replacement. Use explicit bilingual fields when available; otherwise preserve the original text intact.
+  return text.replaceAll("_", " ");
 }
 
 export function supplierGovernorates(supplier: Pick<SupplierDraft, "governorate" | "governorates">) {

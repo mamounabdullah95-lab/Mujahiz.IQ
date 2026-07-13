@@ -14,10 +14,10 @@ export function Button({
   return (
     <button
       className={clsx(
-        "inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
-        variant === "primary" && "bg-ink text-white shadow-soft hover:bg-river",
-        variant === "secondary" && "border border-orange-100 bg-white text-ink hover:border-amber hover:text-amber",
-        variant === "ghost" && "text-slate-700 hover:bg-orange-50 hover:text-ink",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60",
+        variant === "primary" && "bg-navy text-white shadow-soft hover:bg-river",
+        variant === "secondary" && "border border-amber bg-white/85 text-amber hover:bg-amber hover:text-white",
+        variant === "ghost" && "text-ink hover:bg-cream hover:text-amber",
         variant === "danger" && "bg-clay text-white hover:bg-red-700",
         className,
       )}
@@ -34,10 +34,10 @@ export function TextField({
   ...props
 }: { label: string; className?: string } & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label className={clsx("grid gap-1.5 text-sm font-medium text-slate-700", className)}>
+    <label className={clsx("grid gap-1.5 text-sm font-bold text-ink", className)}>
       <span>{label}</span>
       <input
-        className="min-h-11 rounded-md border border-orange-100 bg-white px-3 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-amber focus:ring-2 focus:ring-amber/15"
+        className="min-h-12 rounded-[10px] border border-borderSoft bg-white/95 px-3 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-amber focus:ring-2 focus:ring-amber/15"
         {...props}
       />
     </label>
@@ -50,10 +50,10 @@ export function TextAreaField({
   ...props
 }: { label: string; className?: string } & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
-    <label className={clsx("grid gap-1.5 text-sm font-medium text-slate-700", className)}>
+    <label className={clsx("grid gap-1.5 text-sm font-bold text-ink", className)}>
       <span>{label}</span>
       <textarea
-        className="min-h-28 rounded-md border border-orange-100 bg-white px-3 py-2 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-amber focus:ring-2 focus:ring-amber/15"
+        className="min-h-28 rounded-[10px] border border-borderSoft bg-white/95 px-3 py-2 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-amber focus:ring-2 focus:ring-amber/15"
         {...props}
       />
     </label>
@@ -67,10 +67,10 @@ export function SelectField({
   ...props
 }: { label: string; className?: string; children: ReactNode } & SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <label className={clsx("grid gap-1.5 text-sm font-medium text-slate-700", className)}>
+    <label className={clsx("grid gap-1.5 text-sm font-bold text-ink", className)}>
       <span>{label}</span>
       <select
-        className="min-h-11 rounded-md border border-orange-100 bg-white px-3 text-sm text-ink outline-none transition focus:border-amber focus:ring-2 focus:ring-amber/15"
+        className="min-h-12 rounded-[10px] border border-borderSoft bg-white/95 px-3 text-sm text-ink outline-none transition focus:border-amber focus:ring-2 focus:ring-amber/15"
         {...props}
       >
         {children}
@@ -91,12 +91,12 @@ export function Section({
   actions?: ReactNode;
 }) {
   return (
-    <section className="border-b border-orange-100 bg-white">
+    <section className="bg-creamLight">
       <div className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-[18px] border border-borderSoft bg-white/92 p-5 shadow-card sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-ink">{title}</h2>
-            {description ? <p className="mt-1 max-w-3xl text-sm text-slate-500">{description}</p> : null}
+            <h2 className="text-2xl font-black text-ink">{title}</h2>
+            {description ? <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">{description}</p> : null}
           </div>
           {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
         </div>
@@ -118,24 +118,24 @@ export function StatCard({
   return (
     <div
       className={clsx(
-        "rounded-md border bg-white p-4 shadow-soft",
-        tone === "neutral" && "border-orange-100",
+        "rounded-[18px] border bg-white/96 p-5 shadow-card",
+        tone === "neutral" && "border-borderSoft",
         tone === "good" && "border-mint/30",
         tone === "warning" && "border-amber/40",
         tone === "danger" && "border-clay/40",
       )}
     >
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-2 text-2xl font-bold text-ink">{value}</div>
+      <div className="text-sm font-bold text-ink">{label}</div>
+      <div className="mt-3 text-3xl font-black text-ink">{value}</div>
     </div>
   );
 }
 
 export function EmptyState({ title, body }: { title: string; body?: string }) {
   return (
-    <div className="rounded-md border border-dashed border-orange-200 bg-orange-50/50 px-4 py-10 text-center">
-      <div className="font-semibold text-ink">{title}</div>
-      {body ? <p className="mx-auto mt-1 max-w-xl text-sm text-slate-500">{body}</p> : null}
+    <div className="rounded-[18px] border border-dashed border-borderSoft bg-cream px-4 py-10 text-center">
+      <div className="font-bold text-ink">{title}</div>
+      {body ? <p className="mx-auto mt-1 max-w-xl text-sm leading-7 text-muted">{body}</p> : null}
     </div>
   );
 }
@@ -156,10 +156,10 @@ export function ChipGroup({
         return (
           <button
             className={clsx(
-              "min-h-9 rounded-md border px-3 text-sm font-medium transition",
+              "min-h-10 rounded-xl border px-3 text-sm font-bold transition",
               active
-                ? "border-ink bg-ink text-white"
-                : "border-orange-100 bg-white text-slate-700 hover:border-amber hover:text-amber",
+                ? "border-navy bg-navy text-white"
+                : "border-borderSoft bg-white text-ink hover:border-amber hover:text-amber",
             )}
             key={option.value}
             type="button"

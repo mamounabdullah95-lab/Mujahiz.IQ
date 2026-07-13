@@ -10,6 +10,7 @@ import {
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signOut,
   type User,
@@ -17,22 +18,14 @@ import {
 import { auth, isFirebaseConfigured } from "../config/firebase";
 import type { AppUser } from "../types/domain";
 import { isFuture } from "../utils/date";
-import { createUserProfile, getUserProfile, updateUserProfile } from "../services/firestore";
+import { getUserProfile, updateUserProfile } from "../services/firestore";
 import { demoClearSession, demoGetCurrentUser, demoLogin, demoRegister } from "../services/localDemo";
+import { activateVerifiedUser, createUserProfileSafely, type UserProfileInput } from "../services/registration";
+import { isValidEmailAddress, isValidIraqiPhone, normalizeAccountEmail, normalizeIraqiPhone } from "../utils/accountValidation";
 
-interface RegisterInput {
+export interface RegisterInput extends UserProfileInput {
   email: string;
   password: string;
-  fullName: string;
-  phone: string;
-  jobTitle: string;
-  organization: string;
-  governorate: string;
-  city?: string;
-  sector: string;
-  reasonForJoining?: string;
-  accountType?: "buyer" | "supplier";
-  language?: "en" | "ar";
 }
 
 interface AuthContextValue {
@@ -42,8 +35,12 @@ interface AuthContextValue {
   isAdmin: boolean;
   isOwner: boolean;
   hasActiveAccess: boolean;
+  emailVerified: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
+  completeMissingProfile: (input: UserProfileInput) => Promise<void>;
+  sendVerification: () => Promise<void>;
+  refreshEmailVerification: () => Promise<boolean>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateProfile: (patch: Partial<AppUser>) => Promise<void>;
@@ -56,26 +53,41 @@ function toDemoFirebaseUser(user: AppUser) {
     uid: user.uid,
     email: user.email,
     displayName: user.fullName,
+    emailVerified: true,
   } as User;
+}
+
+function profileSetupError() {
+  const error = new Error("profile_setup_incomplete") as Error & { code?: string };
+  error.code = "profile_setup_incomplete";
+  return error;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [verified, setVerified] = useState(!isFirebaseConfigured);
 
   const loadProfile = useCallback(async (user: User | null) => {
     setFirebaseUser(user);
+    setVerified(!isFirebaseConfigured || Boolean(user?.emailVerified));
     if (!user) {
       setAppUser(null);
       setLoading(false);
       return;
     }
-    const profile = await getUserProfile(user.uid);
-    setAppUser(profile);
-    if (profile?.language) {
-      localStorage.setItem("mujahiz-iq-locale", profile.language);
+    let profile = await getUserProfile(user.uid);
+    if (user.emailVerified && profile) {
+      try {
+        await activateVerifiedUser(user.uid);
+        profile = await getUserProfile(user.uid);
+      } catch {
+        // Existing approved accounts may already be active; route guards still rely on Auth verification.
+      }
     }
+    setAppUser(profile);
+    if (profile?.language) localStorage.setItem("mujahiz-iq-locale", profile.language);
     setLoading(false);
   }, []);
 
@@ -87,38 +99,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!active) return;
           setAppUser(profile);
           setFirebaseUser(profile ? toDemoFirebaseUser(profile) : null);
-          if (profile?.language) {
-            localStorage.setItem("mujahiz-iq-locale", profile.language);
-          }
+          setVerified(Boolean(profile));
+          if (profile?.language) localStorage.setItem("mujahiz-iq-locale", profile.language);
         });
       };
       setLoading(true);
-      void demoGetCurrentUser()
-        .then((profile) => {
-          if (!active) return;
-          setAppUser(profile);
-          setFirebaseUser(profile ? toDemoFirebaseUser(profile) : null);
-          if (profile?.language) {
-            localStorage.setItem("mujahiz-iq-locale", profile.language);
-          }
-        })
-        .finally(() => {
-          if (active) {
-            setLoading(false);
-          }
-        });
+      void demoGetCurrentUser().then((profile) => {
+        if (!active) return;
+        setAppUser(profile);
+        setFirebaseUser(profile ? toDemoFirebaseUser(profile) : null);
+        setVerified(Boolean(profile));
+        if (profile?.language) localStorage.setItem("mujahiz-iq-locale", profile.language);
+      }).finally(() => { if (active) setLoading(false); });
       window.addEventListener("mujahiz-iq-demo-db-updated", syncDemoUser);
-      return () => {
-        active = false;
-        window.removeEventListener("mujahiz-iq-demo-db-updated", syncDemoUser);
-      };
+      return () => { active = false; window.removeEventListener("mujahiz-iq-demo-db-updated", syncDemoUser); };
     }
-    if (!auth) {
-      return undefined;
-    }
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      void loadProfile(user);
-    });
+    const unsubscribe = onAuthStateChanged(auth, (user) => { void loadProfile(user); });
     return unsubscribe;
   }, [loadProfile]);
 
@@ -127,27 +123,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile = await demoGetCurrentUser();
       setAppUser(profile);
       setFirebaseUser(profile ? toDemoFirebaseUser(profile) : null);
+      setVerified(Boolean(profile));
       return;
     }
-    if (!auth?.currentUser) {
-      setAppUser(null);
-      return;
-    }
-    const profile = await getUserProfile(auth.currentUser.uid);
-    setAppUser(profile);
-  }, []);
+    if (!auth?.currentUser) { setAppUser(null); return; }
+    await loadProfile(auth.currentUser);
+  }, [loadProfile]);
 
   const value = useMemo<AuthContextValue>(() => {
     const isAdmin = appUser?.role === "owner" || appUser?.role === "admin";
     const isOwner = appUser?.role === "owner";
-    const hasActiveAccess =
-      isAdmin ||
-      Boolean(
-        appUser?.status === "approved" &&
-          (appUser.accessStatus === "active" || appUser.accessStatus === "temporary") &&
-          isFuture(appUser.accessExpiresAt),
-      );
-
+    const hasActiveAccess = isAdmin || Boolean(appUser?.status === "approved" && (appUser.accessStatus === "active" || appUser.accessStatus === "temporary") && isFuture(appUser.accessExpiresAt));
     return {
       firebaseUser,
       appUser,
@@ -155,96 +141,88 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       isOwner,
       hasActiveAccess,
+      emailVerified: verified,
       login: async (email, password) => {
+        const normalizedEmail = normalizeAccountEmail(email);
+        if (!isValidEmailAddress(normalizedEmail)) throw Object.assign(new Error("invalid_email"), { code: "invalid_email" });
         if (!auth || !isFirebaseConfigured) {
           setLoading(true);
-          try {
-            const profile = await demoLogin(email, password);
-            setAppUser(profile);
-            setFirebaseUser(toDemoFirebaseUser(profile));
-            if (profile.language) {
-              localStorage.setItem("mujahiz-iq-locale", profile.language);
-            }
-          } finally {
-            setLoading(false);
-          }
+          try { const profile = await demoLogin(normalizedEmail, password); setAppUser(profile); setFirebaseUser(toDemoFirebaseUser(profile)); setVerified(true); if (profile.language) localStorage.setItem("mujahiz-iq-locale", profile.language); } finally { setLoading(false); }
           return;
         }
         setLoading(true);
-        const credential = await signInWithEmailAndPassword(auth, email, password);
-        await loadProfile(credential.user);
+        try { const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password); await loadProfile(credential.user); } finally { setLoading(false); }
       },
       register: async (input) => {
+        const email = normalizeAccountEmail(input.email);
+        const phone = normalizeIraqiPhone(input.phone);
+        if (!isValidEmailAddress(email)) throw Object.assign(new Error("invalid_email"), { code: "invalid_email" });
+        if (!isValidIraqiPhone(input.phone)) throw Object.assign(new Error("invalid_phone"), { code: "invalid_phone" });
         if (!auth || !isFirebaseConfigured) {
           setLoading(true);
-          try {
-            const profile = await demoRegister(input.email, input.password, {
-              fullName: input.fullName,
-              phone: input.phone,
-              jobTitle: input.jobTitle,
-              organization: input.organization,
-              governorate: input.governorate,
-              city: input.city,
-              sector: input.sector,
-              reasonForJoining: input.reasonForJoining,
-              accountType: input.accountType,
-              language: input.language,
-            });
-            setAppUser(profile);
-            setFirebaseUser(toDemoFirebaseUser(profile));
-            if (profile.language) {
-              localStorage.setItem("mujahiz-iq-locale", profile.language);
-            }
-          } finally {
-            setLoading(false);
-          }
+          try { const profile = await demoRegister(email, input.password, { ...input, phone }); setAppUser(profile); setFirebaseUser(toDemoFirebaseUser(profile)); setVerified(true); if (profile.language) localStorage.setItem("mujahiz-iq-locale", profile.language); } finally { setLoading(false); }
           return;
         }
         setLoading(true);
-        const credential = await createUserWithEmailAndPassword(auth, input.email, input.password);
-        await createUserProfile(credential.user.uid, input.email, {
-          fullName: input.fullName,
-          phone: input.phone,
-          jobTitle: input.jobTitle,
-          organization: input.organization,
-          governorate: input.governorate,
-          city: input.city,
-          sector: input.sector,
-          reasonForJoining: input.reasonForJoining,
-          accountType: input.accountType,
-          language: input.language,
-        });
-        await loadProfile(credential.user);
+        try {
+          const credential = await createUserWithEmailAndPassword(auth, email, input.password);
+          try { await createUserProfileSafely(credential.user.uid, email, { ...input, phone }); } catch { throw profileSetupError(); }
+          await sendEmailVerification(credential.user, { url: `${window.location.origin}/verify-email`, handleCodeInApp: false });
+          await loadProfile(credential.user);
+        } finally { setLoading(false); }
+      },
+      completeMissingProfile: async (input) => {
+        const current = auth?.currentUser;
+        if (!current?.email) throw profileSetupError();
+        if (!isValidIraqiPhone(input.phone)) throw Object.assign(new Error("invalid_phone"), { code: "invalid_phone" });
+        await createUserProfileSafely(current.uid, current.email, { ...input, phone: normalizeIraqiPhone(input.phone) });
+        if (!current.emailVerified) await sendEmailVerification(current, { url: `${window.location.origin}/verify-email`, handleCodeInApp: false });
+        await loadProfile(current);
+      },
+      sendVerification: async () => {
+        const current = auth?.currentUser;
+        if (!current || current.emailVerified) return;
+        await sendEmailVerification(current, { url: `${window.location.origin}/verify-email`, handleCodeInApp: false });
+      },
+      refreshEmailVerification: async () => {
+        const current = auth?.currentUser;
+        if (!current) return false;
+        await current.reload();
+        const refreshed = auth?.currentUser;
+        const isVerified = Boolean(refreshed?.emailVerified);
+        setVerified(isVerified);
+        if (isVerified && refreshed) {
+          await activateVerifiedUser(refreshed.uid);
+          await loadProfile(refreshed);
+        }
+        return isVerified;
       },
       logout: async () => {
-        if (!auth || !isFirebaseConfigured) {
-          demoClearSession();
-          setFirebaseUser(null);
-          setAppUser(null);
-          return;
-        }
-        await signOut(auth);
-        setFirebaseUser(null);
-        setAppUser(null);
+        if (!auth || !isFirebaseConfigured) demoClearSession();
+        else await signOut(auth);
+        setFirebaseUser(null); setAppUser(null); setVerified(false);
       },
       refreshUser,
       updateProfile: async (patch) => {
-        if (!firebaseUser) {
-          return;
+        if (!firebaseUser) return;
+        const allowed = ["fullName", "phone", "jobTitle", "organization", "governorate", "city", "sector", "reasonForJoining", "language"] as const;
+        const safePatch = Object.fromEntries(Object.entries(patch).filter(([key]) => allowed.includes(key as typeof allowed[number]))) as Partial<AppUser>;
+        if (typeof safePatch.phone === "string") {
+          const phone = normalizeIraqiPhone(safePatch.phone);
+          if (!phone) throw Object.assign(new Error("invalid_phone"), { code: "invalid_phone" });
+          safePatch.phone = phone;
         }
-        await updateUserProfile(firebaseUser.uid, patch);
+        await updateUserProfile(firebaseUser.uid, safePatch);
         await refreshUser();
       },
     };
-  }, [appUser, firebaseUser, loadProfile, loading, refreshUser]);
+  }, [appUser, firebaseUser, loadProfile, loading, refreshUser, verified]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider.");
-  }
+  if (!context) throw new Error("useAuth must be used inside AuthProvider.");
   return context;
 }

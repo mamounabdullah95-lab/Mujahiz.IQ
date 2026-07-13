@@ -1,4 +1,4 @@
-﻿import {
+import {
   addDoc,
   collection,
   deleteField,
@@ -65,6 +65,8 @@ const duplicateIndexRef = collection(db, "supplierDuplicateIndex");
 const settingsRef = collection(db, "settings");
 const categoriesRef = collection(db, "categories");
 const accessCreditsRef = collection(db, "accessCredits");
+const accessGrantsRef = collection(db, "accessGrants");
+const notificationsRef = collection(db, "notifications");
 const contributionLogsRef = collection(db, "contributionLogs");
 const auditLogsRef = collection(db, "auditLogs");
 const supplierFeedbackRef = collection(db, "supplierFeedback");
@@ -215,6 +217,16 @@ export async function setUserRoleAndStatus(
   if (!isFirebaseConfigured) {
     return demo.demoSetUserRoleAndStatus(userId, actorId, role, status);
   }
+  const targetRef = doc(usersRef, userId);
+  const targetSnapshot = await getDoc(targetRef);
+  if (!targetSnapshot.exists()) throw new Error("User profile was not found.");
+  const targetUser = targetSnapshot.data() as AppUser;
+  const removesOwnerAccess = targetUser.role === "owner" && (role !== "owner" || status === "suspended");
+  if (removesOwnerAccess) {
+    const ownerSnapshot = await getDocs(query(usersRef, where("role", "==", "owner"), limit(2)));
+    if (ownerSnapshot.size <= 1) throw new Error("last_owner_protected");
+  }
+
   const batch = writeBatch(db);
   const patch: Partial<AppUser> = {
     role,
@@ -224,7 +236,13 @@ export async function setUserRoleAndStatus(
   if (status === "suspended") {
     patch.accessStatus = "suspended";
   }
-  batch.update(doc(usersRef, userId), patch);
+  batch.update(targetRef, patch);
+  if (targetUser.accountType === "supplier" && targetUser.supplierProfileId) {
+    batch.update(doc(suppliersRef, targetUser.supplierProfileId), {
+      canReceiveRfqs: status === "approved",
+      updatedAt: serverTimestamp(),
+    });
+  }
   batch.set(doc(auditLogsRef), {
     actorId,
     action: "user.role_status_updated",
@@ -367,7 +385,10 @@ export async function submitSupplierDraft(userId: string, draft: SupplierDraft, 
   if (!isFirebaseConfigured) {
     return demo.demoSubmitSupplierDraft(userId, draft, duplicateCheck);
   }
-  await addDoc(submissionsRef, {
+  const submissionDoc = doc(submissionsRef);
+  const pendingIndexDoc = doc(db, "supplierSubmissionDuplicateIndex", submissionDoc.id);
+  const batch = writeBatch(db);
+  batch.set(submissionDoc, {
     submittedBy: userId,
     submissionStatus: duplicateCheck.hasPossibleDuplicate ? "possible_duplicate" : "pending_review",
     supplierData: withoutUndefinedFields(draft),
@@ -377,10 +398,25 @@ export async function submitSupplierDraft(userId: string, draft: SupplierDraft, 
     },
     countsForAccess: false,
     creditConsumed: false,
+    source: "manual",
     createdAt: serverTimestamp(),
   } satisfies Omit<SupplierSubmission, "id" | "createdAt"> & { createdAt: unknown });
+  batch.set(pendingIndexDoc, withoutUndefinedFields({
+    submissionId: submissionDoc.id,
+    submittedBy: userId,
+    supplierName: draft.nameOriginal,
+    normalizedName: draft.normalizedName,
+    normalizedPhones: draft.normalizedPhones,
+    normalizedEmail: draft.normalizedEmail,
+    website: draft.website,
+    googleMapsLink: draft.googleMapsLink,
+    governorate: draft.governorate,
+    categories: draft.categories,
+    source: "pending_submission",
+    createdAt: serverTimestamp(),
+  }));
+  await batch.commit();
 }
-
 export async function resubmitSupplierSubmission(
   submissionId: string,
   userId: string,
@@ -414,6 +450,20 @@ export async function resubmitSupplierSubmission(
       countsForAccess: false,
       creditConsumed: false,
     });
+    transaction.set(doc(db, "supplierSubmissionDuplicateIndex", submissionId), withoutUndefinedFields({
+      submissionId,
+      submittedBy: userId,
+      supplierName: draft.nameOriginal,
+      normalizedName: draft.normalizedName,
+      normalizedPhones: draft.normalizedPhones,
+      normalizedEmail: draft.normalizedEmail,
+      website: draft.website,
+      googleMapsLink: draft.googleMapsLink,
+      governorate: draft.governorate,
+      categories: draft.categories,
+      source: "pending_submission",
+      createdAt: serverTimestamp(),
+    }));
     transaction.set(auditDoc, {
       actorId: userId,
       action: "supplier_submission.resubmitted",
@@ -496,7 +546,7 @@ export async function listSupplierCandidates(categories: string[]) {
   ));
   return snapshot.docs
     .map((item) => withId<Supplier>(item))
-    .filter((item) => item.status === "approved");
+    .filter((item) => item.status === "approved" && item.canReceiveRfqs === true);
 }
 
 export async function listMaterialTerms() {
@@ -739,6 +789,8 @@ export async function approveSupplierSubmission(
   const userDocRef = doc(usersRef, submission.submittedBy);
   const duplicateDoc = doc(duplicateIndexRef, supplierDoc.id);
   const accessCreditDoc = doc(accessCreditsRef);
+  const accessGrantDoc = doc(accessGrantsRef);
+  const notificationDoc = doc(notificationsRef);
   const contributionLogDoc = doc(contributionLogsRef);
   const auditDoc = doc(auditLogsRef);
 
@@ -753,6 +805,7 @@ export async function approveSupplierSubmission(
     const rejectedSubmissions = user.rejectedSubmissions || 0;
     const duplicateSubmissions = user.duplicateSubmissions || 0;
     const approvedNewSupplierContributions = (user.approvedNewSupplierContributions || 0) + 1;
+    const pendingSubmissionIds = [...(user.unconsumedApprovedSubmissionIds || []), submission.id];
     const previewUser = {
       ...user,
       approvedSubmissions,
@@ -792,6 +845,8 @@ export async function approveSupplierSubmission(
       averageRating: 0,
       reviewCount: 0,
       createdBy: submission.submittedBy,
+      accountOwnerId: user.accountType === "supplier" ? submission.submittedBy : "",
+      canReceiveRfqs: user.accountType === "supplier",
       approvedBy: actorId,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -819,6 +874,7 @@ export async function approveSupplierSubmission(
       reviewedAt: serverTimestamp(),
       adminNotes: "",
     });
+    transaction.delete(doc(db, "supplierSubmissionDuplicateIndex", submission.id));
 
     transaction.update(userDocRef, {
       ...(user.accountType === "supplier" && !user.supplierProfileId
@@ -828,6 +884,7 @@ export async function approveSupplierSubmission(
       approvedNewSupplierContributions,
       consumedApprovedSupplierContributions:
         (user.consumedApprovedSupplierContributions || 0) + consumedForAccess,
+      unconsumedApprovedSubmissionIds: consumedForAccess > 0 ? pendingSubmissionIds.slice(Math.min(consumedForAccess, pendingSubmissionIds.length)) : pendingSubmissionIds,
       accessStatus: daysToGrant > 0 || (existingAccessDate && existingAccessDate > now) ? "active" : user.accessStatus,
       accessExpiresAt: newAccessExpiresAt,
       points: (user.points || 0) + 10 + (supplierData.phones.length || supplierData.email ? 2 : 0) + (supplierData.categories.length && supplierData.capabilityTags.length ? 2 : 0),
@@ -856,7 +913,32 @@ export async function approveSupplierSubmission(
         createdAt: serverTimestamp(),
         appliedAt: serverTimestamp(),
       } satisfies Omit<AccessCredit, "id">);
+      transaction.set(accessGrantDoc, {
+        userId: submission.submittedBy,
+        grantType: "supplier_contribution",
+        approvedSubmissionIds: pendingSubmissionIds.slice(0, Math.min(consumedForAccess, pendingSubmissionIds.length)),
+        approvedSupplierCount: consumedForAccess,
+        daysGranted: daysToGrant,
+        grantedAt: serverTimestamp(),
+        previousExpiry: existingAccessDate || null,
+        newExpiry: newAccessExpiresAt,
+        createdBy: actorId,
+        auditReference: auditDoc.id,
+        createdAt: serverTimestamp(),
+      });
     }
+
+    transaction.set(notificationDoc, {
+      userId: submission.submittedBy,
+      type: "submission",
+      titleAr: "تم اعتماد المجهز",
+      titleEn: "Supplier submission approved",
+      bodyAr: daysToGrant > 0 ? "تم اعتماد السجل ومنح فترة وصول إضافية." : "تم اعتماد سجل المجهز وإضافته إلى الدليل.",
+      bodyEn: daysToGrant > 0 ? "The record was approved and additional access was granted." : "The supplier record was approved and added to the directory.",
+      link: "/buyer/suppliers/submissions",
+      read: false,
+      createdAt: serverTimestamp(),
+    });
 
     transaction.set(auditDoc, {
       actorId,
@@ -902,6 +984,7 @@ export async function decideSupplierSubmission(
       creditConsumed: false,
       reviewedAt: serverTimestamp(),
     });
+    transaction.delete(doc(db, "supplierSubmissionDuplicateIndex", submission.id));
 
     if (user) {
       transaction.update(userRef, {
