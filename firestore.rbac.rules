@@ -144,12 +144,25 @@ service cloud.firestore {
         && request.resource.data.approvedNewSupplierContributions == 0
         && request.resource.data.consumedApprovedSupplierContributions == 0;
     }
-    function isValidEmailActivation() {
+    function isValidEmailVerificationSync() {
       return signedIn()
         && request.auth.token.email_verified == true
-        && resource.data.accessStatus == "pending"
         && resource.data.emailVerified == false
         && request.resource.data.emailVerified == true
+        && request.resource.data.emailVerifiedAt is timestamp
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["emailVerified", "emailVerifiedAt", "updatedAt"]);
+    }
+    function isValidBuyerTrialActivation() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && resource.data.accountType == "buyer"
+        && resource.data.accessStatus == "pending"
+        && resource.data.accessExpiresAt == null
+        && resource.data.trialStartedAt == null
+        && resource.data.trialEndsAt == null
+        && resource.data.emailVerified == false
+        && request.resource.data.emailVerified == true
+        && request.resource.data.emailVerifiedAt is timestamp
         && request.resource.data.accessStatus == "temporary"
         && request.resource.data.accessExpiresAt is timestamp
         && request.resource.data.accessExpiresAt > request.time
@@ -158,11 +171,14 @@ service cloud.firestore {
         && request.resource.data.trialEndsAt == request.resource.data.accessExpiresAt
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["emailVerified", "emailVerifiedAt", "trialStartedAt", "trialEndsAt", "accessStatus", "accessExpiresAt", "updatedAt"]);
     }
-    function isValidOwnTrialCredit() {
+    function isValidOwnTrialCredit(documentId) {
       return signedIn() && request.auth.token.email_verified == true
+        && isBuyer()
+        && documentId == "trial-" + request.auth.uid
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.source == "trial_access"
         && request.resource.data.grantType == "trial_access"
+        && request.resource.data.approvedSubmissionIds is list
         && request.resource.data.approvedSupplierCount == 0
         && request.resource.data.daysGranted is int
         && request.resource.data.daysGranted >= 0
@@ -170,10 +186,12 @@ service cloud.firestore {
         && request.resource.data.status == "applied"
         && request.resource.data.createdBy == request.auth.uid;
     }
-    function isValidOwnVerificationAudit() {
+    function isValidOwnVerificationAudit(documentId) {
       return signedIn() && request.auth.token.email_verified == true
+        && documentId == "email-verification-" + request.auth.uid
         && request.resource.data.actorId == request.auth.uid
-        && request.resource.data.action == "user.email_verified_trial_started"
+        && request.resource.data.action in ["user.email_verified", "user.email_verified_trial_started"]
+        && (request.resource.data.action == "user.email_verified" || isBuyer())
         && request.resource.data.targetType == "user"
         && request.resource.data.targetId == request.auth.uid;
     }
@@ -181,7 +199,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow create: if isValidSelfRegistration(userId);
       allow read: if isSelf(userId) || isAdmin();
-      allow update: if canAdminUpdateUser() || (isSelf(userId) && (onlySelfEditableProfileFields() || isValidEmailActivation()));
+      allow update: if canAdminUpdateUser() || (isSelf(userId) && (onlySelfEditableProfileFields() || isValidEmailVerificationSync() || isValidBuyerTrialActivation()));
       allow delete: if isOwner() && userId != request.auth.uid;
     }
 
@@ -336,8 +354,8 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    match /accessCredits/{creditId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create: if isAdmin() || isValidOwnTrialCredit(); allow update, delete: if isAdmin(); }
-    match /accessGrants/{grantId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create: if isAdmin() || (isValidOwnTrialCredit() && request.resource.data.approvedSubmissionIds is list); allow update, delete: if false; }
+    match /accessCredits/{creditId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create: if isAdmin() || isValidOwnTrialCredit(creditId); allow update, delete: if isAdmin(); }
+    match /accessGrants/{grantId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create: if isAdmin() || isValidOwnTrialCredit(grantId); allow update, delete: if false; }
     match /contributionLogs/{logId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create, update, delete: if isAdmin(); }
     match /categories/{categoryId} { allow read: if signedIn(); allow create, update: if isAdmin(); allow delete: if isOwner(); }
     match /settings/{settingId} {
@@ -345,6 +363,6 @@ service cloud.firestore {
       allow create, update: if isOwner() || (hasAnyRole(["admin"]) && settingId == "adminOperations");
       allow delete: if isOwner();
     }
-    match /auditLogs/{logId} { allow read: if isAdmin(); allow create: if isAdmin() || isValidOwnVerificationAudit() || isValidOwnSupplierImportAudit(); allow update, delete: if false; }
+    match /auditLogs/{logId} { allow read: if isAdmin(); allow create: if isAdmin() || isValidOwnVerificationAudit(logId) || isValidOwnSupplierImportAudit(); allow update, delete: if false; }
   }
 }
