@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Pencil, Plus, RotateCcw, Save, Send, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, LoaderCircle, Pencil, Plus, RotateCcw, Save, Send, Trash2, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, ChipGroup, Section, SelectField, TextAreaField, TextField } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
@@ -34,6 +34,7 @@ import { readWorkbookRows } from "../utils/workbookImport";
 const steps = ["supplierIdentity", "location", "contactInfo", "capabilities", "sourceConfidence", "submitForReview"];
 const supplierImportMaxSize = 100 * 1024;
 const addSupplierDraftStorageVersion = 1;
+const duplicateCheckTimeoutMs = 15_000;
 
 interface FormState {
   nameOriginal: string;
@@ -146,6 +147,22 @@ function normalizeFormState(value?: Partial<FormState> | null): FormState {
   };
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => reject(new Error("supplierDuplicateCheckTimeout")), timeoutMs);
+    promise.then(
+      (value) => {
+        window.clearTimeout(timeoutId);
+        resolve(value);
+      },
+      (reason) => {
+        window.clearTimeout(timeoutId);
+        reject(reason);
+      },
+    );
+  });
+}
+
 export function AddSupplierPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
@@ -158,6 +175,8 @@ export function AddSupplierPage() {
   const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheck>({ hasPossibleDuplicate: false, matches: [] });
   const [checkedKey, setCheckedKey] = useState("");
   const [busy, setBusy] = useState(false);
+  const [duplicateChecking, setDuplicateChecking] = useState(false);
+  const duplicateCheckRequestRef = useRef<{ key: string; promise: Promise<DuplicateCheck> } | null>(null);
   const [importing, setImporting] = useState(false);
   const [importSummary, setImportSummary] = useState("");
   const [bulkItems, setBulkItems] = useState<BulkImportItem[]>([]);
@@ -168,6 +187,7 @@ export function AddSupplierPage() {
   const isApprovedEditMode = Boolean(supplierId);
 
   const draft = useMemo(() => buildDraft(form), [form]);
+  const duplicateLookupKey = `${draft.normalizedName}|${draft.normalizedPhones.join(",")}|${draft.normalizedEmail}|${draft.facebook}`;
   const missing = missingRequiredSupplierFieldKeys(draft);
   const bulkEditItem = bulkEditIndex === null ? null : bulkItems[bulkEditIndex] || null;
   const isBulkEditing = Boolean(bulkEditItem);
@@ -234,16 +254,17 @@ export function AddSupplierPage() {
   }, [bulkEditIndex, bulkItems, draftStorageKey, form, importSummary, step, submissionId, supplierId]);
 
   useEffect(() => {
-    if (step !== 5) {
+    if (step !== 5 || !draft.nameOriginal || duplicateLookupKey === checkedKey) {
       return;
     }
-    const key = `${draft.normalizedName}|${draft.normalizedPhones.join(",")}|${draft.normalizedEmail}|${draft.facebook}`;
-    if (!draft.nameOriginal || key === checkedKey) {
-      return;
-    }
-    setCheckedKey(key);
-    void runDuplicateCheck();
-  }, [step, draft, checkedKey]);
+    setDuplicateChecking(true);
+    void runDuplicateCheck()
+      .catch((reason) => {
+        const key = reason instanceof Error ? reason.message : "";
+        setMessage(key === "supplierDuplicateCheckTimeout" ? t(key) : t("supplierDuplicateCheckFailed"));
+      })
+      .finally(() => setDuplicateChecking(false));
+  }, [step, duplicateLookupKey, checkedKey]);
 
   useEffect(() => {
     if (!submissionId || !firebaseUser) {
@@ -437,14 +458,35 @@ export function AddSupplierPage() {
   }
 
   async function runDuplicateCheck() {
-    const indexes = await fetchDuplicateIndexes();
-    const matches = findDuplicateMatches(
-      draft,
-      supplierId ? indexes.filter((item) => item.supplierId !== supplierId) : indexes,
-    );
-    const nextCheck = { hasPossibleDuplicate: matches.length > 0, matches };
-    setDuplicateCheck(nextCheck);
-    return nextCheck;
+    if (duplicateLookupKey === checkedKey) {
+      return duplicateCheck;
+    }
+    const existingRequest = duplicateCheckRequestRef.current;
+    if (existingRequest?.key === duplicateLookupKey) {
+      return existingRequest.promise;
+    }
+
+    const requestKey = duplicateLookupKey;
+    const promise = withTimeout(fetchDuplicateIndexes(), duplicateCheckTimeoutMs)
+      .then((indexes) => {
+        const matches = findDuplicateMatches(
+          draft,
+          supplierId ? indexes.filter((item) => item.supplierId !== supplierId) : indexes,
+        );
+        const nextCheck = { hasPossibleDuplicate: matches.length > 0, matches };
+        if (duplicateCheckRequestRef.current?.key === requestKey) {
+          setDuplicateCheck(nextCheck);
+          setCheckedKey(requestKey);
+        }
+        return nextCheck;
+      })
+      .finally(() => {
+        if (duplicateCheckRequestRef.current?.key === requestKey) {
+          duplicateCheckRequestRef.current = null;
+        }
+      });
+    duplicateCheckRequestRef.current = { key: requestKey, promise };
+    return promise;
   }
 
   async function handleWorkbookUpload(event: ChangeEvent<HTMLInputElement>) {
@@ -516,6 +558,7 @@ export function AddSupplierPage() {
       return;
     }
     setBusy(true);
+    setMessage(t("supplierSubmitInProgress"));
     try {
       const latestDuplicateCheck = await runDuplicateCheck();
       if (supplierId) {
@@ -536,7 +579,8 @@ export function AddSupplierPage() {
       clearSavedDraft();
       setTimeout(() => navigate("/my-submissions"), 700);
     } catch (reason) {
-      setMessage(reason instanceof Error ? reason.message : t("supplierSubmitFailed"));
+      const key = reason instanceof Error ? reason.message : "";
+      setMessage(key === "supplierDuplicateCheckTimeout" ? t(key) : reason instanceof Error ? reason.message : t("supplierSubmitFailed"));
     } finally {
       setBusy(false);
     }
@@ -637,6 +681,12 @@ export function AddSupplierPage() {
           </div>
         ) : null}
 
+        <div className="flex flex-wrap gap-x-5 gap-y-2 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-600">
+          <span><span className="me-1 text-clay">*</span>{t("requiredField")}</span>
+          <span>{t("optionalFieldLegend")}</span>
+          <span>{t("conditionalFieldLegend")}</span>
+        </div>
+
         <div className="overflow-x-auto pb-1">
           <div className="grid min-w-[720px] grid-cols-6 gap-2">
             {steps.map((item, index) => (
@@ -663,7 +713,7 @@ export function AddSupplierPage() {
         {step === 0 ? (
           <div className="grid gap-4 md:grid-cols-2">
             <TextField label={t("supplierName")} value={form.nameOriginal} onChange={(event) => setValue("nameOriginal", event.target.value)} required />
-            <TextField label={t("displayName")} value={form.displayName} onChange={(event) => setValue("displayName", event.target.value)} required />
+            <TextField label={t("displayName")} requirement={t("optional")} value={form.displayName} onChange={(event) => setValue("displayName", event.target.value)} />
             <SelectField label={t("companyNameLanguage")} value={form.nameLanguage} onChange={(event) => setValue("nameLanguage", event.target.value as FormState["nameLanguage"])}>
               <option value="arabic">{t("nameLanguageArabic")}</option>
               <option value="english">{t("nameLanguageEnglish")}</option>
@@ -676,22 +726,22 @@ export function AddSupplierPage() {
                 </option>
               ))}
             </SelectField>
-            <TextField label={t("arabicCompanyName")} value={form.nameAr} onChange={(event) => setValue("nameAr", event.target.value)} />
-            <TextField label={t("englishCompanyName")} value={form.nameEn} onChange={(event) => setValue("nameEn", event.target.value)} />
-            <TextAreaField className="md:col-span-2" label={t("shortDescription")} value={form.shortDescription} onChange={(event) => setValue("shortDescription", event.target.value)} />
+            <TextField label={t("arabicCompanyName")} requirement={t("optional")} value={form.nameAr} onChange={(event) => setValue("nameAr", event.target.value)} />
+            <TextField label={t("englishCompanyName")} requirement={t("optional")} value={form.nameEn} onChange={(event) => setValue("nameEn", event.target.value)} />
+            <TextAreaField className="md:col-span-2" label={t("shortDescription")} requirement={t("optional")} value={form.shortDescription} onChange={(event) => setValue("shortDescription", event.target.value)} />
           </div>
         ) : null}
 
         {step === 1 ? (
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <div className="mb-2 text-sm font-bold text-slate-700">{t("governorate")}</div>
+              <div className="mb-2 text-sm font-bold text-slate-700">{t("governorate")} <span className="text-clay" aria-hidden="true">*</span></div>
               <ChipGroup options={taxonomy.governorates.map(option)} values={form.governorates} onChange={(values) => setValue("governorates", values)} />
             </div>
-            <TextField label={t("city")} value={form.city} onChange={(event) => setValue("city", event.target.value)} required />
-            <TextField label={t("marketArea")} value={form.marketArea} onChange={(event) => setValue("marketArea", event.target.value)} required />
-            <TextField label={t("googleMapsLink")} value={form.googleMapsLink} onChange={(event) => setValue("googleMapsLink", event.target.value)} type="url" />
-            <TextAreaField className="md:col-span-2" label={t("address")} value={form.address} onChange={(event) => setValue("address", event.target.value)} />
+            <TextField label={t("city")} requirement={t("oneOfLocationRequired")} value={form.city} onChange={(event) => setValue("city", event.target.value)} />
+            <TextField label={t("marketArea")} requirement={t("oneOfLocationRequired")} value={form.marketArea} onChange={(event) => setValue("marketArea", event.target.value)} />
+            <TextField label={t("googleMapsLink")} requirement={t("optional")} value={form.googleMapsLink} onChange={(event) => setValue("googleMapsLink", event.target.value)} type="url" />
+            <TextAreaField className="md:col-span-2" label={t("address")} requirement={t("optional")} value={form.address} onChange={(event) => setValue("address", event.target.value)} />
             <div className="md:col-span-2">
               <div className="mb-2 text-sm font-bold text-slate-700">{t("coverageAreas")}</div>
               <ChipGroup options={coverageAreas.map(option)} values={form.coverageAreas} onChange={(values) => setValue("coverageAreas", values)} />
@@ -775,16 +825,19 @@ export function AddSupplierPage() {
 
         {step === 2 ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <TextField label={t("primaryPhone")} value={form.primaryPhone} onChange={(event) => setValue("primaryPhone", event.target.value)} />
-            <TextField label={t("secondaryPhone")} value={form.secondaryPhone} onChange={(event) => setValue("secondaryPhone", event.target.value)} />
+            <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm font-semibold text-ink md:col-span-2">
+              {t("oneContactRequired")}
+            </div>
+            <TextField label={t("primaryPhone")} requirement={t("oneContactField")} value={form.primaryPhone} onChange={(event) => setValue("primaryPhone", event.target.value)} />
+            <TextField label={t("secondaryPhone")} requirement={t("optional")} value={form.secondaryPhone} onChange={(event) => setValue("secondaryPhone", event.target.value)} />
             <SelectField label={t("whatsapp")} value={form.whatsappAvailable} onChange={(event) => setValue("whatsappAvailable", event.target.value as FormState["whatsappAvailable"])}>
               <option value="yes">{t("yes")}</option>
               <option value="no">{t("no")}</option>
               <option value="unknown">{t("unknown")}</option>
             </SelectField>
-            <TextField label={t("email")} value={form.email} onChange={(event) => setValue("email", event.target.value)} type="email" />
-            <TextField label={t("website")} value={form.website} onChange={(event) => setValue("website", event.target.value)} type="url" />
-            <TextField label={t("facebook")} value={form.facebook} onChange={(event) => setValue("facebook", event.target.value)} />
+            <TextField label={t("email")} requirement={t("oneContactField")} value={form.email} onChange={(event) => setValue("email", event.target.value)} type="email" />
+            <TextField label={t("website")} requirement={t("oneContactField")} value={form.website} onChange={(event) => setValue("website", event.target.value)} type="url" />
+            <TextField label={t("facebook")} requirement={t("oneContactField")} value={form.facebook} onChange={(event) => setValue("facebook", event.target.value)} />
             <TextField label={t("instagramLinkedin")} value={form.instagramLinkedin} onChange={(event) => setValue("instagramLinkedin", event.target.value)} />
             <TextField label={t("contactPerson")} value={form.contactPerson} onChange={(event) => setValue("contactPerson", event.target.value)} />
             <TextField label={t("contactPersonRole")} value={form.contactPersonRole} onChange={(event) => setValue("contactPersonRole", event.target.value)} />
@@ -794,12 +847,12 @@ export function AddSupplierPage() {
         {step === 3 ? (
           <div className="grid gap-4">
             <div>
-              <div className="mb-2 text-sm font-bold text-slate-700">{t("mainCategory")}</div>
+              <div className="mb-2 text-sm font-bold text-slate-700">{t("mainCategory")} <span className="text-clay" aria-hidden="true">*</span></div>
               <ChipGroup options={taxonomy.supplierCategories.map(option)} values={form.mainCategories} onChange={(values) => setValue("mainCategories", values)} />
             </div>
             <TextField label={t("subcategories")} value={form.subcategories} onChange={(event) => setValue("subcategories", event.target.value)} placeholder={t("subcategoriesPlaceholder")} />
             <div className="grid gap-4">
-              <div className="text-sm font-bold text-slate-700">{t("capabilityTags")}</div>
+              <div className="text-sm font-bold text-slate-700">{t("capabilityTags")} <span className="text-clay" aria-hidden="true">*</span></div>
               {supplierCapabilityGroups.map((group) => {
                 const groupValues = new Set<string>(group.values);
                 const selected = form.capabilityTags.filter((value) => groupValues.has(value));
@@ -906,6 +959,11 @@ export function AddSupplierPage() {
                 <AlertTriangle className="me-2 inline h-4 w-4" aria-hidden="true" />
                 {t("missingRequiredFields", { fields: missing.map((field) => t(field)).join(", ") })}
               </div>
+            ) : duplicateChecking ? (
+              <div className="rounded-md border border-river/30 bg-river/5 p-4 text-sm font-semibold text-river">
+                <LoaderCircle className="me-2 inline h-4 w-4 animate-spin" aria-hidden="true" />
+                {t("supplierDuplicateCheckInProgress")}
+              </div>
             ) : (
               <div className="rounded-md border border-mint/30 bg-mint/10 p-4 text-sm font-semibold text-mint">
                 <CheckCircle2 className="me-2 inline h-4 w-4" aria-hidden="true" />
@@ -963,8 +1021,12 @@ export function AddSupplierPage() {
             </div>
           ) : (
             <Button disabled={busy || missing.length > 0} type="submit">
-              {isApprovedEditMode ? <Save className="h-4 w-4" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
-              {isApprovedEditMode ? t("saveChanges") : t("submitForReview")}
+              {busy
+                ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+                : isApprovedEditMode
+                  ? <Save className="h-4 w-4" aria-hidden="true" />
+                  : <Send className="h-4 w-4" aria-hidden="true" />}
+              {busy ? t("supplierSubmitInProgress") : isApprovedEditMode ? t("saveChanges") : t("submitForReview")}
             </Button>
           )}
         </div>
