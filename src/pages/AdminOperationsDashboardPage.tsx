@@ -42,12 +42,12 @@ export function AdminOperationsDashboardPage() {
       <div className="grid gap-5 p-5 sm:p-7">
         {error ? <DashboardError message={error} retry={() => void load()} /> : null}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-          <MetricCard label={locale === "ar" ? "المجهزون المعتمدون" : "Approved suppliers"} value={metrics.approvedSuppliers} icon={Building2} tone="good" />
-          <MetricCard label={locale === "ar" ? "حسابات المجهزين" : "Supplier accounts"} value={metrics.supplierAccounts} icon={Users} />
-          <MetricCard label={locale === "ar" ? "حسابات المشترين" : "Buyer accounts"} value={metrics.buyerAccounts} icon={Users} />
-          <MetricCard label={locale === "ar" ? "شركات بانتظار المراجعة" : "Companies awaiting review"} value={metrics.pendingCompanies} icon={ClipboardCheck} tone={metrics.pendingCompanies ? "warning" : "neutral"} />
-          <MetricCard label={locale === "ar" ? "تقييمات بانتظار المراجعة" : "Pending reviews"} value={metrics.pendingReviews} icon={Star} tone={metrics.pendingReviews ? "warning" : "neutral"} />
-          <MetricCard label={locale === "ar" ? "بلاغات ودعم" : "Reports & support"} value={metrics.pendingFeedback} icon={LifeBuoy} tone={metrics.pendingFeedback ? "warning" : "neutral"} />
+          <MetricCard label={locale === "ar" ? "المجهزون المعتمدون" : "Approved suppliers"} value={metrics.approvedSuppliers} icon={Building2} tone="good" to="/admin/suppliers" />
+          <MetricCard label={locale === "ar" ? "حسابات المجهزين" : "Supplier accounts"} value={metrics.supplierAccounts} icon={Users} to="/admin/users" />
+          <MetricCard label={locale === "ar" ? "حسابات المشترين" : "Buyer accounts"} value={metrics.buyerAccounts} icon={Users} to="/admin/buyers" />
+          <MetricCard label={locale === "ar" ? "شركات بانتظار المراجعة" : "Companies awaiting review"} value={metrics.pendingCompanies} icon={ClipboardCheck} tone={metrics.pendingCompanies ? "warning" : "neutral"} to="/admin/submissions" />
+          <MetricCard label={locale === "ar" ? "تقييمات بانتظار المراجعة" : "Pending reviews"} value={metrics.pendingReviews} icon={Star} tone={metrics.pendingReviews ? "warning" : "neutral"} to="/admin/reviews" />
+          <MetricCard label={locale === "ar" ? "بلاغات ودعم" : "Reports & support"} value={metrics.pendingFeedback} icon={LifeBuoy} tone={metrics.pendingFeedback ? "warning" : "neutral"} to="/admin/supplier-feedback" />
         </div>
 
         <DashboardPanel title={locale === "ar" ? "مركز العمليات" : "Operations center"} description={locale === "ar" ? "الأقسام التي تحتاج متابعة إدارية مباشرة." : "Areas that require direct administrative attention."}>

@@ -54,6 +54,7 @@ export const portalNavigation: Record<PortalRole, PortalNavItem[]> = {
     { to: "/admin/suppliers", label: { ar: "إدارة المجهزين", en: "Suppliers" }, icon: Building2 },
     { to: "/admin/suppliers/new", label: { ar: "إضافة مجهز", en: "Add supplier" }, icon: FilePlus2 },
     ...(features.supplierExcelImport ? [{ to: "/suppliers/import", label: { ar: "استيراد مجهزين", en: "Import suppliers" }, icon: FileSpreadsheet }] : []),
+    { to: "/admin/submissions", label: { ar: "طلبات اعتماد الشركات", en: "Company approvals" }, icon: ClipboardCheck },
     { to: "/super-admin/admins", label: { ar: "حسابات المديرين", en: "Admin accounts" }, icon: UserCog },
     { to: "/super-admin/users", label: { ar: "جميع المستخدمين", en: "All users" }, icon: Users },
     { to: "/super-admin/roles", label: { ar: "الأدوار والصلاحيات", en: "Roles & permissions" }, icon: SlidersHorizontal },

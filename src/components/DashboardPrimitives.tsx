@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { AlertCircle, Inbox, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 export function DashboardPageHeader({
   eyebrow,
@@ -31,15 +32,25 @@ export function MetricCard({
   helper,
   icon: Icon,
   tone = "neutral",
+  to,
 }: {
   label: string;
   value: ReactNode;
   helper?: string;
   icon: LucideIcon;
   tone?: "neutral" | "good" | "warning" | "danger";
+  to?: string;
 }) {
-  return (
-    <div className={clsx("min-w-0 rounded-[16px] border bg-white p-5 shadow-card", tone === "neutral" && "border-borderSoft", tone === "good" && "border-mint/30", tone === "warning" && "border-amber/35", tone === "danger" && "border-clay/30")}>
+  const className = clsx(
+    "min-w-0 rounded-[16px] border bg-white p-5 shadow-card",
+    tone === "neutral" && "border-borderSoft",
+    tone === "good" && "border-mint/30",
+    tone === "warning" && "border-amber/35",
+    tone === "danger" && "border-clay/30",
+    to && "group cursor-pointer transition hover:-translate-y-0.5 hover:border-amber hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-2",
+  );
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate text-sm font-bold text-muted">{label}</div>
@@ -48,8 +59,10 @@ export function MetricCard({
         <span className={clsx("grid h-11 w-11 shrink-0 place-items-center rounded-[12px]", tone === "good" && "bg-successBg text-mint", tone === "warning" && "bg-cream text-amber", tone === "danger" && "bg-clay/10 text-clay", tone === "neutral" && "bg-[#eef4f8] text-river")}><Icon className="h-5 w-5" aria-hidden="true" /></span>
       </div>
       {helper ? <p className="mt-3 text-xs font-semibold leading-5 text-muted">{helper}</p> : null}
-    </div>
+    </>
   );
+
+  return to ? <Link className={className} to={to}>{content}</Link> : <div className={className}>{content}</div>;
 }
 
 export function DashboardPanel({ title, description, actions, children, className }: { title: string; description?: string; actions?: ReactNode; children: ReactNode; className?: string }) {
