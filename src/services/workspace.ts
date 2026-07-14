@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteField,
   deleteDoc,
   doc,
   getCountFromServer,
@@ -10,6 +11,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  Timestamp,
   updateDoc,
   where,
   writeBatch,
@@ -41,6 +43,7 @@ const rfqResponsesRef = collection(db, "rfqResponses");
 const notificationsRef = collection(db, "notifications");
 const conversationsRef = collection(db, "conversations");
 const messagesRef = collection(db, "messages");
+const suppliersRef = collection(db, "suppliers");
 const productsRef = collection(db, "supplierProducts");
 const documentsRef = collection(db, "supplierDocuments");
 const contentPagesRef = collection(db, "contentPages");
@@ -119,9 +122,55 @@ export async function removeFavorite(userId: string, supplierId: string) {
   await deleteDoc(doc(favoritesRef, id));
 }
 
-export async function createRfq(buyerId: string, input: Omit<RfqRecord, "id" | "buyerId" | "attachmentStatus" | "createdAt" | "updatedAt">) {
+type RfqInput = Omit<RfqRecord, "id" | "buyerId" | "attachmentStatus" | "closingAt" | "createdAt" | "updatedAt">;
+
+export function isRfqAcceptingResponses(item: Pick<RfqRecord, "status" | "closingDate" | "closingAt">) {
+  if (!["published", "receiving"].includes(item.status)) return false;
+  const closingAt = toDate(item.closingAt as never)?.getTime() || Date.parse(`${item.closingDate}T23:59:59`);
+  return Number.isFinite(closingAt) && closingAt >= Date.now();
+}
+
+function normalizeRfqInput(input: RfqInput) {
+  const title = input.title.trim();
+  const description = input.description.trim();
+  const unit = input.unit.trim();
+  const location = input.location.trim();
+  const recipientIds = [...new Set(input.recipientIds.map((item) => item.trim()).filter(Boolean))].slice(0, 50);
+  const quantity = Math.max(1, Math.trunc(Number(input.quantity) || 0));
+  if (!title || title.length > 120 || !description || description.length > 2000 || !unit || unit.length > 40) throw new Error("invalid_rfq_fields");
+  const closingAtDate = new Date(`${input.closingDate}T23:59:59`);
+  if (!input.categoryId || !input.closingDate || !Number.isFinite(closingAtDate.getTime())) throw new Error("invalid_rfq_fields");
+  if (input.status === "published" && recipientIds.length === 0) throw new Error("rfq_recipient_required");
+  return { ...input, title, description, unit, location, quantity, recipientIds, closingAt: isFirebaseConfigured ? Timestamp.fromDate(closingAtDate) : closingAtDate.toISOString() };
+}
+
+async function recipientOwnerIds(recipientIds: string[]) {
+  const snapshots = await Promise.all(recipientIds.map((supplierId) => getDoc(doc(suppliersRef, supplierId))));
+  return [...new Set(snapshots.map((snapshot) => snapshot.data()?.accountOwnerId).filter((value): value is string => typeof value === "string" && value.length > 0))];
+}
+
+function rfqNotification(userId: string, actorId: string, rfqId: string, direction: "buyer_to_supplier" | "supplier_to_buyer") {
+  const toSupplier = direction === "buyer_to_supplier";
+  return {
+    userId,
+    actorId,
+    type: "rfq" as const,
+    referenceType: "rfq" as const,
+    referenceId: rfqId,
+    titleAr: toSupplier ? "طلب عرض سعر جديد" : "تم استلام عرض سعر",
+    titleEn: toSupplier ? "New RFQ request" : "New quotation received",
+    bodyAr: toSupplier ? "وصل طلب عرض سعر جديد إلى شركتك." : "استلم طلبك عرض سعر جديداً من أحد المجهزين.",
+    bodyEn: toSupplier ? "A new RFQ has been addressed to your company." : "A supplier submitted a quotation for your RFQ.",
+    link: toSupplier ? "/supplier/rfqs" : "/buyer/rfqs",
+    read: false,
+    createdAt: serverTimestamp(),
+  };
+}
+
+export async function createRfq(buyerId: string, input: RfqInput) {
+  const normalized = normalizeRfqInput(input);
   const payload = {
-    ...input,
+    ...normalized,
     buyerId,
     attachmentStatus: "upload_pending_launch" as const,
     createdAt: isFirebaseConfigured ? serverTimestamp() : nowIso(),
@@ -132,8 +181,13 @@ export async function createRfq(buyerId: string, input: Omit<RfqRecord, "id" | "
     localUpsert("rfqs", item);
     return item.id;
   }
-  const created = await addDoc(rfqsRef, payload);
-  return created.id;
+  const rfqRef = doc(rfqsRef);
+  const owners = normalized.status === "published" ? await recipientOwnerIds(normalized.recipientIds) : [];
+  const batch = writeBatch(db);
+  batch.set(rfqRef, payload);
+  owners.forEach((userId) => batch.set(doc(notificationsRef), rfqNotification(userId, buyerId, rfqRef.id, "buyer_to_supplier")));
+  await batch.commit();
+  return rfqRef.id;
 }
 
 export async function listBuyerRfqs(buyerId: string) {
@@ -144,7 +198,7 @@ export async function listBuyerRfqs(buyerId: string) {
 
 export async function listSupplierRfqs(supplierUserId: string, supplierProfileId?: string) {
   if (!isFirebaseConfigured) {
-    return sortNewest(localRead<RfqRecord>("rfqs").filter((item) => item.status !== "draft" && (
+    return sortNewest(localRead<RfqRecord>("rfqs").filter((item) => isRfqAcceptingResponses(item) && (
       item.recipientIds.includes(supplierUserId) || Boolean(supplierProfileId && item.recipientIds.includes(supplierProfileId))
     )));
   }
@@ -153,16 +207,27 @@ export async function listSupplierRfqs(supplierUserId: string, supplierProfileId
   const snapshots = await Promise.all(targets.map((target) => getDocs(query(rfqsRef, where("recipientIds", "array-contains", target), limit(100)))));
   const items = new Map<string, RfqRecord>();
   snapshots.forEach((snapshot) => snapshot.docs.forEach((item) => items.set(item.id, withId<RfqRecord>(item))));
-  return sortNewest([...items.values()].filter((item) => item.status !== "draft"));
+  return sortNewest([...items.values()].filter(isRfqAcceptingResponses));
 }
 
 export async function updateRfqStatus(rfqId: string, status: RfqRecord["status"]) {
   if (!isFirebaseConfigured) {
     const item = localRead<RfqRecord>("rfqs").find((entry) => entry.id === rfqId);
-    if (item) localUpsert("rfqs", { ...item, status, updatedAt: nowIso() });
+    if (!item) throw new Error("rfq_not_found");
+    if (status === "published" && item.recipientIds.length === 0) throw new Error("rfq_recipient_required");
+    localUpsert("rfqs", { ...item, status, updatedAt: nowIso() });
     return;
   }
-  await updateDoc(doc(rfqsRef, rfqId), { status, updatedAt: serverTimestamp() });
+  const rfqRef = doc(rfqsRef, rfqId);
+  const snapshot = await getDoc(rfqRef);
+  if (!snapshot.exists()) throw new Error("rfq_not_found");
+  const item = withId<RfqRecord>(snapshot);
+  if (status === "published" && item.recipientIds.length === 0) throw new Error("rfq_recipient_required");
+  const owners = status === "published" && !["published", "receiving"].includes(item.status) ? await recipientOwnerIds(item.recipientIds) : [];
+  const batch = writeBatch(db);
+  batch.update(rfqRef, { status, updatedAt: serverTimestamp() });
+  owners.forEach((userId) => batch.set(doc(notificationsRef), rfqNotification(userId, item.buyerId, rfqId, "buyer_to_supplier")));
+  await batch.commit();
 }
 
 export async function listRfqResponses(rfqId: string) {
@@ -171,18 +236,53 @@ export async function listRfqResponses(rfqId: string) {
   return sortNewest(snapshot.docs.map((item) => withId<RfqResponse>(item)));
 }
 
+export async function getSupplierRfqResponse(rfqId: string, supplierUserId: string) {
+  const responseId = `${rfqId}_${supplierUserId}`;
+  if (!isFirebaseConfigured) return localRead<RfqResponse>("rfqResponses").find((item) => item.id === responseId) || null;
+  const snapshot = await getDoc(doc(rfqResponsesRef, responseId));
+  return snapshot.exists() ? withId<RfqResponse>(snapshot) : null;
+}
+
 export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status" | "attachmentStatus" | "createdAt" | "updatedAt">) {
+  const message = input.message.trim();
+  const price = input.price === undefined ? undefined : Number(input.price);
+  const deliveryDays = input.deliveryDays === undefined ? undefined : Math.trunc(Number(input.deliveryDays));
+  if (!message || message.length > 2000 || (price !== undefined && (!Number.isFinite(price) || price < 0)) || (deliveryDays !== undefined && (!Number.isFinite(deliveryDays) || deliveryDays < 1))) throw new Error("invalid_rfq_response");
   const id = `${input.rfqId}_${input.supplierUserId}`;
-  const payload = {
-    ...input,
-    id,
-    status: "submitted" as const,
-    attachmentStatus: "upload_pending_launch" as const,
-    createdAt: isFirebaseConfigured ? serverTimestamp() : nowIso(),
-    updatedAt: isFirebaseConfigured ? serverTimestamp() : nowIso(),
-  };
-  if (!isFirebaseConfigured) return localUpsert("rfqResponses", payload as RfqResponse);
-  await setDoc(doc(rfqResponsesRef, id), payload, { merge: true });
+  const values = { ...input, message, ...(price === undefined ? {} : { price }), ...(deliveryDays === undefined ? {} : { deliveryDays }) };
+  if (!isFirebaseConfigured) {
+    const existing = localRead<RfqResponse>("rfqResponses").find((item) => item.id === id);
+    return localUpsert("rfqResponses", { ...existing, ...values, id, status: "submitted", attachmentStatus: "upload_pending_launch", createdAt: existing?.createdAt || nowIso(), updatedAt: nowIso() } as RfqResponse);
+  }
+  const rfqSnapshot = await getDoc(doc(rfqsRef, input.rfqId));
+  if (!rfqSnapshot.exists()) throw new Error("rfq_not_found");
+  const rfq = withId<RfqRecord>(rfqSnapshot);
+  if (!isRfqAcceptingResponses(rfq)) throw new Error("rfq_closed");
+  const responseRef = doc(rfqResponsesRef, id);
+  const existing = await getDoc(responseRef);
+  const batch = writeBatch(db);
+  if (existing.exists()) {
+    batch.update(responseRef, {
+      message,
+      currency: input.currency,
+      price: price === undefined ? deleteField() : price,
+      deliveryDays: deliveryDays === undefined ? deleteField() : deliveryDays,
+      status: "submitted",
+      updatedAt: serverTimestamp(),
+    });
+  } else {
+    batch.set(responseRef, {
+      ...values,
+      id,
+      status: "submitted",
+      attachmentStatus: "upload_pending_launch",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+  batch.set(doc(notificationsRef), rfqNotification(rfq.buyerId, input.supplierUserId, input.rfqId, "supplier_to_buyer"));
+  await batch.commit();
+  return id;
 }
 
 export async function listNotifications(userId: string) {
