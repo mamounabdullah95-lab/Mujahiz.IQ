@@ -10,7 +10,7 @@
     "preview:static": "node scripts/preview-static.mjs",
     "generate:supplier-template": "node scripts/generate-supplier-import-template.mjs",
     "test": "node --test tests/*.test.mjs",
-    "test:firestore-emulator": "firebase emulators:exec --project demo-mujahiziq-integration --only firestore \"node --test tests/firestore-emulator.mjs\""
+    "test:firestore-emulator": "firebase emulators:exec --project demo-mujahiziq-integration --only firestore \"node --test --test-concurrency=1 tests/firestore-emulator.mjs tests/rfq-firestore-emulator.mjs\""
   },
   "dependencies": {
     "clsx": "^2.1.1",
