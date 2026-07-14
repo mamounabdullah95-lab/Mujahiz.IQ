@@ -1,4 +1,4 @@
-import { Bell, BookOpen, CheckCheck, FilePlus2, Heart, Mail, Plus, Search, Send, Settings, Star, Tags, Trash2 } from "lucide-react";
+import { Bell, BookOpen, CheckCheck, CheckCircle2, FilePlus2, Heart, Mail, Plus, Search, Send, Settings, Star, Tags, Trash2 } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -10,7 +10,7 @@ import { useTaxonomy } from "../../contexts/TaxonomyContext";
 import { labelFor } from "../../data/constants";
 import { auth } from "../../config/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { listSupplierCandidates } from "../../services/firestore";
+import { getSupplier, listSupplierCandidates } from "../../services/firestore";
 import {
   createRfq,
   listBuyerRfqs,
@@ -18,13 +18,14 @@ import {
   listConversations,
   listFavorites,
   listNotifications,
+  listRfqResponses,
   markAllNotificationsRead,
   markNotificationRead,
   removeFavorite,
   sendConversationMessage,
   updateRfqStatus,
 } from "../../services/workspace";
-import type { Conversation, ConversationMessage, FavoriteSupplier, RfqRecord, WorkspaceNotification } from "../../types/workspace";
+import type { Conversation, ConversationMessage, FavoriteSupplier, RfqRecord, RfqResponse, WorkspaceNotification } from "../../types/workspace";
 import { toDate } from "../../utils/date";
 
 function useLocale() {
@@ -76,6 +77,7 @@ export function BuyerFavoritesPage() {
 }
 
 const initialRfq = { title: "", description: "", quantity: "1", unit: "piece", location: "", closingDate: "", categoryId: "", recipientIds: [] as string[] };
+type BuyerResponseView = RfqResponse & { supplierName: string };
 
 export function BuyerRfqsPage() {
   const locale = useLocale();
@@ -85,32 +87,87 @@ export function BuyerRfqsPage() {
   const { firebaseUser, hasActiveAccess } = useAuth();
   const { taxonomy } = useTaxonomy();
   const [items, setItems] = useState<RfqRecord[]>([]);
-  const [form, setForm] = useState(() => ({
-    ...initialRfq,
-    categoryId: requestedCategoryId,
-    recipientIds: requestedSupplierId ? [requestedSupplierId] : [],
-  }));
+  const [selected, setSelected] = useState<RfqRecord | null>(null);
+  const [responses, setResponses] = useState<BuyerResponseView[]>([]);
+  const [form, setForm] = useState(() => ({ ...initialRfq, categoryId: requestedCategoryId, recipientIds: requestedSupplierId ? [requestedSupplierId] : [] }));
   const [candidates, setCandidates] = useState<Array<{ id: string; displayName: string; nameOriginal: string }>>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const text = locale === "ar" ? {
-    eyebrow: "دورة الشراء", title: "طلبات عروض الأسعار", description: "أنشئ طلباً منظماً وأرسله إلى مجهزين محددين. لا تُضاف أسعار أو عروض تجريبية.", newTitle: "إنشاء RFQ", titleLabel: "العنوان", desc: "وصف المادة أو الخدمة", quantity: "الكمية", unit: "الوحدة", location: "موقع التسليم", close: "تاريخ الإغلاق", category: "التصنيف", recipients: "المجهزون المستلمون", publish: "نشر الطلب", draft: "حفظ مسودة", empty: "لا توجد طلبات حتى الآن", inactive: "يلزم وصول فعال لاختيار مجهزين من الدليل، ويمكنك حفظ الطلب كمسودة.", none: "لا توجد شركات مطابقة ضمن التصنيف حالياً.", saved: "تم حفظ طلب عرض الأسعار." }
-  : { eyebrow: "Procurement cycle", title: "RFQ requests", description: "Create a structured request and send it to selected suppliers. No demo quotations or prices are generated.", newTitle: "Create RFQ", titleLabel: "Title", desc: "Material or service description", quantity: "Quantity", unit: "Unit", location: "Delivery location", close: "Closing date", category: "Category", recipients: "Recipient suppliers", publish: "Publish request", draft: "Save draft", empty: "No requests yet", inactive: "Active directory access is required to select suppliers; you can still save a draft.", none: "No matching suppliers are currently available for this category.", saved: "The RFQ was saved." };
-  const load = async () => { if (firebaseUser) setItems(await listBuyerRfqs(firebaseUser.uid)); };
+    eyebrow: "دورة الشراء", title: "طلبات عروض الأسعار", description: "أنشئ طلباً منظماً وأرسله إلى مجهزين محددين، ثم قارن العروض المستلمة من مكان واحد.", newTitle: "إنشاء RFQ", titleLabel: "العنوان", desc: "وصف المادة أو الخدمة", quantity: "الكمية", unit: "الوحدة", location: "موقع التسليم", close: "تاريخ الإغلاق", category: "التصنيف", recipients: "المجهزون المستلمون", publish: "نشر الطلب", draft: "حفظ مسودة", empty: "لا توجد طلبات حتى الآن", inactive: "يلزم وصول فعال لاختيار المجهزين ونشر الطلب، ويمكنك حفظه كمسودة.", none: "لا توجد شركات مرتبطة بحساب فعّال ضمن هذا التصنيف.", saved: "تم حفظ طلب عرض الأسعار.", required: "أكمل الحقول المطلوبة أولاً.", recipientRequired: "اختر مجهزاً واحداً على الأقل قبل النشر.", invalidDate: "اختر تاريخ إغلاق اليوم أو بعده.", confirmPublish: "هل تريد نشر الطلب وإرساله إلى المجهزين المحددين؟", responses: "العروض المستلمة", selectRequest: "اختر طلباً لمراجعة عروضه.", noResponses: "لم يصل أي عرض لهذا الطلب بعد.", closeRequest: "إغلاق الطلب", publishDraft: "نشر المسودة", view: "عرض ومقارنة", price: "السعر", delivery: "مدة التجهيز", days: "يوم", publishedOnly: "تظهر العروض بعد نشر الطلب.", confirmClose: "هل تريد إغلاق هذا الطلب؟ لن يتمكن المجهزون من إرسال عروض جديدة." }
+    : { eyebrow: "Procurement cycle", title: "RFQ requests", description: "Create a structured request, address selected suppliers, and compare received quotations in one place.", newTitle: "Create RFQ", titleLabel: "Title", desc: "Material or service description", quantity: "Quantity", unit: "Unit", location: "Delivery location", close: "Closing date", category: "Category", recipients: "Recipient suppliers", publish: "Publish request", draft: "Save draft", empty: "No requests yet", inactive: "Active access is required to select suppliers and publish; you can still save a draft.", none: "No account-enabled suppliers are available for this category.", saved: "The RFQ was saved.", required: "Complete the required fields first.", recipientRequired: "Select at least one supplier before publishing.", invalidDate: "Choose today or a future closing date.", confirmPublish: "Publish this RFQ and notify the selected suppliers?", responses: "Received quotations", selectRequest: "Select a request to review its quotations.", noResponses: "No quotation has been received for this request.", closeRequest: "Close request", publishDraft: "Publish draft", view: "View and compare", price: "Price", delivery: "Delivery", days: "days", publishedOnly: "Quotations appear after the request is published.", confirmClose: "Close this request? Suppliers will no longer be able to submit quotations." };
+
+  const load = async () => {
+    if (!firebaseUser) return [];
+    const values = await listBuyerRfqs(firebaseUser.uid);
+    setItems(values);
+    setSelected((current) => current ? values.find((item) => item.id === current.id) || null : current);
+    return values;
+  };
+
+  async function openRequest(item: RfqRecord) {
+    setSelected(item); setResponses([]); setError("");
+    if (item.status === "draft") return;
+    try {
+      const values = await listRfqResponses(item.id);
+      const enriched = await Promise.all(values.map(async (response) => {
+        const supplier = await getSupplier(response.supplierProfileId).catch(() => null);
+        return { ...response, supplierName: supplier?.displayName || supplier?.nameOriginal || response.supplierProfileId };
+      }));
+      setResponses(enriched);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Failed"); }
+  }
+
   useEffect(() => { void load().catch((reason) => setError(reason instanceof Error ? reason.message : "Failed")); }, [firebaseUser?.uid]);
   useEffect(() => {
     if (!form.categoryId || !hasActiveAccess) { setCandidates([]); return; }
     void listSupplierCandidates([form.categoryId]).then((records) => setCandidates(records.map((item) => ({ id: item.id, displayName: item.displayName, nameOriginal: item.nameOriginal })))).catch(() => setCandidates([]));
   }, [form.categoryId, hasActiveAccess]);
+
   async function submit(status: "draft" | "published") {
-    if (!firebaseUser || !form.title.trim() || !form.description.trim() || !form.closingDate || !form.categoryId) return;
-    setBusy(true); setError("");
+    setError(""); setNotice("");
+    if (!firebaseUser || !form.title.trim() || !form.description.trim() || !form.unit.trim() || !form.closingDate || !form.categoryId) { setError(text.required); return; }
+    if (Date.parse(`${form.closingDate}T23:59:59`) < Date.now()) { setError(text.invalidDate); return; }
+    if (status === "published" && form.recipientIds.length === 0) { setError(text.recipientRequired); return; }
+    if (status === "published" && !window.confirm(text.confirmPublish)) return;
+    setBusy(true);
     try {
-      await createRfq(firebaseUser.uid, { title: form.title.trim(), description: form.description.trim(), quantity: Math.max(1, Number(form.quantity) || 1), unit: form.unit.trim(), location: form.location.trim(), closingDate: form.closingDate, categoryId: form.categoryId, recipientIds: status === "published" ? form.recipientIds : [], status });
-      setForm(initialRfq); await load();
+      const id = await createRfq(firebaseUser.uid, { title: form.title.trim(), description: form.description.trim(), quantity: Math.max(1, Number(form.quantity) || 1), unit: form.unit.trim(), location: form.location.trim(), closingDate: form.closingDate, categoryId: form.categoryId, recipientIds: form.recipientIds, status });
+      setForm(initialRfq); setNotice(text.saved);
+      const values = await load();
+      const created = values.find((item) => item.id === id);
+      if (created) await openRequest(created);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Failed"); } finally { setBusy(false); }
   }
-  return <div className="overflow-hidden rounded-[18px] border border-borderSoft bg-creamLight shadow-card"><DashboardPageHeader eyebrow={text.eyebrow} title={text.title} description={text.description} /><div className="grid gap-5 p-5 sm:p-7 xl:grid-cols-[1.05fr_0.95fr]"><DashboardPanel title={text.newTitle}>{error ? <DashboardError message={error} /> : null}<div className="grid gap-4 sm:grid-cols-2"><TextField label={text.titleLabel} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength={120} required /><TextField label={text.quantity} value={form.quantity} onChange={(event) => setForm({ ...form, quantity: event.target.value })} type="number" min="1" required /><TextField label={text.unit} value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value })} required /><TextField label={text.location} value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} /><TextField label={text.close} value={form.closingDate} onChange={(event) => setForm({ ...form, closingDate: event.target.value })} type="date" required /><SelectField label={text.category} value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value, recipientIds: [] })} required><option value="">—</option>{taxonomy.supplierCategories.map((item) => <option value={item.value} key={item.value}>{labelFor(taxonomy.supplierCategories, item.value, locale)}</option>)}</SelectField><TextAreaField className="sm:col-span-2" label={text.desc} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} maxLength={2000} required /></div><div className="mt-4"><DisabledFileUpload locale={locale} purpose="rfq_attachment" accepted="PDF, XLSX, JPG, PNG" maximumSize="10 MB" compact /></div><div className="mt-4"><div className="mb-2 text-sm font-black">{text.recipients}</div>{!hasActiveAccess ? <p className="text-xs font-bold text-clay">{text.inactive}</p> : candidates.length ? <div className="grid gap-2 sm:grid-cols-2">{candidates.map((supplier) => <label className="flex items-center gap-2 rounded-xl border border-borderSoft bg-creamLight p-3 text-xs font-bold" key={supplier.id}><input type="checkbox" checked={form.recipientIds.includes(supplier.id)} onChange={(event) => setForm({ ...form, recipientIds: event.target.checked ? [...form.recipientIds, supplier.id] : form.recipientIds.filter((id) => id !== supplier.id) })} />{supplier.displayName || supplier.nameOriginal}</label>)}</div> : <p className="text-xs font-semibold text-muted">{text.none}</p>}</div><div className="mt-5 flex flex-wrap gap-2"><Button type="button" disabled={busy} onClick={() => void submit("published")}><Send className="h-4 w-4" />{text.publish}</Button><Button type="button" variant="secondary" disabled={busy} onClick={() => void submit("draft")}><FilePlus2 className="h-4 w-4" />{text.draft}</Button></div></DashboardPanel><DashboardPanel title={text.title}>{items.length ? <div className="grid gap-3">{items.map((item) => <article className="rounded-xl border border-borderSoft bg-creamLight p-4" key={item.id}><div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-black">{item.title}</h3><p className="mt-1 text-xs font-semibold text-muted">{labelFor(taxonomy.supplierCategories, item.categoryId, locale)} · {item.quantity} {item.unit}</p></div><span className="rounded-full bg-white px-3 py-1 text-xs font-black text-amber">{item.status}</span></div><p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">{item.description}</p><div className="mt-3 flex flex-wrap gap-2">{item.status === "draft" ? <Button variant="secondary" onClick={() => void updateRfqStatus(item.id, "published").then(load)}>{text.publish}</Button> : null}{!['closed','cancelled'].includes(item.status) ? <Button variant="ghost" onClick={() => void updateRfqStatus(item.id, "closed").then(load)}>{locale === "ar" ? "إغلاق" : "Close"}</Button> : null}</div></article>)}</div> : <InlineEmptyState title={text.empty} body={text.description} />}</DashboardPanel></div></div>;
+
+  async function publishDraft(item: RfqRecord) {
+    setError("");
+    if (!item.recipientIds.length) { setError(text.recipientRequired); return; }
+    if (!window.confirm(text.confirmPublish)) return;
+    try { await updateRfqStatus(item.id, "published"); await load(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Failed"); }
+  }
+
+  async function closeRequest(item: RfqRecord) {
+    if (!window.confirm(text.confirmClose)) return;
+    try { await updateRfqStatus(item.id, "closed"); await load(); setSelected(null); setResponses([]); } catch (reason) { setError(reason instanceof Error ? reason.message : "Failed"); }
+  }
+
+  const minimumDate = new Date().toISOString().slice(0, 10);
+  return <div className="overflow-hidden rounded-[18px] border border-borderSoft bg-creamLight shadow-card">
+    <DashboardPageHeader eyebrow={text.eyebrow} title={text.title} description={text.description} />
+    <div className="grid gap-5 p-5 sm:p-7 xl:grid-cols-[1.05fr_0.95fr]">
+      <DashboardPanel title={text.newTitle}>
+        {error ? <DashboardError message={error} /> : null}{notice ? <div className="mb-4 flex items-center gap-2 rounded-xl bg-successBg p-3 text-sm font-black text-mint"><CheckCircle2 className="h-5 w-5" />{notice}</div> : null}
+        <div className="grid gap-4 sm:grid-cols-2"><TextField label={text.titleLabel} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength={120} required /><TextField label={text.quantity} value={form.quantity} onChange={(event) => setForm({ ...form, quantity: event.target.value })} type="number" min="1" required /><TextField label={text.unit} value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value })} required /><TextField label={text.location} value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} /><TextField label={text.close} value={form.closingDate} onChange={(event) => setForm({ ...form, closingDate: event.target.value })} type="date" min={minimumDate} required /><SelectField label={text.category} value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value, recipientIds: [] })} required><option value="">—</option>{taxonomy.supplierCategories.map((item) => <option value={item.value} key={item.value}>{labelFor(taxonomy.supplierCategories, item.value, locale)}</option>)}</SelectField><TextAreaField className="sm:col-span-2" label={text.desc} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} maxLength={2000} required /></div>
+        <div className="mt-4"><DisabledFileUpload locale={locale} purpose="rfq_attachment" accepted="PDF, XLSX, JPG, PNG" maximumSize="10 MB" compact /></div>
+        <div className="mt-4"><div className="mb-2 text-sm font-black">{text.recipients}</div>{!hasActiveAccess ? <p className="text-xs font-bold text-clay">{text.inactive}</p> : candidates.length ? <div className="grid gap-2 sm:grid-cols-2">{candidates.map((supplier) => <label className="flex items-center gap-2 rounded-xl border border-borderSoft bg-creamLight p-3 text-xs font-bold" key={supplier.id}><input type="checkbox" checked={form.recipientIds.includes(supplier.id)} onChange={(event) => setForm({ ...form, recipientIds: event.target.checked ? [...form.recipientIds, supplier.id] : form.recipientIds.filter((id) => id !== supplier.id) })} />{supplier.displayName || supplier.nameOriginal}</label>)}</div> : <p className="text-xs font-semibold text-muted">{text.none}</p>}</div>
+        <div className="mt-5 flex flex-wrap gap-2"><Button type="button" disabled={busy || !hasActiveAccess} onClick={() => void submit("published")}><Send className="h-4 w-4" />{text.publish}</Button><Button type="button" variant="secondary" disabled={busy} onClick={() => void submit("draft")}><FilePlus2 className="h-4 w-4" />{text.draft}</Button></div>
+      </DashboardPanel>
+      <DashboardPanel title={text.title}>{items.length ? <div className="grid gap-3">{items.map((item) => <article className={"rounded-xl border p-4 " + (selected?.id === item.id ? "border-amber bg-cream" : "border-borderSoft bg-creamLight")} key={item.id}><div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-black">{item.title}</h3><p className="mt-1 text-xs font-semibold text-muted">{labelFor(taxonomy.supplierCategories, item.categoryId, locale)} · {item.quantity} {item.unit}</p></div><span className="rounded-full bg-white px-3 py-1 text-xs font-black text-amber">{item.status}</span></div><p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">{item.description}</p><div className="mt-3 flex flex-wrap gap-2"><Button variant="secondary" onClick={() => void openRequest(item)}>{text.view}</Button>{item.status === "draft" ? <Button variant="secondary" disabled={!hasActiveAccess} onClick={() => void publishDraft(item)}>{text.publishDraft}</Button> : null}{!["closed", "cancelled"].includes(item.status) ? <Button variant="ghost" onClick={() => void closeRequest(item)}>{text.closeRequest}</Button> : null}</div></article>)}</div> : <InlineEmptyState title={text.empty} body={text.description} />}</DashboardPanel>
+      <div className="xl:col-span-2"><DashboardPanel title={text.responses}>{selected ? selected.status === "draft" ? <InlineEmptyState title={text.publishedOnly} body="" /> : responses.length ? <div className="grid gap-4 lg:grid-cols-2">{responses.map((response) => <article className="rounded-xl border border-borderSoft bg-white p-5" key={response.id}><div className="flex items-start justify-between gap-3"><h3 className="font-black">{response.supplierName}</h3><span className="rounded-full bg-successBg px-3 py-1 text-xs font-black text-mint">{response.status}</span></div><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted">{response.message}</p><dl className="mt-4 grid gap-2 text-xs font-bold sm:grid-cols-2"><div>{text.price}: {response.price ?? "—"} {response.price !== undefined ? response.currency : ""}</div><div>{text.delivery}: {response.deliveryDays ?? "—"} {response.deliveryDays ? text.days : ""}</div></dl></article>)}</div> : <InlineEmptyState title={text.noResponses} body="" /> : <InlineEmptyState title={text.selectRequest} body="" />}</DashboardPanel></div>
+    </div>
+  </div>;
 }
 
 export function WorkspaceMessagesPage() {
