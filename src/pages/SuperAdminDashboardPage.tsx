@@ -51,12 +51,12 @@ export function SuperAdminDashboardPage() {
       <div className="grid gap-5 p-5 sm:p-7">
         {error ? <DashboardError message={error} retry={() => void load()} /> : null}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-          <MetricCard label={locale === "ar" ? "إجمالي المستخدمين" : "Total users"} value={metrics.totalUsers} icon={Users} />
-          <MetricCard label={locale === "ar" ? "المديرون" : "Admins"} value={metrics.admins} icon={UserCog} tone="warning" />
-          <MetricCard label={locale === "ar" ? "الحسابات الرئيسية" : "Super admins"} value={metrics.superAdmins} icon={ShieldCheck} tone="good" />
-          <MetricCard label={locale === "ar" ? "المجهزون المعتمدون" : "Approved suppliers"} value={metrics.approvedSuppliers} icon={ShieldCheck} tone="good" />
-          <MetricCard label={locale === "ar" ? "طلبات الشركات المعلقة" : "Pending company requests"} value={metrics.pendingCompanies} icon={Activity} tone={metrics.pendingCompanies ? "warning" : "neutral"} />
-          <MetricCard label={locale === "ar" ? "التصنيفات" : "Categories"} value={metrics.categories} icon={SlidersHorizontal} />
+          <MetricCard label={locale === "ar" ? "إجمالي المستخدمين" : "Total users"} value={metrics.totalUsers} icon={Users} to="/super-admin/users" />
+          <MetricCard label={locale === "ar" ? "المديرون" : "Admins"} value={metrics.admins} icon={UserCog} tone="warning" to="/super-admin/admins" />
+          <MetricCard label={locale === "ar" ? "الحسابات الرئيسية" : "Super admins"} value={metrics.superAdmins} icon={ShieldCheck} tone="good" to="/super-admin/users" />
+          <MetricCard label={locale === "ar" ? "المجهزون المعتمدون" : "Approved suppliers"} value={metrics.approvedSuppliers} icon={ShieldCheck} tone="good" to="/admin/suppliers" />
+          <MetricCard label={locale === "ar" ? "طلبات الشركات المعلقة" : "Pending company requests"} value={metrics.pendingCompanies} icon={Activity} tone={metrics.pendingCompanies ? "warning" : "neutral"} to="/admin/submissions" />
+          <MetricCard label={locale === "ar" ? "التصنيفات" : "Categories"} value={metrics.categories} icon={SlidersHorizontal} to="/super-admin/categories" />
         </div>
 
         <DashboardPanel title={locale === "ar" ? "إدارة النظام" : "System management"} description={locale === "ar" ? "وظائف الحساب الرئيسي منفصلة عن صلاحيات مدير النظام العادي." : "Super-admin functions are isolated from regular administrator access."}>
