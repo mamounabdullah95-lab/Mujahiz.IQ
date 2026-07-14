@@ -21,6 +21,7 @@ export interface RfqRecord {
   unit: string;
   location: string;
   closingDate: string;
+  closingAt: TimestampLike;
   categoryId: string;
   recipientIds: string[];
   status: RfqStatus;
@@ -48,6 +49,9 @@ export interface WorkspaceNotification {
   id: string;
   userId: string;
   type: "approval" | "rfq" | "message" | "access" | "submission" | "system";
+  actorId?: string;
+  referenceType?: "rfq" | "conversation" | "submission" | "supplier";
+  referenceId?: string;
   titleAr: string;
   titleEn: string;
   bodyAr: string;
