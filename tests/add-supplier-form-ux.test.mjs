@@ -17,8 +17,11 @@ test("supplier form visibly distinguishes required, optional, and conditional fi
   assert.match(page, /t\("conditionalFieldLegend"\)/);
   assert.match(page, /requirement=\{t\("oneOfLocationRequired"\)\}/);
   assert.match(page, /requirement=\{t\("oneContactField"\)\}/);
-  assert.match(page, /required\s+label=\{t\("governorate"\)\}/);
-  assert.match(page, /required\s+label=\{t\("mainCategory"\)\}/);
+  assert.match(page, /t\("governorate"\)\} <span[^>]*>\*<\/span>/);
+  assert.match(page, /t\("mainCategory"\)\} <span[^>]*>\*<\/span>/);
+  assert.match(page, /t\("capabilityTags"\)\} <span[^>]*>\*<\/span>/);
+  assert.match(page, /label=\{t\("businessType"\)\} requirement=\{t\("optional"\)\}/);
+  assert.match(page, /label=\{t\("sourceNote"\)\} requirement=\{t\("optional"\)\}/);
 });
 
 test("supplier duplicate checking is single-flight and does not silently lock submission", () => {
