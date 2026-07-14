@@ -147,6 +147,14 @@ function normalizeFormState(value?: Partial<FormState> | null): FormState {
   };
 }
 
+function missingRequiredFormFieldKeys(form: FormState, draft = buildDraft(form)) {
+  const missing = missingRequiredFormFieldKeys(form, draft);
+  if (!form.primaryPhone.trim() && !missing.includes("primaryPhone")) {
+    missing.push("primaryPhone");
+  }
+  return missing;
+}
+
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
   return new Promise<T>((resolve, reject) => {
     const timeoutId = window.setTimeout(() => reject(new Error("supplierDuplicateCheckTimeout")), timeoutMs);
@@ -380,7 +388,7 @@ export function AddSupplierPage() {
     const matches = findDuplicateMatches(itemDraft, indexes);
     return {
       draft: itemDraft,
-      missing: missingRequiredSupplierFieldKeys(itemDraft),
+      missing: missingRequiredFormFieldKeys(input, itemDraft),
       duplicateCheck: { hasPossibleDuplicate: matches.length > 0, matches },
     };
   }
@@ -419,7 +427,7 @@ export function AddSupplierPage() {
     }
     const itemForm = inputForm || item.form;
     const itemDraft = buildDraft(itemForm);
-    const itemMissing = missingRequiredSupplierFieldKeys(itemDraft);
+    const itemMissing = missingRequiredFormFieldKeys(itemForm, itemDraft);
     if (itemMissing.length) {
       setMessage(t("missingRequiredFields", { fields: itemMissing.map((field) => t(field)).join(", ") }));
       if (inputForm) {
@@ -519,7 +527,7 @@ export function AddSupplierPage() {
           return {
             form: item.form,
             rowNumber: item.rowNumber,
-            missing: missingRequiredSupplierFieldKeys(itemDraft),
+            missing: missingRequiredFormFieldKeys(item.form, itemDraft),
             duplicateCheck: { hasPossibleDuplicate: matches.length > 0, matches },
           };
         });
