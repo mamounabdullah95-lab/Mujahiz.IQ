@@ -297,46 +297,156 @@ service cloud.firestore {
       allow update: if isAdmin() || (isBuyer()
         && resource.data.buyerId == request.auth.uid
         && request.resource.data.buyerId == request.auth.uid
-        && request.resourc…26380 tokens truncated…e: true });
-}
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validRfq(request.resource.data)
+        && buyerTransitionAllowed());
+      allow delete: if isAdmin() || (isBuyer() && resource.data.buyerId == request.auth.uid && resource.data.status == "draft");
+    }
 
-export async function getOperationalReport(): Promise<OperationalReport> {
-  if (!isFirebaseConfigured) {
-    const users = JSON.parse(localStorage.getItem("mujahiz-iq-demo-users") || "[]") as Array<{ accountType?: string }>;
-    const submissions = JSON.parse(localStorage.getItem("mujahiz-iq-demo-submissions") || "[]") as Array<{ submissionStatus?: string }>;
-    return {
-      users: users.length,
-      buyers: users.filter((item) => item.accountType === "buyer").length,
-      supplierAccounts: users.filter((item) => item.accountType === "supplier").length,
-      approvedSuppliers: 0,
-      pendingSubmissions: submissions.filter((item) => ["pending_review", "possible_duplicate"].includes(item.submissionStatus || "")).length,
-      approvedSubmissions: submissions.filter((item) => item.submissionStatus === "approved").length,
-      rejectedSubmissions: submissions.filter((item) => item.submissionStatus === "rejected").length,
-      accessGrants: 0,
-      pendingTerms: 0,
-      reviews: 0,
-      feedback: 0,
-    };
+    match /rfqResponses/{responseId} {
+      function requestedRfq() { return getAfter(/databases/$(database)/documents/rfqs/$(request.resource.data.rfqId)); }
+      function storedRfq() { return get(/databases/$(database)/documents/rfqs/$(resource.data.rfqId)); }
+      function supplierProfileCanRespond() {
+        return isSupplierAccount() && isApproved()
+          && "supplierProfileId" in myUser()
+          && get(/databases/$(database)/documents/suppliers/$(myUser().supplierProfileId)).data.status == "approved"
+          && get(/databases/$(database)/documents/suppliers/$(myUser().supplierProfileId)).data.canReceiveRfqs == true;
+      }
+      function validResponse(data) {
+        return data.id == responseId
+          && data.rfqId is string
+          && data.supplierUserId == request.auth.uid
+          && data.supplierProfileId == myUser().supplierProfileId
+          && data.message is string && data.message.size() > 0 && data.message.size() <= 2000
+          && (!("price" in data) || data.price is int || data.price is float)
+          && (!("deliveryDays" in data) || (data.deliveryDays is int && data.deliveryDays > 0))
+          && data.currency in ["IQD", "USD"]
+          && data.status in ["submitted", "withdrawn"]
+          && data.attachmentStatus == "upload_pending_launch"
+          && noStoredFileFields(data);
+      }
+      allow create: if supplierProfileCanRespond()
+        && responseId == request.resource.data.rfqId + "_" + request.auth.uid
+        && validResponse(request.resource.data)
+        && requestedRfq().data.status in ["published", "receiving"]
+        && requestedRfq().data.closingAt >= request.time
+        && supplierIsTargeted(requestedRfq().data);
+      allow read: if isAdmin() || (isSupplierAccount() && resource.data.supplierUserId == request.auth.uid) || (isBuyer() && storedRfq().data.buyerId == request.auth.uid);
+      allow update: if supplierProfileCanRespond()
+        && resource.data.supplierUserId == request.auth.uid
+        && request.resource.data.rfqId == resource.data.rfqId
+        && request.resource.data.supplierUserId == resource.data.supplierUserId
+        && request.resource.data.supplierProfileId == resource.data.supplierProfileId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validResponse(request.resource.data)
+        && storedRfq().data.status in ["published", "receiving"]
+        && storedRfq().data.closingAt >= request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["message", "price", "currency", "deliveryDays", "status", "updatedAt"]);
+      allow delete: if isAdmin();
+    }
+
+match /conversations/{conversationId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.participantIds;
+      allow create: if signedIn() && request.auth.uid in request.resource.data.participantIds && request.resource.data.participantIds.size() >= 2;
+      allow update: if signedIn() && request.auth.uid in resource.data.participantIds && request.resource.data.participantIds == resource.data.participantIds && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["lastMessage", "lastMessageAt", "updatedAt"]);
+      allow delete: if isAdmin();
+    }
+
+    match /messages/{messageId} {
+      function conversation() { return get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)); }
+      function storedConversation() { return get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)); }
+      allow read: if signedIn() && request.auth.uid in storedConversation().data.participantIds;
+      allow create: if signedIn() && request.resource.data.senderId == request.auth.uid && request.auth.uid in conversation().data.participantIds && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 2000 && request.resource.data.attachmentStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data);
+      allow update: if signedIn() && request.auth.uid in storedConversation().data.participantIds && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"]);
+      allow delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      function notificationRfq() { return getAfter(/databases/$(database)/documents/rfqs/$(request.resource.data.referenceId)); }
+      function validRfqNotification() {
+        return signedIn()
+          && request.resource.data.keys().hasOnly(["userId", "actorId", "type", "referenceType", "referenceId", "titleAr", "titleEn", "bodyAr", "bodyEn", "link", "read", "createdAt"])
+          && request.resource.data.type == "rfq"
+          && request.resource.data.actorId == request.auth.uid
+          && request.resource.data.referenceType == "rfq"
+          && request.resource.data.referenceId is string
+          && request.resource.data.userId is string
+          && request.resource.data.titleAr is string
+          && request.resource.data.titleEn is string
+          && request.resource.data.bodyAr is string
+          && request.resource.data.bodyEn is string
+          && request.resource.data.read == false
+          && request.resource.data.createdAt is timestamp
+          && noStoredFileFields(request.resource.data)
+          && ((isBuyer()
+              && request.resource.data.link == "/supplier/rfqs"
+              && notificationRfq().data.buyerId == request.auth.uid
+              && "supplierProfileId" in userDoc(request.resource.data.userId).data
+              && userDoc(request.resource.data.userId).data.supplierProfileId in notificationRfq().data.recipientIds)
+            || (isSupplierAccount()
+              && request.resource.data.link == "/buyer/rfqs"
+              && notificationRfq().data.buyerId == request.resource.data.userId
+              && supplierIsTargeted(notificationRfq().data)));
+      }
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isAdmin() || validRfqNotification();
+      allow update: if signedIn() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read", "readAt"]);
+      allow delete: if isAdmin();
+    }
+
+    match /supplierProducts/{productId} {
+      allow read: if isAdmin() || (isBuyer() && hasActiveAccess()) || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
+      allow create: if isSupplierAccount() && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.supplierId == myUser().supplierProfileId && request.resource.data.mediaStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data);
+      allow update: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.mediaStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data));
+      allow delete: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
+    }
+
+    match /supplierDocuments/{documentId} {
+      allow read: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
+      allow create: if isSupplierAccount() && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.supplierId == myUser().supplierProfileId && request.resource.data.storageStatus in ["metadata_only", "upload_pending_launch"] && request.resource.data.verificationStatus == "unverified" && noStoredFileFields(request.resource.data);
+      allow update: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.storageStatus in ["metadata_only", "upload_pending_launch"] && noStoredFileFields(request.resource.data));
+      allow delete: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid);
+    }
+
+    match /contentPages/{pageId} {
+      allow read: if resource.data.status == "published" || isOwner();
+      allow create, update, delete: if isOwner();
+    }
+
+    match /publicConfig/{configId} {
+      allow read: if true;
+      allow create, update, delete: if isOwner();
+    }
+
+    match /reviews/{reviewId} {
+      allow create: if isBuyer() && hasActiveAccess() && request.resource.data.reviewedBy == request.auth.uid && request.resource.data.status == "pending_review";
+      allow read: if isAdmin() || (isBuyer() && hasActiveAccess() && resource.data.status == "approved") || (isBuyer() && resource.data.reviewedBy == request.auth.uid) || isOwnSupplierProfile(resource.data.supplierId);
+      allow update, delete: if isAdmin();
+    }
+
+    match /supplierFeedback/{feedbackId} {
+      allow create: if isBuyer() && hasActiveAccess() && request.resource.data.submittedBy == request.auth.uid && request.resource.data.status == "pending" && request.resource.data.supplierId is string && request.resource.data.supplierName is string && request.resource.data.type in ["incorrect_information", "contact_issue", "location_issue", "category_issue", "duplicate_supplier", "business_closed", "other"] && request.resource.data.message is string && request.resource.data.message.size() >= 10 && request.resource.data.message.size() <= 1000 && request.resource.data.suggestedCorrection is string && request.resource.data.suggestedCorrection.size() <= 1000;
+      allow read: if isAdmin() || (signedIn() && resource.data.submittedBy == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /materialTerms/{termId} { allow read: if signedIn(); allow create, update, delete: if isAdmin(); }
+    match /termSuggestions/{suggestionId} {
+      allow create: if isBuyer() && hasActiveAccess() && request.resource.data.term is string && request.resource.data.term.size() >= 2 && request.resource.data.term.size() <= 80 && request.resource.data.normalizedTerm is string && request.resource.data.status == "pending" && request.resource.data.count is int && request.resource.data.sources is list && request.resource.data.examples is list;
+      allow read: if isAdmin();
+      allow update: if isAdmin() || (isBuyer() && hasActiveAccess() && resource.data.status == "pending" && request.resource.data.status == "pending" && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["count", "sources", "examples", "updatedAt", "createdAt", "term", "normalizedTerm", "status"]));
+      allow delete: if isAdmin();
+    }
+
+    match /accessCredits/{creditId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create: if isAdmin() || isValidOwnTrialCredit(creditId); allow update, delete: if isAdmin(); }
+    match /accessGrants/{grantId} { allow read: if isAdmin() || (signedIn() && (grantId == "trial-" + request.auth.uid || resource.data.userId == request.auth.uid)); allow create: if isAdmin() || isValidOwnTrialCredit(grantId); allow update, delete: if false; }
+    match /contributionLogs/{logId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create, update, delete: if isAdmin(); }
+    match /categories/{categoryId} { allow read: if signedIn(); allow create, update: if isAdmin(); allow delete: if isOwner(); }
+    match /settings/{settingId} {
+      allow read: if signedIn();
+      allow create, update: if isOwner() || (hasAnyRole(["admin"]) && settingId == "adminOperations");
+      allow delete: if isOwner();
+    }
+    match /auditLogs/{logId} { allow read: if isAdmin(); allow create: if isAdmin() || isValidOwnVerificationAudit(logId) || isValidOwnSupplierImportAudit(); allow update, delete: if false; }
   }
-  const count = async (name: string, field?: string, value?: string | string[]) => {
-    const ref = collection(db, name);
-    const target = field && value !== undefined
-      ? query(ref, Array.isArray(value) ? where(field, "in", value) : where(field, "==", value))
-      : query(ref);
-    return (await getCountFromServer(target)).data().count;
-  };
-  const [users, buyers, supplierAccounts, approvedSuppliers, pendingSubmissions, approvedSubmissions, rejectedSubmissions, accessGrants, pendingTerms, reviews, feedback] = await Promise.all([
-    count("users"),
-    count("users", "accountType", "buyer"),
-    count("users", "accountType", "supplier"),
-    count("suppliers", "status", "approved"),
-    count("supplierSubmissions", "submissionStatus", ["pending_review", "possible_duplicate"]),
-    count("supplierSubmissions", "submissionStatus", "approved"),
-    count("supplierSubmissions", "submissionStatus", "rejected"),
-    count("accessGrants"),
-    count("termSuggestions", "status", "pending"),
-    count("reviews"),
-    count("supplierFeedback"),
-  ]);
-  return { users, buyers, supplierAccounts, approvedSuppliers, pendingSubmissions, approvedSubmissions, rejectedSubmissions, accessGrants, pendingTerms, reviews, feedback };
 }
