@@ -148,7 +148,7 @@ function normalizeFormState(value?: Partial<FormState> | null): FormState {
 }
 
 function missingRequiredFormFieldKeys(form: FormState, draft = buildDraft(form)) {
-  const missing = missingRequiredFormFieldKeys(form, draft);
+  const missing = missingRequiredSupplierFieldKeys(draft);
   if (!form.primaryPhone.trim() && !missing.includes("primaryPhone")) {
     missing.push("primaryPhone");
   }
@@ -196,7 +196,7 @@ export function AddSupplierPage() {
 
   const draft = useMemo(() => buildDraft(form), [form]);
   const duplicateLookupKey = `${draft.normalizedName}|${draft.normalizedPhones.join(",")}|${draft.normalizedEmail}|${draft.facebook}`;
-  const missing = missingRequiredSupplierFieldKeys(draft);
+  const missing = missingRequiredFormFieldKeys(form, draft);
   const bulkEditItem = bulkEditIndex === null ? null : bulkItems[bulkEditIndex] || null;
   const isBulkEditing = Boolean(bulkEditItem);
   const draftStorageKey = firebaseUser ? `mujahiz-iq-add-supplier-draft-${firebaseUser.uid}` : "";
