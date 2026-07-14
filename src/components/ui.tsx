@@ -1,12 +1,11 @@
 import clsx from "clsx";
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
-function FieldLabel({ label, required, requirement }: { label: string; required?: boolean; requirement?: string }) {
+function FieldLabel({ label, required }: { label: string; required?: boolean }) {
   return (
     <span className="flex flex-wrap items-baseline gap-1.5">
       <span>{label}</span>
       {required ? <span className="text-clay" aria-hidden="true">*</span> : null}
-      {!required && requirement ? <span className="text-xs font-semibold text-slate-500">({requirement})</span> : null}
     </span>
   );
 }
@@ -41,16 +40,17 @@ export function Button({
 export function TextField({
   label,
   className,
-  requirement,
+  hint,
   ...props
-}: { label: string; className?: string; requirement?: string } & InputHTMLAttributes<HTMLInputElement>) {
+}: { label: string; className?: string; hint?: string } & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className={clsx("grid gap-1.5 text-sm font-bold text-ink", className)}>
-      <FieldLabel label={label} required={props.required} requirement={requirement} />
+      <FieldLabel label={label} required={props.required} />
       <input
         className="min-h-12 rounded-[10px] border border-borderSoft bg-white/95 px-3 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-amber focus:ring-2 focus:ring-amber/15"
         {...props}
       />
+      {hint ? <span className="text-xs font-medium leading-5 text-slate-500">{hint}</span> : null}
     </label>
   );
 }
@@ -58,16 +58,17 @@ export function TextField({
 export function TextAreaField({
   label,
   className,
-  requirement,
+  hint,
   ...props
-}: { label: string; className?: string; requirement?: string } & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+}: { label: string; className?: string; hint?: string } & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <label className={clsx("grid gap-1.5 text-sm font-bold text-ink", className)}>
-      <FieldLabel label={label} required={props.required} requirement={requirement} />
+      <FieldLabel label={label} required={props.required} />
       <textarea
         className="min-h-28 rounded-[10px] border border-borderSoft bg-white/95 px-3 py-2 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-amber focus:ring-2 focus:ring-amber/15"
         {...props}
       />
+      {hint ? <span className="text-xs font-medium leading-5 text-slate-500">{hint}</span> : null}
     </label>
   );
 }
@@ -76,18 +77,19 @@ export function SelectField({
   label,
   children,
   className,
-  requirement,
+  hint,
   ...props
-}: { label: string; className?: string; children: ReactNode; requirement?: string } & SelectHTMLAttributes<HTMLSelectElement>) {
+}: { label: string; className?: string; children: ReactNode; hint?: string } & SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <label className={clsx("grid gap-1.5 text-sm font-bold text-ink", className)}>
-      <FieldLabel label={label} required={props.required} requirement={requirement} />
+      <FieldLabel label={label} required={props.required} />
       <select
         className="min-h-12 rounded-[10px] border border-borderSoft bg-white/95 px-3 text-sm text-ink outline-none transition focus:border-amber focus:ring-2 focus:ring-amber/15"
         {...props}
       >
         {children}
       </select>
+      {hint ? <span className="text-xs font-medium leading-5 text-slate-500">{hint}</span> : null}
     </label>
   );
 }
