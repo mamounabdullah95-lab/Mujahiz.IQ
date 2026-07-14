@@ -2,17 +2,24 @@ import { defaultSettings } from "../data/constants";
 import type { AppUser, PlatformSettings, SupplierDraft } from "../types/domain";
 
 export function calculateCompletionScore(draft: Partial<SupplierDraft>) {
-  let score = 0;
-  if (draft.nameOriginal && draft.displayName && draft.businessType) score += 18;
-  if (draft.governorate && draft.city && draft.marketArea) score += 16;
-  if ((draft.phones?.length || 0) > 0 || draft.email || draft.website || draft.facebook) score += 18;
-  if ((draft.categories?.length || 0) > 0 && (draft.capabilityTags?.length || 0) > 0) score += 18;
-  if (draft.sourceType && draft.confidenceLevel && draft.hasDirectExperience) score += 18;
-  if (draft.address) score += 3;
-  if (draft.contactPerson) score += 3;
-  if (draft.shortDescription) score += 3;
-  if (draft.googleMapsLink || draft.website || draft.facebook) score += 3;
-  return Math.min(score, 100);
+  const requiredChecks: Array<[boolean, number]> = [
+    [Boolean(draft.nameOriginal), 8],
+    [Boolean(draft.businessType), 6],
+    [Boolean(draft.nameAr), 7],
+    [Boolean(draft.nameEn), 7],
+    [Boolean(draft.shortDescription), 8],
+    [Boolean(draft.governorate), 7],
+    [Boolean(draft.city || draft.marketArea), 5],
+    [Boolean(draft.address), 8],
+    [Boolean(draft.phones?.length), 8],
+    [Boolean(draft.email), 8],
+    [Boolean(draft.categories?.length), 7],
+    [Boolean(draft.capabilityTags?.length), 7],
+    [Boolean(draft.sourceType), 7],
+    [Boolean(draft.confidenceLevel), 7],
+  ];
+
+  return requiredChecks.reduce((score, [complete, weight]) => score + (complete ? weight : 0), 0);
 }
 
 export function qualityRatio(approved: number, rejected: number, duplicates: number) {
@@ -57,25 +64,37 @@ export function deriveBadges(user: Pick<AppUser, "approvedSubmissions" | "approv
 export function missingRequiredSupplierFields(draft: Partial<SupplierDraft>) {
   const missing: string[] = [];
   if (!draft.nameOriginal) missing.push("Supplier name");
+  if (!draft.businessType) missing.push("Business type");
+  if (!draft.nameAr) missing.push("Arabic company name");
+  if (!draft.nameEn) missing.push("English company name");
+  if (!draft.shortDescription) missing.push("Short description");
   if (!draft.governorate) missing.push("Governorate");
   if (!draft.city && !draft.marketArea) missing.push("City or market area");
-  if (!(draft.phones?.length || draft.email || draft.website || draft.facebook)) missing.push("Contact method");
-  if (!(draft.categories?.length || 0)) missing.push("Main category");
+  if (!draft.address) missing.push("Full address");
+  if (!draft.phones?.length) missing.push("Primary phone");
+  if (!draft.email) missing.push("Email");
+  if (!draft.categories?.length) missing.push("Main category");
   if (!draft.sourceType) missing.push("Source of information");
   if (!draft.confidenceLevel) missing.push("Confidence level");
-  if (!(draft.capabilityTags?.length || 0)) missing.push("Capability tag");
+  if (!draft.capabilityTags?.length) missing.push("Capability tag");
   return missing;
 }
 
 export function missingRequiredSupplierFieldKeys(draft: Partial<SupplierDraft>) {
   const missing: string[] = [];
   if (!draft.nameOriginal) missing.push("supplierName");
+  if (!draft.businessType) missing.push("businessType");
+  if (!draft.nameAr) missing.push("arabicCompanyName");
+  if (!draft.nameEn) missing.push("englishCompanyName");
+  if (!draft.shortDescription) missing.push("shortDescription");
   if (!draft.governorate) missing.push("governorate");
   if (!draft.city && !draft.marketArea) missing.push("cityOrMarketArea");
-  if (!(draft.phones?.length || draft.email || draft.website || draft.facebook)) missing.push("contactMethod");
-  if (!(draft.categories?.length || 0)) missing.push("mainCategory");
+  if (!draft.address) missing.push("address");
+  if (!draft.phones?.length) missing.push("primaryPhone");
+  if (!draft.email) missing.push("email");
+  if (!draft.categories?.length) missing.push("mainCategory");
   if (!draft.sourceType) missing.push("sourceType");
   if (!draft.confidenceLevel) missing.push("confidenceLevel");
-  if (!(draft.capabilityTags?.length || 0)) missing.push("capabilityTag");
+  if (!draft.capabilityTags?.length) missing.push("capabilityTag");
   return missing;
 }
