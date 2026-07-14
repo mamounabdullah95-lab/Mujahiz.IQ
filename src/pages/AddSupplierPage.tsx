@@ -353,9 +353,9 @@ export function AddSupplierPage() {
   }
 
   function firstMissingStep(keys: string[]) {
-    if (keys.some((key) => ["supplierName"].includes(key))) return 0;
-    if (keys.some((key) => ["governorate", "cityOrMarketArea"].includes(key))) return 1;
-    if (keys.some((key) => ["contactMethod"].includes(key))) return 2;
+    if (keys.some((key) => ["supplierName", "businessType", "arabicCompanyName", "englishCompanyName", "shortDescription"].includes(key))) return 0;
+    if (keys.some((key) => ["governorate", "cityOrMarketArea", "address"].includes(key))) return 1;
+    if (keys.some((key) => ["primaryPhone", "email"].includes(key))) return 2;
     if (keys.some((key) => ["mainCategory", "capabilityTag"].includes(key))) return 3;
     if (keys.some((key) => ["sourceType", "confidenceLevel"].includes(key))) return 4;
     return 5;
@@ -562,7 +562,7 @@ export function AddSupplierPage() {
     setMessage("");
     if (missing.length) {
       setMessage(t("missingRequiredFields", { fields: missing.map((field) => t(field)).join(", ") }));
-      setStep(0);
+      setStep(firstMissingStep(missing));
       return;
     }
     setBusy(true);
