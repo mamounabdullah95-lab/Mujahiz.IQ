@@ -714,12 +714,12 @@ export function AddSupplierPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <TextField label={t("supplierName")} value={form.nameOriginal} onChange={(event) => setValue("nameOriginal", event.target.value)} required />
             <TextField label={t("displayName")} requirement={t("optional")} value={form.displayName} onChange={(event) => setValue("displayName", event.target.value)} />
-            <SelectField label={t("companyNameLanguage")} value={form.nameLanguage} onChange={(event) => setValue("nameLanguage", event.target.value as FormState["nameLanguage"])}>
+            <SelectField label={t("companyNameLanguage")} requirement={t("optional")} value={form.nameLanguage} onChange={(event) => setValue("nameLanguage", event.target.value as FormState["nameLanguage"])}>
               <option value="arabic">{t("nameLanguageArabic")}</option>
               <option value="english">{t("nameLanguageEnglish")}</option>
               <option value="mixed">{t("nameLanguageMixed")}</option>
             </SelectField>
-            <SelectField label={t("businessType")} value={form.businessType} onChange={(event) => setValue("businessType", event.target.value)}>
+            <SelectField label={t("businessType")} requirement={t("optional")} value={form.businessType} onChange={(event) => setValue("businessType", event.target.value)}>
               {businessTypes.map((item) => (
                 <option key={item.value} value={item.value}>
                   {labelFor(businessTypes, item.value, locale)}
@@ -743,13 +743,13 @@ export function AddSupplierPage() {
             <TextField label={t("googleMapsLink")} requirement={t("optional")} value={form.googleMapsLink} onChange={(event) => setValue("googleMapsLink", event.target.value)} type="url" />
             <TextAreaField className="md:col-span-2" label={t("address")} requirement={t("optional")} value={form.address} onChange={(event) => setValue("address", event.target.value)} />
             <div className="md:col-span-2">
-              <div className="mb-2 text-sm font-bold text-slate-700">{t("coverageAreas")}</div>
+              <div className="mb-2 text-sm font-bold text-slate-700">{t("coverageAreas")} <span className="font-normal text-slate-500">({t("optional")})</span></div>
               <ChipGroup options={coverageAreas.map(option)} values={form.coverageAreas} onChange={(values) => setValue("coverageAreas", values)} />
             </div>
             <div className="grid gap-3 border-t border-slate-200 pt-4 md:col-span-2">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="font-bold text-ink">{t("supplierBranches")}</div>
+                  <div className="font-bold text-ink">{t("supplierBranches")} <span className="font-normal text-slate-500">({t("optional")})</span></div>
                   <p className="mt-1 text-sm text-slate-500">{t("supplierBranchesDescription")}</p>
                 </div>
                 <Button
@@ -830,7 +830,7 @@ export function AddSupplierPage() {
             </div>
             <TextField label={t("primaryPhone")} requirement={t("oneContactField")} value={form.primaryPhone} onChange={(event) => setValue("primaryPhone", event.target.value)} />
             <TextField label={t("secondaryPhone")} requirement={t("optional")} value={form.secondaryPhone} onChange={(event) => setValue("secondaryPhone", event.target.value)} />
-            <SelectField label={t("whatsapp")} value={form.whatsappAvailable} onChange={(event) => setValue("whatsappAvailable", event.target.value as FormState["whatsappAvailable"])}>
+            <SelectField label={t("whatsapp")} requirement={t("optional")} value={form.whatsappAvailable} onChange={(event) => setValue("whatsappAvailable", event.target.value as FormState["whatsappAvailable"])}>
               <option value="yes">{t("yes")}</option>
               <option value="no">{t("no")}</option>
               <option value="unknown">{t("unknown")}</option>
@@ -838,9 +838,9 @@ export function AddSupplierPage() {
             <TextField label={t("email")} requirement={t("oneContactField")} value={form.email} onChange={(event) => setValue("email", event.target.value)} type="email" />
             <TextField label={t("website")} requirement={t("oneContactField")} value={form.website} onChange={(event) => setValue("website", event.target.value)} type="url" />
             <TextField label={t("facebook")} requirement={t("oneContactField")} value={form.facebook} onChange={(event) => setValue("facebook", event.target.value)} />
-            <TextField label={t("instagramLinkedin")} value={form.instagramLinkedin} onChange={(event) => setValue("instagramLinkedin", event.target.value)} />
-            <TextField label={t("contactPerson")} value={form.contactPerson} onChange={(event) => setValue("contactPerson", event.target.value)} />
-            <TextField label={t("contactPersonRole")} value={form.contactPersonRole} onChange={(event) => setValue("contactPersonRole", event.target.value)} />
+            <TextField label={t("instagramLinkedin")} requirement={t("optional")} value={form.instagramLinkedin} onChange={(event) => setValue("instagramLinkedin", event.target.value)} />
+            <TextField label={t("contactPerson")} requirement={t("optional")} value={form.contactPerson} onChange={(event) => setValue("contactPerson", event.target.value)} />
+            <TextField label={t("contactPersonRole")} requirement={t("optional")} value={form.contactPersonRole} onChange={(event) => setValue("contactPersonRole", event.target.value)} />
           </div>
         ) : null}
 
@@ -850,7 +850,7 @@ export function AddSupplierPage() {
               <div className="mb-2 text-sm font-bold text-slate-700">{t("mainCategory")} <span className="text-clay" aria-hidden="true">*</span></div>
               <ChipGroup options={taxonomy.supplierCategories.map(option)} values={form.mainCategories} onChange={(values) => setValue("mainCategories", values)} />
             </div>
-            <TextField label={t("subcategories")} value={form.subcategories} onChange={(event) => setValue("subcategories", event.target.value)} placeholder={t("subcategoriesPlaceholder")} />
+            <TextField label={t("subcategories")} requirement={t("optional")} value={form.subcategories} onChange={(event) => setValue("subcategories", event.target.value)} placeholder={t("subcategoriesPlaceholder")} />
             <div className="grid gap-4">
               <div className="text-sm font-bold text-slate-700">{t("capabilityTags")} <span className="text-clay" aria-hidden="true">*</span></div>
               {supplierCapabilityGroups.map((group) => {
@@ -873,23 +873,24 @@ export function AddSupplierPage() {
               })}
             </div>
             <div>
-              <div className="mb-2 text-sm font-bold text-slate-700">{t("paymentOptions")}</div>
+              <div className="mb-2 text-sm font-bold text-slate-700">{t("paymentOptions")} <span className="font-normal text-slate-500">({t("optional")})</span></div>
               <ChipGroup options={paymentOptions.map(option)} values={form.paymentOptions} onChange={(values) => setValue("paymentOptions", values)} />
             </div>
             <div className="grid gap-4 md:grid-cols-3">
-              <SelectField label={t("acceptsCredit")} value={form.acceptsCredit} onChange={(event) => setValue("acceptsCredit", event.target.value as FormState["acceptsCredit"])}>
+              <SelectField label={t("acceptsCredit")} requirement={t("optional")} value={form.acceptsCredit} onChange={(event) => setValue("acceptsCredit", event.target.value as FormState["acceptsCredit"])}>
                 <option value="unknown">{t("unknown")}</option>
                 <option value="yes">{t("yes")}</option>
                 <option value="no">{t("no")}</option>
               </SelectField>
               <TextField
                 label={t("creditDays")}
+                requirement={t("optional")}
                 value={form.creditDays}
                 onChange={(event) => setValue("creditDays", event.target.value)}
                 placeholder={t("creditDaysPlaceholder")}
                 disabled={form.acceptsCredit === "no"}
               />
-              <SelectField label={t("creditStart")} value={form.creditStart} onChange={(event) => setValue("creditStart", event.target.value)} disabled={form.acceptsCredit === "no"}>
+              <SelectField label={t("creditStart")} requirement={t("optional")} value={form.creditStart} onChange={(event) => setValue("creditStart", event.target.value)} disabled={form.acceptsCredit === "no"}>
                 <option value=""></option>
                 {creditStarts.map((item) => (
                   <option key={item.value} value={item.value}>{labelFor(creditStarts, item.value, locale)}</option>
@@ -898,6 +899,7 @@ export function AddSupplierPage() {
               <TextAreaField
                 className="md:col-span-3"
                 label={t("creditTermsNote")}
+                requirement={t("optional")}
                 value={form.creditTermsNote}
                 onChange={(event) => setValue("creditTermsNote", event.target.value)}
                 disabled={form.acceptsCredit === "no"}
@@ -924,14 +926,14 @@ export function AddSupplierPage() {
                 </option>
               ))}
             </SelectField>
-            <SelectField label={t("directExperience")} value={form.hasDirectExperience} onChange={(event) => setValue("hasDirectExperience", event.target.value as FormState["hasDirectExperience"])}>
+            <SelectField label={t("directExperience")} requirement={t("optional")} value={form.hasDirectExperience} onChange={(event) => setValue("hasDirectExperience", event.target.value as FormState["hasDirectExperience"])}>
               <option value="yes">{t("yes")}</option>
               <option value="no">{t("no")}</option>
               <option value="not_sure">{t("notSure")}</option>
             </SelectField>
-            <TextField label={t("lastInteractionYear")} value={form.lastInteractionYear} onChange={(event) => setValue("lastInteractionYear", event.target.value)} inputMode="numeric" />
-            <TextField label={t("relatedMaterialService")} value={form.relatedMaterialService} onChange={(event) => setValue("relatedMaterialService", event.target.value)} />
-            <TextAreaField label={t("sourceNote")} value={form.sourceNote} onChange={(event) => setValue("sourceNote", event.target.value)} />
+            <TextField label={t("lastInteractionYear")} requirement={t("optional")} value={form.lastInteractionYear} onChange={(event) => setValue("lastInteractionYear", event.target.value)} inputMode="numeric" />
+            <TextField label={t("relatedMaterialService")} requirement={t("optional")} value={form.relatedMaterialService} onChange={(event) => setValue("relatedMaterialService", event.target.value)} />
+            <TextAreaField label={t("sourceNote")} requirement={t("optional")} value={form.sourceNote} onChange={(event) => setValue("sourceNote", event.target.value)} />
           </div>
         ) : null}
 
