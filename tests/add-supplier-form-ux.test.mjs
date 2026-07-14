@@ -29,7 +29,8 @@ test("supplier form uses red asterisks and concise hints without optional prose"
     "primaryPhone",
     "email",
   ]) {
-    assert.match(page, new RegExp(`label=\\{t\\("${field}"\\)\\}[^>]*required`), `${field} must show a required asterisk`);
+    const fieldLine = page.split("\n").find((line) => line.includes(`label={t("${field}")}`));
+    assert.ok(fieldLine?.includes(" required"), `${field} must show a required asterisk`);
   }
 
   for (const hint of [
@@ -50,10 +51,8 @@ test("supplier form uses red asterisks and concise hints without optional prose"
 
 test("only an explicit click on the final review button can submit a supplier", () => {
   const page = read("src/pages/AddSupplierPage.tsx");
-  const formOpening = page.match(/<form[\s\S]*?>/)?.[0] || "";
-
-  assert.match(formOpening, /onSubmit=\{\(event\) => \{\s*event\.preventDefault\(\);\s*\}\}/);
-  assert.doesNotMatch(formOpening, /handleSubmit/);
+  assert.match(page, /onSubmit=\{\(event\) => \{\s*event\.preventDefault\(\);\s*\}\}/);
+  assert.doesNotMatch(page, /onSubmit=\{\(event\)[\s\S]{0,160}handleSubmit/);
   assert.doesNotMatch(page, /type="submit"/);
   assert.match(page, /disabled=\{busy \|\| missing\.length > 0\} type="button" onClick=\{\(\) => void handleSubmit\(\)\}/);
   assert.match(page, /aria-current=\{index === step \? "step" : undefined\}[\s\S]{0,100}onClick=\{\(\) => setStep\(index\)\}/);
