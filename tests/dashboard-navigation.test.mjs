@@ -49,9 +49,14 @@ test("buyer access summary prefers the extended access expiry over the original 
 test("supplier metrics link to profile, submissions, RFQs, analytics, and messages", () => {
   const supplier = read("src/pages/SupplierDashboardPage.tsx");
   assert.match(supplier, /listSupplierRfqs/);
+  assert.match(supplier, /listSupplierDocuments/);
+  assert.match(supplier, /listConversations/);
   assert.match(supplier, /label=\{text\.completion\}[\s\S]*?to="\/profile"/);
   assert.match(supplier, /label=\{text\.companyStatus\}[\s\S]*?to="\/my-submissions"/);
   assert.match(supplier, /label=\{text\.rfqs\}[\s\S]*?to="\/supplier\/rfqs"/);
   assert.match(supplier, /label=\{text\.views\}[\s\S]*?to="\/supplier\/analytics"/);
   assert.match(supplier, /label=\{text\.inquiries\}[\s\S]*?to="\/supplier\/messages"/);
+  assert.match(supplier, /label=\{text\.inquiries\} value=\{conversationCount\}/);
+  assert.match(supplier, /to="\/supplier\/documents"/);
+  assert.doesNotMatch(supplier, /Coming soon/);
 });
