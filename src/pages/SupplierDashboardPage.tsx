@@ -7,7 +7,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { Button } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { listMySubmissions } from "../services/firestore";
-import { listSupplierRfqs } from "../services/workspace";
+import { listConversations, listSupplierDocuments, listSupplierRfqs } from "../services/workspace";
 import type { SupplierSubmission } from "../types/domain";
 import { formatDate } from "../utils/date";
 import { localizedSupplierName } from "../utils/supplierDisplay";
@@ -41,6 +41,8 @@ const copy = {
     error: "تعذر تحميل بيانات الشركة حالياً.",
     documents: "المستندات والشهادات",
     documentsBody: "سيُفعّل رفع المستندات الموثقة ضمن مرحلة ملف الشركة التالية.",
+    documentRecords: "سجلات المستندات",
+    manageDocuments: "إدارة المستندات",
   },
   en: {
     eyebrow: "Supplier workspace",
@@ -69,7 +71,9 @@ const copy = {
     notStarted: "Not started",
     error: "Company data could not be loaded right now.",
     documents: "Documents and certificates",
-    documentsBody: "Verified document uploads will be enabled in the next company-profile phase.",
+    documentsBody: "Manage document and certificate metadata. File uploads remain disabled until the official launch.",
+    documentRecords: "Document records",
+    manageDocuments: "Manage documents",
   },
 };
 
@@ -80,6 +84,8 @@ export function SupplierDashboardPage() {
   const text = copy[locale];
   const [submissions, setSubmissions] = useState<SupplierSubmission[]>([]);
   const [rfqCount, setRfqCount] = useState(0);
+  const [documentCount, setDocumentCount] = useState(0);
+  const [conversationCount, setConversationCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -88,12 +94,16 @@ export function SupplierDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const [nextSubmissions, rfqs] = await Promise.all([
+      const [nextSubmissions, rfqs, documents, conversations] = await Promise.all([
         listMySubmissions(firebaseUser.uid),
         listSupplierRfqs(firebaseUser.uid, appUser?.supplierProfileId),
+        appUser?.supplierProfileId ? listSupplierDocuments(appUser.supplierProfileId) : Promise.resolve([]),
+        listConversations(firebaseUser.uid),
       ]);
       setSubmissions(nextSubmissions);
       setRfqCount(rfqs.length);
+      setDocumentCount(documents.length);
+      setConversationCount(conversations.length);
     } catch {
       setError(text.error);
     } finally {
@@ -135,7 +145,7 @@ export function SupplierDashboardPage() {
           <MetricCard label={text.companyStatus} value={companyStatus === "not_started" ? text.notStarted : <StatusBadge value={companyStatus} />} helper={pendingCount ? `${pendingCount} ${text.pending}` : undefined} icon={ClipboardCheck} tone={companyStatus === "approved" ? "good" : "warning"} to="/my-submissions" />
           <MetricCard label={text.rfqs} value={rfqCount} icon={FileClock} tone={rfqCount ? "warning" : "neutral"} to="/supplier/rfqs" />
           <MetricCard label={text.views} value="—" helper={text.unavailable} icon={Eye} to="/supplier/analytics" />
-          <MetricCard label={text.inquiries} value="—" helper={text.unavailable} icon={MessageSquare} to="/supplier/messages" />
+          <MetricCard label={text.inquiries} value={conversationCount} icon={MessageSquare} tone={conversationCount ? "warning" : "neutral"} to="/supplier/messages" />
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
@@ -164,7 +174,18 @@ export function SupplierDashboardPage() {
 
         <div className="grid gap-5 lg:grid-cols-2">
           <DashboardPanel title={text.preview} description={text.previewBody}>{appUser.supplierProfileId ? <Link to={`/suppliers/${appUser.supplierProfileId}`}><Button variant="secondary"><Eye className="h-4 w-4" />{locale === "ar" ? "عرض الصفحة كما يراها المشترون" : "View the buyer-facing page"}</Button></Link> : <InlineEmptyState compact title={latest?.submissionStatus === "approved" ? (locale === "ar" ? "بانتظار إتمام الربط" : "Waiting for profile linking") : text.preview} body={text.previewBody} />}</DashboardPanel>
-          <DashboardPanel title={text.documents} description={text.documentsBody}><div className="flex items-start gap-3 rounded-[14px] border border-borderSoft bg-creamLight p-4"><FileText className="mt-0.5 h-5 w-5 shrink-0 text-amber" /><div><div className="text-sm font-black text-ink">{locale === "ar" ? "قريباً" : "Coming soon"}</div><p className="mt-1 text-xs font-semibold leading-6 text-muted">{text.documentsBody}</p></div></div></DashboardPanel>
+          <DashboardPanel title={text.documents} description={text.documentsBody}>
+            <Link className="flex items-center justify-between gap-4 rounded-[14px] border border-borderSoft bg-creamLight p-4 transition hover:border-amber/40 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40" to="/supplier/documents">
+              <div className="flex items-start gap-3">
+                <FileText className="mt-0.5 h-5 w-5 shrink-0 text-amber" />
+                <div>
+                  <div className="text-sm font-black text-ink">{text.documentRecords}: {documentCount}</div>
+                  <p className="mt-1 text-xs font-semibold leading-6 text-muted">{text.documentsBody}</p>
+                </div>
+              </div>
+              <span className="shrink-0 text-xs font-black text-amber">{text.manageDocuments}</span>
+            </Link>
+          </DashboardPanel>
         </div>
       </div>
     </div>
