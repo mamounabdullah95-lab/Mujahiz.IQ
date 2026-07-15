@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, BarChart3, Building2, CheckCircle2, ClipboardCheck, Eye, FileText, MessageSquare, Plus } from "lucide-react";
+import { AlertTriangle, ArrowRight, Building2, CheckCircle2, ClipboardCheck, Eye, FileClock, FileText, MessageSquare, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -7,6 +7,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { Button } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { listMySubmissions } from "../services/firestore";
+import { listSupplierRfqs } from "../services/workspace";
 import type { SupplierSubmission } from "../types/domain";
 import { formatDate } from "../utils/date";
 import { localizedSupplierName } from "../utils/supplierDisplay";
@@ -21,6 +22,7 @@ const copy = {
     companyStatus: "حالة ملف الشركة",
     views: "مشاهدات الملف",
     inquiries: "طلبات التواصل",
+    rfqs: "طلبات عروض الأسعار",
     unavailable: "يبدأ القياس بعد اعتماد وربط ملف الشركة",
     companyReadiness: "جاهزية ملف الشركة",
     companyReadinessBody: "تعتمد النسبة على بيانات الحساب الحالية، وتتحسن عند استكمال طلب بيانات الشركة والمستندات.",
@@ -49,6 +51,7 @@ const copy = {
     companyStatus: "Company profile status",
     views: "Profile views",
     inquiries: "Contact requests",
+    rfqs: "RFQ requests",
     unavailable: "Measurement starts after the company profile is approved and linked",
     companyReadiness: "Company profile readiness",
     companyReadinessBody: "The score uses current account data and improves when company details and documents are completed.",
@@ -76,6 +79,7 @@ export function SupplierDashboardPage() {
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
   const text = copy[locale];
   const [submissions, setSubmissions] = useState<SupplierSubmission[]>([]);
+  const [rfqCount, setRfqCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -84,13 +88,18 @@ export function SupplierDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      setSubmissions(await listMySubmissions(firebaseUser.uid));
+      const [nextSubmissions, rfqs] = await Promise.all([
+        listMySubmissions(firebaseUser.uid),
+        listSupplierRfqs(firebaseUser.uid, appUser?.supplierProfileId),
+      ]);
+      setSubmissions(nextSubmissions);
+      setRfqCount(rfqs.length);
     } catch {
       setError(text.error);
     } finally {
       setLoading(false);
     }
-  }, [firebaseUser, text.error]);
+  }, [appUser?.supplierProfileId, firebaseUser, text.error]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -121,19 +130,20 @@ export function SupplierDashboardPage() {
       <DashboardPageHeader eyebrow={text.eyebrow} title={text.title} description={text.description} actions={<Link to="/suppliers/new"><Button><Plus className="h-4 w-4" />{text.action}</Button></Link>} />
       <div className="grid gap-5 p-5 sm:p-7">
         {error ? <DashboardError message={error} retry={() => void load()} /> : null}
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label={text.completion} value={`${profile.completion}%`} icon={Building2} tone={profile.completion === 100 ? "good" : "warning"} />
-          <MetricCard label={text.companyStatus} value={companyStatus === "not_started" ? text.notStarted : <StatusBadge value={companyStatus} />} helper={pendingCount ? `${pendingCount} ${text.pending}` : undefined} icon={ClipboardCheck} tone={companyStatus === "approved" ? "good" : "warning"} />
-          <MetricCard label={text.views} value="—" helper={text.unavailable} icon={Eye} />
-          <MetricCard label={text.inquiries} value="—" helper={text.unavailable} icon={MessageSquare} />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <MetricCard label={text.completion} value={`${profile.completion}%`} icon={Building2} tone={profile.completion === 100 ? "good" : "warning"} to="/profile" />
+          <MetricCard label={text.companyStatus} value={companyStatus === "not_started" ? text.notStarted : <StatusBadge value={companyStatus} />} helper={pendingCount ? `${pendingCount} ${text.pending}` : undefined} icon={ClipboardCheck} tone={companyStatus === "approved" ? "good" : "warning"} to="/my-submissions" />
+          <MetricCard label={text.rfqs} value={rfqCount} icon={FileClock} tone={rfqCount ? "warning" : "neutral"} to="/supplier/rfqs" />
+          <MetricCard label={text.views} value="—" helper={text.unavailable} icon={Eye} to="/supplier/analytics" />
+          <MetricCard label={text.inquiries} value="—" helper={text.unavailable} icon={MessageSquare} to="/supplier/messages" />
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
           <DashboardPanel title={text.companyReadiness} description={text.companyReadinessBody}>
             <ProgressBar value={profile.completion} label={text.completion} />
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[14px] bg-successBg p-4"><div className="flex items-center gap-2 text-sm font-black text-mint"><CheckCircle2 className="h-5 w-5" />{locale === "ar" ? "طلبات معتمدة" : "Approved submissions"}</div><div className="mt-2 text-2xl font-black text-ink">{approvedCount}</div></div>
-              <div className="rounded-[14px] bg-cream p-4"><div className="flex items-center gap-2 text-sm font-black text-amber"><ClipboardCheck className="h-5 w-5" />{text.pending}</div><div className="mt-2 text-2xl font-black text-ink">{pendingCount}</div></div>
+              <Link className="rounded-[14px] bg-successBg p-4 transition hover:ring-2 hover:ring-mint/30" to="/my-submissions"><div className="flex items-center gap-2 text-sm font-black text-mint"><CheckCircle2 className="h-5 w-5" />{locale === "ar" ? "طلبات معتمدة" : "Approved submissions"}</div><div className="mt-2 text-2xl font-black text-ink">{approvedCount}</div></Link>
+              <Link className="rounded-[14px] bg-cream p-4 transition hover:ring-2 hover:ring-amber/30" to="/my-submissions"><div className="flex items-center gap-2 text-sm font-black text-amber"><ClipboardCheck className="h-5 w-5" />{text.pending}</div><div className="mt-2 text-2xl font-black text-ink">{pendingCount}</div></Link>
             </div>
           </DashboardPanel>
           <DashboardPanel title={text.missing} description={text.missingBody}>
