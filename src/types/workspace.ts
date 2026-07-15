@@ -19,7 +19,16 @@ export interface RfqRecord {
   description: string;
   quantity: number;
   unit: string;
+  unitOther?: string;
   location: string;
+  deliveryGovernorate?: string;
+  deliveryAddress?: string;
+  preferredCurrency?: "IQD" | "USD" | "either";
+  paymentTerms?: string;
+  paymentTermsOther?: string;
+  deliveryTerms?: string;
+  deliveryTermsOther?: string;
+  referenceLinks?: string[];
   closingDate: string;
   closingAt: TimestampLike;
   categoryId: string;
@@ -39,6 +48,11 @@ export interface RfqResponse {
   price?: number;
   currency?: "IQD" | "USD";
   deliveryDays?: number;
+  paymentTerms?: string;
+  paymentTermsOther?: string;
+  deliveryTerms?: string;
+  deliveryTermsOther?: string;
+  referenceLinks?: string[];
   status: "submitted" | "withdrawn";
   attachmentStatus: "upload_pending_launch";
   createdAt: TimestampLike;

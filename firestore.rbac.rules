@@ -36,6 +36,15 @@ service cloud.firestore {
         && !("rawData" in data)
         && !("filePayload" in data);
     }
+    function validReferenceLinks(links) {
+      return links is list
+        && links.size() <= 5
+        && (links.size() < 1 || (links[0] is string && links[0].size() > 0 && links[0].size() <= 500 && links[0].matches('https://.+')))
+        && (links.size() < 2 || (links[1] is string && links[1].size() > 0 && links[1].size() <= 500 && links[1].matches('https://.+')))
+        && (links.size() < 3 || (links[2] is string && links[2].size() > 0 && links[2].size() <= 500 && links[2].matches('https://.+')))
+        && (links.size() < 4 || (links[3] is string && links[3].size() > 0 && links[3].size() <= 500 && links[3].matches('https://.+')))
+        && (links.size() < 5 || (links[4] is string && links[4].size() > 0 && links[4].size() <= 500 && links[4].matches('https://.+')));
+    }
     function canImportSupplierExcel() {
       return signedIn() && myUser().status != "suspended" && (isBuyer() || isAdmin());
     }
@@ -271,7 +280,16 @@ service cloud.firestore {
           && data.description is string && data.description.size() > 0 && data.description.size() <= 2000
           && data.quantity is int && data.quantity > 0
           && data.unit is string && data.unit.size() > 0 && data.unit.size() <= 40
-          && data.location is string
+          && (!("unitOther" in data) || (data.unitOther is string && data.unitOther.size() <= 120))
+          && data.location is string && data.location.size() <= 350
+          && (!("deliveryGovernorate" in data) || (data.deliveryGovernorate is string && data.deliveryGovernorate.size() <= 40))
+          && (!("deliveryAddress" in data) || (data.deliveryAddress is string && data.deliveryAddress.size() <= 300))
+          && (!("preferredCurrency" in data) || data.preferredCurrency in ["IQD", "USD", "either"])
+          && (!("paymentTerms" in data) || (data.paymentTerms is string && data.paymentTerms.size() <= 40))
+          && (!("paymentTermsOther" in data) || (data.paymentTermsOther is string && data.paymentTermsOther.size() <= 120))
+          && (!("deliveryTerms" in data) || (data.deliveryTerms is string && data.deliveryTerms.size() <= 40))
+          && (!("deliveryTermsOther" in data) || (data.deliveryTermsOther is string && data.deliveryTermsOther.size() <= 120))
+          && (!("referenceLinks" in data) || validReferenceLinks(data.referenceLinks))
           && data.closingDate is string
           && data.closingAt is timestamp
           && data.categoryId is string && data.categoryId.size() > 0
@@ -321,6 +339,11 @@ service cloud.firestore {
           && (!("price" in data) || data.price is int || data.price is float)
           && (!("deliveryDays" in data) || (data.deliveryDays is int && data.deliveryDays > 0))
           && data.currency in ["IQD", "USD"]
+          && (!("paymentTerms" in data) || (data.paymentTerms is string && data.paymentTerms.size() <= 40))
+          && (!("paymentTermsOther" in data) || (data.paymentTermsOther is string && data.paymentTermsOther.size() <= 120))
+          && (!("deliveryTerms" in data) || (data.deliveryTerms is string && data.deliveryTerms.size() <= 40))
+          && (!("deliveryTermsOther" in data) || (data.deliveryTermsOther is string && data.deliveryTermsOther.size() <= 120))
+          && (!("referenceLinks" in data) || validReferenceLinks(data.referenceLinks))
           && data.status in ["submitted", "withdrawn"]
           && data.attachmentStatus == "upload_pending_launch"
           && noStoredFileFields(data);
@@ -341,7 +364,7 @@ service cloud.firestore {
         && validResponse(request.resource.data)
         && storedRfq().data.status in ["published", "receiving"]
         && storedRfq().data.closingAt >= request.time
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["message", "price", "currency", "deliveryDays", "status", "updatedAt"]);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "status", "updatedAt"]);
       allow delete: if isAdmin();
     }
 

@@ -124,9 +124,32 @@ export async function removeFavorite(userId: string, supplierId: string) {
 
 type RfqInput = Omit<RfqRecord, "id" | "buyerId" | "attachmentStatus" | "closingAt" | "createdAt" | "updatedAt">;
 
+const MAX_RFQ_REFERENCE_LINKS = 5;
+
+function normalizeReferenceLinks(values: string[] | undefined) {
+  if (!values) return [];
+  if (!Array.isArray(values) || values.length > MAX_RFQ_REFERENCE_LINKS) throw new Error("invalid_reference_link");
+  const links = [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+  for (const link of links) {
+    if (link.length > 500) throw new Error("invalid_reference_link");
+    let parsed: URL;
+    try {
+      parsed = new URL(link);
+    } catch {
+      throw new Error("invalid_reference_link");
+    }
+    if (parsed.protocol !== "https:") throw new Error("invalid_reference_link");
+  }
+  return links;
+}
+
+function validOtherOption(value: string, otherValue: string) {
+  return value !== "other" || (otherValue.length > 0 && otherValue.length <= 120);
+}
+
 export function isRfqAcceptingResponses(item: Pick<RfqRecord, "status" | "closingDate" | "closingAt">) {
   if (!["published", "receiving"].includes(item.status)) return false;
-  const closingAt = toDate(item.closingAt as never)?.getTime() || Date.parse(`${item.closingDate}T23:59:59`);
+  const closingAt = toDate(item.closingAt as never)?.getTime() || Date.parse(item.closingDate + "T23:59:59");
   return Number.isFinite(closingAt) && closingAt >= Date.now();
 }
 
@@ -134,14 +157,60 @@ function normalizeRfqInput(input: RfqInput) {
   const title = input.title.trim();
   const description = input.description.trim();
   const unit = input.unit.trim();
-  const location = input.location.trim();
+  const unitOther = input.unitOther?.trim() || "";
+  const deliveryGovernorate = input.deliveryGovernorate?.trim() || "";
+  const deliveryAddress = input.deliveryAddress?.trim() || "";
+  const preferredCurrency = input.preferredCurrency || "either";
+  const paymentTerms = input.paymentTerms?.trim() || "";
+  const paymentTermsOther = input.paymentTermsOther?.trim() || "";
+  const deliveryTerms = input.deliveryTerms?.trim() || "";
+  const deliveryTermsOther = input.deliveryTermsOther?.trim() || "";
+  const location = input.location.trim() || [deliveryGovernorate, deliveryAddress].filter(Boolean).join(" - ");
+  const referenceLinks = normalizeReferenceLinks(input.referenceLinks);
   const recipientIds = [...new Set(input.recipientIds.map((item) => item.trim()).filter(Boolean))].slice(0, 50);
   const quantity = Math.max(1, Math.trunc(Number(input.quantity) || 0));
-  if (!title || title.length > 120 || !description || description.length > 2000 || !unit || unit.length > 40) throw new Error("invalid_rfq_fields");
-  const closingAtDate = new Date(`${input.closingDate}T23:59:59`);
+
+  if (
+    !title
+    || title.length > 120
+    || !description
+    || description.length > 2000
+    || !unit
+    || unit.length > 40
+    || unitOther.length > 120
+    || deliveryGovernorate.length > 40
+    || deliveryAddress.length > 300
+    || !["IQD", "USD", "either"].includes(preferredCurrency)
+    || paymentTerms.length > 40
+    || deliveryTerms.length > 40
+    || !validOtherOption(unit, unitOther)
+    || !validOtherOption(paymentTerms, paymentTermsOther)
+    || !validOtherOption(deliveryTerms, deliveryTermsOther)
+  ) throw new Error("invalid_rfq_fields");
+
+  const closingAtDate = new Date(input.closingDate + "T23:59:59");
   if (!input.categoryId || !input.closingDate || !Number.isFinite(closingAtDate.getTime())) throw new Error("invalid_rfq_fields");
   if (input.status === "published" && recipientIds.length === 0) throw new Error("rfq_recipient_required");
-  return { ...input, title, description, unit, location, quantity, recipientIds, closingAt: isFirebaseConfigured ? Timestamp.fromDate(closingAtDate) : closingAtDate.toISOString() };
+
+  return {
+    ...input,
+    title,
+    description,
+    unit,
+    unitOther,
+    location,
+    deliveryGovernorate,
+    deliveryAddress,
+    preferredCurrency,
+    paymentTerms,
+    paymentTermsOther,
+    deliveryTerms,
+    deliveryTermsOther,
+    referenceLinks,
+    quantity,
+    recipientIds,
+    closingAt: isFirebaseConfigured ? Timestamp.fromDate(closingAtDate) : closingAtDate.toISOString(),
+  };
 }
 
 async function recipientOwnerIds(recipientIds: string[]) {
@@ -247,13 +316,41 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
   const message = input.message.trim();
   const price = input.price === undefined ? undefined : Number(input.price);
   const deliveryDays = input.deliveryDays === undefined ? undefined : Math.trunc(Number(input.deliveryDays));
-  if (!message || message.length > 2000 || (price !== undefined && (!Number.isFinite(price) || price < 0)) || (deliveryDays !== undefined && (!Number.isFinite(deliveryDays) || deliveryDays < 1))) throw new Error("invalid_rfq_response");
-  const id = `${input.rfqId}_${input.supplierUserId}`;
-  const values = { ...input, message, ...(price === undefined ? {} : { price }), ...(deliveryDays === undefined ? {} : { deliveryDays }) };
+  const paymentTerms = input.paymentTerms?.trim() || "";
+  const paymentTermsOther = input.paymentTermsOther?.trim() || "";
+  const deliveryTerms = input.deliveryTerms?.trim() || "";
+  const deliveryTermsOther = input.deliveryTermsOther?.trim() || "";
+  const referenceLinks = normalizeReferenceLinks(input.referenceLinks);
+
+  if (
+    !message
+    || message.length > 2000
+    || (price !== undefined && (!Number.isFinite(price) || price < 0))
+    || (deliveryDays !== undefined && (!Number.isFinite(deliveryDays) || deliveryDays < 1))
+    || paymentTerms.length > 40
+    || deliveryTerms.length > 40
+    || !validOtherOption(paymentTerms, paymentTermsOther)
+    || !validOtherOption(deliveryTerms, deliveryTermsOther)
+  ) throw new Error("invalid_rfq_response");
+
+  const id = input.rfqId + "_" + input.supplierUserId;
+  const values = {
+    ...input,
+    message,
+    paymentTerms,
+    paymentTermsOther,
+    deliveryTerms,
+    deliveryTermsOther,
+    referenceLinks,
+    ...(price === undefined ? {} : { price }),
+    ...(deliveryDays === undefined ? {} : { deliveryDays }),
+  };
+
   if (!isFirebaseConfigured) {
     const existing = localRead<RfqResponse>("rfqResponses").find((item) => item.id === id);
     return localUpsert("rfqResponses", { ...existing, ...values, id, status: "submitted", attachmentStatus: "upload_pending_launch", createdAt: existing?.createdAt || nowIso(), updatedAt: nowIso() } as RfqResponse);
   }
+
   const rfqSnapshot = await getDoc(doc(rfqsRef, input.rfqId));
   if (!rfqSnapshot.exists()) throw new Error("rfq_not_found");
   const rfq = withId<RfqRecord>(rfqSnapshot);
@@ -261,12 +358,18 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
   const responseRef = doc(rfqResponsesRef, id);
   const existing = await getDoc(responseRef);
   const batch = writeBatch(db);
+
   if (existing.exists()) {
     batch.update(responseRef, {
       message,
       currency: input.currency,
       price: price === undefined ? deleteField() : price,
       deliveryDays: deliveryDays === undefined ? deleteField() : deliveryDays,
+      paymentTerms: paymentTerms || deleteField(),
+      paymentTermsOther: paymentTermsOther || deleteField(),
+      deliveryTerms: deliveryTerms || deleteField(),
+      deliveryTermsOther: deliveryTermsOther || deleteField(),
+      referenceLinks,
       status: "submitted",
       updatedAt: serverTimestamp(),
     });
@@ -280,6 +383,7 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
       updatedAt: serverTimestamp(),
     });
   }
+
   batch.set(doc(notificationsRef), rfqNotification(rfq.buyerId, input.supplierUserId, input.rfqId, "supplier_to_buyer"));
   await batch.commit();
   return id;

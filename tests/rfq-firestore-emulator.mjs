@@ -42,6 +42,7 @@ const users = {
 
 before(async () => {
   environment = await initializeTestEnvironment({ projectId, firestore: { host, port, rules } });
+  await environment.clearFirestore();
   await environment.withSecurityRulesDisabled(async (context) => {
     const database = context.firestore();
     await Promise.all([
@@ -68,8 +69,17 @@ function rfqData(id, buyerId = users.buyer.uid, overrides = {}) {
     title: `RFQ ${id}`,
     description: "Differential pressure gauge, mechanical, 0-10 bar.",
     quantity: 2,
-    unit: "pcs",
-    location: "Baghdad",
+    unit: "piece",
+    unitOther: "",
+    location: "baghdad - Karrada, Street 62",
+    deliveryGovernorate: "baghdad",
+    deliveryAddress: "Karrada, Street 62",
+    preferredCurrency: "either",
+    paymentTerms: "net_30",
+    paymentTermsOther: "",
+    deliveryTerms: "supplier_delivery",
+    deliveryTermsOther: "",
+    referenceLinks: ["https://example.test/specification.pdf"],
     closingDate: "2099-12-31",
     closingAt: future(),
     categoryId: "instrumentation",
@@ -94,6 +104,11 @@ function responseData(rfqId, supplier = users.supplier, overrides = {}) {
     price: 1000,
     currency: "USD",
     deliveryDays: 7,
+    paymentTerms: "net_30",
+    paymentTermsOther: "",
+    deliveryTerms: "supplier_delivery",
+    deliveryTermsOther: "",
+    referenceLinks: ["https://example.test/quotation.pdf"],
     status: "submitted",
     attachmentStatus: "upload_pending_launch",
     createdAt: now,
@@ -167,6 +182,20 @@ test("targeted approved supplier submits a deterministic response and notifies t
   await assertFails(updateDoc(doc(database, "rfqResponses", response.id), { supplierProfileId: users.otherSupplier.supplierProfileId }));
 });
 
+test("supplier can update structured quotation terms and safe reference links", async () => {
+  const supplierDb = contextFor("supplier");
+  const responseId = `rfq-open_${users.supplier.uid}`;
+  await assertSucceeds(updateDoc(doc(supplierDb, "rfqResponses", responseId), {
+    message: "Updated structured quotation.",
+    paymentTerms: "net_45",
+    paymentTermsOther: "",
+    deliveryTerms: "site_delivery",
+    deliveryTermsOther: "",
+    referenceLinks: ["https://example.test/revised-quotation.pdf"],
+    updatedAt: Timestamp.now(),
+  }));
+});
+
 test("supplier reads only its deterministic response while buyer, admin, and owner can review", async () => {
   const supplierDb = contextFor("supplier");
   const buyerDb = contextFor("buyer");
@@ -191,6 +220,19 @@ test("expired RFQ cannot receive a response even if its status still says publis
   const database = contextFor("supplier");
   const response = responseData("rfq-expired");
   await assertFails(setDoc(doc(database, "rfqResponses", response.id), response));
+});
+
+test("RFQ and quotation documents accept safe HTTPS references and reject unsafe links", async () => {
+  const buyerDb = contextFor("buyer");
+  await assertSucceeds(setDoc(doc(buyerDb, "rfqs", "rfq-safe-links"), rfqData("safe-links")));
+  await assertFails(setDoc(doc(buyerDb, "rfqs", "rfq-http-link"), rfqData("http-link", users.buyer.uid, { referenceLinks: ["http://example.test/specification.pdf"] })));
+
+  await seedRfq("rfq-link-response", rfqData("link-response"));
+  const supplierDb = contextFor("supplier");
+  const safeResponse = responseData("rfq-link-response");
+  await assertSucceeds(setDoc(doc(supplierDb, "rfqResponses", safeResponse.id), safeResponse));
+  const unsafeResponse = responseData("rfq-link-response", users.supplier, { referenceLinks: ["javascript:alert(1)"] });
+  await assertFails(setDoc(doc(supplierDb, "rfqResponses", unsafeResponse.id), unsafeResponse, { merge: true }));
 });
 
 test("RFQ and quotation documents reject stored file payloads", async () => {

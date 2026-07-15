@@ -1,13 +1,15 @@
-import { Bell, BookOpen, CheckCheck, CheckCircle2, FilePlus2, Heart, Mail, Plus, Search, Send, Settings, Star, Tags, Trash2 } from "lucide-react";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { Bell, BookOpen, CheckCheck, CheckCircle2, ExternalLink, FilePlus2, Heart, Loader2, Mail, Plus, Search, Send, Settings, Star, Tags, Trash2 } from "lucide-react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { DisabledFileUpload } from "../../components/DisabledFileUpload";
+import { RfqReferenceLinks } from "../../components/RfqReferenceLinks";
 import { DashboardError, DashboardPageHeader, DashboardPanel, DashboardSkeleton, InlineEmptyState } from "../../components/DashboardPrimitives";
 import { Button, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTaxonomy } from "../../contexts/TaxonomyContext";
 import { labelFor } from "../../data/constants";
+import { rfqDeliveryTermOptions, rfqOptionLabel, rfqPaymentTermOptions, rfqPreferredCurrencyOptions, rfqUnitOptions } from "../../data/rfqOptions";
 import { auth } from "../../config/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { getSupplier, listSupplierCandidates } from "../../services/firestore";
@@ -76,7 +78,26 @@ export function BuyerFavoritesPage() {
   return <div className="overflow-hidden rounded-[18px] border border-borderSoft bg-creamLight shadow-card"><DashboardPageHeader eyebrow={text.eyebrow} title={text.title} description={text.description} /><div className="grid gap-4 p-5 sm:p-7">{error ? <DashboardError message={error} retry={() => void load()} /> : null}{items.length ? items.map((item) => <article className="flex flex-col gap-4 rounded-[16px] border border-borderSoft bg-white p-5 shadow-card sm:flex-row sm:items-center sm:justify-between" key={item.id}><div><h3 className="font-black">{item.supplierName}</h3><p className="mt-1 text-xs font-semibold text-muted">{item.governorate || "—"} · {(item.categories || []).join(", ") || "—"}</p></div><div className="flex gap-2"><Link to={`/suppliers/${item.supplierId}`}><Button variant="secondary"><Star className="h-4 w-4" />{text.open}</Button></Link><Button variant="ghost" onClick={() => void removeFavorite(item.userId, item.supplierId).then(load)}><Trash2 className="h-4 w-4" />{text.remove}</Button></div></article>) : <InlineEmptyState title={text.empty} body={text.emptyBody} />}</div></div>;
 }
 
-const initialRfq = { title: "", description: "", quantity: "1", unit: "piece", location: "", closingDate: "", categoryId: "", recipientIds: [] as string[] };
+const initialRfq = {
+  title: "",
+  description: "",
+  quantity: "1",
+  unit: "piece",
+  unitOther: "",
+  location: "",
+  deliveryGovernorate: "",
+  deliveryAddress: "",
+  preferredCurrency: "either" as "IQD" | "USD" | "either",
+  paymentTerms: "bank_transfer",
+  paymentTermsOther: "",
+  deliveryTerms: "supplier_delivery",
+  deliveryTermsOther: "",
+  referenceLinks: [] as string[],
+  closingDate: "",
+  categoryId: "",
+  recipientIds: [] as string[],
+};
+
 type BuyerResponseView = RfqResponse & { supplierName: string };
 
 export function BuyerRfqsPage() {
@@ -86,17 +107,120 @@ export function BuyerRfqsPage() {
   const requestedCategoryId = searchParams.get("category") || "";
   const { firebaseUser, hasActiveAccess } = useAuth();
   const { taxonomy } = useTaxonomy();
+  const responsesPanelRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState<RfqRecord[]>([]);
   const [selected, setSelected] = useState<RfqRecord | null>(null);
   const [responses, setResponses] = useState<BuyerResponseView[]>([]);
-  const [form, setForm] = useState(() => ({ ...initialRfq, categoryId: requestedCategoryId, recipientIds: requestedSupplierId ? [requestedSupplierId] : [] }));
+  const [responsesLoading, setResponsesLoading] = useState(false);
+  const [responseError, setResponseError] = useState("");
+  const [form, setForm] = useState(() => ({
+    ...initialRfq,
+    categoryId: requestedCategoryId,
+    recipientIds: requestedSupplierId ? [requestedSupplierId] : [],
+  }));
   const [candidates, setCandidates] = useState<Array<{ id: string; displayName: string; nameOriginal: string }>>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const text = locale === "ar" ? {
-    eyebrow: "دورة الشراء", title: "طلبات عروض الأسعار", description: "أنشئ طلباً منظماً وأرسله إلى مجهزين محددين، ثم قارن العروض المستلمة من مكان واحد.", newTitle: "إنشاء RFQ", titleLabel: "العنوان", desc: "وصف المادة أو الخدمة", quantity: "الكمية", unit: "الوحدة", location: "موقع التسليم", close: "تاريخ الإغلاق", category: "التصنيف", recipients: "المجهزون المستلمون", publish: "نشر الطلب", draft: "حفظ مسودة", empty: "لا توجد طلبات حتى الآن", inactive: "يلزم وصول فعال لاختيار المجهزين ونشر الطلب، ويمكنك حفظه كمسودة.", none: "لا توجد شركات مرتبطة بحساب فعّال ضمن هذا التصنيف.", saved: "تم حفظ طلب عرض الأسعار.", required: "أكمل الحقول المطلوبة أولاً.", recipientRequired: "اختر مجهزاً واحداً على الأقل قبل النشر.", invalidDate: "اختر تاريخ إغلاق اليوم أو بعده.", confirmPublish: "هل تريد نشر الطلب وإرساله إلى المجهزين المحددين؟", responses: "العروض المستلمة", selectRequest: "اختر طلباً لمراجعة عروضه.", noResponses: "لم يصل أي عرض لهذا الطلب بعد.", closeRequest: "إغلاق الطلب", publishDraft: "نشر المسودة", view: "عرض ومقارنة", price: "السعر", delivery: "مدة التجهيز", days: "يوم", publishedOnly: "تظهر العروض بعد نشر الطلب.", confirmClose: "هل تريد إغلاق هذا الطلب؟ لن يتمكن المجهزون من إرسال عروض جديدة." }
-    : { eyebrow: "Procurement cycle", title: "RFQ requests", description: "Create a structured request, address selected suppliers, and compare received quotations in one place.", newTitle: "Create RFQ", titleLabel: "Title", desc: "Material or service description", quantity: "Quantity", unit: "Unit", location: "Delivery location", close: "Closing date", category: "Category", recipients: "Recipient suppliers", publish: "Publish request", draft: "Save draft", empty: "No requests yet", inactive: "Active access is required to select suppliers and publish; you can still save a draft.", none: "No account-enabled suppliers are available for this category.", saved: "The RFQ was saved.", required: "Complete the required fields first.", recipientRequired: "Select at least one supplier before publishing.", invalidDate: "Choose today or a future closing date.", confirmPublish: "Publish this RFQ and notify the selected suppliers?", responses: "Received quotations", selectRequest: "Select a request to review its quotations.", noResponses: "No quotation has been received for this request.", closeRequest: "Close request", publishDraft: "Publish draft", view: "View and compare", price: "Price", delivery: "Delivery", days: "days", publishedOnly: "Quotations appear after the request is published.", confirmClose: "Close this request? Suppliers will no longer be able to submit quotations." };
+    eyebrow: "دورة الشراء",
+    title: "طلبات عروض الأسعار",
+    description: "أنشئ طلباً منظماً قابلاً للتحليل، ثم قارن عروض المجهزين المستلمة في مكان واحد.",
+    newTitle: "إنشاء طلب عرض سعر",
+    titleLabel: "عنوان الطلب",
+    desc: "وصف المادة أو الخدمة",
+    quantity: "الكمية",
+    unit: "الوحدة",
+    unitOther: "اسم الوحدة الأخرى",
+    governorate: "محافظة التسليم",
+    address: "عنوان التسليم التفصيلي",
+    addressHint: "مثال: بغداد، الكرادة، شارع 62، مخزن الشركة.",
+    close: "تاريخ إغلاق استلام العروض",
+    category: "التصنيف",
+    preferredCurrency: "عملة العرض المفضلة",
+    paymentTerms: "شروط الدفع المفضلة",
+    paymentTermsOther: "شروط دفع أخرى",
+    deliveryTerms: "طريقة وشروط التسليم المفضلة",
+    deliveryTermsOther: "شروط تسليم أخرى",
+    recipients: "المجهزون المستهدفون",
+    publish: "نشر الطلب",
+    draft: "حفظ كمسودة",
+    empty: "لا توجد طلبات حتى الآن",
+    inactive: "يجب أن يكون وصولك فعالاً لإرسال الطلب إلى المجهزين.",
+    none: "لا يوجد مجهزون مؤهلون لهذا التصنيف حتى الآن.",
+    saved: "تم حفظ طلب عرض السعر.",
+    required: "أكمل الحقول المطلوبة والخيارات المرتبطة بخيار أخرى.",
+    recipientRequired: "اختر مجهزاً واحداً على الأقل قبل نشر الطلب.",
+    invalidDate: "يجب أن يكون تاريخ الإغلاق اليوم أو لاحقاً.",
+    invalidLink: "استخدم روابط HTTPS عامة وآمنة فقط، وبحد أقصى خمسة روابط.",
+    confirmPublish: "هل تريد نشر الطلب وإرساله إلى المجهزين المحددين؟",
+    responses: "العروض المستلمة والمقارنة",
+    selectRequest: "اختر طلباً من القائمة لعرض المقارنة.",
+    noResponses: "لم يصل أي عرض لهذا الطلب بعد.",
+    closeRequest: "إغلاق الطلب",
+    publishDraft: "نشر المسودة",
+    view: "عرض ومقارنة",
+    price: "السعر",
+    delivery: "مدة التجهيز",
+    days: "يوم",
+    publishedOnly: "يجب نشر الطلب قبل استلام العروض.",
+    confirmClose: "هل تريد إغلاق هذا الطلب؟ لن تُقبل عروض جديدة بعد الإغلاق.",
+    requestedTerms: "الشروط المطلوبة",
+    offeredPayment: "شروط الدفع المعروضة",
+    offeredDelivery: "شروط التسليم المعروضة",
+    links: "الروابط الداعمة",
+    loading: "جارٍ تحميل العروض...",
+    quotation: "عرض",
+  } : {
+    eyebrow: "Procurement cycle",
+    title: "RFQ requests",
+    description: "Create a structured, analysis-ready request and compare received quotations in one place.",
+    newTitle: "Create RFQ",
+    titleLabel: "Request title",
+    desc: "Material or service description",
+    quantity: "Quantity",
+    unit: "Unit",
+    unitOther: "Other unit name",
+    governorate: "Delivery governorate",
+    address: "Detailed delivery address",
+    addressHint: "Example: Baghdad, Karrada, Street 62, company warehouse.",
+    close: "Quotation closing date",
+    category: "Category",
+    preferredCurrency: "Preferred quotation currency",
+    paymentTerms: "Preferred payment terms",
+    paymentTermsOther: "Other payment terms",
+    deliveryTerms: "Preferred delivery method and terms",
+    deliveryTermsOther: "Other delivery terms",
+    recipients: "Recipient suppliers",
+    publish: "Publish request",
+    draft: "Save draft",
+    empty: "No requests yet",
+    inactive: "Active access is required to select suppliers and publish; you can still save a draft.",
+    none: "No account-enabled suppliers are available for this category.",
+    saved: "The RFQ was saved.",
+    required: "Complete the required fields and any selected Other option.",
+    recipientRequired: "Select at least one supplier before publishing.",
+    invalidDate: "Choose today or a future closing date.",
+    invalidLink: "Use valid HTTPS links only, with no more than five links.",
+    confirmPublish: "Publish this RFQ and notify the selected suppliers?",
+    responses: "Received quotations and comparison",
+    selectRequest: "Select a request from the list to review its quotations.",
+    noResponses: "No quotation has been received for this request.",
+    closeRequest: "Close request",
+    publishDraft: "Publish draft",
+    view: "View and compare",
+    price: "Price",
+    delivery: "Lead time",
+    days: "days",
+    publishedOnly: "Quotations appear after the request is published.",
+    confirmClose: "Close this request? Suppliers will no longer be able to submit quotations.",
+    requestedTerms: "Requested RFQ details",
+    offeredPayment: "Offered payment terms",
+    offeredDelivery: "Offered delivery terms",
+    links: "Supporting links",
+    loading: "Loading quotations...",
+    quotation: "quotation",
+  };
 
   const load = async () => {
     if (!firebaseUser) return [];
@@ -107,8 +231,14 @@ export function BuyerRfqsPage() {
   };
 
   async function openRequest(item: RfqRecord) {
-    setSelected(item); setResponses([]); setError("");
-    if (item.status === "draft") return;
+    setSelected(item);
+    setResponses([]);
+    setResponseError("");
+    setResponsesLoading(item.status !== "draft");
+    if (item.status === "draft") {
+      setResponsesLoading(false);
+      return;
+    }
     try {
       const values = await listRfqResponses(item.id);
       const enriched = await Promise.all(values.map(async (response) => {
@@ -116,56 +246,228 @@ export function BuyerRfqsPage() {
         return { ...response, supplierName: supplier?.displayName || supplier?.nameOriginal || response.supplierProfileId };
       }));
       setResponses(enriched);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Failed"); }
+    } catch (reason) {
+      setResponseError(reason instanceof Error ? reason.message : "Failed");
+    } finally {
+      setResponsesLoading(false);
+    }
   }
 
-  useEffect(() => { void load().catch((reason) => setError(reason instanceof Error ? reason.message : "Failed")); }, [firebaseUser?.uid]);
   useEffect(() => {
-    if (!form.categoryId || !hasActiveAccess) { setCandidates([]); return; }
-    void listSupplierCandidates([form.categoryId]).then((records) => setCandidates(records.map((item) => ({ id: item.id, displayName: item.displayName, nameOriginal: item.nameOriginal })))).catch(() => setCandidates([]));
+    void load().catch((reason) => setError(reason instanceof Error ? reason.message : "Failed"));
+  }, [firebaseUser?.uid]);
+
+  useEffect(() => {
+    if (!form.categoryId || !hasActiveAccess) {
+      setCandidates([]);
+      return;
+    }
+    void listSupplierCandidates([form.categoryId])
+      .then((records) => setCandidates(records.map((item) => ({ id: item.id, displayName: item.displayName, nameOriginal: item.nameOriginal }))))
+      .catch(() => setCandidates([]));
   }, [form.categoryId, hasActiveAccess]);
 
+  useEffect(() => {
+    if (!selected) return;
+    const timer = window.setTimeout(() => responsesPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    return () => window.clearTimeout(timer);
+  }, [selected?.id]);
+
   async function submit(status: "draft" | "published") {
-    setError(""); setNotice("");
-    if (!firebaseUser || !form.title.trim() || !form.description.trim() || !form.unit.trim() || !form.closingDate || !form.categoryId) { setError(text.required); return; }
-    if (Date.parse(`${form.closingDate}T23:59:59`) < Date.now()) { setError(text.invalidDate); return; }
-    if (status === "published" && form.recipientIds.length === 0) { setError(text.recipientRequired); return; }
+    setError("");
+    setNotice("");
+    const missingOther = (form.unit === "other" && !form.unitOther.trim())
+      || (form.paymentTerms === "other" && !form.paymentTermsOther.trim())
+      || (form.deliveryTerms === "other" && !form.deliveryTermsOther.trim());
+    if (
+      !firebaseUser
+      || !form.title.trim()
+      || !form.description.trim()
+      || !form.unit
+      || !form.deliveryGovernorate
+      || !form.deliveryAddress.trim()
+      || !form.closingDate
+      || !form.categoryId
+      || missingOther
+    ) {
+      setError(text.required);
+      return;
+    }
+    if (Date.parse(form.closingDate + "T23:59:59") < Date.now()) {
+      setError(text.invalidDate);
+      return;
+    }
+    if (status === "published" && form.recipientIds.length === 0) {
+      setError(text.recipientRequired);
+      return;
+    }
     if (status === "published" && !window.confirm(text.confirmPublish)) return;
     setBusy(true);
     try {
-      const id = await createRfq(firebaseUser.uid, { title: form.title.trim(), description: form.description.trim(), quantity: Math.max(1, Number(form.quantity) || 1), unit: form.unit.trim(), location: form.location.trim(), closingDate: form.closingDate, categoryId: form.categoryId, recipientIds: form.recipientIds, status });
-      setForm(initialRfq); setNotice(text.saved);
+      const location = [form.deliveryGovernorate, form.deliveryAddress.trim()].filter(Boolean).join(" - ");
+      const id = await createRfq(firebaseUser.uid, {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        quantity: Math.max(1, Number(form.quantity) || 1),
+        unit: form.unit,
+        unitOther: form.unitOther.trim(),
+        location,
+        deliveryGovernorate: form.deliveryGovernorate,
+        deliveryAddress: form.deliveryAddress.trim(),
+        preferredCurrency: form.preferredCurrency,
+        paymentTerms: form.paymentTerms,
+        paymentTermsOther: form.paymentTermsOther.trim(),
+        deliveryTerms: form.deliveryTerms,
+        deliveryTermsOther: form.deliveryTermsOther.trim(),
+        referenceLinks: form.referenceLinks,
+        closingDate: form.closingDate,
+        categoryId: form.categoryId,
+        recipientIds: form.recipientIds,
+        status,
+      });
+      setForm(initialRfq);
+      setNotice(text.saved);
       const values = await load();
       const created = values.find((item) => item.id === id);
       if (created) await openRequest(created);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Failed"); } finally { setBusy(false); }
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "Failed";
+      setError(message === "invalid_reference_link" ? text.invalidLink : message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function publishDraft(item: RfqRecord) {
     setError("");
-    if (!item.recipientIds.length) { setError(text.recipientRequired); return; }
+    if (!item.recipientIds.length) {
+      setError(text.recipientRequired);
+      return;
+    }
     if (!window.confirm(text.confirmPublish)) return;
-    try { await updateRfqStatus(item.id, "published"); await load(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Failed"); }
+    try {
+      await updateRfqStatus(item.id, "published");
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Failed");
+    }
   }
 
   async function closeRequest(item: RfqRecord) {
     if (!window.confirm(text.confirmClose)) return;
-    try { await updateRfqStatus(item.id, "closed"); await load(); setSelected(null); setResponses([]); } catch (reason) { setError(reason instanceof Error ? reason.message : "Failed"); }
+    try {
+      await updateRfqStatus(item.id, "closed");
+      await load();
+      setSelected(null);
+      setResponses([]);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Failed");
+    }
   }
 
   const minimumDate = new Date().toISOString().slice(0, 10);
+  const option = (item: { value: string; labelAr: string; labelEn: string }) => (
+    <option value={item.value} key={item.value}>{locale === "ar" ? item.labelAr : item.labelEn}</option>
+  );
+  const requestedLocation = (item: RfqRecord) => {
+    const governorate = item.deliveryGovernorate
+      ? labelFor(taxonomy.governorates, item.deliveryGovernorate, locale)
+      : "";
+    return [governorate, item.deliveryAddress].filter(Boolean).join(" - ") || item.location || "—";
+  };
+
   return <div className="overflow-hidden rounded-[18px] border border-borderSoft bg-creamLight shadow-card">
     <DashboardPageHeader eyebrow={text.eyebrow} title={text.title} description={text.description} />
     <div className="grid gap-5 p-5 sm:p-7 xl:grid-cols-[1.05fr_0.95fr]">
       <DashboardPanel title={text.newTitle}>
-        {error ? <DashboardError message={error} /> : null}{notice ? <div className="mb-4 flex items-center gap-2 rounded-xl bg-successBg p-3 text-sm font-black text-mint"><CheckCircle2 className="h-5 w-5" />{notice}</div> : null}
-        <div className="grid gap-4 sm:grid-cols-2"><TextField label={text.titleLabel} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength={120} required /><TextField label={text.quantity} value={form.quantity} onChange={(event) => setForm({ ...form, quantity: event.target.value })} type="number" min="1" required /><TextField label={text.unit} value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value })} required /><TextField label={text.location} value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} /><TextField label={text.close} value={form.closingDate} onChange={(event) => setForm({ ...form, closingDate: event.target.value })} type="date" min={minimumDate} required /><SelectField label={text.category} value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value, recipientIds: [] })} required><option value="">—</option>{taxonomy.supplierCategories.map((item) => <option value={item.value} key={item.value}>{labelFor(taxonomy.supplierCategories, item.value, locale)}</option>)}</SelectField><TextAreaField className="sm:col-span-2" label={text.desc} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} maxLength={2000} required /></div>
-        <div className="mt-4"><DisabledFileUpload locale={locale} purpose="rfq_attachment" accepted="PDF, XLSX, JPG, PNG" maximumSize="10 MB" compact /></div>
-        <div className="mt-4"><div className="mb-2 text-sm font-black">{text.recipients}</div>{!hasActiveAccess ? <p className="text-xs font-bold text-clay">{text.inactive}</p> : candidates.length ? <div className="grid gap-2 sm:grid-cols-2">{candidates.map((supplier) => <label className="flex items-center gap-2 rounded-xl border border-borderSoft bg-creamLight p-3 text-xs font-bold" key={supplier.id}><input type="checkbox" checked={form.recipientIds.includes(supplier.id)} onChange={(event) => setForm({ ...form, recipientIds: event.target.checked ? [...form.recipientIds, supplier.id] : form.recipientIds.filter((id) => id !== supplier.id) })} />{supplier.displayName || supplier.nameOriginal}</label>)}</div> : <p className="text-xs font-semibold text-muted">{text.none}</p>}</div>
-        <div className="mt-5 flex flex-wrap gap-2"><Button type="button" disabled={busy || !hasActiveAccess} onClick={() => void submit("published")}><Send className="h-4 w-4" />{text.publish}</Button><Button type="button" variant="secondary" disabled={busy} onClick={() => void submit("draft")}><FilePlus2 className="h-4 w-4" />{text.draft}</Button></div>
+        {error ? <DashboardError message={error} /> : null}
+        {notice ? <div className="mb-4 flex items-center gap-2 rounded-xl bg-successBg p-3 text-sm font-black text-mint"><CheckCircle2 className="h-5 w-5" />{notice}</div> : null}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField label={text.titleLabel} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} maxLength={120} required />
+          <TextField label={text.quantity} value={form.quantity} onChange={(event) => setForm({ ...form, quantity: event.target.value })} type="number" min="1" required />
+          <SelectField label={text.unit} value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value, unitOther: event.target.value === "other" ? form.unitOther : "" })} required>
+            {rfqUnitOptions.map(option)}
+          </SelectField>
+          {form.unit === "other" ? <TextField label={text.unitOther} value={form.unitOther} onChange={(event) => setForm({ ...form, unitOther: event.target.value })} maxLength={120} required /> : null}
+          <SelectField label={text.governorate} value={form.deliveryGovernorate} onChange={(event) => setForm({ ...form, deliveryGovernorate: event.target.value })} required>
+            <option value="">{text.governorate}</option>
+            {taxonomy.governorates.map(option)}
+          </SelectField>
+          <TextField label={text.address} hint={text.addressHint} value={form.deliveryAddress} onChange={(event) => setForm({ ...form, deliveryAddress: event.target.value })} maxLength={300} required />
+          <TextField label={text.close} value={form.closingDate} onChange={(event) => setForm({ ...form, closingDate: event.target.value })} type="date" min={minimumDate} required />
+          <SelectField label={text.category} value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value, recipientIds: [] })} required>
+            <option value="">{text.category}</option>
+            {taxonomy.supplierCategories.map(option)}
+          </SelectField>
+          <SelectField label={text.preferredCurrency} value={form.preferredCurrency} onChange={(event) => setForm({ ...form, preferredCurrency: event.target.value as "IQD" | "USD" | "either" })} required>
+            {rfqPreferredCurrencyOptions.map(option)}
+          </SelectField>
+          <SelectField label={text.paymentTerms} value={form.paymentTerms} onChange={(event) => setForm({ ...form, paymentTerms: event.target.value, paymentTermsOther: event.target.value === "other" ? form.paymentTermsOther : "" })} required>
+            {rfqPaymentTermOptions.map(option)}
+          </SelectField>
+          {form.paymentTerms === "other" ? <TextField label={text.paymentTermsOther} value={form.paymentTermsOther} onChange={(event) => setForm({ ...form, paymentTermsOther: event.target.value })} maxLength={120} required /> : null}
+          <SelectField label={text.deliveryTerms} value={form.deliveryTerms} onChange={(event) => setForm({ ...form, deliveryTerms: event.target.value, deliveryTermsOther: event.target.value === "other" ? form.deliveryTermsOther : "" })} required>
+            {rfqDeliveryTermOptions.map(option)}
+          </SelectField>
+          {form.deliveryTerms === "other" ? <TextField label={text.deliveryTermsOther} value={form.deliveryTermsOther} onChange={(event) => setForm({ ...form, deliveryTermsOther: event.target.value })} maxLength={120} required /> : null}
+          <TextAreaField className="sm:col-span-2" label={text.desc} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} maxLength={2000} required />
+        </div>
+        <div className="mt-4 grid gap-4">
+          <RfqReferenceLinks locale={locale} links={form.referenceLinks} onChange={(referenceLinks) => setForm({ ...form, referenceLinks })} />
+          <DisabledFileUpload locale={locale} purpose="rfq_attachment" accepted="PDF, XLSX, JPG, PNG" maximumSize="10 MB" compact />
+        </div>
+        <div className="mt-4">
+          <div className="mb-2 text-sm font-black">{text.recipients}</div>
+          {!hasActiveAccess ? <p className="text-xs font-bold text-clay">{text.inactive}</p> : candidates.length ? <div className="grid gap-2 sm:grid-cols-2">{candidates.map((supplier) => <label className="flex items-center gap-2 rounded-xl border border-borderSoft bg-creamLight p-3 text-xs font-bold" key={supplier.id}><input type="checkbox" checked={form.recipientIds.includes(supplier.id)} onChange={(event) => setForm({ ...form, recipientIds: event.target.checked ? [...form.recipientIds, supplier.id] : form.recipientIds.filter((id) => id !== supplier.id) })} />{supplier.displayName || supplier.nameOriginal}</label>)}</div> : <p className="text-xs font-semibold text-muted">{text.none}</p>}
+        </div>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Button type="button" disabled={busy || !hasActiveAccess} onClick={() => void submit("published")}><Send className="h-4 w-4" />{text.publish}</Button>
+          <Button type="button" variant="secondary" disabled={busy} onClick={() => void submit("draft")}><FilePlus2 className="h-4 w-4" />{text.draft}</Button>
+        </div>
       </DashboardPanel>
-      <DashboardPanel title={text.title}>{items.length ? <div className="grid gap-3">{items.map((item) => <article className={"rounded-xl border p-4 " + (selected?.id === item.id ? "border-amber bg-cream" : "border-borderSoft bg-creamLight")} key={item.id}><div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-black">{item.title}</h3><p className="mt-1 text-xs font-semibold text-muted">{labelFor(taxonomy.supplierCategories, item.categoryId, locale)} · {item.quantity} {item.unit}</p></div><span className="rounded-full bg-white px-3 py-1 text-xs font-black text-amber">{item.status}</span></div><p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">{item.description}</p><div className="mt-3 flex flex-wrap gap-2"><Button variant="secondary" onClick={() => void openRequest(item)}>{text.view}</Button>{item.status === "draft" ? <Button variant="secondary" disabled={!hasActiveAccess} onClick={() => void publishDraft(item)}>{text.publishDraft}</Button> : null}{!["closed", "cancelled"].includes(item.status) ? <Button variant="ghost" onClick={() => void closeRequest(item)}>{text.closeRequest}</Button> : null}</div></article>)}</div> : <InlineEmptyState title={text.empty} body={text.description} />}</DashboardPanel>
-      <div className="xl:col-span-2"><DashboardPanel title={text.responses}>{selected ? selected.status === "draft" ? <InlineEmptyState title={text.publishedOnly} body="" /> : responses.length ? <div className="grid gap-4 lg:grid-cols-2">{responses.map((response) => <article className="rounded-xl border border-borderSoft bg-white p-5" key={response.id}><div className="flex items-start justify-between gap-3"><h3 className="font-black">{response.supplierName}</h3><span className="rounded-full bg-successBg px-3 py-1 text-xs font-black text-mint">{response.status}</span></div><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted">{response.message}</p><dl className="mt-4 grid gap-2 text-xs font-bold sm:grid-cols-2"><div>{text.price}: {response.price ?? "—"} {response.price !== undefined ? response.currency : ""}</div><div>{text.delivery}: {response.deliveryDays ?? "—"} {response.deliveryDays ? text.days : ""}</div></dl></article>)}</div> : <InlineEmptyState title={text.noResponses} body="" /> : <InlineEmptyState title={text.selectRequest} body="" />}</DashboardPanel></div>
+
+      <DashboardPanel title={text.title}>
+        {items.length ? <div className="grid gap-3">{items.map((item) => <article className={"rounded-xl border p-4 transition " + (selected?.id === item.id ? "border-amber bg-cream shadow-card" : "border-borderSoft bg-creamLight")} key={item.id}>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div><h3 className="font-black">{item.title}</h3><p className="mt-1 text-xs font-semibold text-muted">{labelFor(taxonomy.supplierCategories, item.categoryId, locale)} / {item.quantity} {rfqOptionLabel(rfqUnitOptions, item.unit, locale, item.unitOther)}</p></div>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-amber">{item.status}</span>
+          </div>
+          <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">{item.description}</p>
+          <p className="mt-2 text-xs font-semibold text-muted">{requestedLocation(item)}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" aria-controls="rfq-comparison" onClick={() => void openRequest(item)}>{text.view}</Button>
+            {item.status === "draft" ? <Button type="button" variant="secondary" disabled={!hasActiveAccess} onClick={() => void publishDraft(item)}>{text.publishDraft}</Button> : null}
+            {!["closed", "cancelled"].includes(item.status) ? <Button type="button" variant="ghost" onClick={() => void closeRequest(item)}>{text.closeRequest}</Button> : null}
+          </div>
+        </article>)}</div> : <InlineEmptyState title={text.empty} body={text.description} />}
+      </DashboardPanel>
+
+      <div className="scroll-mt-24 xl:col-span-2" id="rfq-comparison" ref={responsesPanelRef}>
+        <DashboardPanel title={selected ? text.responses + ": " + selected.title : text.responses}>
+          {selected ? <>
+            <div className="mb-5 grid gap-3 rounded-xl border border-borderSoft bg-creamLight p-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              <div><div className="text-xs font-bold text-muted">{text.quantity}</div><div className="mt-1 font-black">{selected.quantity} {rfqOptionLabel(rfqUnitOptions, selected.unit, locale, selected.unitOther)}</div></div>
+              <div><div className="text-xs font-bold text-muted">{text.governorate}</div><div className="mt-1 font-black">{requestedLocation(selected)}</div></div>
+              <div><div className="text-xs font-bold text-muted">{text.paymentTerms}</div><div className="mt-1 font-black">{rfqOptionLabel(rfqPaymentTermOptions, selected.paymentTerms, locale, selected.paymentTermsOther)}</div></div>
+              <div><div className="text-xs font-bold text-muted">{text.deliveryTerms}</div><div className="mt-1 font-black">{rfqOptionLabel(rfqDeliveryTermOptions, selected.deliveryTerms, locale, selected.deliveryTermsOther)}</div></div>
+            </div>
+            {selected.status === "draft" ? <InlineEmptyState title={text.publishedOnly} body="" /> : responsesLoading ? <div className="flex min-h-40 items-center justify-center gap-3 text-sm font-black text-muted"><Loader2 className="h-5 w-5 animate-spin text-amber" />{text.loading}</div> : responseError ? <DashboardError message={responseError} retry={() => void openRequest(selected)} /> : responses.length ? <>
+              <div className="mb-4 text-sm font-black text-ink">{responses.length} {text.quotation}</div>
+              <div className="grid gap-4 lg:grid-cols-2">{responses.map((response) => <article className="rounded-xl border border-borderSoft bg-white p-5 shadow-card" key={response.id}>
+                <div className="flex items-start justify-between gap-3"><h3 className="font-black">{response.supplierName}</h3><span className="rounded-full bg-successBg px-3 py-1 text-xs font-black text-mint">{response.status}</span></div>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted">{response.message}</p>
+                <dl className="mt-4 grid gap-3 rounded-xl bg-creamLight p-4 text-xs sm:grid-cols-2">
+                  <div><dt className="font-bold text-muted">{text.price}</dt><dd className="mt-1 text-base font-black">{response.price ?? "—"} {response.price !== undefined ? response.currency : ""}</dd></div>
+                  <div><dt className="font-bold text-muted">{text.delivery}</dt><dd className="mt-1 text-base font-black">{response.deliveryDays ?? "—"} {response.deliveryDays ? text.days : ""}</dd></div>
+                  <div><dt className="font-bold text-muted">{text.offeredPayment}</dt><dd className="mt-1 font-black">{rfqOptionLabel(rfqPaymentTermOptions, response.paymentTerms, locale, response.paymentTermsOther)}</dd></div>
+                  <div><dt className="font-bold text-muted">{text.offeredDelivery}</dt><dd className="mt-1 font-black">{rfqOptionLabel(rfqDeliveryTermOptions, response.deliveryTerms, locale, response.deliveryTermsOther)}</dd></div>
+                </dl>
+                {response.referenceLinks?.length ? <div className="mt-4"><div className="mb-2 text-xs font-bold text-muted">{text.links}</div><div className="flex flex-wrap gap-2">{response.referenceLinks.map((link, index) => <a className="inline-flex items-center gap-1 rounded-lg border border-borderSoft px-3 py-2 text-xs font-black text-river hover:border-amber hover:text-amber" href={link} key={link} rel="noreferrer" target="_blank"><ExternalLink className="h-3.5 w-3.5" />{index + 1}</a>)}</div></div> : null}
+              </article>)}</div>
+            </> : <InlineEmptyState title={text.noResponses} body="" />}
+          </> : <InlineEmptyState title={text.selectRequest} body="" />}
+        </DashboardPanel>
+      </div>
     </div>
   </div>;
 }
