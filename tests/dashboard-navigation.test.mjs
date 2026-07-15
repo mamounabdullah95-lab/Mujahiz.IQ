@@ -28,3 +28,30 @@ test("company approvals are always visible in admin and owner sidebars", () => {
   assert.match(navigation, /طلبات اعتماد الشركات/);
   assert.match(navigation, /Company approvals/);
 });
+test("buyer metrics link to access, favorites, RFQs, profile, and submissions", () => {
+  const buyer = read("src/pages/BuyerDashboardPage.tsx");
+  assert.match(buyer, /label=\{text\.access\}[\s\S]*?to="\/my-access"/);
+  assert.match(buyer, /label=\{text\.favorites\}[\s\S]*?to="\/buyer\/favorites"/);
+  assert.match(buyer, /label=\{text\.rfqs\}[\s\S]*?to="\/buyer\/rfqs"/);
+  assert.match(buyer, /label=\{text\.profile\}[\s\S]*?to="\/profile"/);
+  assert.match(buyer, /to="\/buyer\/suppliers\/submissions"/);
+});
+
+test("buyer access summary prefers the extended access expiry over the original trial expiry", () => {
+  const buyer = read("src/pages/BuyerDashboardPage.tsx");
+  const accessIndex = buyer.indexOf("const accessExpiresAt = toDate(appUser.accessExpiresAt)");
+  const trialFallbackIndex = buyer.indexOf("trialEndsAt", accessIndex);
+  assert.ok(accessIndex >= 0, "the access expiry must be the primary date");
+  assert.ok(trialFallbackIndex > accessIndex, "the trial expiry must only be a fallback");
+  assert.doesNotMatch(buyer, /const trialEndsAt = toDate\(appUser\.trialEndsAt\) \|\| toDate\(appUser\.accessExpiresAt\)/);
+});
+
+test("supplier metrics link to profile, submissions, RFQs, analytics, and messages", () => {
+  const supplier = read("src/pages/SupplierDashboardPage.tsx");
+  assert.match(supplier, /listSupplierRfqs/);
+  assert.match(supplier, /label=\{text\.completion\}[\s\S]*?to="\/profile"/);
+  assert.match(supplier, /label=\{text\.companyStatus\}[\s\S]*?to="\/my-submissions"/);
+  assert.match(supplier, /label=\{text\.rfqs\}[\s\S]*?to="\/supplier\/rfqs"/);
+  assert.match(supplier, /label=\{text\.views\}[\s\S]*?to="\/supplier\/analytics"/);
+  assert.match(supplier, /label=\{text\.inquiries\}[\s\S]*?to="\/supplier\/messages"/);
+});
