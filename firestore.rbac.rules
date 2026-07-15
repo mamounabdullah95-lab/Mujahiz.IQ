@@ -36,6 +36,15 @@ service cloud.firestore {
         && !("rawData" in data)
         && !("filePayload" in data);
     }
+    function validReferenceLinks(links) {
+      return links is list
+        && links.size() <= 5
+        && (links.size() < 1 || (links[0] is string && links[0].size() > 0 && links[0].size() <= 500 && links[0].matches('https://.+')))
+        && (links.size() < 2 || (links[1] is string && links[1].size() > 0 && links[1].size() <= 500 && links[1].matches('https://.+')))
+        && (links.size() < 3 || (links[2] is string && links[2].size() > 0 && links[2].size() <= 500 && links[2].matches('https://.+')))
+        && (links.size() < 4 || (links[3] is string && links[3].size() > 0 && links[3].size() <= 500 && links[3].matches('https://.+')))
+        && (links.size() < 5 || (links[4] is string && links[4].size() > 0 && links[4].size() <= 500 && links[4].matches('https://.+')));
+    }
     function canImportSupplierExcel() {
       return signedIn() && myUser().status != "suspended" && (isBuyer() || isAdmin());
     }
@@ -265,29 +274,101 @@ service cloud.firestore {
     }
 
     match /rfqs/{rfqId} {
+      function validRfq(data) {
+        return data.buyerId is string
+          && data.title is string && data.title.size() > 0 && data.title.size() <= 120
+          && data.description is string && data.description.size() > 0 && data.description.size() <= 2000
+          && data.quantity is int && data.quantity > 0
+          && data.unit is string && data.unit.size() > 0 && data.unit.size() <= 40
+          && (!("unitOther" in data) || (data.unitOther is string && data.unitOther.size() <= 120))
+          && data.location is string && data.location.size() <= 350
+          && (!("deliveryGovernorate" in data) || (data.deliveryGovernorate is string && data.deliveryGovernorate.size() <= 40))
+          && (!("deliveryAddress" in data) || (data.deliveryAddress is string && data.deliveryAddress.size() <= 300))
+          && (!("preferredCurrency" in data) || data.preferredCurrency in ["IQD", "USD", "either"])
+          && (!("paymentTerms" in data) || (data.paymentTerms is string && data.paymentTerms.size() <= 40))
+          && (!("paymentTermsOther" in data) || (data.paymentTermsOther is string && data.paymentTermsOther.size() <= 120))
+          && (!("deliveryTerms" in data) || (data.deliveryTerms is string && data.deliveryTerms.size() <= 40))
+          && (!("deliveryTermsOther" in data) || (data.deliveryTermsOther is string && data.deliveryTermsOther.size() <= 120))
+          && (!("referenceLinks" in data) || validReferenceLinks(data.referenceLinks))
+          && data.closingDate is string
+          && data.closingAt is timestamp
+          && data.categoryId is string && data.categoryId.size() > 0
+          && data.recipientIds is list && data.recipientIds.size() <= 50
+          && data.status in ["draft", "published", "receiving", "closed", "cancelled"]
+          && data.attachmentStatus == "upload_pending_launch"
+          && noStoredFileFields(data);
+      }
+      function publishable(data) { return data.recipientIds.size() > 0 && data.closingAt >= request.time && hasActiveAccess(); }
+      function buyerTransitionAllowed() {
+        return (resource.data.status == "draft"
+            && (request.resource.data.status in ["draft", "cancelled"]
+              || (request.resource.data.status == "published" && publishable(request.resource.data))))
+          || (resource.data.status in ["published", "receiving"]
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status", "updatedAt"])
+            && (request.resource.data.status in ["closed", "cancelled"]
+              || (request.resource.data.status in ["published", "receiving"] && publishable(request.resource.data))));
+      }
       allow create: if isBuyer() && request.resource.data.buyerId == request.auth.uid
-        && request.resource.data.status in ["draft", "published"]
-        && request.resource.data.attachmentStatus == "upload_pending_launch"
-        && request.resource.data.recipientIds is list
-        && noStoredFileFields(request.resource.data);
+        && validRfq(request.resource.data)
+        && (request.resource.data.status == "draft" || (request.resource.data.status == "published" && publishable(request.resource.data)));
       allow read: if isAdmin() || (isBuyer() && resource.data.buyerId == request.auth.uid) || supplierIsTargeted(resource.data);
-      allow update: if isAdmin() || (isBuyer() && resource.data.buyerId == request.auth.uid && request.resource.data.buyerId == request.auth.uid && request.resource.data.attachmentStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data));
+      allow update: if isAdmin() || (isBuyer()
+        && resource.data.buyerId == request.auth.uid
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validRfq(request.resource.data)
+        && buyerTransitionAllowed());
       allow delete: if isAdmin() || (isBuyer() && resource.data.buyerId == request.auth.uid && resource.data.status == "draft");
     }
 
     match /rfqResponses/{responseId} {
-      function rfq() { return get(/databases/$(database)/documents/rfqs/$(request.resource.data.rfqId)); }
+      function requestedRfq() { return getAfter(/databases/$(database)/documents/rfqs/$(request.resource.data.rfqId)); }
       function storedRfq() { return get(/databases/$(database)/documents/rfqs/$(resource.data.rfqId)); }
-      allow create: if isSupplierAccount() && request.resource.data.supplierUserId == request.auth.uid
-        && request.resource.data.supplierProfileId == myUser().supplierProfileId
-        && request.resource.data.attachmentStatus == "upload_pending_launch"
-        && supplierIsTargeted(rfq().data) && noStoredFileFields(request.resource.data);
+      function supplierProfileCanRespond() {
+        return isSupplierAccount() && isApproved()
+          && "supplierProfileId" in myUser()
+          && get(/databases/$(database)/documents/suppliers/$(myUser().supplierProfileId)).data.status == "approved"
+          && get(/databases/$(database)/documents/suppliers/$(myUser().supplierProfileId)).data.canReceiveRfqs == true;
+      }
+      function validResponse(data) {
+        return data.id == responseId
+          && data.rfqId is string
+          && data.supplierUserId == request.auth.uid
+          && data.supplierProfileId == myUser().supplierProfileId
+          && data.message is string && data.message.size() > 0 && data.message.size() <= 2000
+          && (!("price" in data) || data.price is int || data.price is float)
+          && (!("deliveryDays" in data) || (data.deliveryDays is int && data.deliveryDays > 0))
+          && data.currency in ["IQD", "USD"]
+          && (!("paymentTerms" in data) || (data.paymentTerms is string && data.paymentTerms.size() <= 40))
+          && (!("paymentTermsOther" in data) || (data.paymentTermsOther is string && data.paymentTermsOther.size() <= 120))
+          && (!("deliveryTerms" in data) || (data.deliveryTerms is string && data.deliveryTerms.size() <= 40))
+          && (!("deliveryTermsOther" in data) || (data.deliveryTermsOther is string && data.deliveryTermsOther.size() <= 120))
+          && (!("referenceLinks" in data) || validReferenceLinks(data.referenceLinks))
+          && data.status in ["submitted", "withdrawn"]
+          && data.attachmentStatus == "upload_pending_launch"
+          && noStoredFileFields(data);
+      }
+      allow create: if supplierProfileCanRespond()
+        && responseId == request.resource.data.rfqId + "_" + request.auth.uid
+        && validResponse(request.resource.data)
+        && requestedRfq().data.status in ["published", "receiving"]
+        && requestedRfq().data.closingAt >= request.time
+        && supplierIsTargeted(requestedRfq().data);
       allow read: if isAdmin() || (isSupplierAccount() && resource.data.supplierUserId == request.auth.uid) || (isBuyer() && storedRfq().data.buyerId == request.auth.uid);
-      allow update: if isSupplierAccount() && resource.data.supplierUserId == request.auth.uid && request.resource.data.supplierUserId == request.auth.uid && request.resource.data.attachmentStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data);
+      allow update: if supplierProfileCanRespond()
+        && resource.data.supplierUserId == request.auth.uid
+        && request.resource.data.rfqId == resource.data.rfqId
+        && request.resource.data.supplierUserId == resource.data.supplierUserId
+        && request.resource.data.supplierProfileId == resource.data.supplierProfileId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validResponse(request.resource.data)
+        && storedRfq().data.status in ["published", "receiving"]
+        && storedRfq().data.closingAt >= request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "status", "updatedAt"]);
       allow delete: if isAdmin();
     }
 
-    match /conversations/{conversationId} {
+match /conversations/{conversationId} {
       allow read: if signedIn() && request.auth.uid in resource.data.participantIds;
       allow create: if signedIn() && request.auth.uid in request.resource.data.participantIds && request.resource.data.participantIds.size() >= 2;
       allow update: if signedIn() && request.auth.uid in resource.data.participantIds && request.resource.data.participantIds == resource.data.participantIds && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["lastMessage", "lastMessageAt", "updatedAt"]);
@@ -304,8 +385,34 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
+      function notificationRfq() { return getAfter(/databases/$(database)/documents/rfqs/$(request.resource.data.referenceId)); }
+      function validRfqNotification() {
+        return signedIn()
+          && request.resource.data.keys().hasOnly(["userId", "actorId", "type", "referenceType", "referenceId", "titleAr", "titleEn", "bodyAr", "bodyEn", "link", "read", "createdAt"])
+          && request.resource.data.type == "rfq"
+          && request.resource.data.actorId == request.auth.uid
+          && request.resource.data.referenceType == "rfq"
+          && request.resource.data.referenceId is string
+          && request.resource.data.userId is string
+          && request.resource.data.titleAr is string
+          && request.resource.data.titleEn is string
+          && request.resource.data.bodyAr is string
+          && request.resource.data.bodyEn is string
+          && request.resource.data.read == false
+          && request.resource.data.createdAt is timestamp
+          && noStoredFileFields(request.resource.data)
+          && ((isBuyer()
+              && request.resource.data.link == "/supplier/rfqs"
+              && notificationRfq().data.buyerId == request.auth.uid
+              && "supplierProfileId" in userDoc(request.resource.data.userId).data
+              && userDoc(request.resource.data.userId).data.supplierProfileId in notificationRfq().data.recipientIds)
+            || (isSupplierAccount()
+              && request.resource.data.link == "/buyer/rfqs"
+              && notificationRfq().data.buyerId == request.resource.data.userId
+              && supplierIsTargeted(notificationRfq().data)));
+      }
       allow read: if signedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isAdmin();
+      allow create: if isAdmin() || validRfqNotification();
       allow update: if signedIn() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read", "readAt"]);
       allow delete: if isAdmin();
     }

@@ -65,3 +65,21 @@ test("Excel import does not persist or transmit workbook contents", () => {
   assert.match(read("src/services/supplierExcelImport.ts"), /originalFileName: preview\.fileName/);
   assert.doesNotMatch(read("src/services/supplierExcelImport.ts"), /workbook\s*:|blob\s*:|base64\s*:|arrayBuffer\s*:/i);
 });
+
+
+test("RFQ supporting links are text-only HTTPS references and never file uploads", () => {
+  const linksUi = read("src/components/RfqReferenceLinks.tsx");
+  const service = read("src/services/workspace.ts");
+  const rules = read("firestore.rbac.rules");
+  const buyer = read("src/pages/workspace/BuyerWorkspacePages.tsx");
+  const supplier = read("src/pages/workspace/SupplierWorkspacePages.tsx");
+
+  assert.doesNotMatch(linksUi, /type=["']file["']|FileReader|arrayBuffer|base64|firebase[/]storage/i);
+  assert.match(linksUi, /type="url"/);
+  assert.match(service, /MAX_RFQ_REFERENCE_LINKS = 5/);
+  assert.match(service, /parsed.protocol !== "https:"/);
+  assert.match(rules, /function validReferenceLinks/);
+  assert.ok(rules.includes("links.size() <= 5"));
+  assert.match(buyer, /<DisabledFileUpload/);
+  assert.match(supplier, /<DisabledFileUpload/);
+});
