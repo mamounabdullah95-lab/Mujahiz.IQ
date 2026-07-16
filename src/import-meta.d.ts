@@ -1,4 +1,5 @@
 interface ImportMetaEnv {
+  readonly VITE_PUBLIC_SITE_URL?: string;
   readonly VITE_FORCE_DEMO?: string;
   readonly VITE_FILE_UPLOADS_ENABLED?: string;
   readonly VITE_SUPPLIER_EXCEL_IMPORT_ENABLED?: string;

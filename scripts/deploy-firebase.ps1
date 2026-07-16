@@ -286,32 +286,14 @@ function Write-Firebaserc {
 }
 
 function Build-Production {
-  $configs = @("vite.config.js", "vite.config.ts")
-  $renamed = @()
-  try {
-    foreach ($config in $configs) {
-      if (Test-Path -LiteralPath $config) {
-        $target = "$config.sandbox-hidden"
-        Move-Item -LiteralPath $config -Destination $target -Force
-        $renamed += [pscustomobject]@{ Source = $target; Destination = $config }
-      }
-    }
+  & $Npx tsc -b
+  if ($LASTEXITCODE -ne 0) {
+    throw "TypeScript build failed."
+  }
 
-    & $Npx tsc -b
-    if ($LASTEXITCODE -ne 0) {
-      throw "TypeScript build failed."
-    }
-
-    & $Npx vite build --logLevel info
-    if ($LASTEXITCODE -ne 0) {
-      throw "Vite build failed."
-    }
-  } finally {
-    foreach ($pair in $renamed) {
-      if (Test-Path -LiteralPath $pair.Source) {
-        Move-Item -LiteralPath $pair.Source -Destination $pair.Destination -Force
-      }
-    }
+  & $Npx vite build --config vite.config.ts --logLevel info
+  if ($LASTEXITCODE -ne 0) {
+    throw "Vite build failed."
   }
 }
 

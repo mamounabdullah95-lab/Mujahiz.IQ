@@ -16,6 +16,7 @@ import {
   type User,
 } from "firebase/auth";
 import { auth, isFirebaseConfigured } from "../config/firebase";
+import { getEmailActionSettings } from "../config/site";
 import type { AppUser } from "../types/domain";
 import { isFuture } from "../utils/date";
 import { getUserProfile, updateUserProfile } from "../services/firestore";
@@ -174,7 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const credential = await createUserWithEmailAndPassword(auth, email, input.password);
           try { await createUserProfileSafely(credential.user.uid, email, { ...input, phone }); } catch { throw profileSetupError(); }
-          await sendEmailVerification(credential.user, { url: `${window.location.origin}/verify-email`, handleCodeInApp: false });
+          await sendEmailVerification(credential.user, getEmailActionSettings("/verify-email"));
           await loadProfile(credential.user);
         } finally { setLoading(false); }
       },
@@ -183,13 +184,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!current?.email) throw profileSetupError();
         if (!isValidIraqiPhone(input.phone)) throw Object.assign(new Error("invalid_phone"), { code: "invalid_phone" });
         await createUserProfileSafely(current.uid, current.email, { ...input, phone: normalizeIraqiPhone(input.phone) });
-        if (!current.emailVerified) await sendEmailVerification(current, { url: `${window.location.origin}/verify-email`, handleCodeInApp: false });
+        if (!current.emailVerified) await sendEmailVerification(current, getEmailActionSettings("/verify-email"));
         await loadProfile(current);
       },
       sendVerification: async () => {
         const current = auth?.currentUser;
         if (!current || current.emailVerified) return;
-        await sendEmailVerification(current, { url: `${window.location.origin}/verify-email`, handleCodeInApp: false });
+        await sendEmailVerification(current, getEmailActionSettings("/verify-email"));
       },
       refreshEmailVerification: async () => {
         const current = auth?.currentUser;
