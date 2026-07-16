@@ -9,6 +9,7 @@ import {
 import {
   Timestamp,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -243,4 +244,86 @@ test("RFQ and quotation documents reject stored file payloads", async () => {
   const supplierDb = contextFor("supplier");
   const response = responseData("rfq-file-response");
   await assertFails(setDoc(doc(supplierDb, "rfqResponses", response.id), { ...response, attachmentUrl: "https://example.test/file" }));
+});
+
+test("buyer identity and immutable RFQ ownership are enforced", async () => {
+  const buyerDb = contextFor("buyer");
+  await assertFails(setDoc(
+    doc(buyerDb, "rfqs", "rfq-impersonated-buyer"),
+    rfqData("impersonated-buyer", users.inactiveBuyer.uid, { status: "draft", recipientIds: [] }),
+  ));
+
+  await assertSucceeds(setDoc(
+    doc(buyerDb, "rfqs", "rfq-owned-draft"),
+    rfqData("owned-draft", users.buyer.uid, { status: "draft", recipientIds: [] }),
+  ));
+  await assertSucceeds(updateDoc(doc(buyerDb, "rfqs", "rfq-owned-draft"), {
+    title: "Updated owned draft",
+    updatedAt: Timestamp.now(),
+  }));
+  await assertFails(updateDoc(doc(buyerDb, "rfqs", "rfq-owned-draft"), {
+    buyerId: users.inactiveBuyer.uid,
+    updatedAt: Timestamp.now(),
+  }));
+  await assertSucceeds(updateDoc(doc(buyerDb, "rfqs", "rfq-owned-draft"), {
+    recipientIds: [users.supplier.supplierProfileId],
+    status: "published",
+    updatedAt: Timestamp.now(),
+  }));
+});
+
+test("only targeted supplier profiles can read and answer RFQs", async () => {
+  await seedRfq("rfq-target-boundary", rfqData("target-boundary"));
+  const otherSupplierDb = contextFor("otherSupplier");
+  const otherResponse = responseData("rfq-target-boundary", users.otherSupplier);
+  await assertFails(getDoc(doc(otherSupplierDb, "rfqs", "rfq-target-boundary")));
+  await assertFails(setDoc(doc(otherSupplierDb, "rfqResponses", otherResponse.id), otherResponse));
+
+  await seedRfq("rfq-legacy-uid-target", rfqData("legacy-uid-target", users.buyer.uid, {
+    recipientIds: [users.supplier.uid],
+  }));
+  const supplierDb = contextFor("supplier");
+  const legacyResponse = responseData("rfq-legacy-uid-target");
+  await assertFails(getDoc(doc(supplierDb, "rfqs", "rfq-legacy-uid-target")));
+  await assertFails(setDoc(doc(supplierDb, "rfqResponses", legacyResponse.id), legacyResponse));
+});
+
+test("response identity cannot be impersonated by buyers or other suppliers", async () => {
+  await seedRfq("rfq-response-identity", rfqData("response-identity"));
+  const response = responseData("rfq-response-identity");
+  await assertFails(setDoc(doc(contextFor("buyer"), "rfqResponses", response.id), response));
+  await assertFails(setDoc(
+    doc(contextFor("otherSupplier"), "rfqResponses", `rfq-response-identity_${users.otherSupplier.uid}`),
+    responseData("rfq-response-identity", users.otherSupplier, {
+      supplierProfileId: users.supplier.supplierProfileId,
+    }),
+  ));
+});
+
+test("admin and owner retain review access without implicit RFQ mutation rights", async () => {
+  await seedRfq("rfq-admin-boundary", rfqData("admin-boundary"));
+  const response = responseData("rfq-admin-boundary");
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "rfqResponses", response.id), response);
+  });
+
+  for (const role of ["admin", "owner"]) {
+    const database = contextFor(role);
+    await assertSucceeds(getDoc(doc(database, "rfqs", "rfq-admin-boundary")));
+    await assertSucceeds(getDoc(doc(database, "rfqResponses", response.id)));
+    await assertFails(updateDoc(doc(database, "rfqs", "rfq-admin-boundary"), {
+      status: "closed",
+      updatedAt: Timestamp.now(),
+    }));
+    await assertFails(deleteDoc(doc(database, "rfqs", "rfq-admin-boundary")));
+    await assertFails(deleteDoc(doc(database, "rfqResponses", response.id)));
+  }
+});
+
+test("buyers cannot mutate supplier quotation documents", async () => {
+  const responseId = `rfq-admin-boundary_${users.supplier.uid}`;
+  await assertFails(updateDoc(doc(contextFor("buyer"), "rfqResponses", responseId), {
+    message: "Buyer must not edit this quotation.",
+    updatedAt: Timestamp.now(),
+  }));
 });

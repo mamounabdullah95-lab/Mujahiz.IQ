@@ -237,7 +237,6 @@ function Write-ProductionEnv {
   }
 
   $configJson = ConvertFrom-FirebaseJsonOutput $configOutput
-  $configText = $configJson | ConvertTo-Json -Depth 30
   $apiKey = Find-ValueInJson $configJson "apiKey"
   $authDomain = Find-ValueInJson $configJson "authDomain"
   $projectIdValue = Find-ValueInJson $configJson "projectId"
@@ -255,7 +254,7 @@ function Write-ProductionEnv {
     $storageBucket = "$ResolvedProjectId.appspot.com"
   }
   if (-not $apiKey -or -not $appIdValue) {
-    throw "Firebase SDK config is incomplete: $configText"
+    throw "Firebase SDK config is incomplete for project '$ResolvedProjectId'."
   }
 
   $envLines = @(
@@ -267,7 +266,11 @@ function Write-ProductionEnv {
     "VITE_FIREBASE_APP_ID=$appIdValue",
     "VITE_FIREBASE_AI_ENABLED=true",
     "VITE_FIREBASE_AI_MODEL=gemini-2.5-flash-lite",
-    "VITE_FIREBASE_APP_CHECK_SITE_KEY=$AppCheckSiteKey"
+    "VITE_FIREBASE_APP_CHECK_SITE_KEY=$AppCheckSiteKey",
+    "VITE_FORCE_DEMO=false",
+    "VITE_FILE_UPLOADS_ENABLED=false",
+    "VITE_SUPPLIER_EXCEL_IMPORT_ENABLED=true",
+    "VITE_USE_FIREBASE_EMULATORS=false"
   )
 
   Set-Content -LiteralPath (Join-Path $Root ".env.production") -Value $envLines -Encoding utf8

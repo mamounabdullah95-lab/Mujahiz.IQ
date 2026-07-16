@@ -1,9 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { connectAuthEmulator, getAuth } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
-
-const forceDemo = import.meta.env.VITE_FORCE_DEMO === "true";
-const useFirebaseEmulators = import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true";
+import { clearKnownDemoStorage } from "./demoStorage";
+import { resolveFirebaseRuntime } from "./runtimePolicy";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
@@ -13,6 +12,14 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
 };
+
+const runtimeTarget = resolveFirebaseRuntime({
+  config: firebaseConfig,
+  forceDemo: import.meta.env.VITE_FORCE_DEMO,
+  isDevelopment: import.meta.env.DEV,
+  useFirebaseEmulators: import.meta.env.VITE_USE_FIREBASE_EMULATORS,
+});
+const useFirebaseEmulators = runtimeTarget === "emulator";
 
 const emulatorProjectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-mujahiziq-integration";
 const emulatorConfig = {
@@ -24,10 +31,6 @@ const emulatorConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:000000000000:web:emulator",
 };
 
-export const isFirebaseConfigured = useFirebaseEmulators || (!forceDemo && Boolean(
-  firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId && firebaseConfig.appId,
-));
-
 const demoConfig = {
   apiKey: "demo-api-key",
   authDomain: "demo.firebaseapp.com",
@@ -37,10 +40,30 @@ const demoConfig = {
   appId: "1:000000000000:web:demo",
 };
 
-const selectedConfig = useFirebaseEmulators ? emulatorConfig : isFirebaseConfigured ? firebaseConfig : demoConfig;
+const configurationErrorConfig = {
+  ...demoConfig,
+  projectId: "configuration-error",
+  appId: "1:000000000000:web:configuration-error",
+};
+
+export const isFirebaseConfigured = runtimeTarget === "firebase" || runtimeTarget === "emulator";
+export const isDemoMode = runtimeTarget === "demo";
+
+const selectedConfig = runtimeTarget === "firebase"
+  ? firebaseConfig
+  : runtimeTarget === "emulator"
+    ? emulatorConfig
+    : runtimeTarget === "demo"
+      ? demoConfig
+      : configurationErrorConfig;
+
+if (import.meta.env.PROD && runtimeTarget === "firebase") {
+  clearKnownDemoStorage();
+}
+
 export const app = initializeApp(selectedConfig);
 const appCheckSiteKey = import.meta.env.VITE_FIREBASE_APP_CHECK_SITE_KEY || "";
-if (isFirebaseConfigured && !useFirebaseEmulators && appCheckSiteKey && typeof window !== "undefined") {
+if (runtimeTarget === "firebase" && appCheckSiteKey && typeof window !== "undefined") {
   void import("firebase/app-check").then(({ initializeAppCheck, ReCaptchaEnterpriseProvider }) => {
     initializeAppCheck(app, {
       isTokenAutoRefreshEnabled: true,
@@ -64,5 +87,5 @@ if (useFirebaseEmulators && auth && !emulatorState.__mujahizFirebaseEmulatorsCon
 
 export const firebaseRuntime = Object.freeze({
   projectId: selectedConfig.projectId,
-  target: useFirebaseEmulators ? "emulator" : isFirebaseConfigured ? "firebase" : "demo",
+  target: runtimeTarget,
 });

@@ -271,9 +271,8 @@ export async function listSupplierRfqs(supplierUserId: string, supplierProfileId
       item.recipientIds.includes(supplierUserId) || Boolean(supplierProfileId && item.recipientIds.includes(supplierProfileId))
     )));
   }
-  const targets = [supplierUserId, supplierProfileId].filter(Boolean) as string[];
-  if (!targets.length) return [];
-  const snapshots = await Promise.all(targets.map((target) => getDocs(query(rfqsRef, where("recipientIds", "array-contains", target), limit(100)))));
+  if (!supplierProfileId) return [];
+  const snapshots = [await getDocs(query(rfqsRef, where("recipientIds", "array-contains", supplierProfileId), limit(100)))];
   const items = new Map<string, RfqRecord>();
   snapshots.forEach((snapshot) => snapshot.docs.forEach((item) => items.set(item.id, withId<RfqRecord>(item))));
   return sortNewest([...items.values()].filter(isRfqAcceptingResponses));
@@ -430,6 +429,13 @@ export async function listConversations(userId: string) {
 export async function ensureConversation(input: Pick<Conversation, "participantIds" | "participantLabels" | "rfqId" | "supplierId">) {
   const participantIds = [...new Set(input.participantIds)].sort();
   const id = `${participantIds.join("_")}${input.rfqId ? `_${input.rfqId}` : ""}`;
+  if (!isFirebaseConfigured) {
+    const existing = localRead<Conversation>("conversations").find((item) => item.id === id);
+    if (existing) return id;
+  } else {
+    const existing = await getDoc(doc(conversationsRef, id));
+    if (existing.exists()) return id;
+  }
   const payload = {
     ...input,
     participantIds,
@@ -438,7 +444,7 @@ export async function ensureConversation(input: Pick<Conversation, "participantI
     updatedAt: isFirebaseConfigured ? serverTimestamp() : nowIso(),
   };
   if (!isFirebaseConfigured) localUpsert("conversations", payload as Conversation);
-  else await setDoc(doc(conversationsRef, id), payload, { merge: true });
+  else await setDoc(doc(conversationsRef, id), payload);
   return id;
 }
 

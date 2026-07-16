@@ -25,13 +25,14 @@ import { addDays, maxDate, toDate } from "../utils/date";
 import { normalizeDictionaryText } from "../utils/materialDictionary";
 import { normalizeEmail, normalizeUrl } from "../utils/normalization";
 import { calculateAccessGrant, deriveBadges, qualityRatio } from "../utils/scoring";
+import { DEMO_DATABASE_STORAGE_KEY, DEMO_SESSION_STORAGE_KEY } from "../config/demoStorage";
 
-const dbKey = "mujahiz-iq-demo-db";
-const sessionKey = "mujahiz-iq-demo-session";
+const dbKey = DEMO_DATABASE_STORAGE_KEY;
+const sessionKey = DEMO_SESSION_STORAGE_KEY;
+const demoCredentials = new Map<string, { uid: string; password: string }>();
 
 interface DemoDb {
   users: AppUser[];
-  credentials: Array<{ uid: string; email: string; password: string }>;
   suppliers: Supplier[];
   submissions: SupplierSubmission[];
   reviews: SupplierReview[];
@@ -55,18 +56,22 @@ function id(prefix: string) {
 function readDb(): DemoDb {
   const raw = localStorage.getItem(dbKey);
   if (raw) {
-    const parsed = JSON.parse(raw) as DemoDb;
-    return {
-      ...parsed,
+    const parsed = JSON.parse(raw) as DemoDb & {
+      credentials?: Array<{ uid: string; email: string; password: string }>;
+    };
+    const { credentials: legacyCredentials, ...storedData } = parsed;
+    const sanitized: DemoDb = {
+      ...storedData,
       supplierFeedback: parsed.supplierFeedback || [],
       materialTerms: parsed.materialTerms || [],
       termSuggestions: parsed.termSuggestions || [],
       settings: { ...defaultSettings, ...parsed.settings },
     };
+    if (legacyCredentials) localStorage.setItem(dbKey, JSON.stringify(sanitized));
+    return sanitized;
   }
   return {
     users: [],
-    credentials: [],
     suppliers: [],
     submissions: [],
     reviews: [],
@@ -85,22 +90,19 @@ function writeDb(db: DemoDb) {
   window.dispatchEvent(new CustomEvent("mujahiz-iq-demo-db-updated"));
 }
 
-function withoutPassword<T extends { password?: string }>(value: T) {
-  const copy = { ...value };
-  delete copy.password;
-  return copy;
-}
-
 export function demoCurrentUid() {
-  return localStorage.getItem(sessionKey);
+  localStorage.removeItem(sessionKey);
+  return sessionStorage.getItem(sessionKey);
 }
 
 export function demoSetSession(uid: string) {
-  localStorage.setItem(sessionKey, uid);
+  localStorage.removeItem(sessionKey);
+  sessionStorage.setItem(sessionKey, uid);
 }
 
 export function demoClearSession() {
   localStorage.removeItem(sessionKey);
+  sessionStorage.removeItem(sessionKey);
 }
 
 export async function demoRegister(
@@ -110,7 +112,8 @@ export async function demoRegister(
     Partial<Pick<AppUser, "city" | "reasonForJoining" | "accountType" | "language">>,
 ) {
   const db = readDb();
-  if (db.credentials.some((item) => item.email.toLowerCase() === email.toLowerCase())) {
+  const normalizedEmail = email.toLowerCase();
+  if (db.users.some((item) => item.email.toLowerCase() === normalizedEmail)) {
     throw new Error("This email is already registered in demo mode.");
   }
   const firstUser = db.users.length === 0;
@@ -148,7 +151,7 @@ export async function demoRegister(
     updatedAt: now(),
   };
   db.users.push(user);
-  db.credentials.push({ uid, email, password });
+  demoCredentials.set(normalizedEmail, { uid, password });
   if (!firstUser) {
     db.accessCredits.push({
       id: id("credit"),
@@ -177,10 +180,8 @@ export async function demoRegister(
 
 export async function demoLogin(email: string, password: string) {
   const db = readDb();
-  const credential = db.credentials.find(
-    (item) => item.email.toLowerCase() === email.toLowerCase() && item.password === password,
-  );
-  if (!credential) {
+  const credential = demoCredentials.get(email.toLowerCase());
+  if (!credential || credential.password !== password) {
     throw new Error("Invalid demo email or password.");
   }
   demoSetSession(credential.uid);

@@ -39,10 +39,13 @@ test("RFQ security rules enforce access, immutable identity, time window, and sa
   const rules = read("firestore.rbac.rules");
   assert.match(rules, /data\.closingAt is timestamp/);
   assert.match(rules, /data\.closingAt >= request\.time && hasActiveAccess/);
-  assert.match(rules, /function buyerTransitionAllowed/);
+  assert.match(rules, /function buyerCanUpdateRfq/);
+  assert.match(rules, /function rfqIdentityUnchanged/);
   assert.match(rules, /responseId == request\.resource\.data\.rfqId \+ "_" \+ request\.auth\.uid/);
   assert.match(rules, /request\.resource\.data\.createdAt == resource\.data\.createdAt/);
-  assert.match(rules, /storedRfq\(\)\.data\.closingAt >= request\.time/);
+  assert.match(rules, /function rfqCanReceiveResponse/);
+  assert.match(rules, /supplierIsTargeted\(data\)/);
+  assert.match(rules, /allow delete: if false/);
   assert.match(rules, /request\.resource\.data\.keys\(\)\.hasOnly\(\["userId", "actorId", "type"/);
   assert.match(rules, /noStoredFileFields\(request\.resource\.data\)/);
 });
