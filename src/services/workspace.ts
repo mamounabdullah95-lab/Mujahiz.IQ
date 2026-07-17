@@ -40,6 +40,8 @@ import { toDate } from "../utils/date";
 const favoritesRef = collection(db, "favorites");
 const rfqsRef = collection(db, "rfqs");
 const rfqResponsesRef = collection(db, "rfqResponses");
+const rfqPublishEventsRef = collection(db, "rfqPublishEvents");
+const rfqResponseEventsRef = collection(db, "rfqResponseEvents");
 const notificationsRef = collection(db, "notifications");
 const conversationsRef = collection(db, "conversations");
 const messagesRef = collection(db, "messages");
@@ -218,14 +220,32 @@ async function recipientOwnerIds(recipientIds: string[]) {
   return [...new Set(snapshots.map((snapshot) => snapshot.data()?.accountOwnerId).filter((value): value is string => typeof value === "string" && value.length > 0))];
 }
 
-function rfqNotification(userId: string, actorId: string, rfqId: string, direction: "buyer_to_supplier" | "supplier_to_buyer") {
+function publishedRfqNotificationId(rfqId: string, userId: string) {
+  return `rfq-published_${rfqId}_${userId}`;
+}
+
+function responseNotificationId(responseId: string) {
+  return `rfq-response_${responseId}`;
+}
+
+function rfqNotification(
+  userId: string,
+  actorId: string,
+  rfqId: string,
+  direction: "buyer_to_supplier" | "supplier_to_buyer",
+  responseId?: string,
+) {
   const toSupplier = direction === "buyer_to_supplier";
+  const eventId = toSupplier ? rfqId : responseId;
+  if (!eventId) throw new Error("rfq_response_event_required");
   return {
     userId,
     actorId,
     type: "rfq" as const,
     referenceType: "rfq" as const,
     referenceId: rfqId,
+    eventId,
+    ...(toSupplier ? {} : { responseId }),
     titleAr: toSupplier ? "طلب عرض سعر جديد" : "تم استلام عرض سعر",
     titleEn: toSupplier ? "New RFQ request" : "New quotation received",
     bodyAr: toSupplier ? "وصل طلب عرض سعر جديد إلى شركتك." : "استلم طلبك عرض سعر جديداً من أحد المجهزين.",
@@ -234,6 +254,22 @@ function rfqNotification(userId: string, actorId: string, rfqId: string, directi
     read: false,
     createdAt: serverTimestamp(),
   };
+}
+
+async function createPublishedRfqNotifications(rfqId: string, buyerId: string, ownerIds: string[]) {
+  await Promise.allSettled(ownerIds.map((userId) => setDoc(
+    doc(notificationsRef, publishedRfqNotificationId(rfqId, userId)),
+    rfqNotification(userId, buyerId, rfqId, "buyer_to_supplier"),
+  )));
+}
+
+async function createResponseNotification(rfqId: string, responseId: string, buyerId: string, supplierUserId: string) {
+  await Promise.allSettled([
+    setDoc(
+      doc(notificationsRef, responseNotificationId(responseId)),
+      rfqNotification(buyerId, supplierUserId, rfqId, "supplier_to_buyer", responseId),
+    ),
+  ]);
 }
 
 export async function createRfq(buyerId: string, input: RfqInput) {
@@ -254,8 +290,18 @@ export async function createRfq(buyerId: string, input: RfqInput) {
   const owners = normalized.status === "published" ? await recipientOwnerIds(normalized.recipientIds) : [];
   const batch = writeBatch(db);
   batch.set(rfqRef, payload);
-  owners.forEach((userId) => batch.set(doc(notificationsRef), rfqNotification(userId, buyerId, rfqRef.id, "buyer_to_supplier")));
+  if (normalized.status === "published") {
+    batch.set(doc(rfqPublishEventsRef, rfqRef.id), {
+      type: "rfq_published",
+      actorId: buyerId,
+      buyerId,
+      rfqId: rfqRef.id,
+      recipientIds: normalized.recipientIds,
+      createdAt: serverTimestamp(),
+    });
+  }
   await batch.commit();
+  if (normalized.status === "published") await createPublishedRfqNotifications(rfqRef.id, buyerId, owners);
   return rfqRef.id;
 }
 
@@ -291,11 +337,22 @@ export async function updateRfqStatus(rfqId: string, status: RfqRecord["status"]
   if (!snapshot.exists()) throw new Error("rfq_not_found");
   const item = withId<RfqRecord>(snapshot);
   if (status === "published" && item.recipientIds.length === 0) throw new Error("rfq_recipient_required");
-  const owners = status === "published" && !["published", "receiving"].includes(item.status) ? await recipientOwnerIds(item.recipientIds) : [];
+  const isPublishingDraft = status === "published" && item.status === "draft";
+  const owners = isPublishingDraft ? await recipientOwnerIds(item.recipientIds) : [];
   const batch = writeBatch(db);
   batch.update(rfqRef, { status, updatedAt: serverTimestamp() });
-  owners.forEach((userId) => batch.set(doc(notificationsRef), rfqNotification(userId, item.buyerId, rfqId, "buyer_to_supplier")));
+  if (isPublishingDraft) {
+    batch.set(doc(rfqPublishEventsRef, rfqId), {
+      type: "rfq_published",
+      actorId: item.buyerId,
+      buyerId: item.buyerId,
+      rfqId,
+      recipientIds: item.recipientIds,
+      createdAt: serverTimestamp(),
+    });
+  }
   await batch.commit();
+  if (isPublishingDraft) await createPublishedRfqNotifications(rfqId, item.buyerId, owners);
 }
 
 export async function listRfqResponses(rfqId: string) {
@@ -381,10 +438,19 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    batch.set(doc(rfqResponseEventsRef, id), {
+      type: "rfq_response_submitted",
+      actorId: input.supplierUserId,
+      buyerId: rfq.buyerId,
+      rfqId: input.rfqId,
+      responseId: id,
+      supplierProfileId: input.supplierProfileId,
+      createdAt: serverTimestamp(),
+    });
   }
 
-  batch.set(doc(notificationsRef), rfqNotification(rfq.buyerId, input.supplierUserId, input.rfqId, "supplier_to_buyer"));
   await batch.commit();
+  if (!existing.exists()) await createResponseNotification(input.rfqId, id, rfq.buyerId, input.supplierUserId);
   return id;
 }
 

@@ -96,9 +96,14 @@ not persistent `localStorage`.
 - Conversation documents contain exactly two participants and matching participant
   label keys. Participant IDs, labels, Supplier ID, RFQ ID, and creation time are
   immutable.
+- Historical conversation and message reads remain available to signed-in
+  participants. Every new message, preview update, or read receipt revalidates the
+  caller's current Buyer access or canonical active Supplier ownership.
 - Messages are authorized through their parent conversation. Sender identity must
   match the authenticated participant.
-- Read receipts may add only actual participants and cannot remove prior receipts.
+- A read-receipt update may preserve existing entries and add only the
+  authenticated caller's own UID. It cannot remove an entry, add another
+  participant or unrelated UID, or change any protected message field.
 - Anonymous and unrelated accounts are denied.
 - Admin and Owner do not receive blanket conversation or message access because no
   current trusted document proves an operational involvement relationship.

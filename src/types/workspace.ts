@@ -66,6 +66,8 @@ export interface WorkspaceNotification {
   actorId?: string;
   referenceType?: "rfq" | "conversation" | "submission" | "supplier";
   referenceId?: string;
+  eventId?: string;
+  responseId?: string;
   titleAr: string;
   titleEn: string;
   bodyAr: string;

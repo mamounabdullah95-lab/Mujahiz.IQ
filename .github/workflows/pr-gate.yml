@@ -49,6 +49,9 @@ jobs:
       - name: TypeScript and production build
         run: npm run build
 
+      - name: Validate built Firebase fail-closed bundles
+        run: npm run test:firebase-bundles
+
       - name: Run Firestore Emulator tests
         run: npm run test:firestore-emulator
 

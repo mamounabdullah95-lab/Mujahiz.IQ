@@ -38,7 +38,8 @@ test("buyer and supplier RFQ pages expose comparison and own-response workflows"
 test("RFQ security rules enforce access, immutable identity, time window, and safe notifications", () => {
   const rules = read("firestore.rbac.rules");
   assert.match(rules, /data\.closingAt is timestamp/);
-  assert.match(rules, /data\.closingAt >= request\.time && hasActiveAccess/);
+  assert.match(rules, /function publishable\(data\) \{ return data\.recipientIds\.size\(\) > 0 && data\.closingAt >= request\.time; \}/);
+  assert.match(rules, /allow create: if currentBuyerCanWrite\(\)/);
   assert.match(rules, /function buyerCanUpdateRfq/);
   assert.match(rules, /function rfqIdentityUnchanged/);
   assert.match(rules, /responseId == request\.resource\.data\.rfqId \+ "_" \+ request\.auth\.uid/);

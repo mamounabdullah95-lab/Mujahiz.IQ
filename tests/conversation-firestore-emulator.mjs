@@ -8,11 +8,16 @@ import {
 } from "@firebase/rules-unit-testing";
 import {
   Timestamp,
+  collection,
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
+  limit,
+  query,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
@@ -24,14 +29,20 @@ const projectId = "demo-mujahiziq-integration";
 const rules = fs.readFileSync(new URL("../firestore.rbac.rules", import.meta.url), "utf8");
 let environment;
 
+const future = () => Timestamp.fromMillis(Date.now() + 86_400_000);
+
 const users = {
-  buyer: { uid: "conversation-buyer", role: "contributor", accountType: "buyer", status: "approved" },
-  otherBuyer: { uid: "conversation-buyer-other", role: "contributor", accountType: "buyer", status: "approved" },
+  buyer: { uid: "conversation-buyer", role: "contributor", accountType: "buyer", status: "approved", emailVerified: true, accessStatus: "temporary", accessExpiresAt: future() },
+  otherBuyer: { uid: "conversation-buyer-other", role: "contributor", accountType: "buyer", status: "approved", emailVerified: true, accessStatus: "temporary", accessExpiresAt: future() },
+  suspendedBuyer: { uid: "conversation-buyer-suspended", role: "contributor", accountType: "buyer", status: "approved", emailVerified: true, accessStatus: "suspended", accessExpiresAt: future() },
+  unverifiedBuyer: { uid: "conversation-buyer-unverified", role: "contributor", accountType: "buyer", status: "approved", emailVerified: false, authVerified: false, accessStatus: "temporary", accessExpiresAt: future() },
   supplier: {
     uid: "conversation-supplier",
     role: "contributor",
     accountType: "supplier",
     status: "approved",
+    emailVerified: true,
+    accessStatus: "pending",
     supplierProfileId: "conversation-profile-1",
   },
   otherSupplier: {
@@ -39,11 +50,20 @@ const users = {
     role: "contributor",
     accountType: "supplier",
     status: "approved",
+    emailVerified: true,
+    accessStatus: "pending",
     supplierProfileId: "conversation-profile-2",
   },
-  admin: { uid: "conversation-admin", role: "admin", accountType: "buyer", status: "approved" },
-  owner: { uid: "conversation-owner", role: "owner", accountType: "buyer", status: "approved" },
+  suspendedSupplier: { uid: "conversation-supplier-suspended", role: "contributor", accountType: "supplier", status: "approved", emailVerified: true, accessStatus: "suspended", supplierProfileId: "conversation-profile-suspended" },
+  staleSupplier: { uid: "conversation-supplier-stale", role: "contributor", accountType: "supplier", status: "approved", emailVerified: true, accessStatus: "pending", supplierProfileId: "conversation-profile-1" },
+  admin: { uid: "conversation-admin", role: "admin", accountType: "buyer", status: "approved", emailVerified: true, accessStatus: "active", accessExpiresAt: future() },
+  owner: { uid: "conversation-owner", role: "owner", accountType: "buyer", status: "approved", emailVerified: true, accessStatus: "active", accessExpiresAt: future() },
 };
+
+function cleanUser(user) {
+  const { uid: _uid, authVerified: _authVerified, ...data } = user;
+  return data;
+}
 
 before(async () => {
   environment = await initializeTestEnvironment({ projectId, firestore: { host, port, rules } });
@@ -51,7 +71,7 @@ before(async () => {
   await environment.withSecurityRulesDisabled(async (context) => {
     const database = context.firestore();
     await Promise.all([
-      ...Object.values(users).map((user) => setDoc(doc(database, "users", user.uid), user)),
+      ...Object.values(users).map((user) => setDoc(doc(database, "users", user.uid), cleanUser(user))),
       setDoc(doc(database, "suppliers", "conversation-profile-1"), {
         status: "approved",
         canReceiveRfqs: true,
@@ -61,6 +81,11 @@ before(async () => {
         status: "approved",
         canReceiveRfqs: true,
         accountOwnerId: users.otherSupplier.uid,
+      }),
+      setDoc(doc(database, "suppliers", "conversation-profile-suspended"), {
+        status: "approved",
+        canReceiveRfqs: true,
+        accountOwnerId: users.suspendedSupplier.uid,
       }),
       setDoc(doc(database, "rfqs", "conversation-rfq"), {
         buyerId: users.buyer.uid,
@@ -79,6 +104,7 @@ function contextFor(key) {
   const user = users[key];
   return environment.authenticatedContext(user.uid, {
     email: `${user.uid}@example.test`,
+    email_verified: user.authVerified !== false,
   }).firestore();
 }
 
@@ -171,6 +197,90 @@ test("RFQ conversations require a targeted supplier and exact buyer-owner partic
   }));
 });
 
+test("RFQ conversation creation validates the current status of both sides", async () => {
+  await environment.withSecurityRulesDisabled(async (context) => {
+    const database = context.firestore();
+    await setDoc(doc(database, "rfqs", "conversation-rfq-suspended-buyer"), {
+      buyerId: users.suspendedBuyer.uid,
+      recipientIds: [users.supplier.supplierProfileId],
+      status: "published",
+    });
+    await setDoc(doc(database, "rfqs", "conversation-rfq-suspended-supplier"), {
+      buyerId: users.buyer.uid,
+      recipientIds: [users.suspendedSupplier.supplierProfileId],
+      status: "published",
+    });
+  });
+
+  const suspendedBuyerParticipants = [users.suspendedBuyer.uid, users.supplier.uid].sort();
+  await assertFails(setDoc(doc(contextFor("supplier"), "conversations", "conversation-rfq-suspended-buyer"), {
+    id: "conversation-rfq-suspended-buyer",
+    participantIds: suspendedBuyerParticipants,
+    participantLabels: {
+      [users.suspendedBuyer.uid]: "Suspended buyer",
+      [users.supplier.uid]: "Supplier",
+    },
+    supplierId: users.supplier.supplierProfileId,
+    rfqId: "conversation-rfq-suspended-buyer",
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  }));
+
+  const suspendedSupplierParticipants = [users.buyer.uid, users.suspendedSupplier.uid].sort();
+  await assertFails(setDoc(doc(contextFor("suspendedSupplier"), "conversations", "conversation-rfq-suspended-supplier"), {
+    id: "conversation-rfq-suspended-supplier",
+    participantIds: suspendedSupplierParticipants,
+    participantLabels: {
+      [users.buyer.uid]: "Buyer",
+      [users.suspendedSupplier.uid]: "Suspended supplier",
+    },
+    supplierId: users.suspendedSupplier.supplierProfileId,
+    rfqId: "conversation-rfq-suspended-supplier",
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  }));
+});
+
+test("invalid existing participants retain history reads but cannot write messages or previews", async () => {
+  const fixtures = [
+    ["suspendedBuyer", users.suspendedBuyer, users.supplier, users.supplier.supplierProfileId],
+    ["unverifiedBuyer", users.unverifiedBuyer, users.supplier, users.supplier.supplierProfileId],
+    ["suspendedSupplier", users.buyer, users.suspendedSupplier, users.suspendedSupplier.supplierProfileId],
+    ["staleSupplier", users.buyer, users.staleSupplier, users.supplier.supplierProfileId],
+  ];
+  await environment.withSecurityRulesDisabled(async (context) => {
+    const database = context.firestore();
+    for (const [key, buyer, supplier, supplierId] of fixtures) {
+      const id = `conversation-invalid-${key}`;
+      const participantIds = [buyer.uid, supplier.uid].sort();
+      await setDoc(doc(database, "conversations", id), {
+        id,
+        participantIds,
+        participantLabels: {
+          [buyer.uid]: "Buyer",
+          [supplier.uid]: "Supplier",
+        },
+        supplierId,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+    }
+  });
+
+  for (const [key, buyer, supplier] of fixtures) {
+    const invalidUser = key.includes("Buyer") ? buyer : supplier;
+    const id = `conversation-invalid-${key}`;
+    const database = contextFor(key);
+    await assertSucceeds(getDoc(doc(database, "conversations", id)));
+    await assertFails(setDoc(doc(database, "messages", `message-invalid-${key}`), messageData(id, invalidUser.uid)));
+    await assertFails(updateDoc(doc(database, "conversations", id), {
+      lastMessage: "Forbidden preview",
+      lastMessageAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    }));
+  }
+});
+
 test("messages are parent-bound and visible only to conversation participants", async () => {
   const messageId = "conversation-message-1";
   await assertSucceeds(setDoc(
@@ -191,18 +301,36 @@ test("messages are parent-bound and visible only to conversation participants", 
     doc(contextFor("buyer"), "messages", "conversation-message-impersonated"),
     messageData("conversation-direct", users.supplier.uid),
   ));
+  await assertSucceeds(setDoc(
+    doc(contextFor("supplier"), "messages", "conversation-message-supplier"),
+    messageData("conversation-direct", users.supplier.uid),
+  ));
 });
 
-test("read receipts can only add actual participants and cannot remove prior receipts", async () => {
-  const messageRef = doc(contextFor("supplier"), "messages", "conversation-message-1");
-  await assertSucceeds(updateDoc(messageRef, {
+test("read receipts add only the caller UID, preserve entries, and remain idempotent", async () => {
+  const supplierMessageRef = doc(contextFor("supplier"), "messages", "conversation-message-1");
+  const buyerMessageRef = doc(contextFor("buyer"), "messages", "conversation-message-1");
+  await assertFails(updateDoc(buyerMessageRef, {
     readBy: [users.buyer.uid, users.supplier.uid],
   }));
-  await assertFails(updateDoc(messageRef, {
-    readBy: [users.supplier.uid],
+  await assertSucceeds(updateDoc(supplierMessageRef, {
+    readBy: [users.buyer.uid, users.supplier.uid],
   }));
-  await assertFails(updateDoc(messageRef, {
+  await assertSucceeds(updateDoc(supplierMessageRef, {
+    readBy: [users.buyer.uid, users.supplier.uid],
+  }));
+  await assertFails(updateDoc(buyerMessageRef, {
+    readBy: [users.buyer.uid],
+  }));
+  await assertFails(updateDoc(supplierMessageRef, {
     readBy: [users.buyer.uid, users.supplier.uid, users.otherBuyer.uid],
+  }));
+  await assertFails(updateDoc(supplierMessageRef, {
+    body: "Protected content must not change.",
+    readBy: [users.buyer.uid, users.supplier.uid],
+  }));
+  await assertFails(updateDoc(doc(contextFor("otherBuyer"), "messages", "conversation-message-1"), {
+    readBy: [users.buyer.uid, users.otherBuyer.uid],
   }));
 });
 
@@ -228,4 +356,58 @@ test("existing valid conversation documents remain readable and updatable", asyn
     lastMessageAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   }));
+});
+
+test("actual frontend conversation and message queries are allowed while broader queries are denied", async () => {
+  const buyerDb = contextFor("buyer");
+  await assertSucceeds(getDocs(query(
+    collection(buyerDb, "conversations"),
+    where("participantIds", "array-contains", users.buyer.uid),
+    limit(100),
+  )));
+  await assertFails(getDocs(query(collection(buyerDb, "conversations"), limit(100))));
+  await assertSucceeds(getDocs(query(
+    collection(buyerDb, "messages"),
+    where("conversationId", "==", "conversation-direct"),
+    limit(250),
+  )));
+  await assertFails(getDocs(query(collection(buyerDb, "messages"), limit(250))));
+});
+
+test("legacy conversations and messages remain readable but unsafe legacy writes are denied", async () => {
+  const conversationId = "conversation-legacy";
+  const messageId = "message-legacy";
+  const participantIds = [users.buyer.uid, users.supplier.uid].sort();
+  await environment.withSecurityRulesDisabled(async (context) => {
+    const database = context.firestore();
+    await setDoc(doc(database, "conversations", conversationId), {
+      id: conversationId,
+      participantIds,
+      participantLabels: {
+        [users.buyer.uid]: "Buyer",
+        [users.supplier.uid]: "Supplier",
+      },
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+    await setDoc(doc(database, "messages", messageId), {
+      conversationId,
+      senderId: users.buyer.uid,
+      body: "Legacy message",
+      readBy: [users.buyer.uid],
+      createdAt: Timestamp.now(),
+    });
+  });
+
+  await assertSucceeds(getDoc(doc(contextFor("buyer"), "conversations", conversationId)));
+  await assertSucceeds(getDoc(doc(contextFor("supplier"), "messages", messageId)));
+  await assertFails(updateDoc(doc(contextFor("buyer"), "conversations", conversationId), {
+    lastMessage: "Legacy preview write",
+    lastMessageAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  }));
+  await assertFails(setDoc(
+    doc(contextFor("buyer"), "messages", "message-legacy-new"),
+    messageData(conversationId, users.buyer.uid),
+  ));
 });
