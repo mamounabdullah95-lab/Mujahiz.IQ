@@ -15,7 +15,64 @@ service cloud.firestore {
     function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
     function canSubmitCompany() { return signedIn() && myUser().status != "suspended" && (isBuyer() || isSupplierAccount() || isAdmin()); }
     function isOwnSupplierProfile(supplierId) { return isSupplierAccount() && "supplierProfileId" in myUser() && myUser().supplierProfileId == supplierId; }
-    function supplierIsTargeted(data) { return isSupplierAccount() && (request.auth.uid in data.recipientIds || ("supplierProfileId" in myUser() && myUser().supplierProfileId in data.recipientIds)); }
+    function supplierDoc(supplierId) { return get(/databases/$(database)/documents/suppliers/$(supplierId)); }
+    function isVerifiedRequest() { return signedIn() && request.auth.token.email_verified == true; }
+    function buyerDataHasPortalIdentity(user) {
+      return user.role == "contributor"
+        && (("accountType" in user && user.accountType == "buyer")
+          || (!("accountType" in user)));
+    }
+    function isBuyerPortalIdentity(uid) {
+      let user = userDoc(uid).data;
+      return buyerDataHasPortalIdentity(user);
+    }
+    function buyerAccountCanWrite(uid) {
+      let user = userDoc(uid).data;
+      return buyerDataHasPortalIdentity(user)
+        && user.status == "approved"
+        && user.emailVerified == true
+        && user.accessStatus in ["active", "temporary"]
+        && user.accessExpiresAt is timestamp
+        && user.accessExpiresAt > request.time;
+    }
+    function currentBuyerCanWrite() {
+      return isVerifiedRequest() && buyerAccountCanWrite(request.auth.uid);
+    }
+    function supplierAccountCanWrite(uid, supplierId) {
+      let user = userDoc(uid).data;
+      let supplier = supplierDoc(supplierId).data;
+      return user.role == "contributor"
+        && user.accountType == "supplier"
+        && user.status == "approved"
+        && user.emailVerified == true
+        && user.accessStatus != "suspended"
+        && user.supplierProfileId == supplierId
+        && supplier.status == "approved"
+        && supplier.canReceiveRfqs == true
+        && supplier.accountOwnerId == uid;
+    }
+    function currentSupplierCanWrite(supplierId) {
+      return isVerifiedRequest() && supplierAccountCanWrite(request.auth.uid, supplierId);
+    }
+    function supplierIsTargeted(data) {
+      let user = myUser();
+      return "supplierProfileId" in user
+        && user.supplierProfileId in data.recipientIds
+        && currentSupplierCanWrite(user.supplierProfileId);
+    }
+    function conversationParticipantCanWrite(data, uid) {
+      let user = userDoc(uid).data;
+      return data.supplierId is string
+        && data.participantIds is list
+        && uid in data.participantIds
+        && (user.accountType == "supplier"
+          ? supplierAccountCanWrite(uid, data.supplierId)
+          : buyerAccountCanWrite(uid));
+    }
+    function currentConversationParticipantCanWrite(data) {
+      return isVerifiedRequest()
+        && conversationParticipantCanWrite(data, request.auth.uid);
+    }
     function noStoredFileFields(data) {
       return !("fileUrl" in data)
         && !("downloadUrl" in data)
@@ -274,8 +331,21 @@ service cloud.firestore {
     }
 
     match /rfqs/{rfqId} {
+      function publishEventAfter() {
+        return getAfter(/databases/$(database)/documents/rfqPublishEvents/$(rfqId));
+      }
+      function hasMatchingPublishEvent(data) {
+        let event = publishEventAfter().data;
+        return event.type == "rfq_published"
+          && event.actorId == request.auth.uid
+          && event.buyerId == data.buyerId
+          && event.rfqId == rfqId
+          && event.recipientIds == data.recipientIds
+          && event.createdAt == request.time;
+      }
       function validRfq(data) {
-        return data.buyerId is string
+        return data.keys().hasOnly(["buyerId", "title", "description", "quantity", "unit", "unitOther", "location", "deliveryGovernorate", "deliveryAddress", "preferredCurrency", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "closingDate", "closingAt", "categoryId", "recipientIds", "status", "attachmentStatus", "createdAt", "updatedAt"])
+          && data.buyerId is string
           && data.title is string && data.title.size() > 0 && data.title.size() <= 120
           && data.description is string && data.description.size() > 0 && data.description.size() <= 2000
           && data.quantity is int && data.quantity > 0
@@ -296,47 +366,82 @@ service cloud.firestore {
           && data.recipientIds is list && data.recipientIds.size() <= 50
           && data.status in ["draft", "published", "receiving", "closed", "cancelled"]
           && data.attachmentStatus == "upload_pending_launch"
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp
           && noStoredFileFields(data);
       }
-      function publishable(data) { return data.recipientIds.size() > 0 && data.closingAt >= request.time && hasActiveAccess(); }
-      function buyerTransitionAllowed() {
-        return (resource.data.status == "draft"
-            && (request.resource.data.status in ["draft", "cancelled"]
-              || (request.resource.data.status == "published" && publishable(request.resource.data))))
-          || (resource.data.status in ["published", "receiving"]
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status", "updatedAt"])
-            && (request.resource.data.status in ["closed", "cancelled"]
-              || (request.resource.data.status in ["published", "receiving"] && publishable(request.resource.data))));
+      function publishable(data) { return data.recipientIds.size() > 0 && data.closingAt >= request.time; }
+      function rfqIdentityUnchanged() {
+        return request.resource.data.buyerId == resource.data.buyerId
+          && request.resource.data.createdAt == resource.data.createdAt;
       }
-      allow create: if isBuyer() && request.resource.data.buyerId == request.auth.uid
+      function buyerCanUpdateDraft() {
+        return resource.data.status == "draft"
+          && validRfq(request.resource.data)
+          && (request.resource.data.status in ["draft", "cancelled"]
+            || (request.resource.data.status == "published"
+              && publishable(request.resource.data)
+              && hasMatchingPublishEvent(request.resource.data)));
+      }
+      function buyerCanTransitionOpenRfq() {
+        return resource.data.status in ["published", "receiving"]
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status", "updatedAt"])
+          && request.resource.data.updatedAt is timestamp
+          && request.resource.data.status in ["closed", "cancelled"];
+      }
+      function buyerCanUpdateRfq() {
+        return !currentBuyerCanWrite()
+          ? false
+          : resource.data.buyerId != request.auth.uid
+            ? false
+            : !rfqIdentityUnchanged()
+              ? false
+              : resource.data.status == "draft"
+                ? buyerCanUpdateDraft()
+                : resource.data.status in ["published", "receiving"] && buyerCanTransitionOpenRfq();
+      }
+      allow create: if currentBuyerCanWrite() && request.resource.data.buyerId == request.auth.uid
         && validRfq(request.resource.data)
-        && (request.resource.data.status == "draft" || (request.resource.data.status == "published" && publishable(request.resource.data)));
-      allow read: if isAdmin() || (isBuyer() && resource.data.buyerId == request.auth.uid) || supplierIsTargeted(resource.data);
-      allow update: if isAdmin() || (isBuyer()
-        && resource.data.buyerId == request.auth.uid
-        && request.resource.data.buyerId == request.auth.uid
-        && request.resource.data.createdAt == resource.data.createdAt
-        && validRfq(request.resource.data)
-        && buyerTransitionAllowed());
-      allow delete: if isAdmin() || (isBuyer() && resource.data.buyerId == request.auth.uid && resource.data.status == "draft");
+        && (request.resource.data.status == "draft"
+          || (request.resource.data.status == "published"
+            && publishable(request.resource.data)
+            && hasMatchingPublishEvent(request.resource.data)));
+      allow read: if isAdmin()
+        || (signedIn() && isBuyerPortalIdentity(request.auth.uid) && resource.data.buyerId == request.auth.uid)
+        || supplierIsTargeted(resource.data);
+      allow update: if buyerCanUpdateRfq();
+      allow delete: if currentBuyerCanWrite() && resource.data.buyerId == request.auth.uid && resource.data.status == "draft";
     }
 
     match /rfqResponses/{responseId} {
-      function requestedRfq() { return getAfter(/databases/$(database)/documents/rfqs/$(request.resource.data.rfqId)); }
+      function requestedRfq() { return get(/databases/$(database)/documents/rfqs/$(request.resource.data.rfqId)); }
       function storedRfq() { return get(/databases/$(database)/documents/rfqs/$(resource.data.rfqId)); }
-      function supplierProfileCanRespond() {
-        return isSupplierAccount() && isApproved()
-          && "supplierProfileId" in myUser()
-          && get(/databases/$(database)/documents/suppliers/$(myUser().supplierProfileId)).data.status == "approved"
-          && get(/databases/$(database)/documents/suppliers/$(myUser().supplierProfileId)).data.canReceiveRfqs == true;
+      function responseEventAfter() {
+        return getAfter(/databases/$(database)/documents/rfqResponseEvents/$(responseId));
+      }
+      function hasMatchingResponseEvent(data) {
+        let event = responseEventAfter().data;
+        return event.type == "rfq_response_submitted"
+          && event.actorId == request.auth.uid
+          && event.rfqId == data.rfqId
+          && event.responseId == responseId
+          && event.supplierProfileId == data.supplierProfileId
+          && event.createdAt == request.time;
+      }
+      function rfqCanReceiveResponse(data, supplierProfileId) {
+        return data.status in ["published", "receiving"]
+          && data.closingAt is timestamp
+          && data.closingAt >= request.time
+          && supplierProfileId in data.recipientIds;
       }
       function validResponse(data) {
-        return data.id == responseId
+        return data.keys().hasOnly(["id", "rfqId", "supplierUserId", "supplierProfileId", "message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "status", "attachmentStatus", "createdAt", "updatedAt"])
+          && data.id == responseId
           && data.rfqId is string
           && data.supplierUserId == request.auth.uid
-          && data.supplierProfileId == myUser().supplierProfileId
+          && data.supplierProfileId is string
           && data.message is string && data.message.size() > 0 && data.message.size() <= 2000
-          && (!("price" in data) || data.price is int || data.price is float)
+          && (!("price" in data) || ((data.price is int || data.price is float) && data.price >= 0))
           && (!("deliveryDays" in data) || (data.deliveryDays is int && data.deliveryDays > 0))
           && data.currency in ["IQD", "USD"]
           && (!("paymentTerms" in data) || (data.paymentTerms is string && data.paymentTerms.size() <= 40))
@@ -346,74 +451,315 @@ service cloud.firestore {
           && (!("referenceLinks" in data) || validReferenceLinks(data.referenceLinks))
           && data.status in ["submitted", "withdrawn"]
           && data.attachmentStatus == "upload_pending_launch"
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp
           && noStoredFileFields(data);
       }
-      allow create: if supplierProfileCanRespond()
+      function responseIdentityUnchanged() {
+        return request.resource.data.id == resource.data.id
+          && request.resource.data.rfqId == resource.data.rfqId
+          && request.resource.data.supplierUserId == resource.data.supplierUserId
+          && request.resource.data.supplierProfileId == resource.data.supplierProfileId
+          && request.resource.data.createdAt == resource.data.createdAt;
+      }
+      allow create: if currentSupplierCanWrite(request.resource.data.supplierProfileId)
         && responseId == request.resource.data.rfqId + "_" + request.auth.uid
         && validResponse(request.resource.data)
-        && requestedRfq().data.status in ["published", "receiving"]
-        && requestedRfq().data.closingAt >= request.time
-        && supplierIsTargeted(requestedRfq().data);
-      allow read: if isAdmin() || (isSupplierAccount() && resource.data.supplierUserId == request.auth.uid) || (isBuyer() && storedRfq().data.buyerId == request.auth.uid);
-      allow update: if supplierProfileCanRespond()
-        && resource.data.supplierUserId == request.auth.uid
-        && request.resource.data.rfqId == resource.data.rfqId
-        && request.resource.data.supplierUserId == resource.data.supplierUserId
-        && request.resource.data.supplierProfileId == resource.data.supplierProfileId
-        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.status == "submitted"
+        && rfqCanReceiveResponse(requestedRfq().data, request.resource.data.supplierProfileId)
+        && hasMatchingResponseEvent(request.resource.data);
+      allow read: if isAdmin()
+        || (signedIn()
+          && resource.data.supplierUserId == request.auth.uid
+          && currentSupplierCanWrite(resource.data.supplierProfileId))
+        || (signedIn()
+          && isBuyerPortalIdentity(request.auth.uid)
+          && storedRfq().data.buyerId == request.auth.uid);
+      allow update: if resource.data.supplierUserId == request.auth.uid
+        && currentSupplierCanWrite(resource.data.supplierProfileId)
+        && responseIdentityUnchanged()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "status", "updatedAt"])
         && validResponse(request.resource.data)
-        && storedRfq().data.status in ["published", "receiving"]
-        && storedRfq().data.closingAt >= request.time
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "status", "updatedAt"]);
-      allow delete: if isAdmin();
+        && rfqCanReceiveResponse(storedRfq().data, resource.data.supplierProfileId);
+      allow delete: if false;
     }
 
-match /conversations/{conversationId} {
+    match /rfqPublishEvents/{eventId} {
+      function eventRfqPath() {
+        return /databases/$(database)/documents/rfqs/$(request.resource.data.rfqId);
+      }
+      function publishedRfqAfter() {
+        return getAfter(eventRfqPath());
+      }
+      function validPublishEvent() {
+        let data = request.resource.data;
+        let rfq = publishedRfqAfter().data;
+        return signedIn()
+          && data.keys().hasOnly(["type", "actorId", "buyerId", "rfqId", "recipientIds", "createdAt"])
+          && data.type == "rfq_published"
+          && data.rfqId == eventId
+          && data.actorId == request.auth.uid
+          && data.buyerId == request.auth.uid
+          && data.recipientIds is list
+          && data.recipientIds.size() > 0
+          && data.recipientIds.size() <= 50
+          && data.createdAt == request.time
+          && rfq.buyerId == request.auth.uid
+          && rfq.status == "published"
+          && rfq.recipientIds == data.recipientIds
+          && rfq.updatedAt == request.time;
+      }
+      allow create: if validPublishEvent();
+      allow read, update, delete: if false;
+    }
+
+    match /rfqResponseEvents/{eventId} {
+      function eventResponsePath() {
+        return /databases/$(database)/documents/rfqResponses/$(request.resource.data.responseId);
+      }
+      function eventRfq() {
+        return get(/databases/$(database)/documents/rfqs/$(request.resource.data.rfqId));
+      }
+      function responseAfter() {
+        return getAfter(eventResponsePath());
+      }
+      function validResponseEvent() {
+        let data = request.resource.data;
+        let response = responseAfter().data;
+        let rfq = eventRfq().data;
+        return signedIn()
+          && data.keys().hasOnly(["type", "actorId", "buyerId", "rfqId", "responseId", "supplierProfileId", "createdAt"])
+          && data.type == "rfq_response_submitted"
+          && data.responseId == eventId
+          && data.actorId == request.auth.uid
+          && data.rfqId is string
+          && data.buyerId == rfq.buyerId
+          && data.supplierProfileId is string
+          && data.createdAt == request.time
+          && response.id == eventId
+          && response.rfqId == data.rfqId
+          && response.supplierUserId == request.auth.uid
+          && response.supplierProfileId == data.supplierProfileId
+          && response.status == "submitted"
+          && response.createdAt == request.time
+          && response.updatedAt == request.time
+          && rfq.status in ["published", "receiving"]
+          && rfq.closingAt is timestamp
+          && rfq.closingAt >= request.time
+          && data.supplierProfileId in rfq.recipientIds;
+      }
+      allow create: if validResponseEvent();
+      allow read, update, delete: if false;
+    }
+
+    match /conversations/{conversationId} {
+      function conversationSupplier(data) {
+        return get(/databases/$(database)/documents/suppliers/$(data.supplierId));
+      }
+      function conversationRfq(data) {
+        return get(/databases/$(database)/documents/rfqs/$(data.rfqId));
+      }
+      function hasExactParticipants(data, buyerId, supplierOwnerId) {
+        return buyerId != supplierOwnerId
+          && data.participantIds is list
+          && data.participantIds.size() == 2
+          && buyerId in data.participantIds
+          && supplierOwnerId in data.participantIds;
+      }
+      function validConversationShape(data) {
+        return data.keys().hasOnly(["id", "participantIds", "participantLabels", "rfqId", "supplierId", "lastMessage", "lastMessageAt", "createdAt", "updatedAt"])
+          && data.id == conversationId
+          && data.participantIds is list
+          && data.participantIds.size() == 2
+          && data.participantLabels is map
+          && data.participantLabels.keys().hasAll(data.participantIds)
+          && data.participantLabels.keys().hasOnly(data.participantIds)
+          && (!("lastMessage" in data) || (data.lastMessage is string && data.lastMessage.size() <= 2000))
+          && (!("lastMessageAt" in data) || data.lastMessageAt is timestamp)
+          && data.createdAt is timestamp
+          && data.updatedAt is timestamp
+          && noStoredFileFields(data);
+      }
+      function validDirectSupplierConversation(data) {
+        let supplier = conversationSupplier(data).data;
+        return currentBuyerCanWrite()
+          && data.supplierId is string
+          && !("rfqId" in data)
+          && supplierAccountCanWrite(supplier.accountOwnerId, data.supplierId)
+          && hasExactParticipants(data, request.auth.uid, supplier.accountOwnerId);
+      }
+      function validRfqConversation(data) {
+        let rfq = conversationRfq(data).data;
+        let supplier = conversationSupplier(data).data;
+        return data.supplierId is string
+          && data.rfqId is string
+          && buyerAccountCanWrite(rfq.buyerId)
+          && supplierAccountCanWrite(supplier.accountOwnerId, data.supplierId)
+          && data.supplierId in rfq.recipientIds
+          && hasExactParticipants(data, rfq.buyerId, supplier.accountOwnerId)
+          && (request.auth.uid == rfq.buyerId
+            ? currentBuyerCanWrite()
+            : currentSupplierCanWrite(data.supplierId));
+      }
       allow read: if signedIn() && request.auth.uid in resource.data.participantIds;
-      allow create: if signedIn() && request.auth.uid in request.resource.data.participantIds && request.resource.data.participantIds.size() >= 2;
-      allow update: if signedIn() && request.auth.uid in resource.data.participantIds && request.resource.data.participantIds == resource.data.participantIds && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["lastMessage", "lastMessageAt", "updatedAt"]);
-      allow delete: if isAdmin();
+      allow create: if validConversationShape(request.resource.data)
+        && (validDirectSupplierConversation(request.resource.data) || validRfqConversation(request.resource.data));
+      allow update: if currentConversationParticipantCanWrite(resource.data)
+        && request.resource.data.participantIds == resource.data.participantIds
+        && request.resource.data.participantLabels == resource.data.participantLabels
+        && request.resource.data.supplierId == resource.data.supplierId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && ((!("rfqId" in resource.data) && !("rfqId" in request.resource.data))
+          || ("rfqId" in resource.data && request.resource.data.rfqId == resource.data.rfqId))
+        && request.resource.data.updatedAt is timestamp
+        && (!("lastMessage" in request.resource.data) || (request.resource.data.lastMessage is string && request.resource.data.lastMessage.size() <= 2000))
+        && (!("lastMessageAt" in request.resource.data) || request.resource.data.lastMessageAt is timestamp)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["lastMessage", "lastMessageAt", "updatedAt"]);
+      allow delete: if false;
     }
 
     match /messages/{messageId} {
       function conversation() { return get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)); }
       function storedConversation() { return get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)); }
+      function validParticipantReadBy(readBy, participantIds) {
+        return readBy is list
+          && readBy.size() >= 1
+          && readBy.size() <= 2
+          && (readBy.size() < 1 || readBy[0] in participantIds)
+          && (readBy.size() < 2 || (readBy[1] in participantIds && readBy[0] != readBy[1]));
+      }
+      function existingReceiptsPreserved() {
+        return request.resource.data.readBy.size() >= resource.data.readBy.size()
+          && (resource.data.readBy.size() < 1 || resource.data.readBy[0] in request.resource.data.readBy)
+          && (resource.data.readBy.size() < 2 || resource.data.readBy[1] in request.resource.data.readBy);
+      }
+      function onlyOwnReceiptAdded() {
+        return (request.resource.data.readBy == resource.data.readBy
+            && request.auth.uid in resource.data.readBy)
+          || (!(request.auth.uid in resource.data.readBy)
+            && request.auth.uid in request.resource.data.readBy
+            && request.resource.data.readBy.size() == resource.data.readBy.size() + 1);
+      }
       allow read: if signedIn() && request.auth.uid in storedConversation().data.participantIds;
-      allow create: if signedIn() && request.resource.data.senderId == request.auth.uid && request.auth.uid in conversation().data.participantIds && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 2000 && request.resource.data.attachmentStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data);
-      allow update: if signedIn() && request.auth.uid in storedConversation().data.participantIds && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"]);
-      allow delete: if isAdmin();
+      allow create: if currentConversationParticipantCanWrite(conversation().data)
+        && request.resource.data.keys().hasOnly(["conversationId", "senderId", "body", "readBy", "attachmentStatus", "createdAt"])
+        && request.resource.data.senderId == request.auth.uid
+        && request.auth.uid in conversation().data.participantIds
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 2000
+        && request.resource.data.readBy is list
+        && request.resource.data.readBy.size() == 1
+        && request.resource.data.readBy[0] == request.auth.uid
+        && request.resource.data.attachmentStatus == "upload_pending_launch"
+        && request.resource.data.createdAt is timestamp
+        && noStoredFileFields(request.resource.data);
+      allow update: if currentConversationParticipantCanWrite(storedConversation().data)
+        && validParticipantReadBy(request.resource.data.readBy, storedConversation().data.participantIds)
+        && existingReceiptsPreserved()
+        && onlyOwnReceiptAdded()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"]);
+      allow delete: if false;
     }
 
     match /notifications/{notificationId} {
-      function notificationRfq() { return getAfter(/databases/$(database)/documents/rfqs/$(request.resource.data.referenceId)); }
-      function validRfqNotification() {
-        return signedIn()
-          && request.resource.data.keys().hasOnly(["userId", "actorId", "type", "referenceType", "referenceId", "titleAr", "titleEn", "bodyAr", "bodyEn", "link", "read", "createdAt"])
-          && request.resource.data.type == "rfq"
-          && request.resource.data.actorId == request.auth.uid
-          && request.resource.data.referenceType == "rfq"
-          && request.resource.data.referenceId is string
-          && request.resource.data.userId is string
+      function commonNotificationIsValid() {
+        return request.resource.data.userId is string
           && request.resource.data.titleAr is string
+          && request.resource.data.titleAr.size() > 0
+          && request.resource.data.titleAr.size() <= 160
           && request.resource.data.titleEn is string
+          && request.resource.data.titleEn.size() > 0
+          && request.resource.data.titleEn.size() <= 160
           && request.resource.data.bodyAr is string
+          && request.resource.data.bodyAr.size() > 0
+          && request.resource.data.bodyAr.size() <= 500
           && request.resource.data.bodyEn is string
+          && request.resource.data.bodyEn.size() > 0
+          && request.resource.data.bodyEn.size() <= 500
+          && (!("link" in request.resource.data)
+            || (request.resource.data.link is string && request.resource.data.link.size() <= 300))
           && request.resource.data.read == false
-          && request.resource.data.createdAt is timestamp
-          && noStoredFileFields(request.resource.data)
-          && ((isBuyer()
-              && request.resource.data.link == "/supplier/rfqs"
-              && notificationRfq().data.buyerId == request.auth.uid
-              && "supplierProfileId" in userDoc(request.resource.data.userId).data
-              && userDoc(request.resource.data.userId).data.supplierProfileId in notificationRfq().data.recipientIds)
-            || (isSupplierAccount()
-              && request.resource.data.link == "/buyer/rfqs"
-              && notificationRfq().data.buyerId == request.resource.data.userId
-              && supplierIsTargeted(notificationRfq().data)));
+          && request.resource.data.createdAt == request.time
+          && noStoredFileFields(request.resource.data);
+      }
+      function publishEvent() {
+        return get(/databases/$(database)/documents/rfqPublishEvents/$(request.resource.data.eventId));
+      }
+      function publishTargetProfileId() {
+        return userDoc(request.resource.data.userId).data.supplierProfileId;
+      }
+      function validPublishedRfqNotification() {
+        let event = publishEvent().data;
+        let targetProfileId = publishTargetProfileId();
+        return currentBuyerCanWrite()
+          && request.resource.data.keys().hasOnly(["userId", "actorId", "type", "referenceType", "referenceId", "eventId", "titleAr", "titleEn", "bodyAr", "bodyEn", "link", "read", "createdAt"])
+          && request.resource.data.type == "rfq"
+          && request.resource.data.referenceType == "rfq"
+          && request.resource.data.eventId == request.resource.data.referenceId
+          && notificationId == "rfq-published_" + request.resource.data.eventId + "_" + request.resource.data.userId
+          && event.type == "rfq_published"
+          && event.rfqId == request.resource.data.referenceId
+          && event.actorId == request.auth.uid
+          && event.buyerId == request.auth.uid
+          && request.resource.data.actorId == request.auth.uid
+          && targetProfileId in event.recipientIds
+          && supplierAccountCanWrite(request.resource.data.userId, targetProfileId)
+          && request.resource.data.titleAr == "طلب عرض سعر جديد"
+          && request.resource.data.titleEn == "New RFQ request"
+          && request.resource.data.bodyAr == "وصل طلب عرض سعر جديد إلى شركتك."
+          && request.resource.data.bodyEn == "A new RFQ has been addressed to your company."
+          && request.resource.data.link == "/supplier/rfqs"
+          && commonNotificationIsValid();
+      }
+      function responseEvent() {
+        return get(/databases/$(database)/documents/rfqResponseEvents/$(request.resource.data.eventId));
+      }
+      function validResponseNotification() {
+        let event = responseEvent().data;
+        return request.resource.data.keys().hasOnly(["userId", "actorId", "type", "referenceType", "referenceId", "eventId", "responseId", "titleAr", "titleEn", "bodyAr", "bodyEn", "link", "read", "createdAt"])
+          && request.resource.data.type == "rfq"
+          && request.resource.data.referenceType == "rfq"
+          && request.resource.data.responseId == request.resource.data.eventId
+          && notificationId == "rfq-response_" + request.resource.data.responseId
+          && event.type == "rfq_response_submitted"
+          && event.responseId == request.resource.data.responseId
+          && event.rfqId == request.resource.data.referenceId
+          && event.actorId == request.auth.uid
+          && event.buyerId == request.resource.data.userId
+          && event.supplierProfileId is string
+          && currentSupplierCanWrite(event.supplierProfileId)
+          && request.resource.data.actorId == request.auth.uid
+          && request.resource.data.titleAr == "تم استلام عرض سعر"
+          && request.resource.data.titleEn == "New quotation received"
+          && request.resource.data.bodyAr == "استلم طلبك عرض سعر جديداً من أحد المجهزين."
+          && request.resource.data.bodyEn == "A supplier submitted a quotation for your RFQ."
+          && request.resource.data.link == "/buyer/rfqs"
+          && commonNotificationIsValid();
+      }
+      function validAdminNotification() {
+        return request.resource.data.keys().hasOnly(["userId", "actorId", "type", "referenceType", "referenceId", "titleAr", "titleEn", "bodyAr", "bodyEn", "link", "read", "createdAt"])
+          && request.resource.data.type in ["approval", "message", "access", "submission", "system"]
+          && (!("actorId" in request.resource.data) || request.resource.data.actorId == request.auth.uid)
+          && (!("referenceType" in request.resource.data)
+            || request.resource.data.referenceType in ["conversation", "submission", "supplier"])
+          && (!("referenceId" in request.resource.data) || request.resource.data.referenceId is string)
+          && commonNotificationIsValid();
       }
       allow read: if signedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isAdmin() || validRfqNotification();
-      allow update: if signedIn() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read", "readAt"]);
+      allow create: if !signedIn()
+        ? false
+        : request.resource.data.type == "rfq"
+          ? ("responseId" in request.resource.data
+            ? validResponseNotification()
+            : validPublishedRfqNotification())
+          : isAdmin() && validAdminNotification();
+      allow update: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.read == true
+        && request.resource.data.readAt == request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read", "readAt"]);
       allow delete: if isAdmin();
     }
 

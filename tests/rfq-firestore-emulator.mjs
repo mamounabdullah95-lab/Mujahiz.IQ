@@ -9,10 +9,13 @@ import {
 import {
   Timestamp,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
+  limit,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   where,
@@ -31,14 +34,47 @@ let environment;
 const future = () => Timestamp.fromMillis(Date.now() + 86_400_000);
 const past = () => Timestamp.fromMillis(Date.now() - 86_400_000);
 
-const users = {
-  buyer: { uid: "rfq-buyer", role: "contributor", accountType: "buyer", status: "approved", accessStatus: "temporary", accessExpiresAt: future() },
-  inactiveBuyer: { uid: "rfq-buyer-inactive", role: "contributor", accountType: "buyer", status: "approved", accessStatus: "pending", accessExpiresAt: null },
-  supplier: { uid: "rfq-supplier", role: "contributor", accountType: "supplier", status: "approved", supplierProfileId: "rfq-profile-1" },
-  otherSupplier: { uid: "rfq-supplier-other", role: "contributor", accountType: "supplier", status: "approved", supplierProfileId: "rfq-profile-2" },
-  admin: { uid: "rfq-admin", role: "admin", accountType: "buyer", status: "approved" },
-  owner: { uid: "rfq-owner", role: "owner", accountType: "buyer", status: "approved" },
+const buyerFields = {
+  role: "contributor",
+  accountType: "buyer",
+  status: "approved",
+  emailVerified: true,
+  accessStatus: "temporary",
+  accessExpiresAt: future(),
 };
+const supplierFields = {
+  role: "contributor",
+  accountType: "supplier",
+  status: "approved",
+  emailVerified: true,
+  accessStatus: "pending",
+};
+
+const users = {
+  buyer: { uid: "rfq-buyer", ...buyerFields },
+  legacyBuyer: { uid: "rfq-buyer-legacy", ...buyerFields, accountType: undefined },
+  suspendedBuyer: { uid: "rfq-buyer-suspended", ...buyerFields, accessStatus: "suspended" },
+  unverifiedBuyer: { uid: "rfq-buyer-unverified", ...buyerFields, emailVerified: false, authVerified: false },
+  staleBuyer: { uid: "rfq-buyer-stale", ...buyerFields, emailVerified: false },
+  inactiveBuyer: { uid: "rfq-buyer-inactive", ...buyerFields, accessStatus: "pending", accessExpiresAt: null },
+  notificationBuyer: { uid: "rfq-buyer-notification", ...buyerFields },
+  supplier: { uid: "rfq-supplier", ...supplierFields, supplierProfileId: "rfq-profile-1" },
+  notificationSupplier: { uid: "rfq-supplier-notification", ...supplierFields, supplierProfileId: "rfq-profile-notification" },
+  otherSupplier: { uid: "rfq-supplier-other", ...supplierFields, supplierProfileId: "rfq-profile-2" },
+  staleSupplier: { uid: "rfq-supplier-stale", ...supplierFields, supplierProfileId: "rfq-profile-1" },
+  suspendedSupplier: { uid: "rfq-supplier-suspended", ...supplierFields, supplierProfileId: "rfq-profile-suspended", accessStatus: "suspended" },
+  unverifiedSupplier: { uid: "rfq-supplier-unverified", ...supplierFields, supplierProfileId: "rfq-profile-unverified", emailVerified: false, authVerified: false },
+  unapprovedSupplier: { uid: "rfq-supplier-unapproved", ...supplierFields, supplierProfileId: "rfq-profile-unapproved" },
+  inactiveSupplier: { uid: "rfq-supplier-inactive", ...supplierFields, supplierProfileId: "rfq-profile-inactive" },
+  admin: { uid: "rfq-admin", ...buyerFields, role: "admin" },
+  owner: { uid: "rfq-owner", ...buyerFields, role: "owner" },
+  unrelated: { uid: "rfq-unrelated", ...buyerFields },
+};
+
+function cleanUser(user) {
+  const { uid: _uid, authVerified: _authVerified, ...data } = user;
+  return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+}
 
 before(async () => {
   environment = await initializeTestEnvironment({ projectId, firestore: { host, port, rules } });
@@ -46,9 +82,15 @@ before(async () => {
   await environment.withSecurityRulesDisabled(async (context) => {
     const database = context.firestore();
     await Promise.all([
-      ...Object.values(users).map((user) => setDoc(doc(database, "users", user.uid), user)),
+      ...Object.values(users).map((user) => setDoc(doc(database, "users", user.uid), cleanUser(user))),
       setDoc(doc(database, "suppliers", "rfq-profile-1"), { status: "approved", canReceiveRfqs: true, accountOwnerId: users.supplier.uid }),
       setDoc(doc(database, "suppliers", "rfq-profile-2"), { status: "approved", canReceiveRfqs: true, accountOwnerId: users.otherSupplier.uid }),
+      setDoc(doc(database, "suppliers", "rfq-profile-notification"), { status: "approved", canReceiveRfqs: true, accountOwnerId: users.notificationSupplier.uid }),
+      setDoc(doc(database, "suppliers", "rfq-profile-suspended"), { status: "approved", canReceiveRfqs: true, accountOwnerId: users.suspendedSupplier.uid }),
+      setDoc(doc(database, "suppliers", "rfq-profile-unverified"), { status: "approved", canReceiveRfqs: true, accountOwnerId: users.unverifiedSupplier.uid }),
+      setDoc(doc(database, "suppliers", "rfq-profile-unapproved"), { status: "pending_review", canReceiveRfqs: false, accountOwnerId: users.unapprovedSupplier.uid }),
+      setDoc(doc(database, "suppliers", "rfq-profile-inactive"), { status: "approved", canReceiveRfqs: false, accountOwnerId: users.inactiveSupplier.uid }),
+      setDoc(doc(database, "suppliers", "rfq-profile-legacy"), { name: "Legacy Supplier" }),
     ]);
   });
 });
@@ -57,9 +99,13 @@ after(async () => {
   await environment?.cleanup();
 });
 
-function contextFor(key) {
+function contextFor(key, claims = {}) {
   const user = users[key];
-  return environment.authenticatedContext(user.uid, { email: `${user.uid}@example.test` }).firestore();
+  return environment.authenticatedContext(user.uid, {
+    email: `${user.uid}@example.test`,
+    email_verified: user.authVerified !== false,
+    ...claims,
+  }).firestore();
 }
 
 function rfqData(id, buyerId = users.buyer.uid, overrides = {}) {
@@ -117,21 +163,83 @@ function responseData(rfqId, supplier = users.supplier, overrides = {}) {
   };
 }
 
-function notificationData(userId, actorId, rfqId, link) {
+function publishEventData(rfqId, buyer, recipientIds) {
+  return {
+    type: "rfq_published",
+    actorId: buyer.uid,
+    buyerId: buyer.uid,
+    rfqId,
+    recipientIds,
+    createdAt: serverTimestamp(),
+  };
+}
+
+function responseEventData(response, buyerId) {
+  return {
+    type: "rfq_response_submitted",
+    actorId: response.supplierUserId,
+    buyerId,
+    rfqId: response.rfqId,
+    responseId: response.id,
+    supplierProfileId: response.supplierProfileId,
+    createdAt: serverTimestamp(),
+  };
+}
+
+function notificationData({ userId, actorId, rfqId, direction, responseId }) {
+  const toSupplier = direction === "buyer_to_supplier";
   return {
     userId,
     actorId,
     type: "rfq",
     referenceType: "rfq",
     referenceId: rfqId,
-    titleAr: "اختبار طلب سعر",
-    titleEn: "RFQ test",
-    bodyAr: "إشعار اختبار آمن.",
-    bodyEn: "Safe test notification.",
-    link,
+    eventId: toSupplier ? rfqId : responseId,
+    ...(toSupplier ? {} : { responseId }),
+    titleAr: toSupplier ? "طلب عرض سعر جديد" : "تم استلام عرض سعر",
+    titleEn: toSupplier ? "New RFQ request" : "New quotation received",
+    bodyAr: toSupplier ? "وصل طلب عرض سعر جديد إلى شركتك." : "استلم طلبك عرض سعر جديداً من أحد المجهزين.",
+    bodyEn: toSupplier ? "A new RFQ has been addressed to your company." : "A supplier submitted a quotation for your RFQ.",
+    link: toSupplier ? "/supplier/rfqs" : "/buyer/rfqs",
     read: false,
-    createdAt: Timestamp.now(),
+    createdAt: serverTimestamp(),
   };
+}
+
+function publishedNotificationId(rfqId, userId) {
+  return `rfq-published_${rfqId}_${userId}`;
+}
+
+function responseNotificationId(responseId) {
+  return `rfq-response_${responseId}`;
+}
+
+function createPublishedRfq(database, id, buyer = users.buyer, overrides = {}) {
+  const recipientIds = overrides.recipientIds || [users.supplier.supplierProfileId];
+  const data = rfqData(id, buyer.uid, {
+    ...overrides,
+    recipientIds,
+    status: "published",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  const batch = writeBatch(database);
+  batch.set(doc(database, "rfqs", id), data);
+  batch.set(doc(database, "rfqPublishEvents", id), publishEventData(id, buyer, recipientIds));
+  return batch.commit();
+}
+
+function createResponse(database, rfqId, supplier = users.supplier, overrides = {}, buyerId = users.buyer.uid) {
+  const response = responseData(rfqId, supplier, {
+    ...overrides,
+    status: "submitted",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  const batch = writeBatch(database);
+  batch.set(doc(database, "rfqResponses", response.id), response);
+  batch.set(doc(database, "rfqResponseEvents", response.id), responseEventData(response, buyerId));
+  return { response, commit: batch.commit() };
 }
 
 async function seedRfq(id, data) {
@@ -140,107 +248,368 @@ async function seedRfq(id, data) {
   });
 }
 
-test("inactive buyer can save a draft but cannot publish an RFQ", async () => {
-  const database = contextFor("inactiveBuyer");
-  await assertSucceeds(setDoc(doc(database, "rfqs", "rfq-inactive-draft"), rfqData("inactive-draft", users.inactiveBuyer.uid, { status: "draft", recipientIds: [] })));
-  await assertFails(setDoc(doc(database, "rfqs", "rfq-inactive-published"), rfqData("inactive-published", users.inactiveBuyer.uid)));
-});
-
-test("active buyer cannot publish without a recipient", async () => {
-  const database = contextFor("buyer");
-  await assertFails(setDoc(doc(database, "rfqs", "rfq-empty-recipient"), rfqData("empty-recipient", users.buyer.uid, { recipientIds: [] })));
-});
-
-test("active buyer publishes to a targeted supplier and creates only a safe notification", async () => {
-  const database = contextFor("buyer");
-  const batch = writeBatch(database);
-  batch.set(doc(database, "rfqs", "rfq-open"), rfqData("open"));
-  batch.set(doc(database, "notifications", "rfq-open-notification"), notificationData(users.supplier.uid, users.buyer.uid, "rfq-open", "/supplier/rfqs"));
-  await assertSucceeds(batch.commit());
-  await assertSucceeds(getDoc(doc(contextFor("supplier"), "rfqs", "rfq-open")));
-  await assertFails(getDoc(doc(contextFor("otherSupplier"), "rfqs", "rfq-open")));
-
-  const unsafeBatch = writeBatch(database);
-  unsafeBatch.set(doc(database, "rfqs", "rfq-unsafe-notification"), rfqData("unsafe-notification"));
-  unsafeBatch.set(doc(database, "notifications", "rfq-unsafe-notification"), {
-    ...notificationData(users.supplier.uid, users.buyer.uid, "rfq-unsafe-notification", "/supplier/rfqs"),
-    base64: "forbidden",
+async function seedResponse(response) {
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "rfqResponses", response.id), response);
   });
-  await assertFails(unsafeBatch.commit());
+}
+
+test("ordinary active verified and legacy Buyers can create drafts", async () => {
+  await assertSucceeds(setDoc(doc(contextFor("buyer"), "rfqs", "rfq-active-draft"), rfqData("active-draft", users.buyer.uid, { status: "draft", recipientIds: [] })));
+  await assertSucceeds(setDoc(doc(contextFor("legacyBuyer"), "rfqs", "rfq-legacy-buyer-draft"), rfqData("legacy-buyer-draft", users.legacyBuyer.uid, { status: "draft", recipientIds: [] })));
 });
 
-test("targeted approved supplier submits a deterministic response and notifies the buyer", async () => {
-  const database = contextFor("supplier");
-  const response = responseData("rfq-open");
+test("Admin and Owner accounts with buyer accountType cannot create RFQs", async () => {
+  for (const role of ["admin", "owner"]) {
+    await assertFails(setDoc(doc(contextFor(role), "rfqs", `rfq-${role}-write`), rfqData(`${role}-write`, users[role].uid, { status: "draft", recipientIds: [] })));
+  }
+});
+
+test("suspended, inactive, unverified, and stale-verification Buyers cannot create RFQs", async () => {
+  for (const key of ["suspendedBuyer", "inactiveBuyer", "unverifiedBuyer", "staleBuyer"]) {
+    await assertFails(setDoc(doc(contextFor(key), "rfqs", `rfq-${key}-draft`), rfqData(`${key}-draft`, users[key].uid, { status: "draft", recipientIds: [] })));
+  }
+});
+
+test("invalid Buyers cannot edit, publish, delete, close, or cancel RFQs", async () => {
+  for (const key of ["suspendedBuyer", "unverifiedBuyer"]) {
+    const draftId = `rfq-${key}-existing-draft`;
+    const openId = `rfq-${key}-existing-open`;
+    await seedRfq(draftId, rfqData(draftId, users[key].uid, { status: "draft", recipientIds: [] }));
+    await seedRfq(openId, rfqData(openId, users[key].uid));
+    const database = contextFor(key);
+    await assertFails(updateDoc(doc(database, "rfqs", draftId), { title: "Forbidden edit", updatedAt: Timestamp.now() }));
+    const publishBatch = writeBatch(database);
+    publishBatch.update(doc(database, "rfqs", draftId), {
+      recipientIds: [users.supplier.supplierProfileId],
+      status: "published",
+      updatedAt: serverTimestamp(),
+    });
+    publishBatch.set(doc(database, "rfqPublishEvents", draftId), publishEventData(draftId, users[key], [users.supplier.supplierProfileId]));
+    await assertFails(publishBatch.commit());
+    await assertFails(deleteDoc(doc(database, "rfqs", draftId)));
+    await assertFails(updateDoc(doc(database, "rfqs", openId), { status: "closed", updatedAt: Timestamp.now() }));
+    await assertFails(updateDoc(doc(database, "rfqs", openId), { status: "cancelled", updatedAt: Timestamp.now() }));
+  }
+});
+
+test("published RFQs require an atomic deterministic publish event", async () => {
+  const database = contextFor("buyer");
+  await assertFails(setDoc(doc(database, "rfqs", "rfq-no-event"), rfqData("no-event", users.buyer.uid, {
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })));
+  await assertSucceeds(createPublishedRfq(database, "rfq-open"));
+  await assertFails(setDoc(doc(database, "rfqPublishEvents", "rfq-standalone-event"), publishEventData("rfq-standalone-event", users.buyer, [users.supplier.supplierProfileId])));
+});
+
+test("active Buyer can publish a draft only with the matching event", async () => {
+  const database = contextFor("buyer");
+  const id = "rfq-draft-publish";
+  await assertSucceeds(setDoc(doc(database, "rfqs", id), rfqData(id, users.buyer.uid, { status: "draft", recipientIds: [] })));
   const batch = writeBatch(database);
-  batch.set(doc(database, "rfqResponses", response.id), response);
-  batch.set(doc(database, "notifications", "rfq-response-notification"), notificationData(users.buyer.uid, users.supplier.uid, "rfq-open", "/buyer/rfqs"));
+  batch.update(doc(database, "rfqs", id), {
+    recipientIds: [users.supplier.supplierProfileId],
+    status: "published",
+    updatedAt: serverTimestamp(),
+  });
+  batch.set(doc(database, "rfqPublishEvents", id), publishEventData(id, users.buyer, [users.supplier.supplierProfileId]));
   await assertSucceeds(batch.commit());
-  await assertSucceeds(getDoc(doc(database, "rfqResponses", response.id)));
-
-  await assertFails(setDoc(doc(database, "rfqResponses", "wrong-id"), responseData("rfq-open")));
-  await assertFails(updateDoc(doc(database, "rfqResponses", response.id), { supplierProfileId: users.otherSupplier.supplierProfileId }));
 });
 
-test("supplier can update structured quotation terms and safe reference links", async () => {
+test("RFQ close and cancel transitions work once and cannot reopen", async () => {
+  await seedRfq("rfq-close", rfqData("close"));
+  await seedRfq("rfq-cancel", rfqData("cancel"));
+  const database = contextFor("buyer");
+  await assertSucceeds(updateDoc(doc(database, "rfqs", "rfq-close"), { status: "closed", updatedAt: Timestamp.now() }));
+  await assertSucceeds(updateDoc(doc(database, "rfqs", "rfq-cancel"), { status: "cancelled", updatedAt: Timestamp.now() }));
+  await assertFails(updateDoc(doc(database, "rfqs", "rfq-close"), { status: "published", updatedAt: Timestamp.now() }));
+});
+
+test("canonical active Supplier reads targeted RFQs while invalid ownership and status are denied", async () => {
+  await seedRfq("rfq-supplier-boundaries", rfqData("supplier-boundaries", users.buyer.uid, {
+    recipientIds: [
+      users.supplier.supplierProfileId,
+      users.suspendedSupplier.supplierProfileId,
+      users.unverifiedSupplier.supplierProfileId,
+      users.unapprovedSupplier.supplierProfileId,
+      users.inactiveSupplier.supplierProfileId,
+    ],
+  }));
+  await assertSucceeds(getDoc(doc(contextFor("supplier"), "rfqs", "rfq-supplier-boundaries")));
+  for (const key of ["staleSupplier", "suspendedSupplier", "unverifiedSupplier", "unapprovedSupplier", "inactiveSupplier", "otherSupplier"]) {
+    await assertFails(getDoc(doc(contextFor(key), "rfqs", "rfq-supplier-boundaries")));
+  }
+});
+
+test("canonical Supplier response requires an atomic response event", async () => {
   const supplierDb = contextFor("supplier");
+  const noEvent = responseData("rfq-open", users.supplier, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  await assertFails(setDoc(doc(supplierDb, "rfqResponses", noEvent.id), noEvent));
+  const created = createResponse(supplierDb, "rfq-open");
+  await assertSucceeds(created.commit);
+  await assertSucceeds(getDoc(doc(supplierDb, "rfqResponses", created.response.id)));
+  await assertFails(setDoc(doc(supplierDb, "rfqResponseEvents", "standalone-response-event"), {
+    ...responseEventData({ ...created.response, id: "standalone-response-event" }, users.buyer.uid),
+    responseId: "standalone-response-event",
+  }));
+});
+
+test("stale, unapproved, inactive, suspended, and unverified Suppliers cannot respond", async () => {
+  await seedRfq("rfq-invalid-supplier-response", rfqData("invalid-supplier-response", users.buyer.uid, {
+    recipientIds: [
+      users.supplier.supplierProfileId,
+      users.suspendedSupplier.supplierProfileId,
+      users.unverifiedSupplier.supplierProfileId,
+      users.unapprovedSupplier.supplierProfileId,
+      users.inactiveSupplier.supplierProfileId,
+    ],
+  }));
+  for (const key of ["staleSupplier", "suspendedSupplier", "unverifiedSupplier", "unapprovedSupplier", "inactiveSupplier"]) {
+    const result = createResponse(contextFor(key), "rfq-invalid-supplier-response", users[key]);
+    await assertFails(result.commit);
+  }
+});
+
+test("Supplier cannot respond using another Supplier profile", async () => {
+  await seedRfq("rfq-other-profile", rfqData("other-profile", users.buyer.uid, {
+    recipientIds: [users.supplier.supplierProfileId, users.otherSupplier.supplierProfileId],
+  }));
+  const forged = createResponse(contextFor("supplier"), "rfq-other-profile", users.supplier, {
+    supplierProfileId: users.otherSupplier.supplierProfileId,
+  });
+  await assertFails(forged.commit);
+});
+
+test("Supplier can update its own structured response but not immutable identity", async () => {
   const responseId = `rfq-open_${users.supplier.uid}`;
-  await assertSucceeds(updateDoc(doc(supplierDb, "rfqResponses", responseId), {
+  const database = contextFor("supplier");
+  await assertSucceeds(updateDoc(doc(database, "rfqResponses", responseId), {
     message: "Updated structured quotation.",
     paymentTerms: "net_45",
-    paymentTermsOther: "",
-    deliveryTerms: "site_delivery",
-    deliveryTermsOther: "",
     referenceLinks: ["https://example.test/revised-quotation.pdf"],
+    updatedAt: Timestamp.now(),
+  }));
+  await assertFails(updateDoc(doc(database, "rfqResponses", responseId), {
+    supplierProfileId: users.otherSupplier.supplierProfileId,
     updatedAt: Timestamp.now(),
   }));
 });
 
-test("supplier reads only its deterministic response while buyer, admin, and owner can review", async () => {
-  const supplierDb = contextFor("supplier");
-  const buyerDb = contextFor("buyer");
-  await assertSucceeds(getDoc(doc(supplierDb, "rfqResponses", `rfq-open_${users.supplier.uid}`)));
-  await assertSucceeds(getDocs(query(collection(buyerDb, "rfqResponses"), where("rfqId", "==", "rfq-open"))));
-  await assertSucceeds(getDocs(query(collection(contextFor("admin"), "rfqResponses"), where("rfqId", "==", "rfq-open"))));
-  await assertSucceeds(getDocs(query(collection(contextFor("owner"), "rfqResponses"), where("rfqId", "==", "rfq-open"))));
-});
-
-test("closed RFQ cannot be reopened, edited, or answered", async () => {
-  const buyerDb = contextFor("buyer");
-  await assertSucceeds(updateDoc(doc(buyerDb, "rfqs", "rfq-open"), { status: "closed", updatedAt: Timestamp.now() }));
-  await assertFails(updateDoc(doc(buyerDb, "rfqs", "rfq-open"), { status: "published", updatedAt: Timestamp.now() }));
-  await assertFails(updateDoc(doc(buyerDb, "rfqs", "rfq-open"), { title: "Changed after publish", updatedAt: Timestamp.now() }));
-
-  const supplierDb = contextFor("supplier");
-  await assertFails(setDoc(doc(supplierDb, "rfqResponses", `rfq-open_${users.supplier.uid}`), responseData("rfq-open", users.supplier, { message: "Updated after close" }), { merge: true }));
-});
-
-test("expired RFQ cannot receive a response even if its status still says published", async () => {
+test("expired and closed RFQs reject new Supplier responses", async () => {
   await seedRfq("rfq-expired", rfqData("expired", users.buyer.uid, { closingDate: "2000-01-01", closingAt: past() }));
+  await seedRfq("rfq-closed-response", rfqData("closed-response", users.buyer.uid, { status: "closed" }));
+  await assertFails(createResponse(contextFor("supplier"), "rfq-expired").commit);
+  await assertFails(createResponse(contextFor("supplier"), "rfq-closed-response").commit);
+});
+
+test("safe HTTPS references are allowed and stored file payloads remain denied", async () => {
+  await assertSucceeds(setDoc(doc(contextFor("buyer"), "rfqs", "rfq-safe-links"), rfqData("safe-links", users.buyer.uid, { status: "draft", recipientIds: [] })));
+  await assertFails(setDoc(doc(contextFor("buyer"), "rfqs", "rfq-http-link"), rfqData("http-link", users.buyer.uid, { status: "draft", recipientIds: [], referenceLinks: ["http://example.test/specification.pdf"] })));
+  await assertFails(setDoc(doc(contextFor("buyer"), "rfqs", "rfq-file-payload"), { ...rfqData("file-payload", users.buyer.uid, { status: "draft", recipientIds: [] }), rawFile: "forbidden" }));
+});
+
+test("published RFQ notifications are deterministic, event-bound, and non-repeatable", async () => {
+  const database = contextFor("buyer");
+  const notificationId = publishedNotificationId("rfq-open", users.supplier.uid);
+  const payload = notificationData({
+    userId: users.supplier.uid,
+    actorId: users.buyer.uid,
+    rfqId: "rfq-open",
+    direction: "buyer_to_supplier",
+  });
+  await assertSucceeds(setDoc(doc(database, "notifications", notificationId), payload));
+  await assertFails(setDoc(doc(database, "notifications", notificationId), payload));
+  await assertSucceeds(getDoc(doc(contextFor("supplier"), "notifications", notificationId)));
+});
+
+test("standalone and forged published RFQ notifications are denied", async () => {
+  const database = contextFor("buyer");
+  const missing = notificationData({
+    userId: users.supplier.uid,
+    actorId: users.buyer.uid,
+    rfqId: "rfq-missing-event",
+    direction: "buyer_to_supplier",
+  });
+  await assertFails(setDoc(doc(database, "notifications", publishedNotificationId("rfq-missing-event", users.supplier.uid)), missing));
+  const validBase = { ...missing, eventId: "rfq-open", referenceId: "rfq-open" };
+  await assertFails(setDoc(doc(database, "notifications", "wrong-notification-id"), validBase));
+  await assertFails(setDoc(doc(database, "notifications", publishedNotificationId("rfq-open", users.otherSupplier.uid)), {
+    ...validBase,
+    userId: users.otherSupplier.uid,
+  }));
+  await assertFails(setDoc(doc(database, "notifications", publishedNotificationId("rfq-open", users.supplier.uid) + "-sender"), {
+    ...validBase,
+    actorId: users.otherSupplier.uid,
+  }));
+  await assertFails(setDoc(doc(database, "notifications", publishedNotificationId("rfq-open", users.supplier.uid) + "-type"), {
+    ...validBase,
+    type: "message",
+  }));
+});
+
+test("response notification is deterministic, response-bound, and cannot be repeated or forged", async () => {
+  const responseId = `rfq-open_${users.supplier.uid}`;
   const database = contextFor("supplier");
-  const response = responseData("rfq-expired");
-  await assertFails(setDoc(doc(database, "rfqResponses", response.id), response));
+  const id = responseNotificationId(responseId);
+  const payload = notificationData({
+    userId: users.buyer.uid,
+    actorId: users.supplier.uid,
+    rfqId: "rfq-open",
+    responseId,
+    direction: "supplier_to_buyer",
+  });
+  await assertSucceeds(setDoc(doc(database, "notifications", id), payload));
+  await assertFails(setDoc(doc(database, "notifications", id), payload));
+  await assertFails(setDoc(doc(database, "notifications", id + "-wrong-buyer"), { ...payload, userId: users.unrelated.uid }));
+  await assertFails(setDoc(doc(database, "notifications", id + "-wrong-rfq"), { ...payload, referenceId: "rfq-other" }));
+  await assertFails(setDoc(doc(database, "notifications", id + "-wrong-response"), { ...payload, responseId: "wrong", eventId: "wrong" }));
+  await assertFails(setDoc(doc(database, "notifications", id + "-wrong-sender"), { ...payload, actorId: users.otherSupplier.uid }));
 });
 
-test("RFQ and quotation documents accept safe HTTPS references and reject unsafe links", async () => {
-  const buyerDb = contextFor("buyer");
-  await assertSucceeds(setDoc(doc(buyerDb, "rfqs", "rfq-safe-links"), rfqData("safe-links")));
-  await assertFails(setDoc(doc(buyerDb, "rfqs", "rfq-http-link"), rfqData("http-link", users.buyer.uid, { referenceLinks: ["http://example.test/specification.pdf"] })));
+test("notification creation rechecks the current actor status and canonical Supplier owner", async () => {
+  const rfqId = "rfq-notification-current-actor";
+  const buyerDb = contextFor("notificationBuyer");
+  const supplierDb = contextFor("notificationSupplier");
+  const recipientIds = [users.notificationSupplier.supplierProfileId];
+  await assertSucceeds(createPublishedRfq(buyerDb, rfqId, users.notificationBuyer, { recipientIds }));
 
-  await seedRfq("rfq-link-response", rfqData("link-response"));
-  const supplierDb = contextFor("supplier");
-  const safeResponse = responseData("rfq-link-response");
-  await assertSucceeds(setDoc(doc(supplierDb, "rfqResponses", safeResponse.id), safeResponse));
-  const unsafeResponse = responseData("rfq-link-response", users.supplier, { referenceLinks: ["javascript:alert(1)"] });
-  await assertFails(setDoc(doc(supplierDb, "rfqResponses", unsafeResponse.id), unsafeResponse, { merge: true }));
+  const publishId = publishedNotificationId(rfqId, users.notificationSupplier.uid);
+  const publishPayload = notificationData({
+    userId: users.notificationSupplier.uid,
+    actorId: users.notificationBuyer.uid,
+    rfqId,
+    direction: "buyer_to_supplier",
+  });
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await updateDoc(doc(context.firestore(), "users", users.notificationBuyer.uid), { accessStatus: "suspended" });
+  });
+  await assertFails(setDoc(doc(buyerDb, "notifications", publishId), publishPayload));
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await updateDoc(doc(context.firestore(), "users", users.notificationBuyer.uid), { accessStatus: "temporary" });
+  });
+  await assertSucceeds(setDoc(doc(buyerDb, "notifications", publishId), publishPayload));
+
+  const created = createResponse(supplierDb, rfqId, users.notificationSupplier, {}, users.notificationBuyer.uid);
+  await assertSucceeds(created.commit);
+  const responseId = created.response.id;
+  const responseIdForNotification = responseNotificationId(responseId);
+  const responsePayload = notificationData({
+    userId: users.notificationBuyer.uid,
+    actorId: users.notificationSupplier.uid,
+    rfqId,
+    responseId,
+    direction: "supplier_to_buyer",
+  });
+
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await updateDoc(doc(context.firestore(), "suppliers", users.notificationSupplier.supplierProfileId), { accountOwnerId: users.otherSupplier.uid });
+  });
+  await assertFails(setDoc(doc(supplierDb, "notifications", responseIdForNotification), responsePayload));
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await updateDoc(doc(context.firestore(), "suppliers", users.notificationSupplier.supplierProfileId), { accountOwnerId: users.notificationSupplier.uid });
+    await updateDoc(doc(context.firestore(), "users", users.notificationSupplier.uid), { accessStatus: "suspended" });
+  });
+  await assertFails(setDoc(doc(supplierDb, "notifications", responseIdForNotification), responsePayload));
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await updateDoc(doc(context.firestore(), "users", users.notificationSupplier.uid), { accessStatus: "pending" });
+  });
+  await assertSucceeds(setDoc(doc(supplierDb, "notifications", responseIdForNotification), responsePayload));
 });
 
-test("RFQ and quotation documents reject stored file payloads", async () => {
-  const buyerDb = contextFor("buyer");
-  await assertFails(setDoc(doc(buyerDb, "rfqs", "rfq-file-payload"), { ...rfqData("file-payload"), rawFile: "forbidden" }));
+test("administrative submission notifications preserve the approved workflow boundary", async () => {
+  const notificationId = "admin-submission-notification";
+  const payload = {
+    userId: users.buyer.uid,
+    type: "submission",
+    titleAr: "Test supplier submission approved",
+    titleEn: "Supplier submission approved",
+    bodyAr: "Test approval notification.",
+    bodyEn: "The supplier record was approved and added to the directory.",
+    link: "/buyer/suppliers/submissions",
+    read: false,
+    createdAt: serverTimestamp(),
+  };
+  await assertSucceeds(setDoc(doc(contextFor("admin"), "notifications", notificationId), payload));
+  await assertFails(setDoc(doc(contextFor("buyer"), "notifications", notificationId + "-forged"), payload));
+  await assertSucceeds(getDoc(doc(contextFor("buyer"), "notifications", notificationId)));
+  await assertSucceeds(updateDoc(doc(contextFor("buyer"), "notifications", notificationId), {
+    read: true,
+    readAt: serverTimestamp(),
+  }));
+});
 
-  await seedRfq("rfq-file-response", rfqData("file-response"));
+test("actual frontend RFQ, response, and notification queries are allowed while broader queries are denied", async () => {
+  const buyerDb = contextFor("buyer");
   const supplierDb = contextFor("supplier");
-  const response = responseData("rfq-file-response");
-  await assertFails(setDoc(doc(supplierDb, "rfqResponses", response.id), { ...response, attachmentUrl: "https://example.test/file" }));
+  await assertSucceeds(getDocs(query(collection(buyerDb, "rfqs"), where("buyerId", "==", users.buyer.uid), limit(200))));
+  await assertFails(getDocs(query(collection(buyerDb, "rfqs"), limit(200))));
+  await assertSucceeds(getDocs(query(collection(supplierDb, "rfqs"), where("recipientIds", "array-contains", users.supplier.supplierProfileId), limit(100))));
+  await assertFails(getDocs(query(collection(supplierDb, "rfqs"), limit(100))));
+  await assertSucceeds(getDoc(doc(supplierDb, "rfqResponses", `rfq-open_${users.supplier.uid}`)));
+  await assertFails(getDoc(doc(supplierDb, "rfqResponses", `rfq-open_${users.otherSupplier.uid}`)));
+  await assertSucceeds(getDocs(query(collection(buyerDb, "rfqResponses"), where("rfqId", "==", "rfq-open"), limit(100))));
+  await assertFails(getDocs(query(collection(buyerDb, "rfqResponses"), limit(100))));
+  await assertSucceeds(getDocs(query(collection(supplierDb, "notifications"), where("userId", "==", users.supplier.uid), limit(200))));
+  await assertFails(getDocs(query(collection(supplierDb, "notifications"), limit(200))));
+});
+
+test("Admin and Owner retain review reads without implicit RFQ mutation rights", async () => {
+  const response = responseData("rfq-open");
+  for (const role of ["admin", "owner"]) {
+    const database = contextFor(role);
+    await assertSucceeds(getDoc(doc(database, "rfqs", "rfq-open")));
+    await assertSucceeds(getDoc(doc(database, "rfqResponses", response.id)));
+    await assertFails(updateDoc(doc(database, "rfqs", "rfq-open"), { status: "closed", updatedAt: Timestamp.now() }));
+    await assertFails(deleteDoc(doc(database, "rfqs", "rfq-open")));
+  }
+});
+
+test("representative legacy RFQ data preserves safe draft edits while insecure writes stay blocked", async () => {
+  const legacyDraft = {
+    buyerId: users.buyer.uid,
+    title: "Legacy draft",
+    description: "Older minimal draft",
+    quantity: 1,
+    unit: "piece",
+    location: "Baghdad",
+    closingDate: "2099-12-31",
+    closingAt: future(),
+    categoryId: "legacy",
+    recipientIds: [],
+    status: "draft",
+    attachmentStatus: "upload_pending_launch",
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  };
+  const legacyResponse = {
+    id: "legacy-response",
+    rfqId: "legacy-rfq",
+    supplierUserId: users.supplier.uid,
+    supplierProfileId: users.supplier.supplierProfileId,
+    message: "Legacy response",
+    status: "submitted",
+    createdAt: Timestamp.now(),
+  };
+  await seedRfq("legacy-rfq", legacyDraft);
+  await seedResponse(legacyResponse);
+  await assertSucceeds(getDoc(doc(contextFor("buyer"), "rfqs", "legacy-rfq")));
+  await assertSucceeds(getDoc(doc(contextFor("buyer"), "rfqResponses", "legacy-response")));
+  await assertSucceeds(updateDoc(doc(contextFor("buyer"), "rfqs", "legacy-rfq"), { title: "Partial legacy edit", updatedAt: Timestamp.now() }));
+  await assertFails(updateDoc(doc(contextFor("buyer"), "rfqs", "legacy-rfq"), { buyerId: users.unrelated.uid, updatedAt: Timestamp.now() }));
+  await assertFails(updateDoc(doc(contextFor("buyer"), "rfqs", "legacy-rfq"), { status: "published", updatedAt: Timestamp.now() }));
+
+  await seedRfq("legacy-supplier-rfq", rfqData("legacy-supplier-rfq", users.buyer.uid, { recipientIds: ["rfq-profile-legacy"] }));
+  await environment.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "users", "legacy-supplier-user"), {
+      role: "contributor",
+      accountType: "supplier",
+      status: "approved",
+      emailVerified: true,
+      accessStatus: "pending",
+      supplierProfileId: "rfq-profile-legacy",
+    });
+  });
+  const legacyUser = environment.authenticatedContext("legacy-supplier-user", { email_verified: true }).firestore();
+  await assertFails(getDoc(doc(legacyUser, "rfqs", "legacy-supplier-rfq")));
 });

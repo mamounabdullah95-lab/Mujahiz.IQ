@@ -5,6 +5,7 @@ import fs from "node:fs";
 const firestore = fs.readFileSync(new URL("../src/services/firestore.ts", import.meta.url), "utf8");
 const taxonomy = fs.readFileSync(new URL("../src/contexts/TaxonomyContext.tsx", import.meta.url), "utf8");
 const main = fs.readFileSync(new URL("../src/main.tsx", import.meta.url), "utf8");
+const bootstrap = fs.readFileSync(new URL("../src/bootstrap.tsx", import.meta.url), "utf8");
 const migration = fs.readFileSync(new URL("../scripts/migrate-linked-supplier-accounts.mjs", import.meta.url), "utf8");
 
 test("supplier RFQ eligibility follows the linked account status", () => {
@@ -13,7 +14,8 @@ test("supplier RFQ eligibility follows the linked account status", () => {
 });
 
 test("public pages use local taxonomy without protected Firestore reads", () => {
-  assert.match(main, /<AuthProvider>[\s\S]*?<TaxonomyProvider>/);
+  assert.match(main, /import\("\.\/bootstrap"\)/);
+  assert.match(bootstrap, /<AuthProvider>[\s\S]*?<TaxonomyProvider>/);
   assert.match(taxonomy, /isFirebaseConfigured && !firebaseUser/);
   assert.match(taxonomy, /catch \{[\s\S]*?setTaxonomy\(taxonomyFromSettings\(\)\)/);
 });

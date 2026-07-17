@@ -1,24 +1,24 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import "./i18n";
 import "./index.css";
-import { AppV2 } from "./AppV2";
-import { AuthProvider } from "./contexts/AuthContext";
-import { TaxonomyProvider } from "./contexts/TaxonomyContext";
+import { FirebaseConfigurationErrorScreen } from "./components/FirebaseConfigurationErrorScreen";
+import { firebaseRuntime } from "./config/firebase";
 
 const locale = localStorage.getItem("mujahiz-iq-locale") || "en";
 document.documentElement.lang = locale;
 document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <TaxonomyProvider>
-          <AppV2 />
-        </TaxonomyProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
-);
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Application root element is missing.");
+
+if (firebaseRuntime.target === "configuration_error") {
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <FirebaseConfigurationErrorScreen />
+    </React.StrictMode>,
+  );
+} else {
+  void import("./bootstrap").then(({ renderApplication }) => {
+    renderApplication(rootElement);
+  });
+}

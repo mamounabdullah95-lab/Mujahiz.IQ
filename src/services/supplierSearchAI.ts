@@ -1,9 +1,10 @@
 import { GoogleAIBackend, Schema, getAI, getGenerativeModel } from "firebase/ai";
 import { app, isFirebaseConfigured } from "../config/firebase";
+import { isStrictlyEnabled } from "../config/runtimePolicy";
 import type { CreditStart, TaxonomyLists } from "../types/domain";
 import type { SupplierSearchIntent } from "../utils/supplierRecommendations";
 
-const aiEnabled = isFirebaseConfigured && import.meta.env.VITE_FIREBASE_AI_ENABLED === "true";
+const aiEnabled = isFirebaseConfigured && isStrictlyEnabled(import.meta.env.VITE_FIREBASE_AI_ENABLED);
 const modelName = import.meta.env.VITE_FIREBASE_AI_MODEL || "gemini-2.5-flash-lite";
 
 const responseSchema = Schema.object({

@@ -13,8 +13,8 @@ function sourceFiles(directory) {
 }
 
 test("file uploads default to disabled and require an explicit true flag", () => {
-  assert.match(read("src/config/features.ts"), /VITE_FILE_UPLOADS_ENABLED === "true"/);
-  assert.match(read("src/config/features.ts"), /VITE_SUPPLIER_EXCEL_IMPORT_ENABLED === "true"/);
+  assert.match(read("src/config/features.ts"), /isStrictlyEnabled\(import\.meta\.env\.VITE_FILE_UPLOADS_ENABLED\)/);
+  assert.match(read("src/config/features.ts"), /isStrictlyEnabled\(import\.meta\.env\.VITE_SUPPLIER_EXCEL_IMPORT_ENABLED\)/);
   assert.match(read(".env.example"), /VITE_FILE_UPLOADS_ENABLED=false/);
   assert.match(read(".env.example"), /VITE_SUPPLIER_EXCEL_IMPORT_ENABLED=true/);
   assert.match(read("src/services/uploadService.ts"), /throw new FileUploadsDisabledError/);
