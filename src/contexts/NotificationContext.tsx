@@ -53,13 +53,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const sessionRef = useRef(0);
+  const paginationStartedRef = useRef(false);
 
   useEffect(() => {
     const session = ++sessionRef.current;
     setRecent([]);
     setOlder([]);
+    paginationStartedRef.current = false;
     setCursor(null);
     setHasMore(false);
+    paginationStartedRef.current = false;
     setError("");
     if (!userId) {
       setLoading(false);
@@ -67,13 +70,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
 
     setLoading(true);
-    return subscribeNotifications(
+    const unsubscribe = subscribeNotifications(
       userId,
       (page) => {
         if (session !== sessionRef.current) return;
         setRecent(page.items);
-        setCursor((current) => current ?? page.cursor);
-        setHasMore((current) => current || page.hasMore);
+        if (!paginationStartedRef.current) {
+          setCursor(page.cursor);
+          setHasMore(page.hasMore);
+        }
         setLoading(false);
         setError("");
       },
@@ -83,6 +88,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setError(reason instanceof Error ? reason.message : "notifications_load_failed");
       },
     );
+    return () => {
+      sessionRef.current += 1;
+      unsubscribe();
+    };
   }, [revision, userId]);
 
   const items = useMemo(() => mergeNotifications(recent, older), [older, recent]);
@@ -96,6 +105,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const loadMore = useCallback(async () => {
     if (!userId || !cursor || !hasMore || loadingMore) return;
     const session = sessionRef.current;
+    paginationStartedRef.current = true;
     setLoadingMore(true);
     try {
       const page = await listNotificationsPage(userId, cursor);
