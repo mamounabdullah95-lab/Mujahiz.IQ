@@ -70,7 +70,7 @@ export function NotificationBell() {
                 <Link
                   className={`rounded-md px-3 py-2 text-sm hover:bg-slate-50 ${item.read ? "font-semibold text-slate-600" : "font-bold text-ink"}`}
                   key={item.id}
-                  to={item.link || "#"}
+                  to={item.link || "/notifications"}
                   onClick={() => {
                     if (!item.read) void markRead(item.id);
                     setOpen(false);
