@@ -1,4 +1,4 @@
-import { Bell, BookOpen, CheckCheck, CheckCircle2, ExternalLink, FilePlus2, Heart, Loader2, Mail, Plus, Search, Send, Settings, Star, Tags, Trash2 } from "lucide-react";
+import { Bell, BookOpen, CheckCheck, CheckCircle2, ExternalLink, FilePlus2, Heart, Loader2, Mail, Plus, RefreshCw, Search, Send, Settings, Star, Tags, Trash2 } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -8,6 +8,7 @@ import { DashboardError, DashboardPageHeader, DashboardPanel, DashboardSkeleton,
 import { Button, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTaxonomy } from "../../contexts/TaxonomyContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { labelFor } from "../../data/constants";
 import { rfqDeliveryTermOptions, rfqOptionLabel, rfqPaymentTermOptions, rfqPreferredCurrencyOptions, rfqUnitOptions } from "../../data/rfqOptions";
 import { auth } from "../../config/firebase";
@@ -20,15 +21,12 @@ import {
   listConversationMessages,
   listConversations,
   listFavorites,
-  listNotifications,
   listRfqResponses,
-  markAllNotificationsRead,
-  markNotificationRead,
   removeFavorite,
   sendConversationMessage,
   updateRfqStatus,
 } from "../../services/workspace";
-import type { Conversation, ConversationMessage, FavoriteSupplier, RfqRecord, RfqResponse, WorkspaceNotification } from "../../types/workspace";
+import type { Conversation, ConversationMessage, FavoriteSupplier, RfqRecord, RfqResponse } from "../../types/workspace";
 import { toDate } from "../../utils/date";
 
 function useLocale() {
@@ -494,13 +492,39 @@ export function WorkspaceMessagesPage() {
 
 export function WorkspaceNotificationsPage() {
   const locale = useLocale();
-  const { firebaseUser } = useAuth();
-  const [items, setItems] = useState<WorkspaceNotification[]>([]);
-  const [error, setError] = useState("");
-  const text = locale === "ar" ? { eyebrow: "مركز التنبيهات", title: "الإشعارات", description: "تحديثات الاعتماد والرسائل وطلبات الأسعار والوصول.", all: "تحديد الكل كمقروء", empty: "لا توجد إشعارات", open: "فتح" } : { eyebrow: "Notification center", title: "Notifications", description: "Approval, messaging, RFQ, and access updates.", all: "Mark all as read", empty: "No notifications", open: "Open" };
-  const load = async () => { if (firebaseUser) setItems(await listNotifications(firebaseUser.uid)); };
-  useEffect(() => { void load().catch((reason) => setError(reason instanceof Error ? reason.message : "Failed")); }, [firebaseUser?.uid]);
-  return <div className="overflow-hidden rounded-[18px] border border-borderSoft bg-creamLight shadow-card"><DashboardPageHeader eyebrow={text.eyebrow} title={text.title} description={text.description} actions={<Button variant="secondary" onClick={() => firebaseUser && void markAllNotificationsRead(firebaseUser.uid).then(load)}><CheckCheck className="h-4 w-4" />{text.all}</Button>} /><div className="grid gap-3 p-5 sm:p-7">{error ? <DashboardError message={error} /> : items.length ? items.map((item) => <article className={`flex flex-col gap-3 rounded-[16px] border p-4 sm:flex-row sm:items-center sm:justify-between ${item.read ? "border-borderSoft bg-white/70" : "border-amber/35 bg-white shadow-card"}`} key={item.id}><div className="flex gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cream text-amber"><Bell className="h-5 w-5" /></span><div><h3 className="font-black">{locale === "ar" ? item.titleAr : item.titleEn}</h3><p className="mt-1 text-sm leading-6 text-muted">{locale === "ar" ? item.bodyAr : item.bodyEn}</p><span className="mt-1 block text-[11px] font-semibold text-muted">{formatDate(item.createdAt, locale)}</span></div></div><div className="flex gap-2">{item.link ? <Link to={item.link}><Button variant="secondary">{text.open}</Button></Link> : null}{!item.read ? <Button variant="ghost" onClick={() => firebaseUser && void markNotificationRead(item.id, firebaseUser.uid).then(load)}><CheckCheck className="h-4 w-4" /></Button> : null}</div></article>) : <InlineEmptyState title={text.empty} body={text.description} />}</div></div>;
+  const {
+    items,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    refresh,
+    loadMore,
+    markRead,
+    markAllRead,
+  } = useNotifications();
+  const text = locale === "ar"
+    ? { eyebrow: "مركز التنبيهات", title: "الإشعارات", description: "تحديثات الاعتماد والرسائل وطلبات الأسعار والوصول.", all: "تحديد الكل كمقروء", empty: "لا توجد إشعارات", open: "فتح", refresh: "تحديث", more: "تحميل المزيد" }
+    : { eyebrow: "Notification center", title: "Notifications", description: "Approval, messaging, RFQ, and access updates.", all: "Mark all as read", empty: "No notifications", open: "Open", refresh: "Refresh", more: "Load more" };
+
+  return <div className="overflow-hidden rounded-[18px] border border-borderSoft bg-creamLight shadow-card">
+    <DashboardPageHeader
+      eyebrow={text.eyebrow}
+      title={text.title}
+      description={text.description}
+      actions={<>
+        <Button variant="secondary" onClick={refresh}><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />{text.refresh}</Button>
+        <Button variant="secondary" onClick={() => void markAllRead()}><CheckCheck className="h-4 w-4" />{text.all}</Button>
+      </>}
+    />
+    <div className="grid gap-3 p-5 sm:p-7">
+      {error ? <DashboardError message={error} retry={refresh} /> : items.length ? items.map((item) => <article className={`flex flex-col gap-3 rounded-[16px] border p-4 sm:flex-row sm:items-center sm:justify-between ${item.read ? "border-borderSoft bg-white/70" : "border-amber/35 bg-white shadow-card"}`} key={item.id}>
+        <div className="flex gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cream text-amber"><Bell className="h-5 w-5" /></span><div><h3 className="font-black">{locale === "ar" ? item.titleAr : item.titleEn}</h3><p className="mt-1 text-sm leading-6 text-muted">{locale === "ar" ? item.bodyAr : item.bodyEn}</p><span className="mt-1 block text-[11px] font-semibold text-muted">{formatDate(item.createdAt, locale)}</span></div></div>
+        <div className="flex gap-2">{item.link ? <Link to={item.link}><Button variant="secondary">{text.open}</Button></Link> : null}{!item.read ? <Button variant="ghost" onClick={() => void markRead(item.id)}><CheckCheck className="h-4 w-4" /></Button> : null}</div>
+      </article>) : loading ? <DashboardSkeleton /> : <InlineEmptyState title={text.empty} body={text.description} />}
+      {hasMore ? <Button variant="secondary" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : null}{text.more}</Button> : null}
+    </div>
+  </div>;
 }
 
 export function AccountSettingsPage() {
