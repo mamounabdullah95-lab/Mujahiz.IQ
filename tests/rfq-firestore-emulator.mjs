@@ -10,10 +10,12 @@ import {
   Timestamp,
   collection,
   deleteDoc,
+  documentId,
   doc,
   getDoc,
   getDocs,
   limit,
+  orderBy,
   query,
   serverTimestamp,
   setDoc,
@@ -550,8 +552,9 @@ test("actual frontend RFQ, response, and notification queries are allowed while 
   await assertFails(getDoc(doc(supplierDb, "rfqResponses", `rfq-open_${users.otherSupplier.uid}`)));
   await assertSucceeds(getDocs(query(collection(buyerDb, "rfqResponses"), where("rfqId", "==", "rfq-open"), limit(100))));
   await assertFails(getDocs(query(collection(buyerDb, "rfqResponses"), limit(100))));
-  await assertSucceeds(getDocs(query(collection(supplierDb, "notifications"), where("userId", "==", users.supplier.uid), limit(200))));
-  await assertFails(getDocs(query(collection(supplierDb, "notifications"), limit(200))));
+  await assertSucceeds(getDocs(query(collection(supplierDb, "notifications"), where("userId", "==", users.supplier.uid), orderBy("createdAt", "desc"), orderBy(documentId(), "desc"), limit(26))));
+  await assertFails(getDocs(query(collection(supplierDb, "notifications"), where("userId", "==", users.otherSupplier.uid), orderBy("createdAt", "desc"), orderBy(documentId(), "desc"), limit(26))));
+  await assertFails(getDocs(query(collection(supplierDb, "notifications"), orderBy("createdAt", "desc"), limit(26))));
 });
 
 test("Admin and Owner retain review reads without implicit RFQ mutation rights", async () => {
