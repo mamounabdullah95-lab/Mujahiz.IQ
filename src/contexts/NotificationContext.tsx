@@ -62,6 +62,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     paginationStartedRef.current = false;
     setCursor(null);
     setHasMore(false);
+    setLoadingMore(false);
     setError("");
     if (!userId) {
       setLoading(false);
