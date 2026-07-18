@@ -10,11 +10,13 @@ export interface CacheReadOptions {
 
 export class ReadThroughCache<T> {
   private readonly entries = new Map<string, CacheEntry<T>>();
+  private readonly ttlMs: number;
+  private readonly now: () => number;
 
-  constructor(
-    private readonly ttlMs: number,
-    private readonly now: () => number = Date.now,
-  ) {}
+  constructor(ttlMs: number, now: () => number = Date.now) {
+    this.ttlMs = ttlMs;
+    this.now = now;
+  }
 
   read(key: string, loader: () => Promise<T>, options: CacheReadOptions = {}) {
     const current = this.entries.get(key);
