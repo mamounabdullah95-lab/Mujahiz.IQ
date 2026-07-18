@@ -62,7 +62,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     paginationStartedRef.current = false;
     setCursor(null);
     setHasMore(false);
-    paginationStartedRef.current = false;
     setError("");
     if (!userId) {
       setLoading(false);
@@ -98,6 +97,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(() => {
     setOlder([]);
+    paginationStartedRef.current = false;
     setCursor(null);
     setRevision((value) => value + 1);
   }, []);
