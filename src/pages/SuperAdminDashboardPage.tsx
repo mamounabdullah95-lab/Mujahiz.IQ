@@ -2,6 +2,7 @@ import { Activity, DatabaseBackup, RefreshCw, Settings, ShieldCheck, SlidersHori
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useTaxonomy } from "../contexts/TaxonomyContext";
 import { DashboardError, DashboardPageHeader, DashboardPanel, DashboardSkeleton, MetricCard } from "../components/DashboardPrimitives";
 import { Button } from "../components/ui";
 import { listAuditLogs } from "../services/firestore";
@@ -14,16 +15,18 @@ const emptyMetrics: PortalMetrics = { totalUsers: 0, buyerAccounts: 0, supplierA
 export function SuperAdminDashboardPage() {
   const { i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
+  const { taxonomy } = useTaxonomy();
+  const categoryCount = taxonomy.supplierCategories.length;
   const [metrics, setMetrics] = useState(emptyMetrics);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     setLoading(true);
     setError("");
     try {
-      const [nextMetrics, nextLogs] = await Promise.all([getPortalMetrics(), listAuditLogs()]);
+      const [nextMetrics, nextLogs] = await Promise.all([getPortalMetrics("owner", categoryCount, { force }), listAuditLogs(10)]);
       setMetrics(nextMetrics);
       setLogs(nextLogs.slice(0, 10));
     } catch {
@@ -31,7 +34,7 @@ export function SuperAdminDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [locale]);
+  }, [categoryCount]);
 
   useEffect(() => { void load(); }, [load]);
   if (loading) return <DashboardSkeleton />;
@@ -47,9 +50,9 @@ export function SuperAdminDashboardPage() {
 
   return (
     <div className="overflow-hidden rounded-[18px] border border-borderSoft bg-creamLight shadow-card">
-      <DashboardPageHeader eyebrow={locale === "ar" ? "صلاحيات النظام العليا" : "Highest system privileges"} title={locale === "ar" ? "لوحة الحساب الرئيسي" : "Super Admin dashboard"} description={locale === "ar" ? "إدارة المدراء والأدوار والإعدادات العامة وسجل النظام من مساحة محمية مستقلة." : "Manage administrators, roles, global settings, and the system audit trail from a separate protected workspace."} actions={<Button variant="secondary" onClick={() => void load()}><RefreshCw className="h-4 w-4" />{locale === "ar" ? "تحديث" : "Refresh"}</Button>} />
+      <DashboardPageHeader eyebrow={locale === "ar" ? "صلاحيات النظام العليا" : "Highest system privileges"} title={locale === "ar" ? "لوحة الحساب الرئيسي" : "Super Admin dashboard"} description={locale === "ar" ? "إدارة المدراء والأدوار والإعدادات العامة وسجل النظام من مساحة محمية مستقلة." : "Manage administrators, roles, global settings, and the system audit trail from a separate protected workspace."} actions={<Button variant="secondary" onClick={() => void load(true)}><RefreshCw className="h-4 w-4" />{locale === "ar" ? "تحديث" : "Refresh"}</Button>} />
       <div className="grid gap-5 p-5 sm:p-7">
-        {error ? <DashboardError message={error} retry={() => void load()} /> : null}
+        {error ? <DashboardError message={error} retry={() => void load(true)} /> : null}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           <MetricCard label={locale === "ar" ? "إجمالي المستخدمين" : "Total users"} value={metrics.totalUsers} icon={Users} to="/super-admin/users" />
           <MetricCard label={locale === "ar" ? "المديرون" : "Admins"} value={metrics.admins} icon={UserCog} tone="warning" to="/super-admin/admins" />
