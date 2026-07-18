@@ -1109,7 +1109,7 @@ export async function moderateReview(review: SupplierReview, actorId: string, de
 export async function listAuditLogs(pageSize = 100) {
   const boundedPageSize = Math.max(1, Math.min(pageSize, 100));
   if (!isFirebaseConfigured) {
-    return demo.demoListAuditLogs().slice(0, boundedPageSize);
+    return (await demo.demoListAuditLogs()).slice(0, boundedPageSize);
   }
   const snapshot = await getDocs(query(auditLogsRef, orderBy("createdAt", "desc"), limit(boundedPageSize)));
   return snapshot.docs.map((item) => withId<AuditLog>(item));
