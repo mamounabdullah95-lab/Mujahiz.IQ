@@ -26,7 +26,7 @@ export function AdminOperationsDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const [nextMetrics, logs] = await Promise.all([getPortalMetrics("admin", categoryCount, { force }), listAuditLogs(8)]);
+      const [nextMetrics, logs] = await Promise.all([getPortalMetrics("admin", categoryCount, { force }), listAuditLogs(8, { force })]);
       setMetrics(nextMetrics);
       setActivity(logs.slice(0, 8));
     } catch {
