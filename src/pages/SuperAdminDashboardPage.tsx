@@ -30,7 +30,7 @@ export function SuperAdminDashboardPage() {
       setMetrics(nextMetrics);
       setLogs(nextLogs.slice(0, 10));
     } catch {
-      setError(locale === "ar" ? "تعذر تحميل مؤشرات الحساب الرئيسي." : "Super-admin metrics could not be loaded.");
+      setError("metrics_load_failed");
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ export function SuperAdminDashboardPage() {
     <div className="overflow-hidden rounded-[18px] border border-borderSoft bg-creamLight shadow-card">
       <DashboardPageHeader eyebrow={locale === "ar" ? "صلاحيات النظام العليا" : "Highest system privileges"} title={locale === "ar" ? "لوحة الحساب الرئيسي" : "Super Admin dashboard"} description={locale === "ar" ? "إدارة المدراء والأدوار والإعدادات العامة وسجل النظام من مساحة محمية مستقلة." : "Manage administrators, roles, global settings, and the system audit trail from a separate protected workspace."} actions={<Button variant="secondary" onClick={() => void load(true)}><RefreshCw className="h-4 w-4" />{locale === "ar" ? "تحديث" : "Refresh"}</Button>} />
       <div className="grid gap-5 p-5 sm:p-7">
-        {error ? <DashboardError message={error} retry={() => void load(true)} /> : null}
+        {error ? <DashboardError message={locale === "ar" ? "تعذر تحميل مؤشرات الحساب الرئيسي." : "Super-admin metrics could not be loaded."} retry={() => void load(true)} /> : null}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           <MetricCard label={locale === "ar" ? "إجمالي المستخدمين" : "Total users"} value={metrics.totalUsers} icon={Users} to="/super-admin/users" />
           <MetricCard label={locale === "ar" ? "المديرون" : "Admins"} value={metrics.admins} icon={UserCog} tone="warning" to="/super-admin/admins" />
