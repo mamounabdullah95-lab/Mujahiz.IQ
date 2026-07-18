@@ -84,7 +84,7 @@ export function NotificationBell() {
               ))}
               <Link
                 className="rounded-md px-3 py-2 text-center text-sm font-bold text-amber hover:bg-slate-50"
-                to="/buyer/notifications"
+                to="/notifications"
                 onClick={() => setOpen(false)}
               >
                 {locale === "ar" ? "عرض كل الإشعارات" : "View all notifications"}
