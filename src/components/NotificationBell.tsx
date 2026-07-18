@@ -1,178 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, CheckCheck, RefreshCw } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../contexts/AuthContext";
-import {
-  listMySubmissions,
-  listMySupplierFeedback,
-  listPendingReviews,
-  listSupplierFeedback,
-  listSupplierSubmissions,
-} from "../services/firestore";
-import { localizedSupplierName } from "../utils/supplierDisplay";
-
-interface NotificationItem {
-  id: string;
-  label: string;
-  to: string;
-  tone?: "danger" | "warning" | "neutral";
-}
-
-function latestKey(values: string[]) {
-  const sorted = [...values].sort();
-  return sorted[sorted.length - 1] ?? "";
-}
+import { useNotifications } from "../contexts/NotificationContext";
 
 export function NotificationBell() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
-  const { firebaseUser, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const [readIds, setReadIds] = useState<Set<string>>(new Set());
-  const storageKey = firebaseUser ? `mujahiz-iq-read-notifications:${firebaseUser.uid}` : "";
-
-  useEffect(() => {
-    if (!storageKey) {
-      setReadIds(new Set());
-      return;
-    }
-
-    try {
-      const stored = window.localStorage.getItem(storageKey);
-      const parsed = stored ? (JSON.parse(stored) as string[]) : [];
-      setReadIds(new Set(Array.isArray(parsed) ? parsed : []));
-    } catch {
-      setReadIds(new Set());
-    }
-  }, [storageKey]);
-
-  const markRead = (nextItems: NotificationItem[]) => {
-    if (!storageKey || !nextItems.length) return;
-    setReadIds((current) => {
-      const next = new Set(current);
-      nextItems.forEach((item) => next.add(item.id));
-      const limited = Array.from(next).slice(-100);
-      try {
-        window.localStorage.setItem(storageKey, JSON.stringify(limited));
-      } catch {
-        // Ignore storage failures; the notification panel should still work.
-      }
-      return new Set(limited);
-    });
-  };
-
-  useEffect(() => {
-    if (!firebaseUser) {
-      setItems([]);
-      return;
-    }
-
-    let cancelled = false;
-    const uid = firebaseUser.uid;
-    async function load() {
-      const nextItems: NotificationItem[] = [];
-      const [submissions, myFeedback] = await Promise.all([
-        listMySubmissions(uid),
-        listMySupplierFeedback(uid),
-      ]);
-      const correction = submissions.filter((item) => item.submissionStatus === "needs_correction");
-      const rejected = submissions.filter((item) => item.submissionStatus === "rejected");
-      const approved = submissions.filter((item) => item.submissionStatus === "approved");
-
-      correction.slice(0, 3).forEach((item) => {
-        nextItems.push({
-          id: `submission:${item.id}:${item.submissionStatus}:${String(item.reviewedAt ?? item.createdAt ?? "")}`,
-          label: `${t("needsCorrection")}: ${localizedSupplierName(item.supplierData, locale)}`,
-          to: `/suppliers/submissions/${item.id}/edit`,
-          tone: "danger",
-        });
-      });
-      if (rejected.length) {
-        const latest = latestKey(rejected.map((item) => String(item.reviewedAt ?? item.createdAt ?? "")));
-        nextItems.push({
-          id: `submissions:rejected:${rejected.length}:${latest}`,
-          label: t("notificationRejectedSubmissions", { count: rejected.length }),
-          to: "/my-submissions",
-          tone: "warning",
-        });
-      }
-      if (approved.length) {
-        const latest = latestKey(approved.map((item) => String(item.reviewedAt ?? item.createdAt ?? "")));
-        nextItems.push({
-          id: `submissions:approved:${approved.length}:${latest}`,
-          label: t("notificationApprovedSubmissions", { count: approved.length }),
-          to: "/my-submissions",
-        });
-      }
-
-      const resolvedFeedback = myFeedback.filter((item) => item.status === "resolved" || item.status === "rejected");
-      resolvedFeedback.slice(0, 3).forEach((item) => {
-        const supplierName = locale === "ar"
-          ? item.supplierNameAr || item.supplierName
-          : item.supplierNameEn || item.supplierName;
-        nextItems.push({
-          id: `feedback:${item.id}:${item.status}:${String(item.reviewedAt ?? item.createdAt ?? "")}`,
-          label: `${t("notificationFeedbackResolved", { count: 1 })}: ${supplierName}`,
-          to: `/suppliers/${item.supplierId}`,
-        });
-      });
-
-      if (isAdmin) {
-        const [pendingSubmissions, pendingReviews, pendingFeedback] = await Promise.all([
-          listSupplierSubmissions(),
-          listPendingReviews(),
-          listSupplierFeedback(),
-        ]);
-        if (pendingSubmissions.length) {
-          const latest = latestKey(pendingSubmissions.map((item) => String(item.createdAt ?? "")));
-          nextItems.push({
-            id: `admin:supplier-submissions:${pendingSubmissions.length}:${latest}`,
-            label: t("notificationPendingSuppliers", { count: pendingSubmissions.length }),
-            to: "/admin/submissions",
-            tone: "warning",
-          });
-        }
-        if (pendingReviews.length) {
-          const latest = latestKey(pendingReviews.map((item) => String(item.createdAt ?? "")));
-          nextItems.push({
-            id: `admin:reviews:${pendingReviews.length}:${latest}`,
-            label: t("notificationPendingReviews", { count: pendingReviews.length }),
-            to: "/admin/reviews",
-            tone: "warning",
-          });
-        }
-        if (pendingFeedback.length) {
-          const latest = latestKey(pendingFeedback.map((item) => String(item.createdAt ?? "")));
-          nextItems.push({
-            id: `admin:supplier-feedback:${pendingFeedback.length}:${latest}`,
-            label: t("notificationPendingFeedback", { count: pendingFeedback.length }),
-            to: "/admin/supplier-feedback",
-            tone: "warning",
-          });
-        }
-      }
-
-      if (!cancelled) {
-        setItems(nextItems);
-      }
-    }
-
-    void load();
-    const interval = window.setInterval(() => void load(), 30_000);
-    const listener = () => void load();
-    window.addEventListener("mujahiz-iq-demo-db-updated", listener);
-    window.addEventListener("focus", listener);
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-      window.removeEventListener("mujahiz-iq-demo-db-updated", listener);
-      window.removeEventListener("focus", listener);
-    };
-  }, [firebaseUser, isAdmin, locale, t]);
-
-  const count = useMemo(() => items.filter((item) => !readIds.has(item.id)).length, [items, readIds]);
+  const {
+    items,
+    unreadCount,
+    loading,
+    error,
+    refresh,
+    markRead,
+    markAllRead,
+  } = useNotifications();
 
   return (
     <div className="relative">
@@ -180,42 +24,76 @@ export function NotificationBell() {
         className="relative inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"
         type="button"
         aria-label={t("notifications")}
-        onClick={() => {
-          if (!open) markRead(items);
-          setOpen((current) => !current);
-        }}
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
       >
         <Bell className="h-5 w-5" aria-hidden="true" />
-        {count ? (
+        {unreadCount ? (
           <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-clay px-1 text-center text-xs font-bold leading-5 text-white">
-            {count}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : null}
       </button>
 
       {open ? (
         <div className="absolute end-0 top-12 z-30 w-80 rounded-md border border-slate-200 bg-white p-2 shadow-soft">
-          <div className="px-2 py-2 text-sm font-bold text-ink">{t("notifications")}</div>
-          {items.length ? (
+          <div className="flex items-center justify-between gap-2 px-2 py-2">
+            <span className="text-sm font-bold text-ink">{t("notifications")}</span>
+            <div className="flex items-center gap-1">
+              {unreadCount ? (
+                <button
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
+                  type="button"
+                  aria-label={locale === "ar" ? "تحديد الكل كمقروء" : "Mark all as read"}
+                  onClick={() => void markAllRead()}
+                >
+                  <CheckCheck className="h-4 w-4" />
+                </button>
+              ) : null}
+              <button
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
+                type="button"
+                aria-label={locale === "ar" ? "تحديث" : "Refresh"}
+                onClick={refresh}
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              </button>
+            </div>
+          </div>
+          {error ? (
+            <div className="px-3 py-4 text-sm text-clay">
+              {locale === "ar" ? "تعذر تحميل الإشعارات." : "Notifications could not be loaded."}
+            </div>
+          ) : items.length ? (
             <div className="grid gap-1">
-              {items.map((item, index) => (
+              {items.slice(0, 8).map((item) => (
                 <Link
-                  className="rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  key={`${item.to}-${index}`}
-                  to={item.to}
+                  className={`rounded-md px-3 py-2 text-sm hover:bg-slate-50 ${item.read ? "font-semibold text-slate-600" : "font-bold text-ink"}`}
+                  key={item.id}
+                  to={item.link || "#"}
                   onClick={() => {
-                    markRead([item]);
+                    if (!item.read) void markRead(item.id);
                     setOpen(false);
                   }}
                 >
-                  <span className={item.tone === "danger" ? "text-clay" : item.tone === "warning" ? "text-amber" : "text-ink"}>
-                    {item.label}
+                  <span>{locale === "ar" ? item.titleAr : item.titleEn}</span>
+                  <span className="mt-1 block line-clamp-2 text-xs font-normal text-slate-500">
+                    {locale === "ar" ? item.bodyAr : item.bodyEn}
                   </span>
                 </Link>
               ))}
+              <Link
+                className="rounded-md px-3 py-2 text-center text-sm font-bold text-amber hover:bg-slate-50"
+                to="/buyer/notifications"
+                onClick={() => setOpen(false)}
+              >
+                {locale === "ar" ? "عرض كل الإشعارات" : "View all notifications"}
+              </Link>
             </div>
           ) : (
-            <div className="px-3 py-4 text-sm text-slate-500">{t("noNotifications")}</div>
+            <div className="px-3 py-4 text-sm text-slate-500">
+              {loading ? (locale === "ar" ? "جارٍ التحميل..." : "Loading...") : t("noNotifications")}
+            </div>
           )}
         </div>
       ) : null}
