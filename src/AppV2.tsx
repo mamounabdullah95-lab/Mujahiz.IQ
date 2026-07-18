@@ -92,6 +92,7 @@ export function AppV2() {
       <Route path="dashboard" element={<DashboardRouterPage />} />
       <Route path="pending-approval" element={<PendingApprovalPage />} />
       <Route path="profile" element={<ProfileSettingsPage />} />
+      <Route path="notifications" element={<WorkspaceNotificationsPage />} />
     </Route>
 
     <Route element={<RoleProtectedRoute allowedRoles={contributorRoles} allowPending />}>
