@@ -54,6 +54,7 @@ import type {
 } from "../types/domain";
 import { addDays, maxDate, toDate } from "../utils/date";
 import { calculateAccessGrant, deriveBadges, qualityRatio } from "../utils/scoring";
+import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
 import { normalizeEmail, normalizeUrl } from "../utils/normalization";
 import { normalizeDictionaryText } from "../utils/materialDictionary";
 
@@ -1106,13 +1107,17 @@ export async function moderateReview(review: SupplierReview, actorId: string, de
   });
 }
 
-export async function listAuditLogs(pageSize = 100) {
+const auditLogCache = new ReadThroughCache<AuditLog[]>(30_000);
+
+export function listAuditLogs(pageSize = 100, options: CacheReadOptions = {}) {
   const boundedPageSize = Math.max(1, Math.min(pageSize, 100));
-  if (!isFirebaseConfigured) {
-    return (await demo.demoListAuditLogs()).slice(0, boundedPageSize);
-  }
-  const snapshot = await getDocs(query(auditLogsRef, orderBy("createdAt", "desc"), limit(boundedPageSize)));
-  return snapshot.docs.map((item) => withId<AuditLog>(item));
+  return auditLogCache.read(String(boundedPageSize), async () => {
+    if (!isFirebaseConfigured) {
+      return (await demo.demoListAuditLogs()).slice(0, boundedPageSize);
+    }
+    const snapshot = await getDocs(query(auditLogsRef, orderBy("createdAt", "desc"), limit(boundedPageSize)));
+    return snapshot.docs.map((item) => withId<AuditLog>(item));
+  }, options);
 }
 
 export async function listAccessCredits(userId: string) {
