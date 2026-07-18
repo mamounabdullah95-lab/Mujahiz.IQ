@@ -30,7 +30,7 @@ export function AdminOperationsDashboardPage() {
       setMetrics(nextMetrics);
       setActivity(logs.slice(0, 8));
     } catch {
-      setError(locale === "ar" ? "تعذر تحميل مؤشرات الإدارة حالياً." : "Admin metrics could not be loaded right now.");
+      setError("metrics_load_failed");
     } finally {
       setLoading(false);
     }
@@ -43,7 +43,7 @@ export function AdminOperationsDashboardPage() {
     <div className="overflow-hidden rounded-[18px] border border-borderSoft bg-creamLight shadow-card">
       <DashboardPageHeader eyebrow={locale === "ar" ? "إدارة العمليات اليومية" : "Daily operations"} title={locale === "ar" ? "لوحة مدير النظام" : "Admin dashboard"} description={locale === "ar" ? "تابع طلبات اعتماد الشركات والمستخدمين والمراجعات والبلاغات من مساحة تشغيل واحدة." : "Monitor company approvals, users, reviews, and support items from one operations workspace."} actions={<Button variant="secondary" onClick={() => void load(true)}><RefreshCw className="h-4 w-4" />{locale === "ar" ? "تحديث" : "Refresh"}</Button>} />
       <div className="grid gap-5 p-5 sm:p-7">
-        {error ? <DashboardError message={error} retry={() => void load(true)} /> : null}
+        {error ? <DashboardError message={locale === "ar" ? "تعذر تحميل مؤشرات الإدارة حالياً." : "Admin metrics could not be loaded right now."} retry={() => void load(true)} /> : null}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           <MetricCard label={locale === "ar" ? "المجهزون المعتمدون" : "Approved suppliers"} value={metrics.approvedSuppliers} icon={Building2} tone="good" to="/admin/suppliers" />
           <MetricCard label={locale === "ar" ? "حسابات المجهزين" : "Supplier accounts"} value={metrics.supplierAccounts} icon={Users} to="/admin/users" />
