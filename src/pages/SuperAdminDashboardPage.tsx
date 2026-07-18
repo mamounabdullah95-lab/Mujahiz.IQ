@@ -26,7 +26,7 @@ export function SuperAdminDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const [nextMetrics, nextLogs] = await Promise.all([getPortalMetrics("owner", categoryCount, { force }), listAuditLogs(10)]);
+      const [nextMetrics, nextLogs] = await Promise.all([getPortalMetrics("owner", categoryCount, { force }), listAuditLogs(10, { force })]);
       setMetrics(nextMetrics);
       setLogs(nextLogs.slice(0, 10));
     } catch {
