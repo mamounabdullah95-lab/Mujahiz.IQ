@@ -80,18 +80,16 @@ export async function activateVerifiedUser(uid: string) {
     };
     if (profile.emailVerified === true) return;
 
+    const existingAudit = await transaction.get(verificationAuditRef);
+    const existingGrant = await transaction.get(trialGrantRef);
     const isNewBuyer =
-      profile.accountType === "buyer"
+      profile.role === "contributor"
+      && profile.accountType === "buyer"
       && profile.accessStatus === "pending"
       && !profile.accessExpiresAt
       && !profile.trialStartedAt
       && !profile.trialEndsAt;
-
-    let trialAlreadyGranted = false;
-    if (isNewBuyer) {
-      const existingGrant = await transaction.get(trialGrantRef);
-      trialAlreadyGranted = existingGrant.exists();
-    }
+    const trialAlreadyGranted = existingGrant.exists() || existingAudit.exists();
 
     if (!isNewBuyer || trialAlreadyGranted) {
       transaction.update(userRef, {
@@ -99,17 +97,16 @@ export async function activateVerifiedUser(uid: string) {
         emailVerifiedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      transaction.set(verificationAuditRef, {
-        actorId: uid,
-        action: "user.email_verified",
-        targetType: "user",
-        targetId: uid,
-        details: {
-          accountType: profile.accountType || null,
-          trialStarted: false,
-        },
-        createdAt: serverTimestamp(),
-      });
+      if (!existingAudit.exists()) {
+        transaction.set(verificationAuditRef, {
+          actorId: uid,
+          action: "user.email_verified",
+          targetType: "user",
+          targetId: uid,
+          details: { trialStarted: false },
+          createdAt: serverTimestamp(),
+        });
+      }
       return;
     }
 

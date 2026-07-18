@@ -9,11 +9,14 @@ import {
 import {
   Timestamp,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   runTransaction,
+  serverTimestamp,
   setDoc,
+  updateDoc,
   writeBatch,
 } from "firebase/firestore";
 
@@ -53,6 +56,36 @@ const verificationUsers = {
   buyer: pendingVerificationUser("buyer-verify", "buyer"),
   supplier: pendingVerificationUser("supplier-verify", "supplier"),
   unverifiedBuyer: pendingVerificationUser("buyer-token-stale", "buyer"),
+  protectedProbe: pendingVerificationUser("verification-protected-probe", "supplier"),
+  auditProbe: pendingVerificationUser("verification-audit-probe", "supplier"),
+  trialCompletenessProbe: pendingVerificationUser("verification-trial-completeness", "buyer"),
+  alreadyVerified: {
+    ...pendingVerificationUser("verification-already-complete", "supplier"),
+    emailVerified: true,
+    emailVerifiedAt: Timestamp.now(),
+  },
+  legacyAdmin: {
+    uid: "legacy-admin-verify",
+    email: "legacy-admin-verify@example.test",
+    role: "admin",
+    status: "approved",
+    accessStatus: "active",
+  },
+  legacyOwner: {
+    uid: "legacy-owner-verify",
+    email: "legacy-owner-verify@example.test",
+    role: "owner",
+    accountType: null,
+    status: "approved",
+    accessStatus: "active",
+  },
+  legacyAdminWithAudit: {
+    uid: "legacy-admin-existing-audit",
+    email: "legacy-admin-existing-audit@example.test",
+    role: "admin",
+    status: "approved",
+    accessStatus: "active",
+  },
 };
 
 before(async () => {
@@ -63,6 +96,14 @@ before(async () => {
       [...Object.values(users), ...Object.values(verificationUsers)]
         .map((user) => setDoc(doc(database, "users", user.uid), user)),
     );
+    await setDoc(doc(database, "auditLogs", "email-verification-legacy-admin-existing-audit"), {
+      actorId: verificationUsers.legacyAdminWithAudit.uid,
+      action: "user.email_verified",
+      targetType: "user",
+      targetId: verificationUsers.legacyAdminWithAudit.uid,
+      details: { accountType: null, trialStarted: false },
+      createdAt: Timestamp.now(),
+    });
   });
 });
 
@@ -96,45 +137,45 @@ async function synchronizeVerification(key, emailVerified = true) {
     const profile = snapshot.data();
     if (profile.emailVerified === true) return;
 
+    const existingAudit = await transaction.get(auditRef);
+    const existingGrant = await transaction.get(trialGrantRef);
     const isNewBuyer =
-      profile.accountType === "buyer"
+      profile.role === "contributor"
+      && profile.accountType === "buyer"
       && profile.accessStatus === "pending"
       && !profile.accessExpiresAt
       && !profile.trialStartedAt
       && !profile.trialEndsAt;
+    const trialAlreadyGranted = existingGrant.exists() || existingAudit.exists();
 
-    let trialAlreadyGranted = false;
-    if (isNewBuyer) {
-      trialAlreadyGranted = (await transaction.get(trialGrantRef)).exists();
-    }
-
-    const now = Timestamp.now();
     if (!isNewBuyer || trialAlreadyGranted) {
       transaction.update(userRef, {
         emailVerified: true,
-        emailVerifiedAt: now,
-        updatedAt: now,
+        emailVerifiedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
-      transaction.set(auditRef, {
-        actorId: user.uid,
-        action: "user.email_verified",
-        targetType: "user",
-        targetId: user.uid,
-        details: { accountType: profile.accountType, trialStarted: false },
-        createdAt: now,
-      });
+      if (!existingAudit.exists()) {
+        transaction.set(auditRef, {
+          actorId: user.uid,
+          action: "user.email_verified",
+          targetType: "user",
+          targetId: user.uid,
+          details: { trialStarted: false },
+          createdAt: serverTimestamp(),
+        });
+      }
       return;
     }
 
-    const trialEndsAt = Timestamp.fromMillis(now.toMillis() + (3 * 86_400_000));
+    const trialEndsAt = Timestamp.fromMillis(Date.now() + (3 * 86_400_000));
     transaction.update(userRef, {
       emailVerified: true,
-      emailVerifiedAt: now,
-      trialStartedAt: now,
+      emailVerifiedAt: serverTimestamp(),
+      trialStartedAt: serverTimestamp(),
       trialEndsAt,
       accessStatus: "temporary",
       accessExpiresAt: trialEndsAt,
-      updatedAt: now,
+      updatedAt: serverTimestamp(),
     });
     const grantData = {
       userId: user.uid,
@@ -144,13 +185,13 @@ async function synchronizeVerification(key, emailVerified = true) {
       approvedSupplierCount: 0,
       daysGranted: 3,
       status: "applied",
-      grantedAt: now,
+      grantedAt: serverTimestamp(),
       previousExpiry: null,
       newExpiry: trialEndsAt,
       createdBy: user.uid,
-      createdAt: now,
+      createdAt: serverTimestamp(),
     };
-    transaction.set(trialCreditRef, { ...grantData, appliedAt: now });
+    transaction.set(trialCreditRef, { ...grantData, appliedAt: serverTimestamp() });
     transaction.set(trialGrantRef, { ...grantData, auditReference: auditRef.id });
     transaction.set(auditRef, {
       actorId: user.uid,
@@ -158,9 +199,60 @@ async function synchronizeVerification(key, emailVerified = true) {
       targetType: "user",
       targetId: user.uid,
       details: { accountType: "buyer", days: 3, trialStarted: true },
-      createdAt: now,
+      createdAt: serverTimestamp(),
     });
   });
+}
+
+async function commitEmailOnlyVerification(
+  key,
+  { userPatch = {}, auditPatch = {}, emailVerified = true, targetKey = key } = {},
+) {
+  const actor = verificationUsers[key];
+  const target = verificationUsers[targetKey];
+  const database = verificationContextFor(key, emailVerified);
+  const batch = writeBatch(database);
+  batch.update(doc(database, "users", target.uid), {
+    emailVerified: true,
+    emailVerifiedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    ...userPatch,
+  });
+  batch.set(doc(database, "auditLogs", `email-verification-${actor.uid}`), {
+    actorId: actor.uid,
+    action: "user.email_verified",
+    targetType: "user",
+    targetId: actor.uid,
+    details: { trialStarted: false },
+    createdAt: serverTimestamp(),
+    ...auditPatch,
+  });
+  return batch.commit();
+}
+
+async function commitIncompleteBuyerTrial(key) {
+  const actor = verificationUsers[key];
+  const database = verificationContextFor(key);
+  const trialEndsAt = Timestamp.fromMillis(Date.now() + (3 * 86_400_000));
+  const batch = writeBatch(database);
+  batch.update(doc(database, "users", actor.uid), {
+    emailVerified: true,
+    emailVerifiedAt: serverTimestamp(),
+    trialStartedAt: serverTimestamp(),
+    trialEndsAt,
+    accessStatus: "temporary",
+    accessExpiresAt: trialEndsAt,
+    updatedAt: serverTimestamp(),
+  });
+  batch.set(doc(database, "auditLogs", `email-verification-${actor.uid}`), {
+    actorId: actor.uid,
+    action: "user.email_verified_trial_started",
+    targetType: "user",
+    targetId: actor.uid,
+    details: { accountType: "buyer", days: 3, trialStarted: true },
+    createdAt: serverTimestamp(),
+  });
+  return batch.commit();
 }
 
 async function readVerificationState(uid) {
@@ -403,4 +495,102 @@ test("stale Auth token cannot synchronize Firestore verification", async () => {
   assert.equal(state.profile.emailVerified, false);
   assert.equal(state.grants.length, 0);
   assert.equal(state.audits.length, 0);
+});
+
+test("buyer Trial activation rejects a partial transaction without credit and grant records", async () => {
+  await assertFails(commitIncompleteBuyerTrial("trialCompletenessProbe"));
+  const state = await readVerificationState(verificationUsers.trialCompletenessProbe.uid);
+  assert.equal(state.profile.emailVerified, false);
+  assert.equal(state.profile.accessStatus, "pending");
+  assert.equal(state.credits.length, 0);
+  assert.equal(state.grants.length, 0);
+  assert.equal(state.audits.length, 0);
+});
+
+test("legacy Admin and Owner profiles synchronize missing or false verification without receiving a Trial", async () => {
+  for (const key of ["legacyAdmin", "legacyOwner"]) {
+    await assertSucceeds(synchronizeVerification(key));
+    const state = await readVerificationState(verificationUsers[key].uid);
+    assert.equal(state.profile.emailVerified, true);
+    assert.ok(state.profile.emailVerifiedAt instanceof Timestamp);
+    assert.equal(state.profile.role, verificationUsers[key].role);
+    assert.equal(state.profile.accountType, verificationUsers[key].accountType);
+    assert.equal(state.profile.accessStatus, "active");
+    assert.equal(state.credits.length, 0);
+    assert.equal(state.grants.length, 0);
+    assert.equal(state.audits.length, 1);
+    assert.equal(state.audits[0].data().action, "user.email_verified");
+    assert.deepEqual(state.audits[0].data().details, { trialStarted: false });
+  }
+});
+
+test("a legacy deterministic audit keeps stale-profile synchronization idempotent", async () => {
+  await assertSucceeds(synchronizeVerification("legacyAdminWithAudit"));
+  const state = await readVerificationState(verificationUsers.legacyAdminWithAudit.uid);
+  assert.equal(state.profile.emailVerified, true);
+  assert.equal(state.credits.length, 0);
+  assert.equal(state.grants.length, 0);
+  assert.equal(state.audits.length, 1);
+});
+
+test("verification cannot target another user or run without the atomic deterministic audit", async () => {
+  await assertFails(commitEmailOnlyVerification("protectedProbe", { targetKey: "legacyAdminWithAudit" }));
+  const database = verificationContextFor("protectedProbe");
+  await assertFails(updateDoc(doc(database, "users", verificationUsers.protectedProbe.uid), {
+    emailVerified: true,
+    emailVerifiedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }));
+});
+
+test("verification cannot change protected profile fields in the same write", async () => {
+  const protectedChanges = [
+    { role: "admin" },
+    { accountType: "buyer" },
+    { status: "suspended" },
+    { accessExpiresAt: Timestamp.fromMillis(Date.now() + 86_400_000) },
+    { supplierProfileId: "supplier-hijack" },
+  ];
+  for (const userPatch of protectedChanges) {
+    await assertFails(commitEmailOnlyVerification("protectedProbe", { userPatch }));
+  }
+});
+
+test("verification cannot transition true to false", async () => {
+  const database = verificationContextFor("alreadyVerified");
+  await assertFails(updateDoc(doc(database, "users", verificationUsers.alreadyVerified.uid), {
+    emailVerified: false,
+    emailVerifiedAt: null,
+    updatedAt: serverTimestamp(),
+  }));
+});
+
+test("verification audit creation is atomic, exact, immutable, and non-repeatable", async () => {
+  const actor = verificationUsers.auditProbe;
+  const database = verificationContextFor("auditProbe");
+  const auditRef = doc(database, "auditLogs", `email-verification-${actor.uid}`);
+  const validAudit = {
+    actorId: actor.uid,
+    action: "user.email_verified",
+    targetType: "user",
+    targetId: actor.uid,
+    details: { trialStarted: false },
+    createdAt: serverTimestamp(),
+  };
+
+  await assertFails(setDoc(auditRef, validAudit));
+  await assertFails(commitEmailOnlyVerification("auditProbe", {
+    auditPatch: { action: "platform.settings.changed" },
+  }));
+  await assertFails(commitEmailOnlyVerification("auditProbe", {
+    auditPatch: { targetId: verificationUsers.legacyAdmin.uid },
+  }));
+  await assertFails(commitEmailOnlyVerification("auditProbe", {
+    auditPatch: { details: { accountType: null, trialStarted: false } },
+  }));
+
+  await assertSucceeds(commitEmailOnlyVerification("auditProbe"));
+  await assertFails(setDoc(auditRef, validAudit));
+  await assertFails(updateDoc(auditRef, { details: { trialStarted: true } }));
+  await assertFails(deleteDoc(auditRef));
 });

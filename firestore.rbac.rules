@@ -210,62 +210,159 @@ service cloud.firestore {
         && request.resource.data.approvedNewSupplierContributions == 0
         && request.resource.data.consumedApprovedSupplierContributions == 0;
     }
-    function isValidEmailVerificationSync() {
-      return signedIn()
-        && request.auth.token.email_verified == true
-        && resource.data.emailVerified == false
-        && request.resource.data.emailVerified == true
-        && request.resource.data.emailVerifiedAt is timestamp
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["emailVerified", "emailVerifiedAt", "updatedAt"]);
+    function storedEmailVerificationIsStale(data) {
+      return !("emailVerified" in data) || data.emailVerified == false;
     }
-    function isValidBuyerTrialActivation() {
+    function verificationAuditId(userId) {
+      return "email-verification-" + userId;
+    }
+    function verificationAuditBefore(userId) {
+      return get(/databases/$(database)/documents/auditLogs/$(verificationAuditId(userId)));
+    }
+    function verificationAuditAfter(userId) {
+      return getAfter(/databases/$(database)/documents/auditLogs/$(verificationAuditId(userId)));
+    }
+    function verificationAuditExistsBefore(userId) {
+      return exists(/databases/$(database)/documents/auditLogs/$(verificationAuditId(userId)));
+    }
+    function verificationAuditExistsAfter(userId) {
+      return existsAfter(/databases/$(database)/documents/auditLogs/$(verificationAuditId(userId)));
+    }
+    function userAfter(userId) {
+      return getAfter(/databases/$(database)/documents/users/$(userId)).data;
+    }
+    function isEmailOnlyVerificationTransition(before, after) {
+      return storedEmailVerificationIsStale(before)
+        && after.emailVerified == true
+        && after.emailVerifiedAt == request.time
+        && after.updatedAt == request.time
+        && after.diff(before).affectedKeys().hasOnly(["emailVerified", "emailVerifiedAt", "updatedAt"]);
+    }
+    function isBuyerTrialVerificationTransition(before, after) {
+      return storedEmailVerificationIsStale(before)
+        && before.role == "contributor"
+        && before.accountType == "buyer"
+        && before.accessStatus == "pending"
+        && before.accessExpiresAt == null
+        && before.trialStartedAt == null
+        && before.trialEndsAt == null
+        && after.emailVerified == true
+        && after.emailVerifiedAt == request.time
+        && after.accessStatus == "temporary"
+        && after.accessExpiresAt is timestamp
+        && after.accessExpiresAt > request.time
+        && after.accessExpiresAt <= request.time + duration.value(4, "d")
+        && after.trialStartedAt == request.time
+        && after.trialEndsAt == after.accessExpiresAt
+        && after.updatedAt == request.time
+        && after.diff(before).affectedKeys().hasOnly(["emailVerified", "emailVerifiedAt", "trialStartedAt", "trialEndsAt", "accessStatus", "accessExpiresAt", "updatedAt"]);
+    }
+    function existingVerificationAuditMatches(userId) {
+      let audit = verificationAuditBefore(userId);
+      return verificationAuditExistsBefore(userId)
+        && audit.data.actorId == userId
+        && audit.data.action in ["user.email_verified", "user.email_verified_trial_started"]
+        && audit.data.targetType == "user"
+        && audit.data.targetId == userId;
+    }
+    function newEmailVerificationAuditMatches(userId) {
+      let audit = verificationAuditAfter(userId).data;
+      return !verificationAuditExistsBefore(userId)
+        && verificationAuditExistsAfter(userId)
+        && audit.keys().hasOnly(["actorId", "action", "targetType", "targetId", "details", "createdAt"])
+        && audit.actorId == userId
+        && audit.action == "user.email_verified"
+        && audit.targetType == "user"
+        && audit.targetId == userId
+        && audit.details is map
+        && audit.details.keys().hasOnly(["trialStarted"])
+        && audit.details.trialStarted == false
+        && audit.createdAt == request.time;
+    }
+    function newBuyerTrialAuditMatches(userId) {
+      let audit = verificationAuditAfter(userId).data;
+      return !verificationAuditExistsBefore(userId)
+        && verificationAuditExistsAfter(userId)
+        && audit.keys().hasOnly(["actorId", "action", "targetType", "targetId", "details", "createdAt"])
+        && audit.actorId == userId
+        && audit.action == "user.email_verified_trial_started"
+        && audit.targetType == "user"
+        && audit.targetId == userId
+        && audit.details is map
+        && audit.details.keys().hasOnly(["accountType", "days", "trialStarted"])
+        && audit.details.accountType == "buyer"
+        && audit.details.days == 3
+        && audit.details.trialStarted == true
+        && audit.createdAt == request.time;
+    }
+    function isValidEmailVerificationSync(userId) {
+      return isSelf(userId)
+        && request.auth.token.email_verified == true
+        && isEmailOnlyVerificationTransition(resource.data, request.resource.data)
+        && (existingVerificationAuditMatches(userId) || newEmailVerificationAuditMatches(userId));
+    }
+    function isValidBuyerTrialActivation(userId) {
+      return isSelf(userId)
+        && request.auth.token.email_verified == true
+        && isBuyerTrialVerificationTransition(resource.data, request.resource.data)
+        && newBuyerTrialAuditMatches(userId)
+        && buyerTrialDocumentsAfterMatch(userId);
+    }
+    function isValidTrialCore(data, documentId) {
       return signedIn()
         && request.auth.token.email_verified == true
-        && resource.data.accountType == "buyer"
-        && resource.data.accessStatus == "pending"
-        && resource.data.accessExpiresAt == null
-        && resource.data.trialStartedAt == null
-        && resource.data.trialEndsAt == null
-        && resource.data.emailVerified == false
-        && request.resource.data.emailVerified == true
-        && request.resource.data.emailVerifiedAt is timestamp
-        && request.resource.data.accessStatus == "temporary"
-        && request.resource.data.accessExpiresAt is timestamp
-        && request.resource.data.accessExpiresAt > request.time
-        && request.resource.data.accessExpiresAt <= request.time + duration.value(4, "d")
-        && request.resource.data.trialStartedAt is timestamp
-        && request.resource.data.trialEndsAt == request.resource.data.accessExpiresAt
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["emailVerified", "emailVerifiedAt", "trialStartedAt", "trialEndsAt", "accessStatus", "accessExpiresAt", "updatedAt"]);
+        && documentId == "trial-" + request.auth.uid
+        && data.userId == request.auth.uid
+        && data.source == "trial_access"
+        && data.grantType == "trial_access"
+        && data.approvedSubmissionIds is list
+        && data.approvedSubmissionIds.size() == 0
+        && data.approvedSupplierCount == 0
+        && data.daysGranted == 3
+        && data.status == "applied"
+        && data.createdBy == request.auth.uid
+        && data.previousExpiry == null
+        && data.newExpiry == userAfter(request.auth.uid).accessExpiresAt
+        && data.grantedAt == request.time
+        && data.createdAt == request.time
+        && isBuyerTrialVerificationTransition(myUser(), userAfter(request.auth.uid));
     }
     function isValidOwnTrialCredit(documentId) {
-      return signedIn() && request.auth.token.email_verified == true
-        && isBuyer()
-        && documentId == "trial-" + request.auth.uid
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.source == "trial_access"
-        && request.resource.data.grantType == "trial_access"
-        && request.resource.data.approvedSubmissionIds is list
-        && request.resource.data.approvedSupplierCount == 0
-        && request.resource.data.daysGranted is int
-        && request.resource.data.daysGranted >= 0
-        && request.resource.data.daysGranted <= 14
-        && request.resource.data.status == "applied"
-        && request.resource.data.createdBy == request.auth.uid;
+      return request.resource.data.keys().hasOnly(["userId", "grantType", "source", "approvedSubmissionIds", "approvedSupplierCount", "daysGranted", "previousExpiry", "newExpiry", "status", "grantedAt", "createdAt", "appliedAt", "createdBy"])
+        && isValidTrialCore(request.resource.data, documentId)
+        && request.resource.data.appliedAt == request.time;
+    }
+    function isValidOwnTrialGrant(documentId) {
+      return request.resource.data.keys().hasOnly(["userId", "source", "grantType", "approvedSubmissionIds", "approvedSupplierCount", "daysGranted", "status", "grantedAt", "previousExpiry", "newExpiry", "createdBy", "auditReference", "createdAt"])
+        && isValidTrialCore(request.resource.data, documentId)
+        && request.resource.data.auditReference == verificationAuditId(request.auth.uid);
+    }
+    function buyerTrialDocumentsAfterMatch(userId) {
+      let documentId = "trial-" + userId;
+      let creditPath = /databases/$(database)/documents/accessCredits/$(documentId);
+      let grantPath = /databases/$(database)/documents/accessGrants/$(documentId);
+      return !exists(creditPath)
+        && !exists(grantPath)
+        && existsAfter(creditPath)
+        && existsAfter(grantPath);
     }
     function isValidOwnVerificationAudit(documentId) {
-      return signedIn() && request.auth.token.email_verified == true
-        && documentId == "email-verification-" + request.auth.uid
-        && request.resource.data.actorId == request.auth.uid
-        && request.resource.data.action in ["user.email_verified", "user.email_verified_trial_started"]
-        && (request.resource.data.action == "user.email_verified" || isBuyer())
-        && request.resource.data.targetType == "user"
-        && request.resource.data.targetId == request.auth.uid;
+      let before = myUser();
+      let after = userAfter(request.auth.uid);
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && documentId == verificationAuditId(request.auth.uid)
+        && !verificationAuditExistsBefore(request.auth.uid)
+        && ((isEmailOnlyVerificationTransition(before, after) && newEmailVerificationAuditMatches(request.auth.uid))
+          || (isBuyerTrialVerificationTransition(before, after)
+            && newBuyerTrialAuditMatches(request.auth.uid)
+            && buyerTrialDocumentsAfterMatch(request.auth.uid)));
     }
 
     match /users/{userId} {
       allow create: if isValidSelfRegistration(userId);
       allow read: if isSelf(userId) || isAdmin();
-      allow update: if canAdminUpdateUser() || (isSelf(userId) && (onlySelfEditableProfileFields() || isValidEmailVerificationSync() || isValidBuyerTrialActivation()));
+      allow update: if canAdminUpdateUser() || (isSelf(userId) && (onlySelfEditableProfileFields() || isValidEmailVerificationSync(userId) || isValidBuyerTrialActivation(userId)));
       allow delete: if isOwner() && userId != request.auth.uid;
     }
 
@@ -808,7 +905,7 @@ service cloud.firestore {
     }
 
     match /accessCredits/{creditId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create: if isAdmin() || isValidOwnTrialCredit(creditId); allow update, delete: if isAdmin(); }
-    match /accessGrants/{grantId} { allow read: if isAdmin() || (signedIn() && (grantId == "trial-" + request.auth.uid || resource.data.userId == request.auth.uid)); allow create: if isAdmin() || isValidOwnTrialCredit(grantId); allow update, delete: if false; }
+    match /accessGrants/{grantId} { allow read: if isAdmin() || (signedIn() && (grantId == "trial-" + request.auth.uid || resource.data.userId == request.auth.uid)); allow create: if isAdmin() || isValidOwnTrialGrant(grantId); allow update, delete: if false; }
     match /contributionLogs/{logId} { allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid); allow create, update, delete: if isAdmin(); }
     match /categories/{categoryId} { allow read: if signedIn(); allow create, update: if isAdmin(); allow delete: if isOwner(); }
     match /settings/{settingId} {
@@ -816,6 +913,10 @@ service cloud.firestore {
       allow create, update: if isOwner() || (hasAnyRole(["admin"]) && settingId == "adminOperations");
       allow delete: if isOwner();
     }
-    match /auditLogs/{logId} { allow read: if isAdmin(); allow create: if isAdmin() || isValidOwnVerificationAudit(logId) || isValidOwnSupplierImportAudit(); allow update, delete: if false; }
+    match /auditLogs/{logId} {
+      allow read: if isAdmin() || (signedIn() && logId == verificationAuditId(request.auth.uid));
+      allow create: if isAdmin() || isValidOwnVerificationAudit(logId) || isValidOwnSupplierImportAudit();
+      allow update, delete: if false;
+    }
   }
 }

@@ -22,6 +22,12 @@ import { isFuture } from "../utils/date";
 import { getUserProfile, updateUserProfile } from "../services/firestore";
 import { demoClearSession, demoGetCurrentUser, demoLogin, demoRegister } from "../services/localDemo";
 import { activateVerifiedUser, createUserProfileSafely, type UserProfileInput } from "../services/registration";
+import {
+  refreshVerifiedEmail,
+  resendVerificationEmail,
+  synchronizeVerifiedProfile,
+  type VerificationResendResult,
+} from "../services/emailVerification";
 import { isValidEmailAddress, isValidIraqiPhone, normalizeAccountEmail, normalizeIraqiPhone } from "../utils/accountValidation";
 
 export interface RegisterInput extends UserProfileInput {
@@ -40,7 +46,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   completeMissingProfile: (input: UserProfileInput) => Promise<void>;
-  sendVerification: () => Promise<void>;
+  sendVerification: () => Promise<VerificationResendResult>;
   refreshEmailVerification: () => Promise<boolean>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -64,6 +70,12 @@ function profileSetupError() {
   return error;
 }
 
+function applyAuthLanguage(language?: string) {
+  if (!auth) return;
+  const stored = typeof window === "undefined" ? "" : localStorage.getItem("mujahiz-iq-locale") || "";
+  auth.languageCode = (language || stored).startsWith("ar") ? "ar" : "en";
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
@@ -82,14 +94,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let profile = await getUserProfile(user.uid);
     let verificationSynchronized = !isFirebaseConfigured || Boolean(user.emailVerified);
     if (user.emailVerified && profile) {
-      verificationSynchronized = false;
-      try {
-        await user.getIdToken(true);
-        await activateVerifiedUser(user.uid);
-        profile = await getUserProfile(user.uid);
-        verificationSynchronized = Boolean(profile?.emailVerified);
-      } catch {
-        // Keep protected routes on the verification screen until Auth and Firestore agree.
+      verificationSynchronized = profile.emailVerified === true;
+      if (!verificationSynchronized) {
+        try {
+          await user.getIdToken(true);
+          await synchronizeVerifiedProfile(user.uid, activateVerifiedUser);
+          profile = await getUserProfile(user.uid);
+          verificationSynchronized = Boolean(profile?.emailVerified);
+        } catch {
+          // Keep protected routes on the verification screen for an explicit retry.
+        }
       }
     }
 
@@ -175,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const credential = await createUserWithEmailAndPassword(auth, email, input.password);
           try { await createUserProfileSafely(credential.user.uid, email, { ...input, phone }); } catch { throw profileSetupError(); }
+          applyAuthLanguage(input.language);
           await sendEmailVerification(credential.user, getEmailActionSettings("/verify-email"));
           await loadProfile(credential.user);
         } finally { setLoading(false); }
@@ -184,27 +199,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!current?.email) throw profileSetupError();
         if (!isValidIraqiPhone(input.phone)) throw Object.assign(new Error("invalid_phone"), { code: "invalid_phone" });
         await createUserProfileSafely(current.uid, current.email, { ...input, phone: normalizeIraqiPhone(input.phone) });
-        if (!current.emailVerified) await sendEmailVerification(current, getEmailActionSettings("/verify-email"));
+        if (!current.emailVerified) {
+          applyAuthLanguage(input.language);
+          await sendEmailVerification(current, getEmailActionSettings("/verify-email"));
+        }
         await loadProfile(current);
       },
       sendVerification: async () => {
         const current = auth?.currentUser;
-        if (!current || current.emailVerified) return;
-        await sendEmailVerification(current, getEmailActionSettings("/verify-email"));
+        if (!current) throw Object.assign(new Error("auth/user-not-found"), { code: "auth/user-not-found" });
+        applyAuthLanguage(appUser?.language);
+        const result = await resendVerificationEmail({
+          user: current,
+          getCurrentUser: () => auth?.currentUser || null,
+          synchronize: activateVerifiedUser,
+          actionSettings: getEmailActionSettings("/verify-email"),
+          sendEmail: sendEmailVerification,
+        });
+        if (result === "already_verified") await loadProfile(auth?.currentUser || current);
+        return result;
       },
       refreshEmailVerification: async () => {
         const current = auth?.currentUser;
         if (!current) return false;
 
-        await current.reload();
-        const refreshed = auth?.currentUser;
-        if (!refreshed?.emailVerified) {
+        const isVerified = await refreshVerifiedEmail({
+          user: current,
+          getCurrentUser: () => auth?.currentUser || null,
+          synchronize: activateVerifiedUser,
+        });
+        const refreshed = auth?.currentUser || current;
+        if (!isVerified) {
+          setFirebaseUser(refreshed);
           setVerified(false);
           return false;
         }
 
-        await refreshed.getIdToken(true);
-        await activateVerifiedUser(refreshed.uid);
         const profile = await getUserProfile(refreshed.uid);
         const verificationSynchronized = Boolean(profile?.emailVerified);
         setFirebaseUser(refreshed);
