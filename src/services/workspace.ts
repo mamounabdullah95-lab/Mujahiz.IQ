@@ -555,9 +555,12 @@ export async function markNotificationRead(notificationId: string, userId: strin
 }
 
 export async function markAllNotificationsRead(userId: string, notificationIds?: string[]) {
-  const items = notificationIds
-    ? notificationIds.map((id) => ({ id, userId, read: false } as WorkspaceNotification))
-    : await listNotifications(userId);
+  const requestedIds = notificationIds ? new Set(notificationIds) : null;
+  const items = requestedIds && !isFirebaseConfigured
+    ? localRead<WorkspaceNotification>("notifications").filter((item) => item.userId === userId && requestedIds.has(item.id))
+    : requestedIds
+      ? [...requestedIds].map((id) => ({ id, userId, read: false } as WorkspaceNotification))
+      : await listNotifications(userId);
   if (!isFirebaseConfigured) {
     items.forEach((item) => localUpsert("notifications", { ...item, read: true }));
     return;
