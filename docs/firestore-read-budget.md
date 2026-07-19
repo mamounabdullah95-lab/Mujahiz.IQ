@@ -59,6 +59,7 @@ Listener transport reconnects are controlled by the Firebase SDK and are not cou
 - Notifications are scoped by authenticated UID, ordered by `createdAt` and document ID, and paged 25 at a time.
 - The unread badge is exact for the loaded recent window. When older history exists, it shows the loaded unread count as a lower bound (`N+`) instead of presenting a lifetime-exact value.
 - Mark-all updates only the loaded bounded window while older pages remain; both Arabic and English labels state this explicitly. Loading more expands that window without rereading previous pages.
+- A single mark-loaded action is capped at 400 unread documents, below Firestore's batch limit; any additional loaded unread items remain visible for a subsequent explicit action.
 - Status lists are ordered and limited on the server to 100 records.
 - Notification mark-one performs one update and no reload.
 - Notification mark-all performs one bounded batch and no prerequisite list query when IDs are already loaded.
