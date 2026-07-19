@@ -13,6 +13,7 @@ export function NotificationBell() {
     unreadCount,
     loading,
     error,
+    hasMore,
     refresh,
     markRead,
     markAllRead,
@@ -30,7 +31,7 @@ export function NotificationBell() {
         <Bell className="h-5 w-5" aria-hidden="true" />
         {unreadCount ? (
           <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-clay px-1 text-center text-xs font-bold leading-5 text-white">
-            {unreadCount > 99 ? "99+" : unreadCount}
+            {unreadCount > 99 ? "99+" : hasMore ? `${unreadCount}+` : unreadCount}
           </span>
         ) : null}
       </button>
@@ -44,7 +45,7 @@ export function NotificationBell() {
                 <button
                   className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
                   type="button"
-                  aria-label={locale === "ar" ? "تحديد الكل كمقروء" : "Mark all as read"}
+                  aria-label={hasMore ? (locale === "ar" ? "تحديد الإشعارات المحملة كمقروءة" : "Mark loaded notifications as read") : (locale === "ar" ? "تحديد الكل كمقروء" : "Mark all as read")}
                   onClick={() => void markAllRead()}
                 >
                   <CheckCheck className="h-4 w-4" />
