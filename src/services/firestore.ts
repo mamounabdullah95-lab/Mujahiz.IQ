@@ -617,84 +617,7 @@ export async function listTermSuggestions(status: TermSuggestion["status"] = "pe
 export async function approveTermSuggestion(
   suggestion: TermSuggestion,
   actorId: string,
-  material: Pick<MaterialTerm, "canonicalEn" | "canonicalAr" | "category" | "subcategories" | "synonyms" | "brands" | "standards">,
-) {
-  if (!isFirebaseConfigured) {
-    return demo.demoApproveTermSuggestion(suggestion, actorId, material);
-  }
-  const materialDoc = doc(materialTermsRef);
-  const suggestionDoc = doc(termSuggestionsRef, suggestion.id);
-  const auditDoc = doc(auditLogsRef);
-  const normalizedSynonyms = Array.from(new Set([suggestion.term, ...material.synonyms].map((item) => item.trim()).filter(Boolean)));
-  const payload: MaterialTerm = {
-    id: materialDoc.id,
-    canonicalEn: material.canonicalEn.trim(),
-    canonicalAr: material.canonicalAr.trim(),
-    category: material.category,
-    subcategories: material.subcategories,
-    synonyms: normalizedSynonyms,
-    brands: material.brands,
-    standards: material.standards,
-    status: "active",
-    createdBy: actorId,
-    updatedBy: actorId,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-  const batch = writeBatch(db);
-  batch.set(materialDoc, payload);
-  batch.update(suggestionDoc, {
-    status: "approved",
-    materialTermId: materialDoc.id,
-    reviewedAt: serverTimestamp(),
-    reviewedBy: actorId,
-    updatedAt: serverTimestamp(),
-  });
-  batch.set(auditDoc, {
-    actorId,
-    action: "term_suggestion.approved",
-    targetType: "termSuggestion",
-    targetId: suggestion.id,
-    details: { term: suggestion.term, materialTermId: materialDoc.id },
-    createdAt: serverTimestamp(),
-  } satisfies Omit<AuditLog, "id">);
-  await batch.commit();
-}
-
-export async function ignoreTermSuggestion(suggestion: TermSuggestion, actorId: string) {
-  if (!isFirebaseConfigured) {
-    return demo.demoIgnoreTermSuggestion(suggestion, actorId);
-  }
-  await updateDoc(doc(termSuggestionsRef, suggestion.id), {
-    status: "ignored",
-    reviewedAt: serverTimestamp(),
-    reviewedBy: actorId,
-    updatedAt: serverTimestamp(),
-  });
-  await addDoc(auditLogsRef, {
-    actorId,
-    action: "term_suggestion.ignored",
-    targetType: "termSuggestion",
-    targetId: suggestion.id,
-    details: { term: suggestion.term },
-    createdAt: serverTimestamp(),
-  } satisfies Omit<AuditLog, "id">);
-}
-
-function stableSuggestionId(normalizedTerm: string) {
-  let hash = 0;
-  for (let index = 0; index < normalizedTerm.length; index += 1) {
-    hash = (hash * 31 + normalizedTerm.charCodeAt(index)) | 0;
-  }
-  const suffix = normalizedTerm.replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 28);
-  return `term_${Math.abs(hash)}${suffix ? `_${suffix}` : ""}`;
-}
-
-export async function getSupplier(supplierId: string) {
-  if (!isFirebaseConfigured) {
-    return demo.demoGetSupplier(supplierId);
-  }
-  const snapshot = await getDoc(doc(suppliersRef, supplierId));
+  material: Pick<MaterialTerm, "canonicalEn" | "canonicalAr" | "cate…668 tokens truncated…pliersRef, supplierId));
   return snapshot.exists() ? withId<Supplier>(snapshot) : null;
 }
 
@@ -938,7 +861,7 @@ export async function approveSupplierSubmission(
       titleEn: "Supplier submission approved",
       bodyAr: daysToGrant > 0 ? "تم اعتماد السجل ومنح فترة وصول إضافية." : "تم اعتماد سجل المجهز وإضافته إلى الدليل.",
       bodyEn: daysToGrant > 0 ? "The record was approved and additional access was granted." : "The supplier record was approved and added to the directory.",
-      link: "/buyer/suppliers/submissions",
+      link: "/my-submissions",
       read: false,
       createdAt: serverTimestamp(),
     });
@@ -1214,5 +1137,6 @@ export async function updateSupplierFeedbackStatus(
     } satisfies Omit<AuditLog, "id">);
   });
 }
+
 
 
