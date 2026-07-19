@@ -151,7 +151,6 @@ function PortalShell() {
     if (!value) return;
     if (role === "buyer") navigate(`/directory?q=${encodeURIComponent(value)}`);
     else if (role === "admin" || role === "super_admin") navigate(`/admin/suppliers?q=${encodeURIComponent(value)}`);
-    else navigate("/supplier");
   }
 
   const initials = appUser.fullName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "M";
@@ -170,10 +169,12 @@ function PortalShell() {
             </div>
             <h1 className="mt-1 truncate text-lg font-black text-ink sm:text-xl">{pageTitle}</h1>
           </div>
-          <form className="relative hidden w-full max-w-sm md:block" onSubmit={submitSearch}>
-            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden="true" />
-            <input className="h-11 w-full rounded-xl border border-borderSoft bg-creamLight ps-10 pe-3 text-sm font-semibold outline-none transition focus:border-amber focus:ring-2 focus:ring-amber/15" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={isRtl ? "بحث سريع..." : "Quick search..."} />
-          </form>
+          {role !== "supplier" ? (
+            <form className="relative hidden w-full max-w-sm md:block" onSubmit={submitSearch}>
+              <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden="true" />
+              <input className="h-11 w-full rounded-xl border border-borderSoft bg-creamLight ps-10 pe-3 text-sm font-semibold outline-none transition focus:border-amber focus:ring-2 focus:ring-amber/15" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={isRtl ? "بحث سريع..." : "Quick search..."} />
+            </form>
+          ) : null}
           <LanguageToggle />
           <NotificationBell />
           <div className="relative">
@@ -237,3 +238,4 @@ function Sidebar({ role, items, locale, collapsed, onCollapse }: { role: NonNull
     </div>
   );
 }
+
