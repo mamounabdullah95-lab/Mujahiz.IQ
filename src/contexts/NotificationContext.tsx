@@ -54,12 +54,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [revision, setRevision] = useState(0);
   const sessionRef = useRef(0);
   const paginationStartedRef = useRef(false);
+  const loadMoreInFlightRef = useRef(false);
 
   useEffect(() => {
     const session = ++sessionRef.current;
     setRecent([]);
     setOlder([]);
     paginationStartedRef.current = false;
+    loadMoreInFlightRef.current = false;
     setCursor(null);
     setHasMore(false);
     setLoadingMore(false);
@@ -99,14 +101,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(() => {
     setOlder([]);
     paginationStartedRef.current = false;
+    loadMoreInFlightRef.current = false;
     setCursor(null);
     setRevision((value) => value + 1);
   }, []);
 
   const loadMore = useCallback(async () => {
-    if (!userId || !cursor || !hasMore || loadingMore) return;
+    if (!userId || !cursor || !hasMore || loadingMore || loadMoreInFlightRef.current) return;
     const session = sessionRef.current;
     paginationStartedRef.current = true;
+    loadMoreInFlightRef.current = true;
     setLoadingMore(true);
     try {
       const page = await listNotificationsPage(userId, cursor);
@@ -117,6 +121,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     } catch (reason) {
       if (session === sessionRef.current) setError(reason instanceof Error ? reason.message : "notifications_load_failed");
     } finally {
+      loadMoreInFlightRef.current = false;
       if (session === sessionRef.current) setLoadingMore(false);
     }
   }, [cursor, hasMore, loadingMore, userId]);
@@ -127,6 +132,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const optimistic = (group: WorkspaceNotification[]) => group.map((item) => (
       item.id === notificationId ? { ...item, read: true } : item
     ));
+    setError("");
     setRecent(optimistic);
     setOlder(optimistic);
     try {
@@ -139,7 +145,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setRecent(rollback);
         setOlder(rollback);
       }
-      throw reason;
+      setError(reason instanceof Error ? reason.message : "notifications_update_failed");
     }
   }, [items, userId]);
 
@@ -151,15 +157,20 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const optimistic = (group: WorkspaceNotification[]) => group.map((item) => (
       unread.has(item.id) ? { ...item, read: true } : item
     ));
+    setError("");
     setRecent(optimistic);
     setOlder(optimistic);
     try {
       await markAllNotificationsRead(userId, unreadIds);
     } catch (reason) {
-      refresh();
-      throw reason;
+      const rollback = (group: WorkspaceNotification[]) => group.map((item) => (
+        unread.has(item.id) ? { ...item, read: false } : item
+      ));
+      setRecent(rollback);
+      setOlder(rollback);
+      setError(reason instanceof Error ? reason.message : "notifications_update_failed");
     }
-  }, [items, refresh, userId]);
+  }, [items, userId]);
 
   const value = useMemo<NotificationContextValue>(() => ({
     items,
