@@ -504,8 +504,8 @@ export function WorkspaceNotificationsPage() {
     markAllRead,
   } = useNotifications();
   const text = locale === "ar"
-    ? { eyebrow: "مركز التنبيهات", title: "الإشعارات", description: "تحديثات الاعتماد والرسائل وطلبات الأسعار والوصول.", all: "تحديد الكل كمقروء", empty: "لا توجد إشعارات", open: "فتح", refresh: "تحديث", more: "تحميل المزيد" }
-    : { eyebrow: "Notification center", title: "Notifications", description: "Approval, messaging, RFQ, and access updates.", all: "Mark all as read", empty: "No notifications", open: "Open", refresh: "Refresh", more: "Load more" };
+    ? { eyebrow: "مركز التنبيهات", title: "الإشعارات", description: "تحديثات الاعتماد والرسائل وطلبات الأسعار والوصول.", all: "تحديد الكل كمقروء", allLoaded: "تحديد الإشعارات المحملة كمقروءة", empty: "لا توجد إشعارات", open: "فتح", refresh: "تحديث", more: "تحميل المزيد" }
+    : { eyebrow: "Notification center", title: "Notifications", description: "Approval, messaging, RFQ, and access updates.", all: "Mark all as read", allLoaded: "Mark loaded notifications as read", empty: "No notifications", open: "Open", refresh: "Refresh", more: "Load more" };
 
   return <div className="overflow-hidden rounded-[18px] border border-borderSoft bg-creamLight shadow-card">
     <DashboardPageHeader
@@ -514,7 +514,7 @@ export function WorkspaceNotificationsPage() {
       description={text.description}
       actions={<>
         <Button variant="secondary" onClick={refresh}><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />{text.refresh}</Button>
-        <Button variant="secondary" onClick={() => void markAllRead()}><CheckCheck className="h-4 w-4" />{text.all}</Button>
+        <Button variant="secondary" onClick={() => void markAllRead()}><CheckCheck className="h-4 w-4" />{hasMore ? text.allLoaded : text.all}</Button>
       </>}
     />
     <div className="grid gap-3 p-5 sm:p-7">
