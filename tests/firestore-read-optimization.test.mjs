@@ -61,6 +61,7 @@ test("notification bell uses one shared bounded source without timers or focus r
   assert.match(provider, /unsubscribe\(\)/);
   assert.match(provider, /setRecent\(\[\]\)/);
   assert.match(provider, /setOlder\(\[\]\)/);
+  assert.match(provider, /loadMoreInFlightRef\.current/);
   assert.match(workspace, /where\("userId", "==", userId\)/);
   assert.match(workspace, /orderBy\("createdAt", "desc"\)/);
   assert.match(workspace, /orderBy\(documentId\(\), "desc"\)/);
@@ -75,6 +76,8 @@ test("notification updates are optimistic, reversible, and never reload one docu
   assert.match(provider, /const rollback/);
   assert.match(provider, /markAllNotificationsRead\(userId, unreadIds\)/);
   assert.doesNotMatch(provider, /getDoc|getDocs|Promise\.all\(unreadIds/);
+  assert.match(provider, /notifications_update_failed/);
+  assert.doesNotMatch(provider, /throw reason/);
 });
 
 test("dashboard aggregation budgets are role-scoped, cached, and language independent", () => {
@@ -141,6 +144,7 @@ test("bounded unread state never presents a lifetime-exact count", () => {
   const page = read("src/pages/workspace/BuyerWorkspacePages.tsx");
   const budget = read("docs/firestore-read-budget.md");
 
+  assert.match(bell, /unreadCount \|\| hasMore/);
   assert.match(bell, /hasMore \? `\$\{unreadCount\}\+` : unreadCount/);
   assert.match(bell, /Mark loaded notifications as read/);
   assert.match(page, /hasMore \? text\.allLoaded : text\.all/);
