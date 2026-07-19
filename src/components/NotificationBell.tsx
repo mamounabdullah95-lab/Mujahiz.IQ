@@ -29,7 +29,7 @@ export function NotificationBell() {
         onClick={() => setOpen((current) => !current)}
       >
         <Bell className="h-5 w-5" aria-hidden="true" />
-        {unreadCount ? (
+        {unreadCount || hasMore ? (
           <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-clay px-1 text-center text-xs font-bold leading-5 text-white">
             {unreadCount > 99 ? "99+" : hasMore ? `${unreadCount}+` : unreadCount}
           </span>
