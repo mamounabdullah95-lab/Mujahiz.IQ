@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { Download, Pencil, Trash2 } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Download, Pencil, Search, Trash2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, ChipGroup, EmptyState, Section } from "../../components/ui";
 import { useAuth } from "../../contexts/AuthContext";
@@ -18,6 +18,7 @@ import {
 import { deleteApprovedSupplier, listSuppliers } from "../../services/firestore";
 import type { Locale, Supplier } from "../../types/domain";
 import { formatDate } from "../../utils/date";
+import { filterSuppliersForAdmin } from "../../utils/supplierAdminSearch";
 import { localizedCity, localizedSupplierGovernorates, localizedSupplierName } from "../../utils/supplierDisplay";
 
 const exportLabels = {
@@ -36,6 +37,25 @@ const exportLabels = {
     exportAllCategories: "\u0633\u064a\u062a\u0645 \u062a\u062d\u0645\u064a\u0644 \u062c\u0645\u064a\u0639 \u0627\u0644\u062a\u0635\u0646\u064a\u0641\u0627\u062a \u0639\u0646\u062f \u0639\u062f\u0645 \u062a\u062d\u062f\u064a\u062f \u0627\u064a \u062a\u0635\u0646\u064a\u0641.",
     exportSelectedCount: "\u062a\u0645 \u062a\u062d\u062f\u064a\u062f {{count}} \u062a\u0635\u0646\u064a\u0641.",
     totalSuppliers: "{{count}} \u0645\u062c\u0647\u0632 \u0645\u0639\u062a\u0645\u062f",
+  },
+} as const;
+
+const searchLabels = {
+  en: {
+    title: "Search approved suppliers",
+    placeholder: "Company, ID, email, phone, location, category...",
+    clear: "Clear search",
+    all: "Showing all approved suppliers.",
+    results: "{{count}} result(s) for \"{{query}}\".",
+    exportScope: "The download includes the current search results, then applies any selected category filters.",
+  },
+  ar: {
+    title: "\u0627\u0644\u0628\u062d\u062b \u0641\u064a \u0627\u0644\u0645\u062c\u0647\u0632\u064a\u0646 \u0627\u0644\u0645\u0639\u062a\u0645\u062f\u064a\u0646",
+    placeholder: "\u0627\u0644\u0634\u0631\u0643\u0629\u060c \u0627\u0644\u0645\u0639\u0631\u0641\u060c \u0627\u0644\u0628\u0631\u064a\u062f\u060c \u0627\u0644\u0647\u0627\u062a\u0641\u060c \u0627\u0644\u0645\u0648\u0642\u0639\u060c \u0627\u0644\u062a\u0635\u0646\u064a\u0641...",
+    clear: "\u0645\u0633\u062d \u0627\u0644\u0628\u062d\u062b",
+    all: "\u064a\u062a\u0645 \u0639\u0631\u0636 \u062c\u0645\u064a\u0639 \u0627\u0644\u0645\u062c\u0647\u0632\u064a\u0646 \u0627\u0644\u0645\u0639\u062a\u0645\u062f\u064a\u0646.",
+    results: "{{count}} \u0646\u062a\u064a\u062c\u0629 \u0644\u0644\u0628\u062d\u062b \u0639\u0646 \"{{query}}\".",
+    exportScope: "\u064a\u0634\u0645\u0644 \u0627\u0644\u062a\u062d\u0645\u064a\u0644 \u0646\u062a\u0627\u0626\u062c \u0627\u0644\u0628\u062d\u062b \u0627\u0644\u062d\u0627\u0644\u064a\u0629\u060c \u062b\u0645 \u064a\u0637\u0628\u0642 \u062a\u0635\u0641\u064a\u0629 \u0627\u0644\u062a\u0635\u0646\u064a\u0641\u0627\u062a \u0627\u0644\u0645\u062d\u062f\u062f\u0629.",
   },
 } as const;
 
@@ -150,21 +170,31 @@ export function AdminApprovedSuppliersPage() {
   const locale: Locale = i18n.language.startsWith("ar") ? "ar" : "en";
   const { firebaseUser, isOwner } = useAuth();
   const { taxonomy } = useTaxonomy();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [exportCategories, setExportCategories] = useState<string[]>([]);
   const [busyId, setBusyId] = useState("");
   const [message, setMessage] = useState("");
+  const query = searchParams.get("q") || "";
+  const filteredSuppliers = useMemo(() => filterSuppliersForAdmin(suppliers, query), [query, suppliers]);
   const exportSuppliers = useMemo(
     () =>
       exportCategories.length
-        ? suppliers.filter((supplier) => supplier.categories.some((category) => exportCategories.includes(category)))
-        : suppliers,
-    [exportCategories, suppliers],
+        ? filteredSuppliers.filter((supplier) => supplier.categories.some((category) => exportCategories.includes(category)))
+        : filteredSuppliers,
+    [exportCategories, filteredSuppliers],
   );
 
   useEffect(() => {
     void listSuppliers().then(setSuppliers);
   }, []);
+
+  function updateSearchQuery(value: string, replace = true) {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set("q", value);
+    else next.delete("q");
+    setSearchParams(next, { replace });
+  }
 
   async function removeSupplier(supplier: Supplier) {
     if (!firebaseUser || !isOwner) {
@@ -198,9 +228,35 @@ export function AdminApprovedSuppliersPage() {
         </Button>
       }
     >
+      <div className="rounded-md border border-slate-200 bg-white p-4">
+        <label className="grid gap-1.5 text-sm font-bold text-ink" htmlFor="admin-supplier-search">
+          <span>{searchLabels[locale].title}</span>
+          <span className="relative">
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <input
+              className="min-h-12 w-full rounded-[10px] border border-borderSoft bg-white/95 ps-10 pe-3 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-amber focus:ring-2 focus:ring-amber/15"
+              id="admin-supplier-search"
+              type="search"
+              value={query}
+              placeholder={searchLabels[locale].placeholder}
+              onChange={(event) => updateSearchQuery(event.target.value)}
+            />
+          </span>
+        </label>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-slate-500">
+          <span>{query ? searchLabels[locale].results.replace("{{count}}", String(filteredSuppliers.length)).replace("{{query}}", query) : searchLabels[locale].all}</span>
+          {query ? (
+            <Button type="button" variant="ghost" onClick={() => updateSearchQuery("", false)}>
+              <X className="h-4 w-4" aria-hidden="true" />
+              {searchLabels[locale].clear}
+            </Button>
+          ) : null}
+        </div>
+      </div>
       <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
         <div className="font-bold text-ink">{exportText(locale, "exportTitle")}</div>
         <p className="mt-1 text-sm text-slate-500">{exportText(locale, "exportBody")}</p>
+        <p className="mt-1 text-sm font-semibold text-slate-600">{searchLabels[locale].exportScope}</p>
         <div className="mt-3">
           <ChipGroup
             options={taxonomy.supplierCategories.map((item) => ({ value: item.value, label: labelFor(taxonomy.supplierCategories, item.value, locale) }))}
@@ -218,8 +274,8 @@ export function AdminApprovedSuppliersPage() {
         </div>
       </div>
       {message ? <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-ink">{message}</div> : null}
-      {!suppliers.length ? <EmptyState title={t("noResults")} /> : null}
-      <div className="overflow-x-auto rounded-md border border-slate-200">
+      {!filteredSuppliers.length ? <EmptyState title={t("noResults")} /> : null}
+      {filteredSuppliers.length ? <div className="overflow-x-auto rounded-md border border-slate-200">
         <table className="min-w-[680px] w-full text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
@@ -230,7 +286,7 @@ export function AdminApprovedSuppliersPage() {
             </tr>
           </thead>
           <tbody>
-            {suppliers.map((supplier) => (
+            {filteredSuppliers.map((supplier) => (
               <tr className="border-t border-slate-200" key={supplier.id}>
                 <td className="px-3 py-2 font-semibold text-ink">{localizedSupplierName(supplier, locale)}</td>
                 <td className="px-3 py-2">{supplier.categories.map((category) => labelFor(taxonomy.supplierCategories, category, locale)).join(", ")}</td>
@@ -260,7 +316,7 @@ export function AdminApprovedSuppliersPage() {
             ))}
           </tbody>
         </table>
-      </div>
+      </div> : null}
     </Section>
   );
 }

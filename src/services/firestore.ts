@@ -938,7 +938,7 @@ export async function approveSupplierSubmission(
       titleEn: "Supplier submission approved",
       bodyAr: daysToGrant > 0 ? "تم اعتماد السجل ومنح فترة وصول إضافية." : "تم اعتماد سجل المجهز وإضافته إلى الدليل.",
       bodyEn: daysToGrant > 0 ? "The record was approved and additional access was granted." : "The supplier record was approved and added to the directory.",
-      link: "/buyer/suppliers/submissions",
+      link: "/my-submissions",
       read: false,
       createdAt: serverTimestamp(),
     });
