@@ -135,3 +135,35 @@ test("documented read budgets cover all required lifecycle scenarios", () => {
     "Operational report",
   ]) assert.match(budget, new RegExp(scenario));
 });
+
+test("bounded unread state never presents a lifetime-exact count", () => {
+  const bell = read("src/components/NotificationBell.tsx");
+  const page = read("src/pages/workspace/BuyerWorkspacePages.tsx");
+  const budget = read("docs/firestore-read-budget.md");
+
+  assert.match(bell, /hasMore \? `\$\{unreadCount\}\+` : unreadCount/);
+  assert.match(bell, /Mark loaded notifications as read/);
+  assert.match(page, /hasMore \? text\.allLoaded : text\.all/);
+  assert.match(budget, /lower bound \(`N\+`\)/);
+  assert.match(budget, /Mark-all updates only the loaded bounded window/);
+});
+
+test("one shell provider owns notification lifecycle and UI states", () => {
+  const bootstrap = read("src/bootstrap.tsx");
+  const app = read("src/AppV2.tsx");
+  const provider = read("src/contexts/NotificationContext.tsx");
+  const bell = read("src/components/NotificationBell.tsx");
+  const page = read("src/pages/workspace/BuyerWorkspacePages.tsx");
+
+  assert.equal((bootstrap.match(/<NotificationProvider>/g) || []).length, 1);
+  assert.doesNotMatch(app, /NotificationProvider/);
+  assert.equal((provider.match(/subscribeNotifications\(/g) || []).length, 1);
+  assert.match(provider, /new Map<string, WorkspaceNotification>/);
+  assert.match(provider, /sessionRef\.current \+= 1/);
+  assert.match(provider, /paginationStartedRef\.current = false/);
+  assert.match(bell, /Notifications could not be loaded/);
+  assert.match(bell, /جارٍ التحميل/);
+  assert.match(page, /Load more/);
+  assert.match(page, /لا توجد إشعارات/);
+});
+
