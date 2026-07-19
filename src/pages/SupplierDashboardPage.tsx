@@ -1,5 +1,5 @@
 import { AlertTriangle, ArrowRight, Building2, CheckCircle2, ClipboardCheck, Eye, FileClock, FileText, MessageSquare, Plus } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { DashboardError, DashboardPageHeader, DashboardPanel, DashboardSkeleton, InlineEmptyState, MetricCard, ProgressBar } from "../components/DashboardPrimitives";
@@ -11,6 +11,7 @@ import { listConversations, listSupplierDocuments, listSupplierRfqs } from "../s
 import type { SupplierSubmission } from "../types/domain";
 import { formatDate } from "../utils/date";
 import { localizedSupplierName } from "../utils/supplierDisplay";
+import { loadSupplierDashboardData, type SupplierDashboardLoadError } from "../utils/supplierDashboardLoad";
 
 const copy = {
   ar: {
@@ -82,37 +83,54 @@ export function SupplierDashboardPage() {
   const { appUser, firebaseUser } = useAuth();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
   const text = copy[locale];
+  const partialWarning = locale === "ar"
+    ? "\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0628\u0639\u0636 \u0645\u0624\u0634\u0631\u0627\u062a \u0645\u0633\u0627\u062d\u0629 \u0627\u0644\u0639\u0645\u0644. \u064a\u0645\u0643\u0646\u0643 \u0645\u062a\u0627\u0628\u0639\u0629 \u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0627\u0644\u0635\u0641\u062d\u0629 \u0623\u0648 \u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629."
+    : "Some workspace metrics could not be loaded. You can continue using the page or retry.";
   const [submissions, setSubmissions] = useState<SupplierSubmission[]>([]);
   const [rfqCount, setRfqCount] = useState(0);
   const [documentCount, setDocumentCount] = useState(0);
   const [conversationCount, setConversationCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loadErrors, setLoadErrors] = useState<SupplierDashboardLoadError[]>([]);
+  const loadRequestRef = useRef(0);
 
   const load = useCallback(async () => {
-    if (!firebaseUser) return;
+    const userId = firebaseUser?.uid;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
     setError("");
+    setLoadErrors([]);
     try {
-      const [nextSubmissions, rfqs, documents, conversations] = await Promise.all([
-        listMySubmissions(firebaseUser.uid),
-        listSupplierRfqs(firebaseUser.uid, appUser?.supplierProfileId),
-        appUser?.supplierProfileId ? listSupplierDocuments(appUser.supplierProfileId) : Promise.resolve([]),
-        listConversations(firebaseUser.uid),
-      ]);
-      setSubmissions(nextSubmissions);
-      setRfqCount(rfqs.length);
-      setDocumentCount(documents.length);
-      setConversationCount(conversations.length);
+      const result = await loadSupplierDashboardData({
+        submissions: () => listMySubmissions(userId),
+        rfqs: () => listSupplierRfqs(userId, appUser?.supplierProfileId),
+        documents: () => appUser?.supplierProfileId ? listSupplierDocuments(appUser.supplierProfileId, userId) : Promise.resolve([]),
+        conversations: () => listConversations(userId),
+      });
+      if (loadRequestRef.current !== requestId) return;
+      setSubmissions(result.submissions);
+      setRfqCount(result.rfqCount);
+      setDocumentCount(result.documentCount);
+      setConversationCount(result.conversationCount);
+      setLoadErrors(result.errors);
+      if (result.errors.some((item) => item.critical)) setError(text.error);
     } catch {
+      if (loadRequestRef.current !== requestId) return;
       setError(text.error);
     } finally {
-      setLoading(false);
+      if (loadRequestRef.current === requestId) setLoading(false);
     }
-  }, [appUser?.supplierProfileId, firebaseUser, text.error]);
+  }, [appUser?.supplierProfileId, firebaseUser?.uid, text.error]);
 
-  useEffect(() => { void load(); }, [load]);
-
+  useEffect(() => {
+    void load();
+    return () => { loadRequestRef.current += 1; };
+  }, [load]);
   const profile = useMemo(() => {
     if (!appUser) return { completion: 0, missing: [] as string[] };
     const fields = [
@@ -140,6 +158,11 @@ export function SupplierDashboardPage() {
       <DashboardPageHeader eyebrow={text.eyebrow} title={text.title} description={text.description} actions={<Link to="/suppliers/new"><Button><Plus className="h-4 w-4" />{text.action}</Button></Link>} />
       <div className="grid gap-5 p-5 sm:p-7">
         {error ? <DashboardError message={error} retry={() => void load()} /> : null}
+        {!error && loadErrors.some((item) => !item.critical) ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-amber/30 bg-cream px-4 py-3 text-sm font-bold text-ink">
+            <span>{partialWarning}</span><Button variant="secondary" onClick={() => void load()}>{locale === "ar" ? "\u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629" : "Retry"}</Button>
+          </div>
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <MetricCard label={text.completion} value={`${profile.completion}%`} icon={Building2} tone={profile.completion === 100 ? "good" : "warning"} to="/profile" />
           <MetricCard label={text.companyStatus} value={companyStatus === "not_started" ? text.notStarted : <StatusBadge value={companyStatus} />} helper={pendingCount ? `${pendingCount} ${text.pending}` : undefined} icon={ClipboardCheck} tone={companyStatus === "approved" ? "good" : "warning"} to="/my-submissions" />
@@ -173,7 +196,7 @@ export function SupplierDashboardPage() {
         </DashboardPanel>
 
         <div className="grid gap-5 lg:grid-cols-2">
-          <DashboardPanel title={text.preview} description={text.previewBody}>{appUser.supplierProfileId ? <Link to={`/suppliers/${appUser.supplierProfileId}`}><Button variant="secondary"><Eye className="h-4 w-4" />{locale === "ar" ? "عرض الصفحة كما يراها المشترون" : "View the buyer-facing page"}</Button></Link> : <InlineEmptyState compact title={latest?.submissionStatus === "approved" ? (locale === "ar" ? "بانتظار إتمام الربط" : "Waiting for profile linking") : text.preview} body={text.previewBody} />}</DashboardPanel>
+          <DashboardPanel title={text.preview} description={text.previewBody}>{appUser.supplierProfileId ? <Link to={`/supplier/company-preview`}><Button variant="secondary"><Eye className="h-4 w-4" />{locale === "ar" ? "عرض الصفحة كما يراها المشترون" : "View the buyer-facing page"}</Button></Link> : <InlineEmptyState compact title={latest?.submissionStatus === "approved" ? (locale === "ar" ? "بانتظار إتمام الربط" : "Waiting for profile linking") : text.preview} body={text.previewBody} />}</DashboardPanel>
           <DashboardPanel title={text.documents} description={text.documentsBody}>
             <Link className="flex items-center justify-between gap-4 rounded-[14px] border border-borderSoft bg-creamLight p-4 transition hover:border-amber/40 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40" to="/supplier/documents">
               <div className="flex items-start gap-3">

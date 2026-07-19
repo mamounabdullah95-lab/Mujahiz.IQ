@@ -54,11 +54,12 @@ const feedbackTypes: SupplierFeedbackType[] = [
 
 const blockedCommentTerms = ["idiot", "liar", "scam", "حرامي", "نصاب", "كذاب"];
 
-export function SupplierProfilePage() {
-  const { id } = useParams();
+export function SupplierProfilePage({ supplierId, ownedPreview = false }: { supplierId?: string; ownedPreview?: boolean } = {}) {
+  const { id: routeSupplierId } = useParams();
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
   const { appUser, firebaseUser, isAdmin } = useAuth();
+  const id = ownedPreview ? appUser?.supplierProfileId : supplierId || routeSupplierId;
   const { taxonomy } = useTaxonomy();
   const navigate = useNavigate();
   const [supplier, setSupplier] = useState<Supplier | null>(null);
@@ -105,15 +106,16 @@ export function SupplierProfilePage() {
       try {
         const supplierResult = await getSupplier(supplierId);
         if (!active) return;
-        setSupplier(supplierResult);
-        if (!supplierResult) {
+        const visibleSupplier = ownedPreview && supplierResult?.status !== "approved" ? null : supplierResult;
+        setSupplier(visibleSupplier);
+        if (!visibleSupplier) {
           setReviews([]);
           setMyFeedback([]);
           return;
         }
         const [reviewResult, feedbackResult] = await Promise.all([
           listSupplierReviews(supplierId).catch(() => []),
-          firebaseUser ? listMySupplierFeedback(firebaseUser.uid).catch(() => []) : Promise.resolve([]),
+          !ownedPreview && firebaseUser ? listMySupplierFeedback(firebaseUser.uid).catch(() => []) : Promise.resolve([]),
         ]);
         if (!active) return;
         setReviews(reviewResult);
@@ -132,19 +134,19 @@ export function SupplierProfilePage() {
     return () => {
       active = false;
     };
-  }, [firebaseUser, id, t]);
+  }, [firebaseUser, id, ownedPreview, t]);
 
   useEffect(() => {
-    if (!firebaseUser || appUser?.accountType !== "buyer" || !id) {
+    if (ownedPreview || !firebaseUser || appUser?.accountType !== "buyer" || !id) {
       setIsFavorite(false);
       return;
     }
     void listFavorites(firebaseUser.uid)
       .then((items) => setIsFavorite(items.some((item) => item.supplierId === id)))
       .catch(() => setIsFavorite(false));
-  }, [appUser?.accountType, firebaseUser?.uid, id]);
+  }, [appUser?.accountType, firebaseUser?.uid, id, ownedPreview]);
 
-  if (!id) return null;
+  if (!id) return <Section title={locale === "ar" ? "\u0645\u0639\u0627\u064a\u0646\u0629 \u0645\u0644\u0641 \u0627\u0644\u0634\u0631\u0643\u0629" : "Company profile preview"}><EmptyState title={locale === "ar" ? "\u0644\u0627 \u064a\u0648\u062c\u062f \u0645\u0644\u0641 \u0634\u0631\u0643\u0629 \u0645\u0631\u062a\u0628\u0637 \u0628\u0627\u0644\u062d\u0633\u0627\u0628" : "No company profile is linked to this account"} body={locale === "ar" ? "\u0623\u0631\u0633\u0644 \u0628\u064a\u0627\u0646\u0627\u062a \u0634\u0631\u0643\u062a\u0643 \u0644\u0644\u0645\u0631\u0627\u062c\u0639\u0629\u060c \u062b\u0645 \u0633\u062a\u062a\u0627\u062d \u0627\u0644\u0645\u0639\u0627\u064a\u0646\u0629 \u0628\u0639\u062f \u0627\u0644\u0627\u0639\u062a\u0645\u0627\u062f \u0648\u0627\u0644\u0631\u0628\u0637." : "Submit your company details for review. Preview becomes available after approval and account linking."} /></Section>;
 
   if (loading) {
     return <Section title={t("details")}><EmptyState title={t("loading")} /></Section>;
@@ -158,8 +160,8 @@ export function SupplierProfilePage() {
     );
   }
 
-  const canContribute = appUser?.role !== "viewer" && appUser?.role !== "suspended" && appUser?.status !== "suspended";
-  const isBuyerAccount = appUser?.accountType === "buyer" && Boolean(firebaseUser);
+  const canContribute = !ownedPreview && appUser?.role !== "viewer" && appUser?.role !== "suspended" && appUser?.status !== "suspended";
+  const isBuyerAccount = !ownedPreview && appUser?.accountType === "buyer" && Boolean(firebaseUser);
   const canContactDirectly = isBuyerAccount && supplier.canReceiveRfqs === true && Boolean(supplier.accountOwnerId);
   const averageRating = Number(supplier.averageRating || 0);
 
@@ -524,4 +526,8 @@ export function SupplierProfilePage() {
       </div>
     </Section>
   );
+}
+
+export function SupplierOwnedProfilePreviewPage() {
+  return <SupplierProfilePage ownedPreview />;
 }

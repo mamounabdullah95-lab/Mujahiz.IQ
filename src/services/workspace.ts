@@ -635,9 +635,17 @@ export async function sendConversationMessage(conversationId: string, senderId: 
   await batch.commit();
 }
 
-export async function listSupplierProducts(supplierId: string) {
-  if (!isFirebaseConfigured) return sortNewest(localRead<SupplierProduct>("products").filter((item) => item.supplierId === supplierId));
-  const snapshot = await getDocs(query(productsRef, where("supplierId", "==", supplierId), limit(250)));
+export async function listSupplierProducts(supplierId: string, ownerUserId: string) {
+  const normalizedSupplierId = supplierId.trim();
+  const normalizedOwnerUserId = ownerUserId.trim();
+  if (!normalizedSupplierId || !normalizedOwnerUserId) return [];
+  if (!isFirebaseConfigured) return sortNewest(localRead<SupplierProduct>("products").filter((item) => item.supplierId === normalizedSupplierId && item.ownerUserId === normalizedOwnerUserId));
+  const snapshot = await getDocs(query(
+    productsRef,
+    where("supplierId", "==", normalizedSupplierId),
+    where("ownerUserId", "==", normalizedOwnerUserId),
+    limit(250),
+  ));
   return sortNewest(snapshot.docs.map((item) => withId<SupplierProduct>(item)));
 }
 
@@ -659,9 +667,17 @@ export async function deleteSupplierProduct(productId: string) {
   await deleteDoc(doc(productsRef, productId));
 }
 
-export async function listSupplierDocuments(supplierId: string) {
-  if (!isFirebaseConfigured) return sortNewest(localRead<SupplierDocumentMetadata>("documents").filter((item) => item.supplierId === supplierId));
-  const snapshot = await getDocs(query(documentsRef, where("supplierId", "==", supplierId), limit(250)));
+export async function listSupplierDocuments(supplierId: string, ownerUserId: string) {
+  const normalizedSupplierId = supplierId.trim();
+  const normalizedOwnerUserId = ownerUserId.trim();
+  if (!normalizedSupplierId || !normalizedOwnerUserId) return [];
+  if (!isFirebaseConfigured) return sortNewest(localRead<SupplierDocumentMetadata>("documents").filter((item) => item.supplierId === normalizedSupplierId && item.ownerUserId === normalizedOwnerUserId));
+  const snapshot = await getDocs(query(
+    documentsRef,
+    where("supplierId", "==", normalizedSupplierId),
+    where("ownerUserId", "==", normalizedOwnerUserId),
+    limit(250),
+  ));
   return sortNewest(snapshot.docs.map((item) => withId<SupplierDocumentMetadata>(item)));
 }
 

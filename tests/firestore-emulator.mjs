@@ -13,10 +13,13 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
+  query,
   runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
   writeBatch,
 } from "firebase/firestore";
 
@@ -34,6 +37,39 @@ const users = {
   supplier: { uid: "supplier-1", role: "contributor", accountType: "supplier", status: "approved" },
   admin: { uid: "admin-1", role: "admin", accountType: "buyer", status: "approved" },
   owner: { uid: "owner-1", role: "owner", accountType: "buyer", status: "approved" },
+};
+
+const supplierWorkspaceUsers = {
+  one: {
+    uid: "workspace-supplier-1",
+    email: "workspace-supplier-1@example.test",
+    role: "contributor",
+    accountType: "supplier",
+    status: "approved",
+    accessStatus: "active",
+    emailVerified: true,
+    supplierProfileId: "workspace-profile-1",
+  },
+  two: {
+    uid: "workspace-supplier-2",
+    email: "workspace-supplier-2@example.test",
+    role: "contributor",
+    accountType: "supplier",
+    status: "approved",
+    accessStatus: "active",
+    emailVerified: true,
+    supplierProfileId: "workspace-profile-2",
+  },
+  empty: {
+    uid: "workspace-supplier-empty",
+    email: "workspace-supplier-empty@example.test",
+    role: "contributor",
+    accountType: "supplier",
+    status: "approved",
+    accessStatus: "active",
+    emailVerified: true,
+    supplierProfileId: "workspace-profile-empty",
+  },
 };
 
 function pendingVerificationUser(uid, accountType) {
@@ -93,7 +129,7 @@ before(async () => {
   await environment.withSecurityRulesDisabled(async (context) => {
     const database = context.firestore();
     await Promise.all(
-      [...Object.values(users), ...Object.values(verificationUsers)]
+      [...Object.values(users), ...Object.values(verificationUsers), ...Object.values(supplierWorkspaceUsers)]
         .map((user) => setDoc(doc(database, "users", user.uid), user)),
     );
     await setDoc(doc(database, "auditLogs", "email-verification-legacy-admin-existing-audit"), {
@@ -104,6 +140,25 @@ before(async () => {
       details: { accountType: null, trialStarted: false },
       createdAt: Timestamp.now(),
     });
+    await Promise.all(Object.values(supplierWorkspaceUsers).map((user) => setDoc(
+      doc(database, "suppliers", user.supplierProfileId),
+      {
+        nameAr: `G.G2&'..('1 ${user.uid}`,
+        nameEn: `Workspace supplier ${user.uid}`,
+        status: "approved",
+        canReceiveRfqs: true,
+        accountOwnerId: user.uid,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      },
+    )));
+    await Promise.all(["one", "two"].flatMap((key) => {
+      const user = supplierWorkspaceUsers[key];
+      return [
+        setDoc(doc(database, "supplierProducts", `workspace-product-${key}`), supplierProductData(user)),
+        setDoc(doc(database, "supplierDocuments", `workspace-document-${key}`), supplierDocumentData(user)),
+      ];
+    }));
   });
 });
 
@@ -114,6 +169,60 @@ after(async () => {
 function contextFor(key) {
   const user = users[key];
   return environment.authenticatedContext(user.uid, { email: `${user.uid}@example.test` }).firestore();
+}
+
+function supplierWorkspaceContextFor(key) {
+  const user = supplierWorkspaceUsers[key];
+  return environment.authenticatedContext(user.uid, {
+    email: user.email,
+    email_verified: true,
+  }).firestore();
+}
+
+function supplierProductData(user, overrides = {}) {
+  return {
+    supplierId: user.supplierProfileId,
+    ownerUserId: user.uid,
+    nameAr: "GF*,&'..('1",
+    nameEn: "Workspace test product",
+    descriptionAr: "N7A&'...'7J",
+    descriptionEn: "Test description",
+    categoryId: "workspace-category",
+    type: "product",
+    status: "draft",
+    mediaStatus: "upload_pending_launch",
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+    ...overrides,
+  };
+}
+
+function supplierDocumentData(user, overrides = {}) {
+  return {
+    supplierId: user.supplierProfileId,
+    ownerUserId: user.uid,
+    name: "Workspace test certificate",
+    documentType: "certificate",
+    description: "Metadata-only test document",
+    certificateNumber: "TEST-001",
+    issuer: "Test issuer",
+    issuedAt: Timestamp.now(),
+    expiresAt: null,
+    storageStatus: "metadata_only",
+    verificationStatus: "unverified",
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+    ...overrides,
+  };
+}
+
+function ownedWorkspaceQuery(database, collectionName, user) {
+  return query(
+    collection(database, collectionName),
+    where("supplierId", "==", user.supplierProfileId),
+    where("ownerUserId", "==", user.uid),
+    limit(250),
+  );
 }
 
 function verificationContextFor(key, emailVerified = true) {
@@ -593,4 +702,98 @@ test("verification audit creation is atomic, exact, immutable, and non-repeatabl
   await assertFails(setDoc(auditRef, validAudit));
   await assertFails(updateDoc(auditRef, { details: { trialStarted: true } }));
   await assertFails(deleteDoc(auditRef));
+});
+
+
+test("supplier workspace queries require both profile and owner constraints", async () => {
+  const user = supplierWorkspaceUsers.one;
+  const database = supplierWorkspaceContextFor("one");
+  const productSnapshot = await assertSucceeds(getDocs(ownedWorkspaceQuery(database, "supplierProducts", user)));
+  const documentSnapshot = await assertSucceeds(getDocs(ownedWorkspaceQuery(database, "supplierDocuments", user)));
+  assert.equal(productSnapshot.size, 1);
+  assert.equal(documentSnapshot.size, 1);
+  await assertFails(getDocs(query(
+    collection(database, "supplierProducts"),
+    where("supplierId", "==", user.supplierProfileId),
+    limit(250),
+  )));
+  await assertFails(getDocs(query(
+    collection(database, "supplierDocuments"),
+    where("supplierId", "==", user.supplierProfileId),
+    limit(250),
+  )));
+});
+
+test("empty owned supplier collections load successfully", async () => {
+  const user = supplierWorkspaceUsers.empty;
+  const database = supplierWorkspaceContextFor("empty");
+  const products = await assertSucceeds(getDocs(ownedWorkspaceQuery(database, "supplierProducts", user)));
+  const documents = await assertSucceeds(getDocs(ownedWorkspaceQuery(database, "supplierDocuments", user)));
+  assert.equal(products.empty, true);
+  assert.equal(documents.empty, true);
+});
+
+test("supplier workspace rejects cross-owner and cross-profile queries", async () => {
+  const ownUser = supplierWorkspaceUsers.one;
+  const otherUser = supplierWorkspaceUsers.two;
+  const database = supplierWorkspaceContextFor("one");
+  for (const collectionName of ["supplierProducts", "supplierDocuments"]) {
+    await assertFails(getDocs(query(
+      collection(database, collectionName),
+      where("supplierId", "==", ownUser.supplierProfileId),
+      where("ownerUserId", "==", otherUser.uid),
+      limit(250),
+    )));
+    await assertFails(getDocs(query(
+      collection(database, collectionName),
+      where("supplierId", "==", otherUser.supplierProfileId),
+      where("ownerUserId", "==", ownUser.uid),
+      limit(250),
+    )));
+  }
+});
+
+test("supplier cannot directly read another supplier product or document", async () => {
+  const database = supplierWorkspaceContextFor("one");
+  await assertFails(getDoc(doc(database, "supplierProducts", "workspace-product-two")));
+  await assertFails(getDoc(doc(database, "supplierDocuments", "workspace-document-two")));
+});
+
+test("admin retains read access to supplier products and documents", async () => {
+  const database = contextFor("admin");
+  const products = await assertSucceeds(getDocs(collection(database, "supplierProducts")));
+  const documents = await assertSucceeds(getDocs(collection(database, "supplierDocuments")));
+  assert.ok(products.size >= 2);
+  assert.ok(documents.size >= 2);
+});
+
+test("supplier can create and delete an owned product without changing its ownership", async () => {
+  const user = supplierWorkspaceUsers.one;
+  const database = supplierWorkspaceContextFor("one");
+  const productRef = doc(database, "supplierProducts", "workspace-product-created");
+  await assertSucceeds(setDoc(productRef, supplierProductData(user)));
+  await assertFails(updateDoc(productRef, { ownerUserId: supplierWorkspaceUsers.two.uid }));
+  await assertFails(updateDoc(productRef, { supplierId: supplierWorkspaceUsers.two.supplierProfileId }));
+  await assertSucceeds(deleteDoc(productRef));
+});
+
+test("supplier documents remain metadata-only and immutable across ownership and verification fields", async () => {
+  const user = supplierWorkspaceUsers.one;
+  const database = supplierWorkspaceContextFor("one");
+  const allowedRef = doc(database, "supplierDocuments", "workspace-document-created");
+  const storedFileRef = doc(database, "supplierDocuments", "workspace-document-with-file");
+  await assertSucceeds(setDoc(allowedRef, supplierDocumentData(user)));
+  await assertFails(setDoc(storedFileRef, supplierDocumentData(user, {
+    fileUrl: "https://example.test/test.pdf",
+  })));
+  await assertFails(updateDoc(allowedRef, { ownerUserId: supplierWorkspaceUsers.two.uid }));
+  await assertFails(updateDoc(allowedRef, { supplierId: supplierWorkspaceUsers.two.supplierProfileId }));
+  await assertFails(updateDoc(allowedRef, { verificationStatus: "verified" }));
+  await assertSucceeds(deleteDoc(allowedRef));
+});
+
+test("supplier cannot delete another supplier product or document", async () => {
+  const database = supplierWorkspaceContextFor("one");
+  await assertFails(deleteDoc(doc(database, "supplierProducts", "workspace-product-two")));
+  await assertFails(deleteDoc(doc(database, "supplierDocuments", "workspace-document-two")));
 });
