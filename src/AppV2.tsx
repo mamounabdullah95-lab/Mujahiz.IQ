@@ -34,6 +34,7 @@ const ProfileSettingsPage = lazy(() => import("./pages/ProfileSettingsPage").the
 const PublicContentPage = lazy(() => import("./pages/PublicContentPage").then((m) => ({ default: m.PublicContentPage })));
 const RegisterPage = lazy(() => import("./pages/RegisterPage").then((m) => ({ default: m.RegisterPage })));
 const SupplierProfilePage = lazy(() => import("./pages/SupplierProfilePage").then((m) => ({ default: m.SupplierProfilePage })));
+const SupplierOwnedProfilePreviewPage = lazy(() => import("./pages/SupplierProfilePage").then((m) => ({ default: m.SupplierOwnedProfilePreviewPage })));
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage").then((m) => ({ default: m.VerifyEmailPage })));
 const CompleteProfilePage = lazy(() => import("./pages/CompleteProfilePage").then((m) => ({ default: m.CompleteProfilePage })));
 const BuyerCategoriesPage = lazy(() => import("./pages/workspace/BuyerWorkspacePages").then((m) => ({ default: m.BuyerCategoriesPage })));
@@ -128,6 +129,7 @@ export function AppV2() {
 
     <Route element={<RoleProtectedRoute allowedRoles={supplierRoles} allowPending />}>
       <Route path="supplier" element={<SupplierDashboardPage />} />
+      <Route path="supplier/company-preview" element={<SupplierOwnedProfilePreviewPage />} />
       <Route path="my-submissions" element={<MySubmissionsPage />} />
       <Route path="supplier/products" element={<SupplierProductsPage />} />
       <Route path="supplier/categories" element={<SupplierCategoriesPage />} />

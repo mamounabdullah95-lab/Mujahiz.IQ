@@ -863,15 +863,15 @@ service cloud.firestore {
     match /supplierProducts/{productId} {
       allow read: if isAdmin() || (isBuyer() && hasActiveAccess()) || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
       allow create: if isSupplierAccount() && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.supplierId == myUser().supplierProfileId && request.resource.data.mediaStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data);
-      allow update: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.mediaStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data));
+      allow update: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId && request.resource.data.ownerUserId == resource.data.ownerUserId && request.resource.data.supplierId == resource.data.supplierId && request.resource.data.mediaStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data));
       allow delete: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
     }
 
     match /supplierDocuments/{documentId} {
       allow read: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
       allow create: if isSupplierAccount() && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.supplierId == myUser().supplierProfileId && request.resource.data.storageStatus in ["metadata_only", "upload_pending_launch"] && request.resource.data.verificationStatus == "unverified" && noStoredFileFields(request.resource.data);
-      allow update: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.storageStatus in ["metadata_only", "upload_pending_launch"] && noStoredFileFields(request.resource.data));
-      allow delete: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid);
+      allow update: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId && request.resource.data.ownerUserId == resource.data.ownerUserId && request.resource.data.supplierId == resource.data.supplierId && request.resource.data.verificationStatus == resource.data.verificationStatus && request.resource.data.storageStatus in ["metadata_only", "upload_pending_launch"] && noStoredFileFields(request.resource.data));
+      allow delete: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
     }
 
     match /contentPages/{pageId} {
