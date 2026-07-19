@@ -128,6 +128,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const markRead = useCallback(async (notificationId: string) => {
     if (!userId) return;
+    const session = sessionRef.current;
     const previous = items.find((item) => item.id === notificationId);
     const optimistic = (group: WorkspaceNotification[]) => group.map((item) => (
       item.id === notificationId ? { ...item, read: true } : item
@@ -138,6 +139,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     try {
       await markNotificationRead(notificationId, userId);
     } catch (reason) {
+      if (session !== sessionRef.current) return;
       if (previous) {
         const rollback = (group: WorkspaceNotification[]) => group.map((item) => (
           item.id === notificationId ? previous : item
@@ -151,7 +153,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const markAllRead = useCallback(async () => {
     if (!userId) return;
-    const unreadIds = items.filter((item) => !item.read).map((item) => item.id);
+    const session = sessionRef.current;
+    const unreadIds = items.filter((item) => !item.read).map((item) => item.id).slice(0, 400);
     if (!unreadIds.length) return;
     const unread = new Set(unreadIds);
     const optimistic = (group: WorkspaceNotification[]) => group.map((item) => (
@@ -163,6 +166,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     try {
       await markAllNotificationsRead(userId, unreadIds);
     } catch (reason) {
+      if (session !== sessionRef.current) return;
       const rollback = (group: WorkspaceNotification[]) => group.map((item) => (
         unread.has(item.id) ? { ...item, read: false } : item
       ));
