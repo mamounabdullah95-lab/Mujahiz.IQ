@@ -123,4 +123,3 @@ test("approval recipient stays the supplier and no admin cross-user notification
   assert.match(approval, /userId: submission\.submittedBy/);
   assert.doesNotMatch(approval, /reviewNotifications|adminIds|ownerIds|super_admin/);
 });
-

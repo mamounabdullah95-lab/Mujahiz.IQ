@@ -238,4 +238,3 @@ function Sidebar({ role, items, locale, collapsed, onCollapse }: { role: NonNull
     </div>
   );
 }
-

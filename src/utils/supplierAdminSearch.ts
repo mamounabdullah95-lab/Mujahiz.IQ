@@ -73,4 +73,3 @@ export function supplierMatchesAdminQuery(supplier: Supplier, value: unknown) {
 export function filterSuppliersForAdmin(suppliers: Supplier[], value: unknown) {
   return suppliers.filter((supplier) => supplierMatchesAdminQuery(supplier, value));
 }
-
