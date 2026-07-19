@@ -75,6 +75,8 @@ test("notification updates are optimistic, reversible, and never reload one docu
   assert.match(provider, /setOlder\(optimistic\)/);
   assert.match(provider, /const rollback/);
   assert.match(provider, /markAllNotificationsRead\(userId, unreadIds\)/);
+  assert.match(provider, /map\(\(item\) => item\.id\)\.slice\(0, 400\)/);
+  assert.match(provider, /session !== sessionRef\.current/);
   assert.doesNotMatch(provider, /getDoc|getDocs|Promise\.all\(unreadIds/);
   assert.match(provider, /notifications_update_failed/);
   assert.doesNotMatch(provider, /throw reason/);
