@@ -54,6 +54,7 @@ import type {
 } from "../types/domain";
 import { addDays, maxDate, toDate } from "../utils/date";
 import { calculateAccessGrant, deriveBadges, qualityRatio } from "../utils/scoring";
+import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
 import { normalizeEmail, normalizeUrl } from "../utils/normalization";
 import { normalizeDictionaryText } from "../utils/materialDictionary";
 
@@ -180,7 +181,9 @@ export async function listUsers(status?: AppUser["status"]) {
   if (!isFirebaseConfigured) {
     return demo.demoListUsers(status);
   }
-  const snapshot = await getDocs(status ? query(usersRef, where("status", "==", status)) : query(usersRef));
+  const snapshot = await getDocs(status
+    ? query(usersRef, where("status", "==", status), orderBy("createdAt", "desc"), limit(100))
+    : query(usersRef, orderBy("createdAt", "desc"), limit(100)));
   return sortByCreatedAtDesc(
     snapshot.docs.map((item) => withId<AppUser>(item)),
     100,
@@ -479,7 +482,7 @@ export async function listMySubmissions(userId: string) {
   if (!isFirebaseConfigured) {
     return demo.demoListMySubmissions(userId);
   }
-  const snapshot = await getDocs(query(submissionsRef, where("submittedBy", "==", userId)));
+  const snapshot = await getDocs(query(submissionsRef, where("submittedBy", "==", userId), orderBy("createdAt", "desc"), limit(100)));
   return sortByCreatedAtDesc(
     snapshot.docs.map((item) => withId<SupplierSubmission>(item)),
     100,
@@ -490,7 +493,7 @@ export async function listSupplierSubmissions(statuses: SupplierSubmissionStatus
   if (!isFirebaseConfigured) {
     return demo.demoListSupplierSubmissions(statuses);
   }
-  const snapshot = await getDocs(query(submissionsRef, where("submissionStatus", "in", statuses)));
+  const snapshot = await getDocs(query(submissionsRef, where("submissionStatus", "in", statuses), orderBy("createdAt", "desc"), limit(100)));
   return sortByCreatedAtDesc(
     snapshot.docs.map((item) => withId<SupplierSubmission>(item)),
     100,
@@ -1048,7 +1051,7 @@ export async function listPendingReviews() {
   if (!isFirebaseConfigured) {
     return demo.demoListPendingReviews();
   }
-  const snapshot = await getDocs(query(reviewsRef, where("status", "==", "pending_review")));
+  const snapshot = await getDocs(query(reviewsRef, where("status", "==", "pending_review"), orderBy("createdAt", "desc"), limit(100)));
   return sortByCreatedAtDesc(
     snapshot.docs.map((item) => withId<SupplierReview>(item)),
     100,
@@ -1104,12 +1107,17 @@ export async function moderateReview(review: SupplierReview, actorId: string, de
   });
 }
 
-export async function listAuditLogs() {
-  if (!isFirebaseConfigured) {
-    return demo.demoListAuditLogs();
-  }
-  const snapshot = await getDocs(query(auditLogsRef, orderBy("createdAt", "desc"), limit(100)));
-  return snapshot.docs.map((item) => withId<AuditLog>(item));
+const auditLogCache = new ReadThroughCache<AuditLog[]>(30_000);
+
+export function listAuditLogs(pageSize = 100, options: CacheReadOptions = {}) {
+  const boundedPageSize = Math.max(1, Math.min(pageSize, 100));
+  return auditLogCache.read(String(boundedPageSize), async () => {
+    if (!isFirebaseConfigured) {
+      return (await demo.demoListAuditLogs()).slice(0, boundedPageSize);
+    }
+    const snapshot = await getDocs(query(auditLogsRef, orderBy("createdAt", "desc"), limit(boundedPageSize)));
+    return snapshot.docs.map((item) => withId<AuditLog>(item));
+  }, options);
 }
 
 export async function listAccessCredits(userId: string) {
@@ -1152,7 +1160,7 @@ export async function listMySupplierFeedback(userId: string) {
   if (!isFirebaseConfigured) {
     return demo.demoListMySupplierFeedback(userId);
   }
-  const snapshot = await getDocs(query(supplierFeedbackRef, where("submittedBy", "==", userId)));
+  const snapshot = await getDocs(query(supplierFeedbackRef, where("submittedBy", "==", userId), orderBy("createdAt", "desc"), limit(100)));
   return sortByCreatedAtDesc(
     snapshot.docs.map((item) => withId<SupplierFeedback>(item)),
     100,
@@ -1167,8 +1175,8 @@ export async function listSupplierFeedback(
   }
   const snapshot = await getDocs(
     statuses.length === 1
-      ? query(supplierFeedbackRef, where("status", "==", statuses[0]))
-      : query(supplierFeedbackRef, where("status", "in", statuses)),
+      ? query(supplierFeedbackRef, where("status", "==", statuses[0]), orderBy("createdAt", "desc"), limit(100))
+      : query(supplierFeedbackRef, where("status", "in", statuses), orderBy("createdAt", "desc"), limit(100)),
   );
   return sortByCreatedAtDesc(
     snapshot.docs.map((item) => withId<SupplierFeedback>(item)),

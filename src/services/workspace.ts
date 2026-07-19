@@ -3,19 +3,25 @@ import {
   collection,
   deleteField,
   deleteDoc,
+  documentId,
   doc,
   getCountFromServer,
   getDoc,
   getDocs,
   limit,
+  onSnapshot,
+  orderBy,
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
   Timestamp,
   updateDoc,
   where,
   writeBatch,
   type DocumentData,
+  type QueryConstraint,
+  type Unsubscribe,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "../config/firebase";
 import { defaultRegistrationSectors } from "../data/registrationSectors";
@@ -36,6 +42,7 @@ import type {
   WorkspaceNotification,
 } from "../types/workspace";
 import { toDate } from "../utils/date";
+import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
 
 const favoritesRef = collection(db, "favorites");
 const rfqsRef = collection(db, "rfqs");
@@ -454,10 +461,88 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
   return id;
 }
 
+export interface NotificationCursor {
+  createdAt: unknown;
+  id: string;
+}
+
+export interface NotificationPage {
+  items: WorkspaceNotification[];
+  cursor: NotificationCursor | null;
+  hasMore: boolean;
+}
+
+const notificationPageSize = 25;
+
+function sortNotifications(items: WorkspaceNotification[]) {
+  return [...items].sort((left, right) => {
+    const leftTime = toDate(left.createdAt as never)?.getTime() || 0;
+    const rightTime = toDate(right.createdAt as never)?.getTime() || 0;
+    return rightTime - leftTime || right.id.localeCompare(left.id);
+  });
+}
+
+function notificationPage(items: WorkspaceNotification[], pageSize: number): NotificationPage {
+  const visible = items.slice(0, pageSize);
+  const last = visible[visible.length - 1];
+  return {
+    items: visible,
+    cursor: last ? { createdAt: last.createdAt, id: last.id } : null,
+    hasMore: items.length > pageSize,
+  };
+}
+
+function notificationQuery(userId: string, cursor: NotificationCursor | null, pageSize: number) {
+  const constraints: QueryConstraint[] = [
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc"),
+    orderBy(documentId(), "desc"),
+  ];
+  if (cursor) constraints.push(startAfter(cursor.createdAt, cursor.id));
+  constraints.push(limit(pageSize + 1));
+  return query(notificationsRef, ...constraints);
+}
+
+export async function listNotificationsPage(
+  userId: string,
+  cursor: NotificationCursor | null = null,
+  pageSize = notificationPageSize,
+) {
+  if (!isFirebaseConfigured) {
+    const all = sortNotifications(localRead<WorkspaceNotification>("notifications").filter((item) => item.userId === userId));
+    const offset = cursor ? Math.max(0, all.findIndex((item) => item.id === cursor.id) + 1) : 0;
+    return notificationPage(all.slice(offset, offset + pageSize + 1), pageSize);
+  }
+  const snapshot = await getDocs(notificationQuery(userId, cursor, pageSize));
+  return notificationPage(snapshot.docs.map((item) => withId<WorkspaceNotification>(item)), pageSize);
+}
+
 export async function listNotifications(userId: string) {
-  if (!isFirebaseConfigured) return sortNewest(localRead<WorkspaceNotification>("notifications").filter((item) => item.userId === userId));
-  const snapshot = await getDocs(query(notificationsRef, where("userId", "==", userId), limit(200)));
-  return sortNewest(snapshot.docs.map((item) => withId<WorkspaceNotification>(item)));
+  return (await listNotificationsPage(userId, null, 50)).items;
+}
+
+export function subscribeNotifications(
+  userId: string,
+  onNext: (page: NotificationPage) => void,
+  onError: (error: unknown) => void,
+): Unsubscribe {
+  if (!isFirebaseConfigured) {
+    let active = true;
+    const emit = () => void listNotificationsPage(userId).then((page) => {
+      if (active) onNext(page);
+    }).catch(onError);
+    emit();
+    window.addEventListener("mujahiz-iq-workspace-updated", emit);
+    return () => {
+      active = false;
+      window.removeEventListener("mujahiz-iq-workspace-updated", emit);
+    };
+  }
+  return onSnapshot(
+    notificationQuery(userId, null, notificationPageSize),
+    (snapshot) => onNext(notificationPage(snapshot.docs.map((item) => withId<WorkspaceNotification>(item)), notificationPageSize)),
+    onError,
+  );
 }
 
 export async function markNotificationRead(notificationId: string, userId: string) {
@@ -469,14 +554,21 @@ export async function markNotificationRead(notificationId: string, userId: strin
   await updateDoc(doc(notificationsRef, notificationId), { read: true, readAt: serverTimestamp() });
 }
 
-export async function markAllNotificationsRead(userId: string) {
-  const items = await listNotifications(userId);
+export async function markAllNotificationsRead(userId: string, notificationIds?: string[]) {
+  const requestedIds = notificationIds ? new Set(notificationIds) : null;
+  const items = requestedIds && !isFirebaseConfigured
+    ? localRead<WorkspaceNotification>("notifications").filter((item) => item.userId === userId && requestedIds.has(item.id))
+    : requestedIds
+      ? [...requestedIds].map((id) => ({ id, userId, read: false } as WorkspaceNotification))
+      : await listNotifications(userId);
   if (!isFirebaseConfigured) {
     items.forEach((item) => localUpsert("notifications", { ...item, read: true }));
     return;
   }
+  const unread = items.filter((item) => !item.read).slice(0, 400);
+  if (!unread.length) return;
   const batch = writeBatch(db);
-  items.filter((item) => !item.read).slice(0, 400).forEach((item) => batch.update(doc(notificationsRef, item.id), { read: true, readAt: serverTimestamp() }));
+  unread.forEach((item) => batch.update(doc(notificationsRef, item.id), { read: true, readAt: serverTimestamp() }));
   await batch.commit();
 }
 
@@ -666,7 +758,7 @@ export async function saveRegistrationSectors(sectors: RegistrationSector[], act
   await setDoc(doc(db, "publicConfig", "registration"), { sectors: sanitized, updatedAt: serverTimestamp(), updatedBy: actorId }, { merge: true });
 }
 
-export async function getOperationalReport(): Promise<OperationalReport> {
+async function loadOperationalReport(): Promise<OperationalReport> {
   if (!isFirebaseConfigured) {
     const users = JSON.parse(localStorage.getItem("mujahiz-iq-demo-users") || "[]") as Array<{ accountType?: string }>;
     const submissions = JSON.parse(localStorage.getItem("mujahiz-iq-demo-submissions") || "[]") as Array<{ submissionStatus?: string }>;
@@ -705,4 +797,10 @@ export async function getOperationalReport(): Promise<OperationalReport> {
     count("supplierFeedback"),
   ]);
   return { users, buyers, supplierAccounts, approvedSuppliers, pendingSubmissions, approvedSubmissions, rejectedSubmissions, accessGrants, pendingTerms, reviews, feedback };
+}
+
+const operationalReportCache = new ReadThroughCache<OperationalReport>(60_000);
+
+export function getOperationalReport(options: CacheReadOptions = {}) {
+  return operationalReportCache.read("global", loadOperationalReport, options);
 }

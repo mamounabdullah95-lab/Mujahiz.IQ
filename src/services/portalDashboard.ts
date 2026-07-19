@@ -1,7 +1,6 @@
 import { collection, getCountFromServer, query, where, type Query } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "../config/firebase";
 import {
-  getPlatformSettings,
   listPendingReviews,
   listSupplierFeedback,
   listSupplierSubmissions,
@@ -9,6 +8,7 @@ import {
   listTermSuggestions,
   listUsers,
 } from "./firestore";
+import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
 
 export interface PortalMetrics {
   totalUsers: number;
@@ -26,95 +26,121 @@ export interface PortalMetrics {
   categories: number;
 }
 
+export type PortalMetricScope = "admin" | "owner";
+
+const portalMetricCache = new ReadThroughCache<PortalMetrics>(60_000);
+
 async function count(ref: Query) {
   return (await getCountFromServer(ref)).data().count;
 }
 
-export async function getPortalMetrics(): Promise<PortalMetrics> {
-  if (!isFirebaseConfigured) {
-    const [users, suppliers, pendingCompanies, rejectedCompanies, reviews, feedback, terms, settings] = await Promise.all([
-      listUsers(),
-      listSuppliers(),
-      listSupplierSubmissions(),
-      listSupplierSubmissions(["rejected"]),
-      listPendingReviews(),
-      listSupplierFeedback(),
-      listTermSuggestions("pending"),
-      getPlatformSettings(),
-    ]);
-    const admins = users.filter((user) => user.role === "admin").length;
-    const superAdmins = users.filter((user) => user.role === "owner").length;
-    const supplierAccounts = users.filter((user) => user.accountType === "supplier" && user.role !== "admin" && user.role !== "owner").length;
-    const buyerAccounts = users.filter((user) => user.accountType !== "supplier" && user.role !== "admin" && user.role !== "owner").length;
-    return {
-      totalUsers: users.length,
-      buyerAccounts,
-      supplierAccounts,
-      admins,
-      superAdmins,
-      pendingUsers: users.filter((user) => user.status === "pending_approval").length,
-      approvedSuppliers: suppliers.length,
-      pendingCompanies: pendingCompanies.length,
-      rejectedCompanies: rejectedCompanies.length,
-      pendingReviews: reviews.length,
-      pendingFeedback: feedback.length,
-      pendingTerms: terms.length,
-      categories: settings.taxonomy?.supplierCategories.length || 0,
-    };
-  }
+async function loadLocalMetrics(categories: number): Promise<PortalMetrics> {
+  const [users, suppliers, pendingCompanies, rejectedCompanies, reviews, feedback, terms] = await Promise.all([
+    listUsers(),
+    listSuppliers(),
+    listSupplierSubmissions(),
+    listSupplierSubmissions(["rejected"]),
+    listPendingReviews(),
+    listSupplierFeedback(),
+    listTermSuggestions("pending"),
+  ]);
+  const admins = users.filter((user) => user.role === "admin").length;
+  const superAdmins = users.filter((user) => user.role === "owner").length;
+  const supplierAccounts = users.filter((user) => user.accountType === "supplier" && user.role !== "admin" && user.role !== "owner").length;
+  const buyerAccounts = users.filter((user) => user.accountType !== "supplier" && user.role !== "admin" && user.role !== "owner").length;
+  return {
+    totalUsers: users.length,
+    buyerAccounts,
+    supplierAccounts,
+    admins,
+    superAdmins,
+    pendingUsers: users.filter((user) => user.status === "pending_approval").length,
+    approvedSuppliers: suppliers.length,
+    pendingCompanies: pendingCompanies.length,
+    rejectedCompanies: rejectedCompanies.length,
+    pendingReviews: reviews.length,
+    pendingFeedback: feedback.length,
+    pendingTerms: terms.length,
+    categories,
+  };
+}
 
+async function loadAdminMetrics(categories: number): Promise<PortalMetrics> {
   const users = collection(db, "users");
   const suppliers = collection(db, "suppliers");
   const submissions = collection(db, "supplierSubmissions");
   const reviews = collection(db, "reviews");
   const feedback = collection(db, "supplierFeedback");
-  const terms = collection(db, "termSuggestions");
-
   const [
     totalUsers,
+    buyerAccounts,
     supplierAccounts,
-    admins,
-    superAdmins,
-    pendingUsers,
     approvedSuppliers,
-    pendingReview,
-    possibleDuplicate,
-    rejectedCompanies,
+    pendingCompanies,
     pendingReviews,
     pendingFeedback,
-    inReviewFeedback,
-    pendingTerms,
-    categoryCount,
   ] = await Promise.all([
     count(query(users)),
+    count(query(users, where("accountType", "==", "buyer"))),
     count(query(users, where("accountType", "==", "supplier"))),
-    count(query(users, where("role", "==", "admin"))),
-    count(query(users, where("role", "==", "owner"))),
-    count(query(users, where("status", "==", "pending_approval"))),
     count(query(suppliers, where("status", "==", "approved"))),
-    count(query(submissions, where("submissionStatus", "==", "pending_review"))),
-    count(query(submissions, where("submissionStatus", "==", "possible_duplicate"))),
-    count(query(submissions, where("submissionStatus", "==", "rejected"))),
+    count(query(submissions, where("submissionStatus", "in", ["pending_review", "possible_duplicate"]))),
     count(query(reviews, where("status", "==", "pending_review"))),
-    count(query(feedback, where("status", "==", "pending"))),
-    count(query(feedback, where("status", "==", "in_review"))),
-    count(query(terms, where("status", "==", "pending"))),
-    getPlatformSettings().then((settings) => settings.taxonomy?.supplierCategories.length || 0),
+    count(query(feedback, where("status", "in", ["pending", "in_review"]))),
   ]);
-
   return {
     totalUsers,
-    buyerAccounts: Math.max(0, totalUsers - supplierAccounts - admins - superAdmins),
+    buyerAccounts,
     supplierAccounts,
+    admins: 0,
+    superAdmins: 0,
+    pendingUsers: 0,
+    approvedSuppliers,
+    pendingCompanies,
+    rejectedCompanies: 0,
+    pendingReviews,
+    pendingFeedback,
+    pendingTerms: 0,
+    categories,
+  };
+}
+
+async function loadOwnerMetrics(categories: number): Promise<PortalMetrics> {
+  const users = collection(db, "users");
+  const suppliers = collection(db, "suppliers");
+  const submissions = collection(db, "supplierSubmissions");
+  const [totalUsers, admins, superAdmins, approvedSuppliers, pendingCompanies] = await Promise.all([
+    count(query(users)),
+    count(query(users, where("role", "==", "admin"))),
+    count(query(users, where("role", "==", "owner"))),
+    count(query(suppliers, where("status", "==", "approved"))),
+    count(query(submissions, where("submissionStatus", "in", ["pending_review", "possible_duplicate"]))),
+  ]);
+  return {
+    totalUsers,
+    buyerAccounts: 0,
+    supplierAccounts: 0,
     admins,
     superAdmins,
-    pendingUsers,
+    pendingUsers: 0,
     approvedSuppliers,
-    pendingCompanies: pendingReview + possibleDuplicate,
-    rejectedCompanies,
-    pendingReviews,
-    pendingFeedback: pendingFeedback + inReviewFeedback,
-    pendingTerms,
-    categories: categoryCount,
+    pendingCompanies,
+    rejectedCompanies: 0,
+    pendingReviews: 0,
+    pendingFeedback: 0,
+    pendingTerms: 0,
+    categories,
   };
+}
+
+export function getPortalMetrics(
+  scope: PortalMetricScope,
+  categories: number,
+  options: CacheReadOptions = {},
+) {
+  const cacheKey = `${scope}:${categories}`;
+  return portalMetricCache.read(cacheKey, () => {
+    if (!isFirebaseConfigured) return loadLocalMetrics(categories);
+    return scope === "owner" ? loadOwnerMetrics(categories) : loadAdminMetrics(categories);
+  }, options);
 }
