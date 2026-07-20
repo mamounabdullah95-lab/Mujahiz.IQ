@@ -368,14 +368,67 @@ export async function listRfqResponses(rfqId: string) {
   return sortNewest(snapshot.docs.map((item) => withId<RfqResponse>(item)));
 }
 
-export async function getSupplierRfqResponse(rfqId: string, supplierUserId: string) {
-  const responseId = `${rfqId}_${supplierUserId}`;
-  if (!isFirebaseConfigured) return localRead<RfqResponse>("rfqResponses").find((item) => item.id === responseId) || null;
-  const snapshot = await getDoc(doc(rfqResponsesRef, responseId));
-  return snapshot.exists() ? withId<RfqResponse>(snapshot) : null;
+interface SupplierRfqResponseScope {
+  rfqId: string;
+  supplierUserId: string;
+  supplierProfileId: string;
+  responseId: string;
+}
+
+function normalizeSupplierRfqResponseScope(rfqId: string, supplierUserId: string, supplierProfileId: string): SupplierRfqResponseScope {
+  const normalizedRfqId = rfqId.trim();
+  const normalizedSupplierUserId = supplierUserId.trim();
+  const normalizedSupplierProfileId = supplierProfileId.trim();
+  if (!normalizedRfqId || !normalizedSupplierUserId || !normalizedSupplierProfileId) {
+    throw new Error("invalid_rfq_response_scope");
+  }
+  return {
+    rfqId: normalizedRfqId,
+    supplierUserId: normalizedSupplierUserId,
+    supplierProfileId: normalizedSupplierProfileId,
+    responseId: `${normalizedRfqId}_${normalizedSupplierUserId}`,
+  };
+}
+
+function validateScopedSupplierRfqResponse(item: RfqResponse, scope: SupplierRfqResponseScope) {
+  if (
+    item.id !== scope.responseId
+    || item.rfqId !== scope.rfqId
+    || item.supplierUserId !== scope.supplierUserId
+    || item.supplierProfileId !== scope.supplierProfileId
+  ) {
+    throw new Error("rfq_response_integrity_error");
+  }
+  return item;
+}
+
+async function findScopedSupplierRfqResponse(rfqId: string, supplierUserId: string, supplierProfileId: string) {
+  const scope = normalizeSupplierRfqResponseScope(rfqId, supplierUserId, supplierProfileId);
+  const matches = !isFirebaseConfigured
+    ? localRead<RfqResponse>("rfqResponses").filter((item) => (
+      item.rfqId === scope.rfqId
+      && item.supplierUserId === scope.supplierUserId
+      && item.supplierProfileId === scope.supplierProfileId
+    )).slice(0, 2)
+    : (await getDocs(query(
+      rfqResponsesRef,
+      where("rfqId", "==", scope.rfqId),
+      where("supplierUserId", "==", scope.supplierUserId),
+      where("supplierProfileId", "==", scope.supplierProfileId),
+      limit(2),
+    ))).docs.map((snapshot) => withId<RfqResponse>(snapshot));
+
+  if (matches.length === 0) return null;
+  if (matches.length !== 1) throw new Error("rfq_response_integrity_error");
+  return validateScopedSupplierRfqResponse(matches[0], scope);
+}
+
+export async function getSupplierRfqResponse(rfqId: string, supplierUserId: string, supplierProfileId: string) {
+  return findScopedSupplierRfqResponse(rfqId, supplierUserId, supplierProfileId);
 }
 
 export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status" | "attachmentStatus" | "createdAt" | "updatedAt">) {
+  const scope = normalizeSupplierRfqResponseScope(input.rfqId, input.supplierUserId, input.supplierProfileId);
   const message = input.message.trim();
   const price = input.price === undefined ? undefined : Number(input.price);
   const deliveryDays = input.deliveryDays === undefined ? undefined : Math.trunc(Number(input.deliveryDays));
@@ -396,9 +449,12 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
     || !validOtherOption(deliveryTerms, deliveryTermsOther)
   ) throw new Error("invalid_rfq_response");
 
-  const id = input.rfqId + "_" + input.supplierUserId;
+  const id = scope.responseId;
   const values = {
     ...input,
+    rfqId: scope.rfqId,
+    supplierUserId: scope.supplierUserId,
+    supplierProfileId: scope.supplierProfileId,
     message,
     paymentTerms,
     paymentTermsOther,
@@ -410,19 +466,22 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
   };
 
   if (!isFirebaseConfigured) {
-    const existing = localRead<RfqResponse>("rfqResponses").find((item) => item.id === id);
+    const rfq = localRead<RfqRecord>("rfqs").find((item) => item.id === scope.rfqId);
+    if (!rfq) throw new Error("rfq_not_found");
+    if (!isRfqAcceptingResponses(rfq)) throw new Error("rfq_closed");
+    const existing = await findScopedSupplierRfqResponse(scope.rfqId, scope.supplierUserId, scope.supplierProfileId);
     return localUpsert("rfqResponses", { ...existing, ...values, id, status: "submitted", attachmentStatus: "upload_pending_launch", createdAt: existing?.createdAt || nowIso(), updatedAt: nowIso() } as RfqResponse);
   }
 
-  const rfqSnapshot = await getDoc(doc(rfqsRef, input.rfqId));
+  const rfqSnapshot = await getDoc(doc(rfqsRef, scope.rfqId));
   if (!rfqSnapshot.exists()) throw new Error("rfq_not_found");
   const rfq = withId<RfqRecord>(rfqSnapshot);
   if (!isRfqAcceptingResponses(rfq)) throw new Error("rfq_closed");
   const responseRef = doc(rfqResponsesRef, id);
-  const existing = await getDoc(responseRef);
+  const existing = await findScopedSupplierRfqResponse(scope.rfqId, scope.supplierUserId, scope.supplierProfileId);
   const batch = writeBatch(db);
 
-  if (existing.exists()) {
+  if (existing) {
     batch.update(responseRef, {
       message,
       currency: input.currency,
@@ -447,17 +506,17 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
     });
     batch.set(doc(rfqResponseEventsRef, id), {
       type: "rfq_response_submitted",
-      actorId: input.supplierUserId,
+      actorId: scope.supplierUserId,
       buyerId: rfq.buyerId,
-      rfqId: input.rfqId,
+      rfqId: scope.rfqId,
       responseId: id,
-      supplierProfileId: input.supplierProfileId,
+      supplierProfileId: scope.supplierProfileId,
       createdAt: serverTimestamp(),
     });
   }
 
   await batch.commit();
-  if (!existing.exists()) await createResponseNotification(input.rfqId, id, rfq.buyerId, input.supplierUserId);
+  if (!existing) await createResponseNotification(scope.rfqId, id, rfq.buyerId, scope.supplierUserId);
   return id;
 }
 

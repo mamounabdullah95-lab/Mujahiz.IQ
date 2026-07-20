@@ -176,6 +176,8 @@ export function SupplierRfqsPage() {
     profileRequired: "يجب اعتماد ملف شركتك وربطه بحسابك قبل إرسال عروض الأسعار.",
     required: "أكمل تفاصيل العرض والسعر وشروط الدفع والتسليم.",
     invalidLink: "استخدم روابط HTTPS عامة وآمنة فقط، وبحد أقصى خمسة روابط.",
+    responseLoadError: "\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0639\u0631\u0636 \u0627\u0644\u0633\u0639\u0631. \u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649\u060c \u0648\u0625\u0630\u0627 \u0627\u0633\u062a\u0645\u0631\u062a \u0627\u0644\u0645\u0634\u0643\u0644\u0629 \u0641\u062a\u0648\u0627\u0635\u0644 \u0645\u0639 \u0627\u0644\u062f\u0639\u0645.",
+    responseSubmitError: "\u062a\u0639\u0630\u0631 \u0625\u0631\u0633\u0627\u0644 \u0639\u0631\u0636 \u0627\u0644\u0633\u0639\u0631. \u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u062a\u0635\u0627\u0644\u0643 \u0648\u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649.",
   } : {
     eyebrow: "Supply opportunities",
     title: "RFQ requests",
@@ -207,6 +209,8 @@ export function SupplierRfqsPage() {
     profileRequired: "An approved company profile must be linked before RFQs can be received.",
     required: "Complete the price, lead time, payment terms, and delivery terms.",
     invalidLink: "Use valid HTTPS links only, with no more than five links.",
+    responseLoadError: "We could not load your quotation. Try again, or contact support if the issue continues.",
+    responseSubmitError: "We could not send your quotation. Check your connection and try again.",
   };
 
   const load = async () => {
@@ -225,9 +229,9 @@ export function SupplierRfqsPage() {
   async function selectRequest(item: RfqRecord) {
     setSelected(item);
     setError("");
-    if (!firebaseUser) return;
+    if (!firebaseUser || !appUser?.supplierProfileId) return;
     try {
-      const current = await getSupplierRfqResponse(item.id, firebaseUser.uid);
+      const current = await getSupplierRfqResponse(item.id, firebaseUser.uid, appUser.supplierProfileId);
       setResponse(current);
       setForm(current ? {
         message: current.message,
@@ -240,8 +244,8 @@ export function SupplierRfqsPage() {
         deliveryTermsOther: current.deliveryTermsOther || "",
         referenceLinks: current.referenceLinks || [],
       } : emptyRfqResponse);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Failed");
+    } catch {
+      setError(text.responseLoadError);
     }
   }
 
@@ -289,8 +293,16 @@ export function SupplierRfqsPage() {
       });
       await selectRequest(selected);
     } catch (reason) {
-      const message = reason instanceof Error ? reason.message : "Failed";
-      setError(message === "invalid_reference_link" ? text.invalidLink : message);
+      const message = reason instanceof Error ? reason.message : "";
+      setError(
+        message === "invalid_reference_link"
+          ? text.invalidLink
+          : message === "rfq_closed"
+            ? text.closed
+            : message === "invalid_rfq_response"
+              ? text.required
+              : text.responseSubmitError,
+      );
     } finally {
       setBusy(false);
     }

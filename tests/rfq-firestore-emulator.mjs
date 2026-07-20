@@ -343,6 +343,77 @@ test("canonical active Supplier reads targeted RFQs while invalid ownership and 
     await assertFails(getDoc(doc(contextFor(key), "rfqs", "rfq-supplier-boundaries")));
   }
 });
+test("first-time Supplier response uses an exact scoped query before deterministic creation", async () => {
+  const rfqId = "rfq-first-response";
+  const responseId = `${rfqId}_${users.supplier.uid}`;
+  const supplierDb = contextFor("supplier");
+  await seedRfq(rfqId, rfqData(rfqId));
+
+  await assertFails(getDoc(doc(supplierDb, "rfqResponses", responseId)));
+
+  const scopedQuery = () => query(
+    collection(supplierDb, "rfqResponses"),
+    where("rfqId", "==", rfqId),
+    where("supplierUserId", "==", users.supplier.uid),
+    where("supplierProfileId", "==", users.supplier.supplierProfileId),
+    limit(2),
+  );
+  const empty = await assertSucceeds(getDocs(scopedQuery()));
+  assert.equal(empty.empty, true);
+
+  const created = createResponse(supplierDb, rfqId);
+  await assertSucceeds(created.commit);
+  await assertSucceeds(setDoc(
+    doc(supplierDb, "notifications", responseNotificationId(responseId)),
+    notificationData({
+      userId: users.buyer.uid,
+      actorId: users.supplier.uid,
+      rfqId,
+      responseId,
+      direction: "supplier_to_buyer",
+    }),
+  ));
+
+  const existing = await assertSucceeds(getDocs(scopedQuery()));
+  assert.equal(existing.size, 1);
+  assert.equal(existing.docs[0].id, responseId);
+  assert.equal(existing.docs[0].data().supplierUserId, users.supplier.uid);
+  assert.equal(existing.docs[0].data().supplierProfileId, users.supplier.supplierProfileId);
+
+  await assertSucceeds(updateDoc(doc(supplierDb, "rfqResponses", responseId), {
+    message: "Updated first quotation.",
+    updatedAt: Timestamp.now(),
+  }));
+  const updated = await assertSucceeds(getDocs(scopedQuery()));
+  assert.equal(updated.size, 1);
+  assert.equal(updated.docs[0].data().message, "Updated first quotation.");
+
+  await assertFails(getDocs(query(
+    collection(contextFor("otherSupplier"), "rfqResponses"),
+    where("rfqId", "==", rfqId),
+    where("supplierUserId", "==", users.supplier.uid),
+    where("supplierProfileId", "==", users.supplier.supplierProfileId),
+    limit(2),
+  )));
+  await assertFails(getDocs(query(
+    collection(supplierDb, "rfqResponses"),
+    where("rfqId", "==", rfqId),
+    where("supplierUserId", "==", users.supplier.uid),
+    where("supplierProfileId", "==", users.otherSupplier.supplierProfileId),
+    limit(2),
+  )));
+
+  await environment.withSecurityRulesDisabled(async (context) => {
+    const database = context.firestore();
+    const responseRecords = await getDocs(query(collection(database, "rfqResponses"), where("rfqId", "==", rfqId)));
+    const eventRecords = await getDocs(query(collection(database, "rfqResponseEvents"), where("rfqId", "==", rfqId)));
+    const notificationRecords = await getDocs(query(collection(database, "notifications"), where("referenceId", "==", rfqId)));
+    assert.equal(responseRecords.size, 1);
+    assert.equal(eventRecords.size, 1);
+    assert.equal(notificationRecords.size, 1);
+  });
+});
+
 
 test("canonical Supplier response requires an atomic response event", async () => {
   const supplierDb = contextFor("supplier");
@@ -382,6 +453,14 @@ test("Supplier cannot respond using another Supplier profile", async () => {
   });
   await assertFails(forged.commit);
 });
+test("Supplier not targeted by the RFQ cannot submit a response", async () => {
+  const rfqId = "rfq-supplier-not-targeted";
+  await seedRfq(rfqId, rfqData(rfqId, users.buyer.uid, {
+    recipientIds: [users.otherSupplier.supplierProfileId],
+  }));
+  await assertFails(createResponse(contextFor("supplier"), rfqId).commit);
+});
+
 
 test("Supplier can update its own structured response but not immutable identity", async () => {
   const responseId = `rfq-open_${users.supplier.uid}`;
@@ -404,6 +483,21 @@ test("expired and closed RFQs reject new Supplier responses", async () => {
   await assertFails(createResponse(contextFor("supplier"), "rfq-expired").commit);
   await assertFails(createResponse(contextFor("supplier"), "rfq-closed-response").commit);
 });
+test("expired and closed RFQs reject updates to existing Supplier responses", async () => {
+  for (const [rfqId, overrides] of [
+    ["rfq-expired-update", { closingDate: "2000-01-01", closingAt: past() }],
+    ["rfq-closed-update", { status: "closed" }],
+  ]) {
+    await seedRfq(rfqId, rfqData(rfqId, users.buyer.uid, overrides));
+    const response = responseData(rfqId);
+    await seedResponse(response);
+    await assertFails(updateDoc(doc(contextFor("supplier"), "rfqResponses", response.id), {
+      message: "Forbidden late update.",
+      updatedAt: Timestamp.now(),
+    }));
+  }
+});
+
 
 test("safe HTTPS references are allowed and stored file payloads remain denied", async () => {
   await assertSucceeds(setDoc(doc(contextFor("buyer"), "rfqs", "rfq-safe-links"), rfqData("safe-links", users.buyer.uid, { status: "draft", recipientIds: [] })));
