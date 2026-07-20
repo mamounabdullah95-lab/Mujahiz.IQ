@@ -516,14 +516,34 @@ service cloud.firestore {
       function responseEventAfter() {
         return getAfter(/databases/$(database)/documents/rfqResponseEvents/$(responseId));
       }
+      function responseRevisionAfter(data) {
+        return getAfter(/databases/$(database)/documents/rfqResponseRevisions/$(data.revisionId));
+      }
+      function responseNotificationAfter() {
+        return getAfter(/databases/$(database)/documents/notifications/$("rfq-response_" + responseId));
+      }
+      function responseUpdateEventAfter(data) {
+        return getAfter(/databases/$(database)/documents/rfqResponseEvents/$(data.revisionId));
+      }
+      function responseUpdateNotificationAfter(data) {
+        return getAfter(/databases/$(database)/documents/notifications/$("rfq-response-updated_" + data.revisionId));
+      }
       function hasMatchingResponseEvent(data) {
-        let event = responseEventAfter().data;
-        return event.type == "rfq_response_submitted"
-          && event.actorId == request.auth.uid
-          && event.rfqId == data.rfqId
-          && event.responseId == responseId
-          && event.supplierProfileId == data.supplierProfileId
-          && event.createdAt == request.time;
+        return existsAfter(/databases/$(database)/documents/rfqResponseEvents/$(responseId));
+      }
+      function hasMatchingRevision(data) {
+        return existsAfter(/databases/$(database)/documents/rfqResponseRevisions/$(data.revisionId));
+      }
+      function hasMatchingCreateNotification(data) {
+        return existsAfter(/databases/$(database)/documents/notifications/$("rfq-response_" + responseId));
+      }
+      function hasMatchingUpdateArtifacts(data) {
+        return existsAfter(/databases/$(database)/documents/rfqResponseEvents/$(data.revisionId))
+          && existsAfter(/databases/$(database)/documents/notifications/$("rfq-response-updated_" + data.revisionId));
+      }
+      function hasLegacyBaselineRevision() {
+        return !("revisionNumber" in resource.data)
+          && existsAfter(/databases/$(database)/documents/rfqResponseRevisions/$(responseId + "_v1"));
       }
       function rfqCanReceiveResponse(data, supplierProfileId) {
         return data.status in ["published", "receiving"]
@@ -532,7 +552,7 @@ service cloud.firestore {
           && supplierProfileId in data.recipientIds;
       }
       function validResponse(data) {
-        return data.keys().hasOnly(["id", "rfqId", "supplierUserId", "supplierProfileId", "message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "status", "attachmentStatus", "createdAt", "updatedAt"])
+        return data.keys().hasOnly(["id", "rfqId", "supplierUserId", "supplierProfileId", "message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "status", "attachmentStatus", "revisionNumber", "revisionId", "firstSubmittedAt", "createdAt", "updatedAt"])
           && data.id == responseId
           && data.rfqId is string
           && data.supplierUserId == request.auth.uid
@@ -548,6 +568,9 @@ service cloud.firestore {
           && (!("referenceLinks" in data) || validReferenceLinks(data.referenceLinks))
           && data.status in ["submitted", "withdrawn"]
           && data.attachmentStatus == "upload_pending_launch"
+          && data.revisionNumber is int && data.revisionNumber > 0
+          && data.revisionId is string && data.revisionId.size() > responseId.size()
+          && data.firstSubmittedAt is timestamp
           && data.createdAt is timestamp
           && data.updatedAt is timestamp
           && noStoredFileFields(data);
@@ -563,8 +586,14 @@ service cloud.firestore {
         && responseId == request.resource.data.rfqId + "_" + request.auth.uid
         && validResponse(request.resource.data)
         && request.resource.data.status == "submitted"
+        && request.resource.data.revisionNumber == 1
+        && request.resource.data.firstSubmittedAt == request.time
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
         && rfqCanReceiveResponse(requestedRfq().data, request.resource.data.supplierProfileId)
-        && hasMatchingResponseEvent(request.resource.data);
+        && hasMatchingResponseEvent(request.resource.data)
+        && hasMatchingRevision(request.resource.data)
+        && hasMatchingCreateNotification(request.resource.data);
       allow read: if isAdmin()
         || (signedIn()
           && resource.data.supplierUserId == request.auth.uid
@@ -575,10 +604,102 @@ service cloud.firestore {
       allow update: if resource.data.supplierUserId == request.auth.uid
         && currentSupplierCanWrite(resource.data.supplierProfileId)
         && responseIdentityUnchanged()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "status", "updatedAt"])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "status", "revisionNumber", "revisionId", "firstSubmittedAt", "updatedAt"])
+        && request.resource.data.diff(resource.data).affectedKeys().hasAny(["message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks"])
         && validResponse(request.resource.data)
-        && rfqCanReceiveResponse(storedRfq().data, resource.data.supplierProfileId);
+        && request.resource.data.revisionNumber == resource.data.get("revisionNumber", 1) + 1
+        && request.resource.data.firstSubmittedAt == resource.data.get("firstSubmittedAt", resource.data.createdAt)
+        && request.resource.data.updatedAt == request.time
+        && rfqCanReceiveResponse(storedRfq().data, resource.data.supplierProfileId)
+        && hasMatchingRevision(request.resource.data)
+        && hasMatchingUpdateArtifacts(request.resource.data)
+        && (("revisionNumber" in resource.data) || hasLegacyBaselineRevision());
       allow delete: if false;
+    }
+
+    match /rfqResponseRevisions/{revisionId} {
+      function responseBefore() {
+        return get(/databases/$(database)/documents/rfqResponses/$(request.resource.data.responseId));
+      }
+      function responseAfter() {
+        return getAfter(/databases/$(database)/documents/rfqResponses/$(request.resource.data.responseId));
+      }
+      function relatedRfq() {
+        return get(/databases/$(database)/documents/rfqs/$(request.resource.data.rfqId));
+      }
+      function storedRelatedRfq() {
+        return get(/databases/$(database)/documents/rfqs/$(resource.data.rfqId));
+      }
+      function revisionCommercialMatches(data, response) {
+        return data.message == response.message
+          && data.get("price", null) == response.get("price", null)
+          && data.get("currency", null) == response.get("currency", null)
+          && data.get("deliveryDays", null) == response.get("deliveryDays", null)
+          && data.get("paymentTerms", "") == response.get("paymentTerms", "")
+          && data.get("paymentTermsOther", "") == response.get("paymentTermsOther", "")
+          && data.get("deliveryTerms", "") == response.get("deliveryTerms", "")
+          && data.get("deliveryTermsOther", "") == response.get("deliveryTermsOther", "")
+          && data.get("referenceLinks", []) == response.get("referenceLinks", []);
+      }
+      function validRevisionShape(data) {
+        return data.keys().hasOnly(["id", "responseId", "rfqId", "buyerId", "supplierUserId", "supplierProfileId", "revisionNumber", "changeType", "message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks", "responseStatus", "createdBy", "createdAt", "previousRevisionNumber"])
+          && data.id == revisionId
+          && data.responseId is string
+          && data.rfqId is string
+          && data.buyerId == relatedRfq().data.buyerId
+          && data.supplierUserId == request.auth.uid
+          && data.supplierProfileId is string
+          && data.revisionNumber is int && data.revisionNumber > 0
+          && data.changeType in ["submitted", "updated"]
+          && data.responseStatus in ["submitted", "withdrawn"]
+          && data.createdBy == request.auth.uid
+          && data.createdAt is timestamp
+          && noStoredFileFields(data);
+      }
+      function validCurrentRevision(data) {
+        let response = responseAfter().data;
+        return response.revisionId == revisionId
+          && response.revisionNumber == data.revisionNumber
+          && response.rfqId == data.rfqId
+          && response.supplierUserId == data.supplierUserId
+          && response.supplierProfileId == data.supplierProfileId
+          && response.status == data.responseStatus
+          && revisionCommercialMatches(data, response)
+          && data.createdAt == request.time
+          && ((data.revisionNumber == 1
+              && data.changeType == "submitted"
+              && !("previousRevisionNumber" in data))
+            || (data.revisionNumber > 1
+              && data.changeType == "updated"
+              && data.previousRevisionNumber == data.revisionNumber - 1));
+      }
+      function validLegacyBaseline(data) {
+        let before = responseBefore();
+        let after = responseAfter().data;
+        return exists(/databases/$(database)/documents/rfqResponses/$(data.responseId))
+          && !("revisionNumber" in before.data)
+          && revisionId == data.responseId + "_v1"
+          && data.revisionNumber == 1
+          && data.changeType == "submitted"
+          && !("previousRevisionNumber" in data)
+          && data.createdAt == before.data.createdAt
+          && after.revisionNumber == 2
+          && after.supplierUserId == data.supplierUserId
+          && after.supplierProfileId == data.supplierProfileId
+          && revisionCommercialMatches(data, before.data);
+      }
+      allow create: if currentSupplierCanWrite(request.resource.data.supplierProfileId)
+        && request.resource.data.supplierProfileId in relatedRfq().data.recipientIds
+        && validRevisionShape(request.resource.data)
+        && (validCurrentRevision(request.resource.data) || validLegacyBaseline(request.resource.data));
+      allow read: if isAdmin()
+        || (signedIn()
+          && resource.data.supplierUserId == request.auth.uid
+          && currentSupplierCanWrite(resource.data.supplierProfileId))
+        || (signedIn()
+          && isBuyerPortalIdentity(request.auth.uid)
+          && resource.data.buyerId == request.auth.uid);
+      allow update, delete: if false;
     }
 
     match /rfqPublishEvents/{eventId} {
@@ -620,24 +741,29 @@ service cloud.firestore {
       function responseAfter() {
         return getAfter(eventResponsePath());
       }
-      function validResponseEvent() {
+      function revisionAfter() {
+        return getAfter(/databases/$(database)/documents/rfqResponseRevisions/$(eventId));
+      }
+      function validSubmittedResponseEvent() {
         let data = request.resource.data;
         let response = responseAfter().data;
         let rfq = eventRfq().data;
         return signedIn()
-          && data.keys().hasOnly(["type", "actorId", "buyerId", "rfqId", "responseId", "supplierProfileId", "createdAt"])
+          && data.keys().hasOnly(["type", "actorId", "buyerId", "rfqId", "responseId", "supplierProfileId", "revisionNumber", "createdAt"])
           && data.type == "rfq_response_submitted"
           && data.responseId == eventId
           && data.actorId == request.auth.uid
           && data.rfqId is string
           && data.buyerId == rfq.buyerId
           && data.supplierProfileId is string
+          && data.revisionNumber == 1
           && data.createdAt == request.time
           && response.id == eventId
           && response.rfqId == data.rfqId
           && response.supplierUserId == request.auth.uid
           && response.supplierProfileId == data.supplierProfileId
           && response.status == "submitted"
+          && response.revisionNumber == 1
           && response.createdAt == request.time
           && response.updatedAt == request.time
           && rfq.status in ["published", "receiving"]
@@ -645,7 +771,37 @@ service cloud.firestore {
           && rfq.closingAt >= request.time
           && data.supplierProfileId in rfq.recipientIds;
       }
-      allow create: if validResponseEvent();
+      function validUpdatedResponseEvent() {
+        let data = request.resource.data;
+        let response = responseAfter().data;
+        let revision = revisionAfter().data;
+        let rfq = eventRfq().data;
+        return signedIn()
+          && data.keys().hasOnly(["type", "actorId", "buyerId", "rfqId", "responseId", "supplierProfileId", "revisionNumber", "previousRevisionNumber", "createdAt"])
+          && data.type == "rfq_response_updated"
+          && eventId == response.revisionId
+          && data.actorId == request.auth.uid
+          && data.buyerId == rfq.buyerId
+          && data.rfqId == response.rfqId
+          && data.responseId == response.id
+          && data.supplierProfileId == response.supplierProfileId
+          && data.revisionNumber == response.revisionNumber
+          && data.previousRevisionNumber == data.revisionNumber - 1
+          && data.createdAt == request.time
+          && response.supplierUserId == request.auth.uid
+          && response.updatedAt == request.time
+          && revision.id == eventId
+          && revision.responseId == data.responseId
+          && revision.revisionNumber == data.revisionNumber
+          && revision.createdAt == request.time
+          && rfq.status in ["published", "receiving"]
+          && rfq.closingAt is timestamp
+          && rfq.closingAt >= request.time
+          && data.supplierProfileId in rfq.recipientIds;
+      }
+      allow create: if request.resource.data.type == "rfq_response_submitted"
+        ? validSubmittedResponseEvent()
+        : request.resource.data.type == "rfq_response_updated" && validUpdatedResponseEvent();
       allow read, update, delete: if false;
     }
 
@@ -810,7 +966,7 @@ service cloud.firestore {
           && commonNotificationIsValid();
       }
       function responseEvent() {
-        return get(/databases/$(database)/documents/rfqResponseEvents/$(request.resource.data.eventId));
+        return getAfter(/databases/$(database)/documents/rfqResponseEvents/$(request.resource.data.eventId));
       }
       function validResponseNotification() {
         let event = responseEvent().data;
@@ -834,6 +990,30 @@ service cloud.firestore {
           && request.resource.data.link == "/buyer/rfqs"
           && commonNotificationIsValid();
       }
+      function validUpdatedResponseNotification() {
+        let event = responseEvent().data;
+        return request.resource.data.keys().hasOnly(["userId", "actorId", "type", "referenceType", "referenceId", "eventId", "responseId", "revisionNumber", "titleAr", "titleEn", "bodyAr", "bodyEn", "link", "read", "createdAt"])
+          && request.resource.data.type == "rfq"
+          && request.resource.data.referenceType == "rfq"
+          && request.resource.data.eventId != request.resource.data.responseId
+          && notificationId == "rfq-response-updated_" + request.resource.data.eventId
+          && event.type == "rfq_response_updated"
+          && event.responseId == request.resource.data.responseId
+          && event.rfqId == request.resource.data.referenceId
+          && event.actorId == request.auth.uid
+          && event.buyerId == request.resource.data.userId
+          && event.supplierProfileId is string
+          && event.revisionNumber == request.resource.data.revisionNumber
+          && event.createdAt == request.time
+          && currentSupplierCanWrite(event.supplierProfileId)
+          && request.resource.data.actorId == request.auth.uid
+          && request.resource.data.titleAr == "تم تحديث عرض سعر"
+          && request.resource.data.titleEn == "Quotation updated"
+          && request.resource.data.bodyAr == "قام أحد المجهزين بتحديث عرضه على طلب عرض الأسعار الخاص بك."
+          && request.resource.data.bodyEn == "A Supplier updated its quotation for your RFQ."
+          && request.resource.data.link == "/buyer/rfqs"
+          && commonNotificationIsValid();
+      }
       function validAdminNotification() {
         return request.resource.data.keys().hasOnly(["userId", "actorId", "type", "referenceType", "referenceId", "titleAr", "titleEn", "bodyAr", "bodyEn", "link", "read", "createdAt"])
           && request.resource.data.type in ["approval", "message", "access", "submission", "system"]
@@ -848,7 +1028,9 @@ service cloud.firestore {
         ? false
         : request.resource.data.type == "rfq"
           ? ("responseId" in request.resource.data
-            ? validResponseNotification()
+            ? ("revisionNumber" in request.resource.data
+              ? validUpdatedResponseNotification()
+              : validResponseNotification())
             : validPublishedRfqNotification())
           : isAdmin() && validAdminNotification();
       allow update: if signedIn()

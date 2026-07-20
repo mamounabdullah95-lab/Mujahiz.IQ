@@ -55,8 +55,37 @@ export interface RfqResponse {
   referenceLinks?: string[];
   status: "submitted" | "withdrawn";
   attachmentStatus: "upload_pending_launch";
+  revisionNumber?: number;
+  revisionId?: string;
+  firstSubmittedAt?: TimestampLike;
   createdAt: TimestampLike;
   updatedAt: TimestampLike;
+}
+
+export type RfqResponseRevisionChangeType = "submitted" | "updated";
+
+export interface RfqResponseRevision {
+  id: string;
+  responseId: string;
+  rfqId: string;
+  buyerId: string;
+  supplierUserId: string;
+  supplierProfileId: string;
+  revisionNumber: number;
+  changeType: RfqResponseRevisionChangeType;
+  message: string;
+  price?: number;
+  currency?: "IQD" | "USD";
+  deliveryDays?: number;
+  paymentTerms?: string;
+  paymentTermsOther?: string;
+  deliveryTerms?: string;
+  deliveryTermsOther?: string;
+  referenceLinks?: string[];
+  responseStatus: RfqResponse["status"];
+  createdBy: string;
+  createdAt: TimestampLike;
+  previousRevisionNumber?: number;
 }
 
 export interface WorkspaceNotification {

@@ -17,7 +17,10 @@ test("RFQ service preserves draft recipients and uses scoped deterministic suppl
   assert.match(service, /limit\(2\)/);
   assert.match(service, /item\.id !== scope\.responseId/);
   assert.match(service, /matches\.length !== 1/);
-  assert.match(service, /existing\?\.createdAt \|\| nowIso\(\)/);
+  assert.match(service, /existing\?\.firstSubmittedAt \|\| existing\?\.createdAt \|\| timestamp/);
+  assert.match(service, /runTransaction\(db/);
+  assert.match(service, /hasMaterialRfqResponseChange/);
+  assert.match(service, /rfqResponseUpdatedNotificationId/);
 });
 
 test("RFQ response window uses a Firestore timestamp and blocks closed requests in service", () => {
@@ -39,6 +42,9 @@ test("buyer and supplier RFQ pages expose comparison and own-response workflows"
   assert.match(supplier, /firebaseUser\.uid, appUser\.supplierProfileId/);
   assert.match(supplier, /responseLoadError/);
   assert.match(supplier, /isRfqAcceptingResponses/);
+  assert.match(supplier, /partitionSupplierRfqLifecycle/);
+  assert.match(supplier, /RfqLifecycleTimeline/);
+  assert.match(supplier, /RfqRevisionHistory/);
   assert.doesNotMatch(supplier, /listRfqResponses/);
 });
 
@@ -52,6 +58,8 @@ test("RFQ security rules enforce access, immutable identity, time window, and sa
   assert.match(rules, /responseId == request\.resource\.data\.rfqId \+ "_" \+ request\.auth\.uid/);
   assert.match(rules, /request\.resource\.data\.createdAt == resource\.data\.createdAt/);
   assert.match(rules, /function rfqCanReceiveResponse/);
+  assert.match(rules, /match \/rfqResponseRevisions\/\{revisionId\}/);
+  assert.match(rules, /validUpdatedResponseNotification/);
   assert.match(rules, /supplierIsTargeted\(data\)/);
   assert.match(rules, /allow delete: if false/);
   assert.match(rules, /request\.resource\.data\.keys\(\)\.hasOnly\(\["userId", "actorId", "type"/);

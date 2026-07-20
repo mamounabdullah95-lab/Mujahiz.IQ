@@ -17,6 +17,7 @@ import {
   limit,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -184,6 +185,75 @@ function responseEventData(response, buyerId) {
     rfqId: response.rfqId,
     responseId: response.id,
     supplierProfileId: response.supplierProfileId,
+    revisionNumber: 1,
+    createdAt: serverTimestamp(),
+  };
+}
+
+function responseRevisionId(responseId, revisionNumber) {
+  return `${responseId}_v${revisionNumber}`;
+}
+
+function responseUpdatedNotificationId(responseId, revisionNumber) {
+  return `rfq-response-updated_${responseRevisionId(responseId, revisionNumber)}`;
+}
+
+function responseRevisionData(response, buyerId, revisionNumber, changeType, createdAt, previousRevisionNumber) {
+  return {
+    id: responseRevisionId(response.id, revisionNumber),
+    responseId: response.id,
+    rfqId: response.rfqId,
+    buyerId,
+    supplierUserId: response.supplierUserId,
+    supplierProfileId: response.supplierProfileId,
+    revisionNumber,
+    changeType,
+    message: response.message,
+    price: response.price,
+    currency: response.currency,
+    deliveryDays: response.deliveryDays,
+    paymentTerms: response.paymentTerms,
+    paymentTermsOther: response.paymentTermsOther,
+    deliveryTerms: response.deliveryTerms,
+    deliveryTermsOther: response.deliveryTermsOther,
+    referenceLinks: response.referenceLinks,
+    responseStatus: response.status,
+    createdBy: response.supplierUserId,
+    createdAt,
+    ...(previousRevisionNumber === undefined ? {} : { previousRevisionNumber }),
+  };
+}
+
+function responseUpdatedEventData(response, buyerId, revisionNumber) {
+  return {
+    type: "rfq_response_updated",
+    actorId: response.supplierUserId,
+    buyerId,
+    rfqId: response.rfqId,
+    responseId: response.id,
+    supplierProfileId: response.supplierProfileId,
+    revisionNumber,
+    previousRevisionNumber: revisionNumber - 1,
+    createdAt: serverTimestamp(),
+  };
+}
+
+function responseUpdatedNotificationData(response, buyerId, revisionNumber) {
+  return {
+    userId: buyerId,
+    actorId: response.supplierUserId,
+    type: "rfq",
+    referenceType: "rfq",
+    referenceId: response.rfqId,
+    eventId: responseRevisionId(response.id, revisionNumber),
+    responseId: response.id,
+    revisionNumber,
+    titleAr: "تم تحديث عرض سعر",
+    titleEn: "Quotation updated",
+    bodyAr: "قام أحد المجهزين بتحديث عرضه على طلب عرض الأسعار الخاص بك.",
+    bodyEn: "A Supplier updated its quotation for your RFQ.",
+    link: "/buyer/rfqs",
+    read: false,
     createdAt: serverTimestamp(),
   };
 }
@@ -232,16 +302,93 @@ function createPublishedRfq(database, id, buyer = users.buyer, overrides = {}) {
 }
 
 function createResponse(database, rfqId, supplier = users.supplier, overrides = {}, buyerId = users.buyer.uid) {
+  const responseId = `${rfqId}_${supplier.uid}`;
   const response = responseData(rfqId, supplier, {
     ...overrides,
     status: "submitted",
+    revisionNumber: 1,
+    revisionId: responseRevisionId(responseId, 1),
+    firstSubmittedAt: serverTimestamp(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
   const batch = writeBatch(database);
   batch.set(doc(database, "rfqResponses", response.id), response);
   batch.set(doc(database, "rfqResponseEvents", response.id), responseEventData(response, buyerId));
+  batch.set(doc(database, "rfqResponseRevisions", response.revisionId), responseRevisionData(
+    response,
+    buyerId,
+    1,
+    "submitted",
+    serverTimestamp(),
+  ));
+  batch.set(doc(database, "notifications", responseNotificationId(response.id)), notificationData({
+    userId: buyerId,
+    actorId: supplier.uid,
+    rfqId,
+    responseId: response.id,
+    direction: "supplier_to_buyer",
+  }));
   return { response, commit: batch.commit() };
+}
+
+async function updateResponse(database, responseId, buyerId, changes) {
+  try {
+    return await runTransaction(database, async (transaction) => {
+    const responseRef = doc(database, "rfqResponses", responseId);
+    const snapshot = await transaction.get(responseRef);
+    if (!snapshot.exists()) throw new Error("response_not_found");
+    const before = { id: snapshot.id, ...snapshot.data() };
+    const materialKeys = ["message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks"];
+    const materialChange = materialKeys.some((key) => JSON.stringify(before[key] ?? null) !== JSON.stringify(changes[key] ?? before[key] ?? null));
+    if (!materialChange) return before.revisionNumber || 1;
+    const previousRevisionNumber = before.revisionNumber || 1;
+    const revisionNumber = previousRevisionNumber + 1;
+    const after = {
+      ...before,
+      ...changes,
+      revisionNumber,
+      revisionId: responseRevisionId(responseId, revisionNumber),
+      firstSubmittedAt: before.firstSubmittedAt || before.createdAt,
+      updatedAt: serverTimestamp(),
+    };
+    if (!before.revisionNumber) {
+      transaction.set(doc(database, "rfqResponseRevisions", responseRevisionId(responseId, 1)), responseRevisionData(
+        before,
+        buyerId,
+        1,
+        "submitted",
+        before.createdAt,
+      ));
+    }
+    transaction.update(responseRef, {
+      ...changes,
+      revisionNumber,
+      revisionId: after.revisionId,
+      firstSubmittedAt: after.firstSubmittedAt,
+      updatedAt: serverTimestamp(),
+    });
+    transaction.set(doc(database, "rfqResponseRevisions", after.revisionId), responseRevisionData(
+      after,
+      buyerId,
+      revisionNumber,
+      "updated",
+      serverTimestamp(),
+      previousRevisionNumber,
+    ));
+    transaction.set(doc(database, "rfqResponseEvents", after.revisionId), responseUpdatedEventData(after, buyerId, revisionNumber));
+    transaction.set(doc(database, "notifications", responseUpdatedNotificationId(responseId, revisionNumber)), responseUpdatedNotificationData(after, buyerId, revisionNumber));
+    return revisionNumber;
+    });
+  } catch (error) {
+    const settled = await getDoc(doc(database, "rfqResponses", responseId));
+    const materialKeys = ["message", "price", "currency", "deliveryDays", "paymentTerms", "paymentTermsOther", "deliveryTerms", "deliveryTermsOther", "referenceLinks"];
+    const alreadyApplied = settled.exists() && !materialKeys.some((key) => (
+      key in changes && JSON.stringify(settled.data()[key] ?? null) !== JSON.stringify(changes[key] ?? null)
+    ));
+    if (alreadyApplied) return settled.data().revisionNumber || 1;
+    throw error;
+  }
 }
 
 async function seedRfq(id, data) {
@@ -363,16 +510,6 @@ test("first-time Supplier response uses an exact scoped query before determinist
 
   const created = createResponse(supplierDb, rfqId);
   await assertSucceeds(created.commit);
-  await assertSucceeds(setDoc(
-    doc(supplierDb, "notifications", responseNotificationId(responseId)),
-    notificationData({
-      userId: users.buyer.uid,
-      actorId: users.supplier.uid,
-      rfqId,
-      responseId,
-      direction: "supplier_to_buyer",
-    }),
-  ));
 
   const existing = await assertSucceeds(getDocs(scopedQuery()));
   assert.equal(existing.size, 1);
@@ -380,9 +517,8 @@ test("first-time Supplier response uses an exact scoped query before determinist
   assert.equal(existing.docs[0].data().supplierUserId, users.supplier.uid);
   assert.equal(existing.docs[0].data().supplierProfileId, users.supplier.supplierProfileId);
 
-  await assertSucceeds(updateDoc(doc(supplierDb, "rfqResponses", responseId), {
+  await assertSucceeds(updateResponse(supplierDb, responseId, users.buyer.uid, {
     message: "Updated first quotation.",
-    updatedAt: Timestamp.now(),
   }));
   const updated = await assertSucceeds(getDocs(scopedQuery()));
   assert.equal(updated.size, 1);
@@ -407,15 +543,17 @@ test("first-time Supplier response uses an exact scoped query before determinist
     const database = context.firestore();
     const responseRecords = await getDocs(query(collection(database, "rfqResponses"), where("rfqId", "==", rfqId)));
     const eventRecords = await getDocs(query(collection(database, "rfqResponseEvents"), where("rfqId", "==", rfqId)));
+    const revisionRecords = await getDocs(query(collection(database, "rfqResponseRevisions"), where("rfqId", "==", rfqId)));
     const notificationRecords = await getDocs(query(collection(database, "notifications"), where("referenceId", "==", rfqId)));
     assert.equal(responseRecords.size, 1);
-    assert.equal(eventRecords.size, 1);
-    assert.equal(notificationRecords.size, 1);
+    assert.equal(eventRecords.size, 2);
+    assert.equal(revisionRecords.size, 2);
+    assert.equal(notificationRecords.size, 2);
   });
 });
 
 
-test("canonical Supplier response requires an atomic response event", async () => {
+test("canonical Supplier response requires atomic V1, event, and notification artifacts", async () => {
   const supplierDb = contextFor("supplier");
   const noEvent = responseData("rfq-open", users.supplier, { createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
   await assertFails(setDoc(doc(supplierDb, "rfqResponses", noEvent.id), noEvent));
@@ -465,16 +603,145 @@ test("Supplier not targeted by the RFQ cannot submit a response", async () => {
 test("Supplier can update its own structured response but not immutable identity", async () => {
   const responseId = `rfq-open_${users.supplier.uid}`;
   const database = contextFor("supplier");
-  await assertSucceeds(updateDoc(doc(database, "rfqResponses", responseId), {
+  await assertSucceeds(updateResponse(database, responseId, users.buyer.uid, {
     message: "Updated structured quotation.",
     paymentTerms: "net_45",
     referenceLinks: ["https://example.test/revised-quotation.pdf"],
-    updatedAt: Timestamp.now(),
   }));
   await assertFails(updateDoc(doc(database, "rfqResponses", responseId), {
     supplierProfileId: users.otherSupplier.supplierProfileId,
     updatedAt: Timestamp.now(),
   }));
+});
+
+test("material updates create one immutable revision, event, and Buyer notification", async () => {
+  const rfqId = "rfq-revision-artifacts";
+  const supplierDb = contextFor("supplier");
+  await seedRfq(rfqId, rfqData(rfqId));
+  const created = createResponse(supplierDb, rfqId);
+  await assertSucceeds(created.commit);
+  await assertSucceeds(updateResponse(supplierDb, created.response.id, users.buyer.uid, {
+    price: 1250,
+    deliveryDays: 5,
+    message: "Revised quotation with faster delivery.",
+  }));
+
+  const revisionId = responseRevisionId(created.response.id, 2);
+  const updateNotificationId = responseUpdatedNotificationId(created.response.id, 2);
+  const supplierRevision = await assertSucceeds(getDoc(doc(supplierDb, "rfqResponseRevisions", revisionId)));
+  assert.equal(supplierRevision.data().revisionNumber, 2);
+  assert.equal(supplierRevision.data().previousRevisionNumber, 1);
+  await assertSucceeds(getDoc(doc(contextFor("buyer"), "rfqResponseRevisions", revisionId)));
+  await assertFails(getDoc(doc(contextFor("unrelated"), "rfqResponseRevisions", revisionId)));
+  await assertFails(getDoc(doc(contextFor("otherSupplier"), "rfqResponseRevisions", revisionId)));
+  await assertSucceeds(getDoc(doc(contextFor("buyer"), "notifications", updateNotificationId)));
+  await assertFails(updateDoc(doc(supplierDb, "rfqResponseRevisions", revisionId), { price: 1 }));
+  await assertFails(deleteDoc(doc(supplierDb, "rfqResponseRevisions", revisionId)));
+  await assertFails(updateDoc(doc(supplierDb, "rfqResponseEvents", revisionId), { revisionNumber: 99 }));
+  await assertFails(deleteDoc(doc(supplierDb, "rfqResponseEvents", revisionId)));
+});
+
+test("revision history queries require the exact Supplier or Buyer ownership scope", async () => {
+  const rfqId = "rfq-revision-query-scope";
+  const supplierDb = contextFor("supplier");
+  const buyerDb = contextFor("buyer");
+  await seedRfq(rfqId, rfqData(rfqId));
+  const created = createResponse(supplierDb, rfqId);
+  await assertSucceeds(created.commit);
+  await assertSucceeds(updateResponse(supplierDb, created.response.id, users.buyer.uid, { price: 1350 }));
+
+  const supplierQuery = query(
+    collection(supplierDb, "rfqResponseRevisions"),
+    where("responseId", "==", created.response.id),
+    where("supplierUserId", "==", users.supplier.uid),
+    where("supplierProfileId", "==", users.supplier.supplierProfileId),
+    orderBy("revisionNumber", "desc"),
+    limit(25),
+  );
+  const buyerQuery = query(
+    collection(buyerDb, "rfqResponseRevisions"),
+    where("responseId", "==", created.response.id),
+    where("buyerId", "==", users.buyer.uid),
+    orderBy("revisionNumber", "desc"),
+    limit(25),
+  );
+  const broadSupplierQuery = query(
+    collection(supplierDb, "rfqResponseRevisions"),
+    where("responseId", "==", created.response.id),
+    orderBy("revisionNumber", "desc"),
+    limit(25),
+  );
+  const broadBuyerQuery = query(
+    collection(buyerDb, "rfqResponseRevisions"),
+    where("responseId", "==", created.response.id),
+    orderBy("revisionNumber", "desc"),
+    limit(25),
+  );
+
+  assert.equal((await assertSucceeds(getDocs(supplierQuery))).size, 2);
+  assert.equal((await assertSucceeds(getDocs(buyerQuery))).size, 2);
+  await assertFails(getDocs(broadSupplierQuery));
+  await assertFails(getDocs(broadBuyerQuery));
+});
+
+test("unchanged and concurrent identical updates do not create duplicate revisions", async () => {
+  const rfqId = "rfq-idempotent-update";
+  const supplierDb = contextFor("supplier");
+  await seedRfq(rfqId, rfqData(rfqId));
+  const created = createResponse(supplierDb, rfqId);
+  await assertSucceeds(created.commit);
+
+  await assertSucceeds(updateResponse(supplierDb, created.response.id, users.buyer.uid, {
+    message: created.response.message,
+    price: created.response.price,
+  }));
+  await Promise.all([
+    assertSucceeds(updateResponse(supplierDb, created.response.id, users.buyer.uid, { price: 1400 })),
+    assertSucceeds(updateResponse(supplierDb, created.response.id, users.buyer.uid, { price: 1400 })),
+  ]);
+
+  await environment.withSecurityRulesDisabled(async (context) => {
+    const database = context.firestore();
+    const revisions = await getDocs(query(collection(database, "rfqResponseRevisions"), where("responseId", "==", created.response.id)));
+    const events = await getDocs(query(collection(database, "rfqResponseEvents"), where("responseId", "==", created.response.id)));
+    const notifications = await getDocs(query(collection(database, "notifications"), where("responseId", "==", created.response.id)));
+    assert.equal(revisions.size, 2);
+    assert.equal(events.size, 2);
+    assert.equal(notifications.size, 2);
+  });
+});
+
+test("first material update of a legacy response preserves baseline V1 and creates V2", async () => {
+  const rfqId = "rfq-legacy-revision";
+  const supplierDb = contextFor("supplier");
+  await seedRfq(rfqId, rfqData(rfqId));
+  const legacy = responseData(rfqId);
+  await seedResponse(legacy);
+
+  await assertSucceeds(updateResponse(supplierDb, legacy.id, users.buyer.uid, {
+    price: 1600,
+    message: "First post-release legacy update.",
+  }));
+  const baseline = await assertSucceeds(getDoc(doc(supplierDb, "rfqResponseRevisions", responseRevisionId(legacy.id, 1))));
+  const updated = await assertSucceeds(getDoc(doc(supplierDb, "rfqResponseRevisions", responseRevisionId(legacy.id, 2))));
+  assert.equal(baseline.data().price, legacy.price);
+  assert.equal(baseline.data().createdAt.toMillis(), legacy.createdAt.toMillis());
+  assert.equal(updated.data().price, 1600);
+  assert.equal(updated.data().previousRevisionNumber, 1);
+});
+
+test("submitted quotation and revisions remain readable after closure while updates are denied", async () => {
+  const rfqId = "rfq-closed-history";
+  const supplierDb = contextFor("supplier");
+  await seedRfq(rfqId, rfqData(rfqId));
+  const created = createResponse(supplierDb, rfqId);
+  await assertSucceeds(created.commit);
+  await assertSucceeds(updateDoc(doc(contextFor("buyer"), "rfqs", rfqId), { status: "closed", updatedAt: Timestamp.now() }));
+
+  await assertSucceeds(getDoc(doc(supplierDb, "rfqs", rfqId)));
+  await assertSucceeds(getDoc(doc(supplierDb, "rfqResponses", created.response.id)));
+  await assertSucceeds(getDoc(doc(supplierDb, "rfqResponseRevisions", responseRevisionId(created.response.id, 1))));
+  await assertFails(updateResponse(supplierDb, created.response.id, users.buyer.uid, { price: 1700 }));
 });
 
 test("expired and closed RFQs reject new Supplier responses", async () => {
@@ -555,7 +822,7 @@ test("response notification is deterministic, response-bound, and cannot be repe
     responseId,
     direction: "supplier_to_buyer",
   });
-  await assertSucceeds(setDoc(doc(database, "notifications", id), payload));
+  await assertSucceeds(getDoc(doc(contextFor("buyer"), "notifications", id)));
   await assertFails(setDoc(doc(database, "notifications", id), payload));
   await assertFails(setDoc(doc(database, "notifications", id + "-wrong-buyer"), { ...payload, userId: users.unrelated.uid }));
   await assertFails(setDoc(doc(database, "notifications", id + "-wrong-rfq"), { ...payload, referenceId: "rfq-other" }));
@@ -586,31 +853,21 @@ test("notification creation rechecks the current actor status and canonical Supp
   });
   await assertSucceeds(setDoc(doc(buyerDb, "notifications", publishId), publishPayload));
 
-  const created = createResponse(supplierDb, rfqId, users.notificationSupplier, {}, users.notificationBuyer.uid);
-  await assertSucceeds(created.commit);
-  const responseId = created.response.id;
-  const responseIdForNotification = responseNotificationId(responseId);
-  const responsePayload = notificationData({
-    userId: users.notificationBuyer.uid,
-    actorId: users.notificationSupplier.uid,
-    rfqId,
-    responseId,
-    direction: "supplier_to_buyer",
-  });
-
   await environment.withSecurityRulesDisabled(async (context) => {
     await updateDoc(doc(context.firestore(), "suppliers", users.notificationSupplier.supplierProfileId), { accountOwnerId: users.otherSupplier.uid });
   });
-  await assertFails(setDoc(doc(supplierDb, "notifications", responseIdForNotification), responsePayload));
+  await assertFails(createResponse(supplierDb, rfqId, users.notificationSupplier, {}, users.notificationBuyer.uid).commit);
   await environment.withSecurityRulesDisabled(async (context) => {
     await updateDoc(doc(context.firestore(), "suppliers", users.notificationSupplier.supplierProfileId), { accountOwnerId: users.notificationSupplier.uid });
     await updateDoc(doc(context.firestore(), "users", users.notificationSupplier.uid), { accessStatus: "suspended" });
   });
-  await assertFails(setDoc(doc(supplierDb, "notifications", responseIdForNotification), responsePayload));
+  await assertFails(createResponse(supplierDb, rfqId, users.notificationSupplier, {}, users.notificationBuyer.uid).commit);
   await environment.withSecurityRulesDisabled(async (context) => {
     await updateDoc(doc(context.firestore(), "users", users.notificationSupplier.uid), { accessStatus: "pending" });
   });
-  await assertSucceeds(setDoc(doc(supplierDb, "notifications", responseIdForNotification), responsePayload));
+  const created = createResponse(supplierDb, rfqId, users.notificationSupplier, {}, users.notificationBuyer.uid);
+  await assertSucceeds(created.commit);
+  await assertSucceeds(getDoc(doc(contextFor("notificationBuyer"), "notifications", responseNotificationId(created.response.id))));
 });
 
 test("administrative submission notifications preserve the approved workflow boundary", async () => {
@@ -640,7 +897,15 @@ test("actual frontend RFQ, response, and notification queries are allowed while 
   const supplierDb = contextFor("supplier");
   await assertSucceeds(getDocs(query(collection(buyerDb, "rfqs"), where("buyerId", "==", users.buyer.uid), limit(200))));
   await assertFails(getDocs(query(collection(buyerDb, "rfqs"), limit(200))));
-  await assertSucceeds(getDocs(query(collection(supplierDb, "rfqs"), where("recipientIds", "array-contains", users.supplier.supplierProfileId), limit(100))));
+  await assertSucceeds(getDocs(query(
+    collection(supplierDb, "rfqs"),
+    where("recipientIds", "array-contains", users.supplier.supplierProfileId),
+    where("status", "in", ["published", "receiving"]),
+    where("closingAt", ">=", Timestamp.now()),
+    orderBy("closingAt", "asc"),
+    orderBy(documentId(), "asc"),
+    limit(26),
+  )));
   await assertFails(getDocs(query(collection(supplierDb, "rfqs"), limit(100))));
   await assertSucceeds(getDoc(doc(supplierDb, "rfqResponses", `rfq-open_${users.supplier.uid}`)));
   await assertFails(getDoc(doc(supplierDb, "rfqResponses", `rfq-open_${users.otherSupplier.uid}`)));

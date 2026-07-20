@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { DisabledFileUpload } from "../../components/DisabledFileUpload";
 import { RfqReferenceLinks } from "../../components/RfqReferenceLinks";
+import { RfqRevisionHistory } from "../../components/RfqRevisionHistory";
 import { DashboardError, DashboardPageHeader, DashboardPanel, DashboardSkeleton, InlineEmptyState } from "../../components/DashboardPrimitives";
 import { Button, SelectField, TextAreaField, TextField } from "../../components/ui";
 import { useAuth } from "../../contexts/AuthContext";
@@ -28,6 +29,7 @@ import {
 } from "../../services/workspace";
 import type { Conversation, ConversationMessage, FavoriteSupplier, RfqRecord, RfqResponse } from "../../types/workspace";
 import { toDate } from "../../utils/date";
+import { localizedRfqResponseStatus } from "../../utils/rfqLifecycle";
 
 function useLocale() {
   const { i18n } = useTranslation();
@@ -453,7 +455,7 @@ export function BuyerRfqsPage() {
             {selected.status === "draft" ? <InlineEmptyState title={text.publishedOnly} body="" /> : responsesLoading ? <div className="flex min-h-40 items-center justify-center gap-3 text-sm font-black text-muted"><Loader2 className="h-5 w-5 animate-spin text-amber" />{text.loading}</div> : responseError ? <DashboardError message={responseError} retry={() => void openRequest(selected)} /> : responses.length ? <>
               <div className="mb-4 text-sm font-black text-ink">{responses.length} {text.quotation}</div>
               <div className="grid gap-4 lg:grid-cols-2">{responses.map((response) => <article className="rounded-xl border border-borderSoft bg-white p-5 shadow-card" key={response.id}>
-                <div className="flex items-start justify-between gap-3"><h3 className="font-black">{response.supplierName}</h3><span className="rounded-full bg-successBg px-3 py-1 text-xs font-black text-mint">{response.status}</span></div>
+                <div className="flex items-start justify-between gap-3"><h3 className="font-black">{response.supplierName}</h3><span className="rounded-full bg-successBg px-3 py-1 text-xs font-black text-mint">{localizedRfqResponseStatus(response.status, locale)}</span></div>
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted">{response.message}</p>
                 <dl className="mt-4 grid gap-3 rounded-xl bg-creamLight p-4 text-xs sm:grid-cols-2">
                   <div><dt className="font-bold text-muted">{text.price}</dt><dd className="mt-1 text-base font-black">{response.price ?? "—"} {response.price !== undefined ? response.currency : ""}</dd></div>
@@ -462,6 +464,11 @@ export function BuyerRfqsPage() {
                   <div><dt className="font-bold text-muted">{text.offeredDelivery}</dt><dd className="mt-1 font-black">{rfqOptionLabel(rfqDeliveryTermOptions, response.deliveryTerms, locale, response.deliveryTermsOther)}</dd></div>
                 </dl>
                 {response.referenceLinks?.length ? <div className="mt-4"><div className="mb-2 text-xs font-bold text-muted">{text.links}</div><div className="flex flex-wrap gap-2">{response.referenceLinks.map((link, index) => <a className="inline-flex items-center gap-1 rounded-lg border border-borderSoft px-3 py-2 text-xs font-black text-river hover:border-amber hover:text-amber" href={link} key={link} rel="noreferrer" target="_blank"><ExternalLink className="h-3.5 w-3.5" />{index + 1}</a>)}</div></div> : null}
+                <RfqRevisionHistory
+                  response={response}
+                  locale={locale}
+                  scope={{ viewer: "buyer", buyerId: selected.buyerId }}
+                />
               </article>)}</div>
             </> : <InlineEmptyState title={text.noResponses} body="" />}
           </> : <InlineEmptyState title={text.selectRequest} body="" />}

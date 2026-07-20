@@ -12,6 +12,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   startAfter,
@@ -37,18 +38,30 @@ import type {
   RegistrationSector,
   RfqRecord,
   RfqResponse,
+  RfqResponseRevision,
   SupplierDocumentMetadata,
   SupplierProduct,
   WorkspaceNotification,
 } from "../types/workspace";
 import { toDate } from "../utils/date";
 import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
+import {
+  currentRfqRevision,
+  hasMaterialRfqResponseChange,
+  normalizeRfqCommercialValues,
+  RFQ_HISTORY_PAGE_SIZE,
+  rfqResponseRevisionId,
+  rfqResponseUpdatedEventId,
+  rfqResponseUpdatedNotificationId,
+  type SupplierRfqLifecycleItem,
+} from "../utils/rfqLifecycle";
 
 const favoritesRef = collection(db, "favorites");
 const rfqsRef = collection(db, "rfqs");
 const rfqResponsesRef = collection(db, "rfqResponses");
 const rfqPublishEventsRef = collection(db, "rfqPublishEvents");
 const rfqResponseEventsRef = collection(db, "rfqResponseEvents");
+const rfqResponseRevisionsRef = collection(db, "rfqResponseRevisions");
 const notificationsRef = collection(db, "notifications");
 const conversationsRef = collection(db, "conversations");
 const messagesRef = collection(db, "messages");
@@ -235,6 +248,32 @@ function responseNotificationId(responseId: string) {
   return `rfq-response_${responseId}`;
 }
 
+function responseUpdatedNotification(
+  buyerId: string,
+  supplierUserId: string,
+  rfqId: string,
+  responseId: string,
+  revisionNumber: number,
+) {
+  return {
+    userId: buyerId,
+    actorId: supplierUserId,
+    type: "rfq" as const,
+    referenceType: "rfq" as const,
+    referenceId: rfqId,
+    eventId: rfqResponseUpdatedEventId(responseId, revisionNumber),
+    responseId,
+    revisionNumber,
+    titleAr: "تم تحديث عرض سعر",
+    titleEn: "Quotation updated",
+    bodyAr: "قام أحد المجهزين بتحديث عرضه على طلب عرض الأسعار الخاص بك.",
+    bodyEn: "A Supplier updated its quotation for your RFQ.",
+    link: "/buyer/rfqs",
+    read: false,
+    createdAt: serverTimestamp(),
+  };
+}
+
 function rfqNotification(
   userId: string,
   actorId: string,
@@ -318,17 +357,130 @@ export async function listBuyerRfqs(buyerId: string) {
   return sortNewest(snapshot.docs.map((item) => withId<RfqRecord>(item)));
 }
 
-export async function listSupplierRfqs(supplierUserId: string, supplierProfileId?: string) {
+export interface SupplierRfqLifecycleCursor {
+  activeClosingAt?: unknown;
+  activeId?: string;
+  activeComplete: boolean;
+  responseUpdatedAt?: unknown;
+  responseId?: string;
+  responseComplete: boolean;
+}
+
+export interface SupplierRfqLifecyclePage {
+  items: SupplierRfqLifecycleItem[];
+  cursor: SupplierRfqLifecycleCursor | null;
+  hasMore: boolean;
+}
+
+function mergeSupplierRfqLifecycleItems(
+  rfqs: RfqRecord[],
+  responses: RfqResponse[],
+) {
+  const responseByRfq = new Map(responses.map((item) => [item.rfqId, item]));
+  const items = new Map<string, SupplierRfqLifecycleItem>();
+  rfqs.forEach((rfq) => items.set(rfq.id, { rfq, response: responseByRfq.get(rfq.id) || null }));
+  return [...items.values()];
+}
+
+export async function listSupplierRfqLifecyclePage(
+  supplierUserId: string,
+  supplierProfileId: string,
+  cursor: SupplierRfqLifecycleCursor | null = null,
+  pageSize = RFQ_HISTORY_PAGE_SIZE,
+): Promise<SupplierRfqLifecyclePage> {
+  if (!supplierUserId.trim() || !supplierProfileId.trim()) return { items: [], cursor: null, hasMore: false };
+  const boundedPageSize = Math.min(50, Math.max(1, Math.trunc(pageSize)));
+  const activeComplete = cursor?.activeComplete || false;
+  const responseComplete = cursor?.responseComplete || false;
+
   if (!isFirebaseConfigured) {
-    return sortNewest(localRead<RfqRecord>("rfqs").filter((item) => isRfqAcceptingResponses(item) && (
-      item.recipientIds.includes(supplierUserId) || Boolean(supplierProfileId && item.recipientIds.includes(supplierProfileId))
+    const active = sortNewest(localRead<RfqRecord>("rfqs").filter((item) => (
+      item.recipientIds.includes(supplierProfileId) && isRfqAcceptingResponses(item)
     )));
+    const responses = sortNewest(localRead<RfqResponse>("rfqResponses").filter((item) => (
+      item.supplierUserId === supplierUserId && item.supplierProfileId === supplierProfileId
+    )));
+    const activeStart = cursor?.activeId ? Math.max(0, active.findIndex((item) => item.id === cursor.activeId) + 1) : 0;
+    const responseStart = cursor?.responseId ? Math.max(0, responses.findIndex((item) => item.id === cursor.responseId) + 1) : 0;
+    const activePage = activeComplete ? [] : active.slice(activeStart, activeStart + boundedPageSize);
+    const responsePage = responseComplete ? [] : responses.slice(responseStart, responseStart + boundedPageSize);
+    const referencedRfqs = localRead<RfqRecord>("rfqs").filter((item) => responsePage.some((response) => response.rfqId === item.id));
+    const nextActiveComplete = activeComplete || activeStart + activePage.length >= active.length;
+    const nextResponseComplete = responseComplete || responseStart + responsePage.length >= responses.length;
+    const nextCursor = nextActiveComplete && nextResponseComplete ? null : {
+      activeId: activePage[activePage.length - 1]?.id || cursor?.activeId,
+      activeComplete: nextActiveComplete,
+      responseId: responsePage[responsePage.length - 1]?.id || cursor?.responseId,
+      responseComplete: nextResponseComplete,
+    };
+    return {
+      items: mergeSupplierRfqLifecycleItems([...activePage, ...referencedRfqs], responsePage),
+      cursor: nextCursor,
+      hasMore: Boolean(nextCursor),
+    };
   }
+
+  const activeConstraints: QueryConstraint[] = [
+    where("recipientIds", "array-contains", supplierProfileId),
+    where("status", "in", ["published", "receiving"]),
+    where("closingAt", ">=", Timestamp.now()),
+    orderBy("closingAt", "asc"),
+    orderBy(documentId(), "asc"),
+    limit(boundedPageSize + 1),
+  ];
+  if (cursor?.activeClosingAt && cursor.activeId) {
+    activeConstraints.splice(-1, 0, startAfter(cursor.activeClosingAt, cursor.activeId));
+  }
+  const responseConstraints: QueryConstraint[] = [
+    where("supplierUserId", "==", supplierUserId),
+    where("supplierProfileId", "==", supplierProfileId),
+    orderBy("updatedAt", "desc"),
+    orderBy(documentId(), "desc"),
+    limit(boundedPageSize + 1),
+  ];
+  if (cursor?.responseUpdatedAt && cursor.responseId) {
+    responseConstraints.splice(-1, 0, startAfter(cursor.responseUpdatedAt, cursor.responseId));
+  }
+
+  const [activeSnapshot, responseSnapshot] = await Promise.all([
+    activeComplete ? null : getDocs(query(rfqsRef, ...activeConstraints)),
+    responseComplete ? null : getDocs(query(rfqResponsesRef, ...responseConstraints)),
+  ]);
+  const activeDocs = activeSnapshot?.docs || [];
+  const responseDocs = responseSnapshot?.docs || [];
+  const activeHasMore = activeDocs.length > boundedPageSize;
+  const responseHasMore = responseDocs.length > boundedPageSize;
+  const activePageDocs = activeDocs.slice(0, boundedPageSize);
+  const responsePageDocs = responseDocs.slice(0, boundedPageSize);
+  const activeRfqs = activePageDocs.map((item) => withId<RfqRecord>(item)).filter(isRfqAcceptingResponses);
+  const responses = responsePageDocs.map((item) => withId<RfqResponse>(item));
+  const activeIds = new Set(activeRfqs.map((item) => item.id));
+  const referencedIds = [...new Set(responses.map((item) => item.rfqId).filter((id) => !activeIds.has(id)))];
+  const referencedSnapshots = await Promise.all(referencedIds.map((id) => getDoc(doc(rfqsRef, id))));
+  const referencedRfqs = referencedSnapshots.filter((item) => item.exists()).map((item) => withId<RfqRecord>(item));
+  const nextActiveComplete = activeComplete || !activeHasMore;
+  const nextResponseComplete = responseComplete || !responseHasMore;
+  const lastActive = activePageDocs[activePageDocs.length - 1];
+  const lastResponse = responsePageDocs[responsePageDocs.length - 1];
+  const nextCursor = nextActiveComplete && nextResponseComplete ? null : {
+    activeClosingAt: lastActive?.get("closingAt") || cursor?.activeClosingAt,
+    activeId: lastActive?.id || cursor?.activeId,
+    activeComplete: nextActiveComplete,
+    responseUpdatedAt: lastResponse?.get("updatedAt") || cursor?.responseUpdatedAt,
+    responseId: lastResponse?.id || cursor?.responseId,
+    responseComplete: nextResponseComplete,
+  };
+  return {
+    items: mergeSupplierRfqLifecycleItems([...activeRfqs, ...referencedRfqs], responses),
+    cursor: nextCursor,
+    hasMore: Boolean(nextCursor),
+  };
+}
+
+export async function listSupplierRfqs(supplierUserId: string, supplierProfileId?: string) {
   if (!supplierProfileId) return [];
-  const snapshots = [await getDocs(query(rfqsRef, where("recipientIds", "array-contains", supplierProfileId), limit(100)))];
-  const items = new Map<string, RfqRecord>();
-  snapshots.forEach((snapshot) => snapshot.docs.forEach((item) => items.set(item.id, withId<RfqRecord>(item))));
-  return sortNewest([...items.values()].filter(isRfqAcceptingResponses));
+  const page = await listSupplierRfqLifecyclePage(supplierUserId, supplierProfileId);
+  return page.items.filter(({ rfq }) => isRfqAcceptingResponses(rfq)).map(({ rfq }) => rfq);
 }
 
 export async function updateRfqStatus(rfqId: string, status: RfqRecord["status"]) {
@@ -366,6 +518,54 @@ export async function listRfqResponses(rfqId: string) {
   if (!isFirebaseConfigured) return sortNewest(localRead<RfqResponse>("rfqResponses").filter((item) => item.rfqId === rfqId));
   const snapshot = await getDocs(query(rfqResponsesRef, where("rfqId", "==", rfqId), limit(100)));
   return sortNewest(snapshot.docs.map((item) => withId<RfqResponse>(item)));
+}
+
+export type RfqResponseRevisionViewerScope =
+  | {
+    viewer: "supplier";
+    buyerId: string;
+    supplierUserId: string;
+    supplierProfileId: string;
+  }
+  | {
+    viewer: "buyer";
+    buyerId: string;
+  };
+
+export type RfqResponseRevisionScope = RfqResponseRevisionViewerScope & { responseId: string };
+
+export async function listRfqResponseRevisions(scope: RfqResponseRevisionScope, pageSize = RFQ_HISTORY_PAGE_SIZE) {
+  const boundedPageSize = Math.min(50, Math.max(1, Math.trunc(pageSize)));
+  const responseId = scope.responseId.trim();
+  const buyerId = scope.buyerId.trim();
+  if (!responseId || !buyerId) throw new Error("invalid_rfq_revision_scope");
+  if (scope.viewer === "supplier" && (!scope.supplierUserId.trim() || !scope.supplierProfileId.trim())) {
+    throw new Error("invalid_rfq_revision_scope");
+  }
+  if (!isFirebaseConfigured) {
+    return localRead<RfqResponseRevision>("rfqResponseRevisions")
+      .filter((item) => item.responseId === responseId
+        && item.buyerId === buyerId
+        && (scope.viewer === "buyer"
+          || (item.supplierUserId === scope.supplierUserId.trim()
+            && item.supplierProfileId === scope.supplierProfileId.trim())))
+      .sort((a, b) => b.revisionNumber - a.revisionNumber)
+      .slice(0, boundedPageSize);
+  }
+  const ownershipConstraints = scope.viewer === "supplier"
+    ? [
+      where("supplierUserId", "==", scope.supplierUserId.trim()),
+      where("supplierProfileId", "==", scope.supplierProfileId.trim()),
+    ]
+    : [where("buyerId", "==", buyerId)];
+  const snapshot = await getDocs(query(
+    rfqResponseRevisionsRef,
+    where("responseId", "==", responseId),
+    ...ownershipConstraints,
+    orderBy("revisionNumber", "desc"),
+    limit(boundedPageSize),
+  ));
+  return snapshot.docs.map((item) => withId<RfqResponseRevision>(item));
 }
 
 interface SupplierRfqResponseScope {
@@ -427,42 +627,70 @@ export async function getSupplierRfqResponse(rfqId: string, supplierUserId: stri
   return findScopedSupplierRfqResponse(rfqId, supplierUserId, supplierProfileId);
 }
 
+function rfqCommercialPayload(values: ReturnType<typeof normalizeRfqCommercialValues>) {
+  return {
+    message: values.message,
+    currency: values.currency,
+    paymentTerms: values.paymentTerms,
+    paymentTermsOther: values.paymentTermsOther,
+    deliveryTerms: values.deliveryTerms,
+    deliveryTermsOther: values.deliveryTermsOther,
+    referenceLinks: values.referenceLinks,
+    ...(values.price === undefined ? {} : { price: values.price }),
+    ...(values.deliveryDays === undefined ? {} : { deliveryDays: values.deliveryDays }),
+  };
+}
+
+function rfqRevisionPayload(
+  response: Pick<RfqResponse, "id" | "rfqId" | "supplierUserId" | "supplierProfileId"> & Partial<RfqResponse>,
+  buyerId: string,
+  revisionNumber: number,
+  changeType: RfqResponseRevision["changeType"],
+  createdAt: unknown,
+  previousRevisionNumber?: number,
+) {
+  const commercial = normalizeRfqCommercialValues(response);
+  return {
+    id: rfqResponseRevisionId(response.id, revisionNumber),
+    responseId: response.id,
+    rfqId: response.rfqId,
+    buyerId,
+    supplierUserId: response.supplierUserId,
+    supplierProfileId: response.supplierProfileId,
+    revisionNumber,
+    changeType,
+    ...rfqCommercialPayload(commercial),
+    responseStatus: response.status || "submitted",
+    createdBy: response.supplierUserId,
+    createdAt,
+    ...(previousRevisionNumber === undefined ? {} : { previousRevisionNumber }),
+  };
+}
+
 export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status" | "attachmentStatus" | "createdAt" | "updatedAt">) {
   const scope = normalizeSupplierRfqResponseScope(input.rfqId, input.supplierUserId, input.supplierProfileId);
-  const message = input.message.trim();
-  const price = input.price === undefined ? undefined : Number(input.price);
-  const deliveryDays = input.deliveryDays === undefined ? undefined : Math.trunc(Number(input.deliveryDays));
-  const paymentTerms = input.paymentTerms?.trim() || "";
-  const paymentTermsOther = input.paymentTermsOther?.trim() || "";
-  const deliveryTerms = input.deliveryTerms?.trim() || "";
-  const deliveryTermsOther = input.deliveryTermsOther?.trim() || "";
-  const referenceLinks = normalizeReferenceLinks(input.referenceLinks);
+  const commercial = normalizeRfqCommercialValues({
+    ...input,
+    referenceLinks: normalizeReferenceLinks(input.referenceLinks),
+  });
 
   if (
-    !message
-    || message.length > 2000
-    || (price !== undefined && (!Number.isFinite(price) || price < 0))
-    || (deliveryDays !== undefined && (!Number.isFinite(deliveryDays) || deliveryDays < 1))
-    || paymentTerms.length > 40
-    || deliveryTerms.length > 40
-    || !validOtherOption(paymentTerms, paymentTermsOther)
-    || !validOtherOption(deliveryTerms, deliveryTermsOther)
+    !commercial.message
+    || commercial.message.length > 2000
+    || (commercial.price !== undefined && (!Number.isFinite(commercial.price) || commercial.price < 0))
+    || (commercial.deliveryDays !== undefined && (!Number.isFinite(commercial.deliveryDays) || commercial.deliveryDays < 1))
+    || (commercial.paymentTerms || "").length > 40
+    || (commercial.deliveryTerms || "").length > 40
+    || !validOtherOption(commercial.paymentTerms || "", commercial.paymentTermsOther || "")
+    || !validOtherOption(commercial.deliveryTerms || "", commercial.deliveryTermsOther || "")
   ) throw new Error("invalid_rfq_response");
 
   const id = scope.responseId;
   const values = {
-    ...input,
+    ...rfqCommercialPayload(commercial),
     rfqId: scope.rfqId,
     supplierUserId: scope.supplierUserId,
     supplierProfileId: scope.supplierProfileId,
-    message,
-    paymentTerms,
-    paymentTermsOther,
-    deliveryTerms,
-    deliveryTermsOther,
-    referenceLinks,
-    ...(price === undefined ? {} : { price }),
-    ...(deliveryDays === undefined ? {} : { deliveryDays }),
   };
 
   if (!isFirebaseConfigured) {
@@ -470,53 +698,168 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
     if (!rfq) throw new Error("rfq_not_found");
     if (!isRfqAcceptingResponses(rfq)) throw new Error("rfq_closed");
     const existing = await findScopedSupplierRfqResponse(scope.rfqId, scope.supplierUserId, scope.supplierProfileId);
-    return localUpsert("rfqResponses", { ...existing, ...values, id, status: "submitted", attachmentStatus: "upload_pending_launch", createdAt: existing?.createdAt || nowIso(), updatedAt: nowIso() } as RfqResponse);
-  }
-
-  const rfqSnapshot = await getDoc(doc(rfqsRef, scope.rfqId));
-  if (!rfqSnapshot.exists()) throw new Error("rfq_not_found");
-  const rfq = withId<RfqRecord>(rfqSnapshot);
-  if (!isRfqAcceptingResponses(rfq)) throw new Error("rfq_closed");
-  const responseRef = doc(rfqResponsesRef, id);
-  const existing = await findScopedSupplierRfqResponse(scope.rfqId, scope.supplierUserId, scope.supplierProfileId);
-  const batch = writeBatch(db);
-
-  if (existing) {
-    batch.update(responseRef, {
-      message,
-      currency: input.currency,
-      price: price === undefined ? deleteField() : price,
-      deliveryDays: deliveryDays === undefined ? deleteField() : deliveryDays,
-      paymentTerms: paymentTerms || deleteField(),
-      paymentTermsOther: paymentTermsOther || deleteField(),
-      deliveryTerms: deliveryTerms || deleteField(),
-      deliveryTermsOther: deliveryTermsOther || deleteField(),
-      referenceLinks,
-      status: "submitted",
-      updatedAt: serverTimestamp(),
-    });
-  } else {
-    batch.set(responseRef, {
+    if (existing && !hasMaterialRfqResponseChange(existing, commercial)) return id;
+    const timestamp = nowIso();
+    const revisionNumber = existing ? currentRfqRevision(existing) + 1 : 1;
+    if (existing && !existing.revisionNumber) {
+      localUpsert("rfqResponseRevisions", rfqRevisionPayload(existing, rfq.buyerId, 1, "submitted", existing.createdAt) as RfqResponseRevision);
+    }
+    const current = {
+      ...existing,
       ...values,
       id,
-      status: "submitted",
-      attachmentStatus: "upload_pending_launch",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    batch.set(doc(rfqResponseEventsRef, id), {
-      type: "rfq_response_submitted",
+      status: "submitted" as const,
+      attachmentStatus: "upload_pending_launch" as const,
+      revisionNumber,
+      revisionId: rfqResponseRevisionId(id, revisionNumber),
+      firstSubmittedAt: existing?.firstSubmittedAt || existing?.createdAt || timestamp,
+      createdAt: existing?.createdAt || timestamp,
+      updatedAt: timestamp,
+    } as RfqResponse;
+    localUpsert("rfqResponses", current);
+    localUpsert("rfqResponseRevisions", rfqRevisionPayload(
+      current,
+      rfq.buyerId,
+      revisionNumber,
+      existing ? "updated" : "submitted",
+      timestamp,
+      existing ? revisionNumber - 1 : undefined,
+    ) as RfqResponseRevision);
+    const eventId = existing ? rfqResponseUpdatedEventId(id, revisionNumber) : id;
+    localUpsert("rfqResponseEvents", {
+      id: eventId,
+      type: existing ? "rfq_response_updated" : "rfq_response_submitted",
       actorId: scope.supplierUserId,
       buyerId: rfq.buyerId,
       rfqId: scope.rfqId,
       responseId: id,
       supplierProfileId: scope.supplierProfileId,
-      createdAt: serverTimestamp(),
+      revisionNumber,
+      ...(existing ? { previousRevisionNumber: revisionNumber - 1 } : {}),
+      createdAt: timestamp,
     });
+    localUpsert("notifications", {
+      id: existing ? rfqResponseUpdatedNotificationId(id, revisionNumber) : responseNotificationId(id),
+      ...(existing
+        ? responseUpdatedNotification(rfq.buyerId, scope.supplierUserId, scope.rfqId, id, revisionNumber)
+        : rfqNotification(rfq.buyerId, scope.supplierUserId, scope.rfqId, "supplier_to_buyer", id)),
+      createdAt: timestamp,
+    } as WorkspaceNotification);
+    return id;
   }
 
-  await batch.commit();
-  if (!existing) await createResponseNotification(scope.rfqId, id, rfq.buyerId, scope.supplierUserId);
+  const responseRef = doc(rfqResponsesRef, id);
+  const rfqRef = doc(rfqsRef, scope.rfqId);
+  try {
+    await runTransaction(db, async (transaction) => {
+    const [rfqSnapshot, responseSnapshot] = await Promise.all([
+      transaction.get(rfqRef),
+      transaction.get(responseRef),
+    ]);
+    if (!rfqSnapshot.exists()) throw new Error("rfq_not_found");
+    const rfq = withId<RfqRecord>(rfqSnapshot);
+    if (!isRfqAcceptingResponses(rfq)) throw new Error("rfq_closed");
+    const existing = responseSnapshot.exists()
+      ? validateScopedSupplierRfqResponse(withId<RfqResponse>(responseSnapshot), scope)
+      : null;
+    if (existing && !hasMaterialRfqResponseChange(existing, commercial)) return;
+
+    if (!existing) {
+      const created = {
+        ...values,
+        id,
+        status: "submitted" as const,
+        attachmentStatus: "upload_pending_launch" as const,
+        revisionNumber: 1,
+        revisionId: rfqResponseRevisionId(id, 1),
+        firstSubmittedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      transaction.set(responseRef, created);
+      transaction.set(doc(rfqResponseRevisionsRef, rfqResponseRevisionId(id, 1)), rfqRevisionPayload(
+        { ...created, createdAt: undefined, updatedAt: undefined },
+        rfq.buyerId,
+        1,
+        "submitted",
+        serverTimestamp(),
+      ));
+      transaction.set(doc(rfqResponseEventsRef, id), {
+        type: "rfq_response_submitted",
+        actorId: scope.supplierUserId,
+        buyerId: rfq.buyerId,
+        rfqId: scope.rfqId,
+        responseId: id,
+        supplierProfileId: scope.supplierProfileId,
+        revisionNumber: 1,
+        createdAt: serverTimestamp(),
+      });
+      transaction.set(
+        doc(notificationsRef, responseNotificationId(id)),
+        rfqNotification(rfq.buyerId, scope.supplierUserId, scope.rfqId, "supplier_to_buyer", id),
+      );
+      return;
+    }
+
+    const previousRevisionNumber = currentRfqRevision(existing);
+    const revisionNumber = previousRevisionNumber + 1;
+    if (!existing.revisionNumber) {
+      transaction.set(doc(rfqResponseRevisionsRef, rfqResponseRevisionId(id, 1)), rfqRevisionPayload(
+        existing,
+        rfq.buyerId,
+        1,
+        "submitted",
+        existing.createdAt,
+      ));
+    }
+    transaction.update(responseRef, {
+      message: commercial.message,
+      currency: commercial.currency,
+      price: commercial.price === undefined ? deleteField() : commercial.price,
+      deliveryDays: commercial.deliveryDays === undefined ? deleteField() : commercial.deliveryDays,
+      paymentTerms: commercial.paymentTerms || deleteField(),
+      paymentTermsOther: commercial.paymentTermsOther || deleteField(),
+      deliveryTerms: commercial.deliveryTerms || deleteField(),
+      deliveryTermsOther: commercial.deliveryTermsOther || deleteField(),
+      referenceLinks: commercial.referenceLinks,
+      status: "submitted",
+      revisionNumber,
+      revisionId: rfqResponseRevisionId(id, revisionNumber),
+      firstSubmittedAt: existing.firstSubmittedAt || existing.createdAt,
+      updatedAt: serverTimestamp(),
+    });
+    transaction.set(doc(rfqResponseRevisionsRef, rfqResponseRevisionId(id, revisionNumber)), rfqRevisionPayload(
+      { ...existing, ...values, revisionNumber, status: "submitted" },
+      rfq.buyerId,
+      revisionNumber,
+      "updated",
+      serverTimestamp(),
+      previousRevisionNumber,
+    ));
+    transaction.set(doc(rfqResponseEventsRef, rfqResponseUpdatedEventId(id, revisionNumber)), {
+      type: "rfq_response_updated",
+      actorId: scope.supplierUserId,
+      buyerId: rfq.buyerId,
+      rfqId: scope.rfqId,
+      responseId: id,
+      supplierProfileId: scope.supplierProfileId,
+      revisionNumber,
+      previousRevisionNumber,
+      createdAt: serverTimestamp(),
+    });
+    transaction.set(
+      doc(notificationsRef, rfqResponseUpdatedNotificationId(id, revisionNumber)),
+      responseUpdatedNotification(rfq.buyerId, scope.supplierUserId, scope.rfqId, id, revisionNumber),
+    );
+    });
+  } catch (error) {
+    const settledSnapshot = await getDoc(responseRef);
+    const settled = settledSnapshot.exists()
+      ? validateScopedSupplierRfqResponse(withId<RfqResponse>(settledSnapshot), scope)
+      : null;
+    if (settled && !hasMaterialRfqResponseChange(settled, commercial)) return id;
+    throw error;
+  }
   return id;
 }
 

@@ -66,3 +66,45 @@ Listener transport reconnects are controlled by the Firebase SDK and are not cou
 - Account switches clear notification state and invalidate callbacks before a new UID subscription is accepted.
 - Language changes do not refetch dashboard metrics.
 - No Production reads or writes are performed by these tests.
+
+## July 2026 UAT usage review
+
+Firestore Usage Insights for approximately 18-20 July showed about 64,040 reads and 2,870 writes. The largest read groups were `auditLogs` (~22,077), `suppliers` (~18,245), `supplierSubmissions` (~16,197), and `contributionLogs` (~6,862). This distribution is not explained by the few authenticated UAT users and one RFQ alone.
+
+Repository inspection found historical operational workflows capable of reading broad administrative result sets, plus manual integrity and hash audits performed outside the normal UI. The repository does not contain enough execution evidence to attribute every observed read to a specific command, so this document does not claim a single root cause. Full collection integrity scans and repeated hash generation remain the highest-risk audit pattern and are prohibited by default.
+
+## Production audit policy
+
+The standard command is `npm run audit:production:read-only`. Its default path uses aggregation counts, exact known document IDs, bounded targeted fallbacks for reviewed UAT references, and a latest-five audit-log query. It contains no Firestore write method. Targeted checks should pass `--supplier-id`, `--user-id`, `--rfq-id`, and optionally `--response-id`.
+
+Permitted default patterns:
+
+- server aggregation counts;
+- exact document reads by reviewed IDs;
+- latest-record queries with a limit of at most 10;
+- targeted Supplier/User/RFQ/response linkage checks;
+- zero writes.
+
+Prohibited default patterns:
+
+- downloading complete `suppliers`, `supplierSubmissions`, `auditLogs`, or `contributionLogs` collections;
+- calculating Supplier ID or content hashes;
+- unbounded `runQuery` or `getDocs(collection(...))` calls;
+- repeating a pre/post audit while an earlier result remains valid.
+
+The exceptional full-scan path requires `--allow-full-scan`, prints an estimated read warning, and is not part of routine deployment verification. It must be separately approved and was not run while developing the RFQ lifecycle change.
+
+## RFQ lifecycle query budget
+
+| Flow | Logical operations | Maximum initial document results | Notes |
+| --- | ---: | ---: | --- |
+| Supplier RFQ page | 2 bounded queries + up to 25 exact RFQ gets | 25 active RFQs + 25 responses + 25 referenced RFQs | Page size 25; responses require both UID and linked profile; no response query per RFQ |
+| Supplier load more | Same as one initial page | Same 75-document ceiling | Cursor-based; completed sides are skipped |
+| One quotation revision expansion | 1 bounded query | 25 revisions | Runs only after explicit expansion; no page-mount revision reads |
+| Buyer RFQ comparison | 1 bounded response query | 100 current responses | Existing comparison ceiling; each revision panel stays closed initially |
+| Buyer revision expansion | 1 bounded query | 25 revisions | Adjacent changes are compared client-side |
+| Notification shell | 1 shared listener | 26 recent notifications | No polling or second Bell data source |
+| Admin/Owner dashboard | 5-7 count aggregations + 1 bounded audit query | Bounded audit page only | Existing TTL and in-flight deduplication remain unchanged |
+| Standard Production audit | 12 count aggregations + exact requested IDs + latest 5 audit IDs | Usually at most 15 documents | Aggregate billing follows Firestore aggregation rules; no full collections downloaded |
+
+The Supplier lifecycle loader rejects stale results after UID/profile changes, cleans request generations on unmount, and adds no interval, focus refetch, or recurring listener. RFQs referenced by the response page are fetched by immutable ID only; this is bounded by the response page size and avoids an unbounded join.

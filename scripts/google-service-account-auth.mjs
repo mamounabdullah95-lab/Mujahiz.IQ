@@ -1,4 +1,5 @@
 import { createSign } from "node:crypto";
+import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 
 function base64Url(input) {
@@ -9,16 +10,28 @@ function base64Url(input) {
     .replaceAll("=", "");
 }
 
-export function readServiceAccount() {
+export function readServiceAccount({ required = true } = {}) {
   const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (!serviceAccountPath) {
-    throw new Error("GOOGLE_APPLICATION_CREDENTIALS is required.");
+    if (required) throw new Error("GOOGLE_APPLICATION_CREDENTIALS is required.");
+    return null;
   }
   return JSON.parse(readFileSync(serviceAccountPath, "utf8"));
 }
 
 export async function getAccessToken(scopes = ["https://www.googleapis.com/auth/cloud-platform"]) {
-  const serviceAccount = readServiceAccount();
+  const serviceAccount = readServiceAccount({ required: false });
+  if (!serviceAccount) {
+    const require = createRequire(import.meta.url);
+    const firebaseAuth = require("firebase-tools/lib/auth");
+    const account = firebaseAuth.getProjectDefaultAccount(process.cwd()) || firebaseAuth.getGlobalDefaultAccount();
+    if (!account?.tokens?.refresh_token) {
+      throw new Error("GOOGLE_APPLICATION_CREDENTIALS or an authenticated Firebase CLI session is required.");
+    }
+    const tokens = await firebaseAuth.getAccessToken(account.tokens.refresh_token, scopes);
+    if (!tokens?.access_token) throw new Error("Firebase CLI did not return an access token.");
+    return tokens.access_token;
+  }
   const now = Math.floor(Date.now() / 1000);
   const header = base64Url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claims = base64Url(
