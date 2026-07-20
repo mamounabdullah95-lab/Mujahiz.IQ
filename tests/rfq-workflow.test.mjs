@@ -6,12 +6,17 @@ import path from "node:path";
 const root = path.resolve(new URL("../", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
-test("RFQ service preserves draft recipients and uses deterministic supplier response reads", () => {
+test("RFQ service preserves draft recipients and uses scoped deterministic supplier response reads", () => {
   const service = read("src/services/workspace.ts");
   assert.match(service, /const recipientIds = \[\.\.\.new Set/);
   assert.match(service, /status === "published" && recipientIds\.length === 0/);
   assert.match(service, /export async function getSupplierRfqResponse/);
-  assert.match(service, /const responseId = `\$\{rfqId\}_\$\{supplierUserId\}`/);
+  assert.match(service, /where\("rfqId", "==", scope\.rfqId\)/);
+  assert.match(service, /where\("supplierUserId", "==", scope\.supplierUserId\)/);
+  assert.match(service, /where\("supplierProfileId", "==", scope\.supplierProfileId\)/);
+  assert.match(service, /limit\(2\)/);
+  assert.match(service, /item\.id !== scope\.responseId/);
+  assert.match(service, /matches\.length !== 1/);
   assert.match(service, /existing\?\.createdAt \|\| nowIso\(\)/);
 });
 
@@ -31,6 +36,8 @@ test("buyer and supplier RFQ pages expose comparison and own-response workflows"
   assert.match(buyer, /Received quotations/);
   assert.match(buyer, /window\.confirm\(text\.confirmPublish\)/);
   assert.match(supplier, /getSupplierRfqResponse/);
+  assert.match(supplier, /firebaseUser\.uid, appUser\.supplierProfileId/);
+  assert.match(supplier, /responseLoadError/);
   assert.match(supplier, /isRfqAcceptingResponses/);
   assert.doesNotMatch(supplier, /listRfqResponses/);
 });
