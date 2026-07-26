@@ -23,6 +23,22 @@ test("RFQ service preserves draft recipients and uses scoped deterministic suppl
   assert.match(service, /rfqResponseUpdatedNotificationId/);
 });
 
+test("first Supplier submission uses the authorized scoped query before the atomic create batch", () => {
+  const service = read("src/services/workspace.ts");
+  const start = service.indexOf("export async function submitRfqResponse");
+  const end = service.indexOf("export interface NotificationCursor", start);
+  assert.ok(start >= 0 && end > start);
+  const submit = service.slice(start, end);
+  assert.match(submit, /const preexisting = await findScopedSupplierRfqResponse/);
+  assert.match(submit, /if \(!preexisting\) \{[\s\S]*?const batch = writeBatch\(db\);/);
+  assert.match(submit, /batch\.set\(responseRef, created\)/);
+  assert.match(submit, /batch\.set\(doc\(rfqResponseRevisionsRef, created\.revisionId\)/);
+  assert.match(submit, /batch\.set\(doc\(rfqResponseEventsRef, id\)/);
+  assert.match(submit, /doc\(notificationsRef, responseNotificationId\(id\)\)/);
+  assert.match(submit, /await batch\.commit\(\);[\s\S]*?return id;[\s\S]*?await runTransaction\(db/);
+  assert.doesNotMatch(submit, /settledSnapshot = await getDoc\(responseRef\)/);
+});
+
 test("RFQ response window uses a Firestore timestamp and blocks closed requests in service", () => {
   const service = read("src/services/workspace.ts");
   const types = read("src/types/workspace.ts");
