@@ -750,6 +750,65 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
 
   const responseRef = doc(rfqResponsesRef, id);
   const rfqRef = doc(rfqsRef, scope.rfqId);
+  const preexisting = await findScopedSupplierRfqResponse(
+    scope.rfqId,
+    scope.supplierUserId,
+    scope.supplierProfileId,
+  );
+
+  if (!preexisting) {
+    const rfqSnapshot = await getDoc(rfqRef);
+    if (!rfqSnapshot.exists()) throw new Error("rfq_not_found");
+    const rfq = withId<RfqRecord>(rfqSnapshot);
+    if (!isRfqAcceptingResponses(rfq)) throw new Error("rfq_closed");
+    const created = {
+      ...values,
+      id,
+      status: "submitted" as const,
+      attachmentStatus: "upload_pending_launch" as const,
+      revisionNumber: 1,
+      revisionId: rfqResponseRevisionId(id, 1),
+      firstSubmittedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    const batch = writeBatch(db);
+    batch.set(responseRef, created);
+    batch.set(doc(rfqResponseRevisionsRef, created.revisionId), rfqRevisionPayload(
+      { ...created, createdAt: undefined, updatedAt: undefined },
+      rfq.buyerId,
+      1,
+      "submitted",
+      serverTimestamp(),
+    ));
+    batch.set(doc(rfqResponseEventsRef, id), {
+      type: "rfq_response_submitted",
+      actorId: scope.supplierUserId,
+      buyerId: rfq.buyerId,
+      rfqId: scope.rfqId,
+      responseId: id,
+      supplierProfileId: scope.supplierProfileId,
+      revisionNumber: 1,
+      createdAt: serverTimestamp(),
+    });
+    batch.set(
+      doc(notificationsRef, responseNotificationId(id)),
+      rfqNotification(rfq.buyerId, scope.supplierUserId, scope.rfqId, "supplier_to_buyer", id),
+    );
+    try {
+      await batch.commit();
+    } catch (error) {
+      const settled = await findScopedSupplierRfqResponse(
+        scope.rfqId,
+        scope.supplierUserId,
+        scope.supplierProfileId,
+      ).catch(() => null);
+      if (settled && !hasMaterialRfqResponseChange(settled, commercial)) return id;
+      throw error;
+    }
+    return id;
+  }
+
   try {
     await runTransaction(db, async (transaction) => {
     const [rfqSnapshot, responseSnapshot] = await Promise.all([
@@ -759,47 +818,9 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
     if (!rfqSnapshot.exists()) throw new Error("rfq_not_found");
     const rfq = withId<RfqRecord>(rfqSnapshot);
     if (!isRfqAcceptingResponses(rfq)) throw new Error("rfq_closed");
-    const existing = responseSnapshot.exists()
-      ? validateScopedSupplierRfqResponse(withId<RfqResponse>(responseSnapshot), scope)
-      : null;
-    if (existing && !hasMaterialRfqResponseChange(existing, commercial)) return;
-
-    if (!existing) {
-      const created = {
-        ...values,
-        id,
-        status: "submitted" as const,
-        attachmentStatus: "upload_pending_launch" as const,
-        revisionNumber: 1,
-        revisionId: rfqResponseRevisionId(id, 1),
-        firstSubmittedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-      transaction.set(responseRef, created);
-      transaction.set(doc(rfqResponseRevisionsRef, rfqResponseRevisionId(id, 1)), rfqRevisionPayload(
-        { ...created, createdAt: undefined, updatedAt: undefined },
-        rfq.buyerId,
-        1,
-        "submitted",
-        serverTimestamp(),
-      ));
-      transaction.set(doc(rfqResponseEventsRef, id), {
-        type: "rfq_response_submitted",
-        actorId: scope.supplierUserId,
-        buyerId: rfq.buyerId,
-        rfqId: scope.rfqId,
-        responseId: id,
-        supplierProfileId: scope.supplierProfileId,
-        revisionNumber: 1,
-        createdAt: serverTimestamp(),
-      });
-      transaction.set(
-        doc(notificationsRef, responseNotificationId(id)),
-        rfqNotification(rfq.buyerId, scope.supplierUserId, scope.rfqId, "supplier_to_buyer", id),
-      );
-      return;
-    }
+    if (!responseSnapshot.exists()) throw new Error("rfq_response_integrity_error");
+    const existing = validateScopedSupplierRfqResponse(withId<RfqResponse>(responseSnapshot), scope);
+    if (!hasMaterialRfqResponseChange(existing, commercial)) return;
 
     const previousRevisionNumber = currentRfqRevision(existing);
     const revisionNumber = previousRevisionNumber + 1;
@@ -853,10 +874,11 @@ export async function submitRfqResponse(input: Omit<RfqResponse, "id" | "status"
     );
     });
   } catch (error) {
-    const settledSnapshot = await getDoc(responseRef);
-    const settled = settledSnapshot.exists()
-      ? validateScopedSupplierRfqResponse(withId<RfqResponse>(settledSnapshot), scope)
-      : null;
+    const settled = await findScopedSupplierRfqResponse(
+      scope.rfqId,
+      scope.supplierUserId,
+      scope.supplierProfileId,
+    ).catch(() => null);
     if (settled && !hasMaterialRfqResponseChange(settled, commercial)) return id;
     throw error;
   }
