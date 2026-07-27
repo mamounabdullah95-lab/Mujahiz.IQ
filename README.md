@@ -57,6 +57,30 @@ npm run build
 firebase deploy --only hosting
 ```
 
+## Internal Emulator Accounts
+
+Run the focused internal account suite with:
+
+```bash
+npm run test:internal-emulator-accounts
+```
+
+The command starts isolated Auth and Firestore Emulators under the fixed
+`demo-mujahiziq-integration` project, resets Emulator state, and creates four
+Buyer plus four Supplier identities from
+`tests/helpers/internal-emulator-accounts.mjs`. It requires no Production
+credentials, Firebase Console access, inboxes, or manual verification.
+
+To seed the same accounts into Emulators that are already running, use:
+
+```bash
+npm run seed:internal-emulator-accounts
+```
+
+The seed command fails closed unless both `FIREBASE_AUTH_EMULATOR_HOST` and
+`FIRESTORE_EMULATOR_HOST` point to loopback hosts. It never falls back to a
+Demo or Production service.
+
 ## First Owner Bootstrap
 
 1. Register the first user from the app.
