@@ -1,7 +1,7 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-07-21-post-pr25`
-Updated: 2026-07-21
+Baseline ID: `baseline-2026-07-27-post-pr28-rfq-revision-uat`
+Updated: 2026-07-27
 Canonical Production URL: `https://mujahiz.com`
 
 This is the only frequently changing context document. Update it after a behavior-affecting code merge, deployment, Production-data change, or infrastructure change. Keep the current repository state, merged-but-undeployed changes, and last verified Production state distinct.
@@ -10,69 +10,124 @@ This is the only frequently changing context document. Update it after a behavio
 
 - Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - Approved branch: `main`.
-- Current verified `main` commit: `a660f9921d688424b3d7574fc06a400197230130`.
+- Current verified `main` commit: `3f7a1e56c481c6ef72d3d43bcfcb0a4c81ab986d`.
 - PR #23 is merged. Its merge commit is `8fc818c432e66eac387d0c57f06214a7db5aacc6`.
-- PR #25 is merged. Its merge commit, and the current `main`, is `a660f9921d688424b3d7574fc06a400197230130`.
-- PR #25 changed documentation and repository instructions only. It did not change the application or the Production deployment.
+- PR #28 is merged. Its source commit is `6c6edeff6a8ca06ec4dd412d51e7378c6e29b0f2`; its merge commit, and the current `main`, is `3f7a1e56c481c6ef72d3d43bcfcb0a4c81ab986d`.
+- PR #25 is merged. Its documentation-only merge commit is `a660f9921d688424b3d7574fc06a400197230130`.
 
-The current repository SHA identifies source control state. It must not be described as the active Production application version unless a deployment is separately verified.
+The repository SHA identifies source-control state. It must not be described as the active Production application version unless a Hosting deployment is separately verified.
 
 Codex must verify the live `main` SHA before making changes.
 
+### Latest verified automated-test baseline
+
+- Repository tests: **128/128 passed**.
+- Firebase bundle tests: **3/3 passed**.
+- Firestore Emulator tests: **66/66 passed**, including diagnostics.
+- Total: **197 passing tests**.
+- Production build: **passed**.
+- Evidence source: the complete verification recorded for PR #28 against source commit `6c6edeff6a8ca06ec4dd412d51e7378c6e29b0f2`, which is contained in current `main`.
+- GitHub exposes no separate combined status checks for current merge commit `3f7a1e56c481c6ef72d3d43bcfcb0a4c81ab986d`; do not describe these results as a fresh CI run on that merge commit.
+- `npm audit --omit=dev` reported two pre-existing moderate React Router advisories. PR #28 did not change dependencies or the lockfile.
+
 ## 2. Merged but not yet deployed
 
-PR #23 changed application behavior, Firestore Rules, and Firestore indexes. Those changes are present in the repository but have not been deployed to Production.
+No known PR #23 or PR #28 application change remains merged but undeployed:
 
-PR #23 requires a staged Production deployment in this order:
+- PR #23 was deployed through its required staged index, Rules, and Hosting sequence.
+- PR #28 was subsequently deployed to Hosting only because it required no Rules or index change.
 
-1. Deploy indexes.
-2. Wait until every required index reports `READY`.
-3. Deploy Firestore Rules.
-4. Deploy Hosting.
+This does not authorize a future deployment. Any later merged change requires its own deployment-scope verification and approval.
 
-Do not collapse or reorder these stages. Each Production deployment action requires explicit approval and fresh read-only pre-deployment verification.
+## 3. Current verified Production deployment state
 
-## 3. Last verified Production deployment state
-
-The last verified Production application state predates PR #23 and does not include its application, Firestore Rules, or index changes.
-
-Last recorded deployment values after PR #22:
+Keep repository, Hosting, Rules, and indexes distinct:
 
 - Firebase project: `mujahiziq`.
-- Hosting release: `1784535807667000`.
-- Hosting version: `b27d80d752d4b942`.
-- Firestore Ruleset: `bf7f044a-f69d-4cca-a5f8-151cad0c0c7a`.
-- Index status: 77 indexes reported `READY`.
+- Current Hosting release: `1785098739622000`.
+- Current Hosting version: `f16be6f0bed75c19`.
+- Current Hosting release time: `2026-07-26T20:45:39.622Z`.
+- The current Hosting release is the corrected PR #28 Hosting deployment and includes the deployed PR #23 RFQ lifecycle behavior.
+- PR #23 Hosting release `1784644705920000` / version `6e79204bb8715250` is superseded by the current PR #28 Hosting release.
+- Active Firestore Ruleset: `e6948804-1333-433a-ac69-f0f963d07355`.
+- PR #28 did not change Firestore Rules; the active Ruleset remains the PR #23 deployment.
+- All **15** required composite indexes report `READY`.
+- PR #28 did not change indexes; their deployed state remains the PR #23 deployment.
 - Canonical Production domain: `mujahiz.com`.
 - Legacy Firebase Hosting origins are intended to redirect to the canonical domain.
 
-These values document the last verified state; they are not a claim about the currently active state. Before deployment, the current Hosting release/version, active Ruleset, and readiness of all required indexes need fresh read-only verification.
+The repository `main` SHA, Hosting version, Ruleset ID, and index state identify different systems and must not be substituted for one another.
 
 ## 4. Last verified Production data counts
 
-The last verified counts are:
+The final bounded RFQ UAT audit recorded these fresh relevant global counts:
+
+- RFQ responses: **2**.
+- RFQ response revisions: **2**.
+- RFQ response events: **3**.
+- Notifications: **6**.
+
+Delta reconciliation against the Stage 3 pre-submission checkpoint:
+
+| Collection | Stage 3 baseline | Final | Delta |
+| --- | ---: | ---: | ---: |
+| RFQ responses | 1 | 2 | +1 |
+| RFQ response revisions | 0 | 2 | +2 |
+| RFQ response events | 1 | 3 | +2 |
+| Notifications | 4 | 6 | +2 |
+
+Every delta matched the expected single V1 submission and single material V2 update. The identical V2 resubmission and RFQ closure added no response, revision, event, or notification artifact.
+
+The following older counts were not refreshed during the final UAT audit and remain last-verified values rather than fresh current assertions:
 
 - Suppliers: **480**.
 - Supplier submissions/requests: **540**.
 - Users: **4**.
-- RFQs: **1**.
-- RFQ responses: **1**.
-- Notifications: **3**.
 - Conversations: **0**.
 - Messages: **0**.
 
-These are preserved as the last verified counts, not asserted as fresh current counts. Retrieve fresh relevant counts through an approved read-only check when a deployment or high-risk task requires them.
+The exact current global RFQ count was not re-aggregated in the final audit. Two controlled TEST RFQs are known and preserved: `UAT-RFQ-20260720-01` and `UAT-RFQ-REVISION-20260721-01`.
 
-The last complete read-only audit before the controlled RFQ UAT was recorded at `2026-07-20T07:32:33.904Z`. It attempted no Production writes. Supplier ID/content fingerprints were unchanged against the approved 480-supplier baseline. The exact post-480 fingerprint values were not included in the PR #22 summary; retrieve them through the approved read-only audit script/report when a high-risk task requires fingerprint comparison. Do not reuse the older 479-supplier fingerprint values.
+The last complete read-only supplier audit before the controlled RFQ UAT was recorded at `2026-07-20T07:32:33.904Z`. It attempted no Production writes. Supplier ID/content fingerprints were unchanged against the approved 480-supplier baseline. The final RFQ audit did not run a full scan or calculate Supplier hashes.
 
-## 5. Controlled RFQ UAT state
+## 5. Controlled Production RFQ quotation-revision UAT
 
-- Controlled RFQ: `UAT-RFQ-20260720-01`.
-- A first Supplier quotation was submitted successfully and then updated.
-- The Buyer closed the RFQ.
-- PR #23 addresses the resulting RFQ lifecycle/history and notification behavior in repository code, but those changes are not yet deployed.
-- Do not delete the controlled RFQ, quotation, notification, or related TEST records without explicit approval.
-- Any controlled Production RFQ write-path UAT requires separate explicit approval. Deployment approval does not authorize Production test writes.
+Final result: **PASS**. No known UAT issue remains.
+
+### Controlled TEST identity
+
+- RFQ reference: `UAT-RFQ-REVISION-20260721-01`.
+- RFQ document ID: `f0jto81FI742Q1o87Fqw`.
+- Title: `TEST - RFQ Revision Lifecycle`.
+- The RFQ targeted exactly one approved TEST Supplier and remained linked to the correct TEST Buyer.
+- The deterministic response ID is `{rfqId}_{TEST_SUPPLIER_UID}`. The UID-bearing literal is deliberately not stored in this baseline.
+- Deterministic revision IDs: `{responseId}_v1` and `{responseId}_v2`.
+- Deterministic response event IDs: `{responseId}` for first submission and `{responseId}_v2` for the material update.
+- Deterministic Buyer notification IDs: `rfq-response_{responseId}` and `rfq-response-updated_{responseId}_v2`.
+
+### Verified lifecycle
+
+- RFQ creation and publication passed.
+- V1 creation passed at **300000 IQD** and **4 delivery days**.
+- V2 creation passed at **325000 IQD** and **4 delivery days**.
+- V1 remained immutable after V2.
+- Resubmitting identical V2 values was a no-op: canonical `updatedAt` did not change and no V3 artifact was created.
+- Exactly one canonical response, two immutable revisions, two deterministic response events, and two deterministic Buyer notifications exist for this TEST RFQ.
+- No duplicate response, revision, event, or notification artifact exists.
+- RFQ closure and movement to Supplier History passed.
+- Buyer and Supplier can read V1 and V2 in read-only revision history after closure.
+- The older controlled RFQ `UAT-RFQ-20260720-01` remained untouched.
+- Preserve all controlled TEST RFQ, response, revision, event, and notification artifacts. Do not clean them up without explicit approval.
+
+### Verified timestamps
+
+- Corrected PR #28 Hosting release: `2026-07-26T20:45:39.622Z`.
+- V1 atomic artifact timestamp: `2026-07-26T20:58:07.548Z`.
+- V1 document creation time: `2026-07-26T20:58:07.622109Z`.
+- V2 atomic artifact timestamp: `2026-07-27T05:53:44.129Z`.
+- RFQ closure timestamp: `2026-07-27T06:22:30.586Z`.
+
+The final audit used bounded exact/targeted reads plus four aggregation counts. It estimated 12 logical reads, attempted no writes, executed no full scan, calculated no Supplier hashes, and exposed no protected identifier.
 
 ## 6. Audit-log count
 
@@ -81,7 +136,13 @@ The last complete read-only audit before the controlled RFQ UAT was recorded at 
 
 Do not hard-code 622 as the current value in future high-risk prompts.
 
-## 7. Domain state
+## 7. Future scope and recommended next task
+
+- Buyer quotation decision / Award Status remains future scope. It was not implemented, started, or exercised by this UAT.
+- The recommended next task is an internal automated test environment with **4 Buyer and 4 Supplier Emulator accounts**.
+- This baseline update does not start or authorize that test-environment task.
+
+## 8. Domain state
 
 - Purchased and active primary domain: `mujahiz.com`.
 - Production is served through the canonical domain.
@@ -89,14 +150,15 @@ Do not hard-code 622 as the current value in future high-risk prompts.
 - DNS is no longer described as merely pending manual setup in this baseline.
 - Any new DNS, SSL, redirect, Authorized Domains, App Check, or email-action change still requires explicit approval and fresh verification.
 
-## 8. Known deployment boundaries
+## 9. Known deployment boundaries
 
 - File uploads remain disabled unless separately approved.
 - Do not assume Storage, Functions, Extensions, or Firebase AI services are active.
-- PR #23 requires the staged deployment sequence documented above; it is not a Hosting-only change.
-- Do not deploy, merge, write Production UAT records, or change infrastructure without explicit approval.
+- PR #23 required index, Rules, and Hosting deployment; that sequence is complete for the verified deployment above.
+- PR #28 required Hosting only; its verified Hosting deployment supersedes the PR #23 Hosting version without changing Rules or indexes.
+- Do not deploy, merge, write Production UAT records, clean up TEST artifacts, or change infrastructure without explicit approval.
 
-## 9. Baseline verification rule
+## 10. Baseline verification rule
 
 For ordinary UI or isolated application changes:
 
