@@ -29,6 +29,7 @@ const publicRoutes = new Set([
   "/login",
   "/forgot-password",
   "/reset-password",
+  "/auth/action",
   "/register",
   "/verify-email",
   "/complete-profile",

@@ -11,14 +11,15 @@ const testCommand = [
   "tests/conversation-firestore-emulator.mjs",
   "tests/internal-emulator-accounts.mjs",
   "tests/password-recovery-emulator.mjs",
+  "tests/email-actions-emulator.mjs",
   "&& node scripts/assert-firestore-emulator-log.mjs",
 ].join(" ");
 
 function forwardRedactedLines(stream, destination) {
   const lines = createInterface({ input: stream, crlfDelay: Infinity });
   lines.on("line", (line) => {
-    const output = line.includes("/emulator/action?mode=resetPassword")
-      ? "i  auth: [password-reset action link redacted]"
+    const output = line.includes("/emulator/action?")
+      ? "i  auth: [email action link redacted]"
       : line;
     destination.write(`${output}\n`);
   });

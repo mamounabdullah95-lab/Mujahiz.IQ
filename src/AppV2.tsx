@@ -27,6 +27,7 @@ const LandingPage = lazy(() => import("./pages/LandingPage").then((m) => ({ defa
 const LoginPage = lazy(() => import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage").then((m) => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage").then((m) => ({ default: m.ResetPasswordPage })));
+const EmailActionPage = lazy(() => import("./pages/EmailActionPage").then((m) => ({ default: m.EmailActionPage })));
 const MyAccessPage = lazy(() => import("./pages/MyAccessPage").then((m) => ({ default: m.MyAccessPage })));
 const MyReviewsPage = lazy(() => import("./pages/MyReviewsPage").then((m) => ({ default: m.MyReviewsPage })));
 const MySubmissionsPage = lazy(() => import("./pages/MySubmissionsPage").then((m) => ({ default: m.MySubmissionsPage })));
@@ -76,6 +77,7 @@ export function AppV2() {
     <Route path="login" element={<LoginPage />} />
     <Route path="forgot-password" element={<ForgotPasswordPage />} />
     <Route path="reset-password" element={<ResetPasswordPage />} />
+    <Route path="auth/action" element={<EmailActionPage />} />
     <Route path="register" element={<RegisterPage />} />
     <Route path="verify-email" element={<VerifyEmailPage />} />
     <Route path="complete-profile" element={<CompleteProfilePage />} />
