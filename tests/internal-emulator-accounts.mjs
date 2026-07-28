@@ -71,6 +71,127 @@ test("creates eight deterministic verified Auth users and matching application r
   }
 });
 
+test("write helpers reject invalid Emulator hosts before creating a context or Auth request", async () => {
+  const originalAuthHost = process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  const originalFirestoreHost = process.env.FIRESTORE_EMULATOR_HOST;
+  const originalFetch = globalThis.fetch;
+  let authRequestCount = 0;
+  let authenticatedContextCount = 0;
+  const guardedEnvironment = {
+    authenticatedContext() {
+      authenticatedContextCount += 1;
+      throw new Error("Authenticated context must not be created before Emulator host validation.");
+    },
+  };
+  const invalidConfigurations = [
+    {
+      label: "missing Auth host",
+      authHost: undefined,
+      firestoreHost: "127.0.0.1:8080",
+      errorPattern: /FIREBASE_AUTH_EMULATOR_HOST/,
+    },
+    {
+      label: "missing Firestore host",
+      authHost: "127.0.0.1:9099",
+      firestoreHost: undefined,
+      errorPattern: /FIRESTORE_EMULATOR_HOST/,
+    },
+    {
+      label: "malformed Auth host",
+      authHost: "http://127.0.0.1:9099",
+      firestoreHost: "127.0.0.1:8080",
+      errorPattern: /FIREBASE_AUTH_EMULATOR_HOST/,
+    },
+    {
+      label: "non-loopback Auth host",
+      authHost: "192.0.2.10:9099",
+      firestoreHost: "127.0.0.1:8080",
+      errorPattern: /FIREBASE_AUTH_EMULATOR_HOST/,
+    },
+    {
+      label: "malformed Firestore host",
+      authHost: "127.0.0.1:9099",
+      firestoreHost: "127.0.0.1",
+      errorPattern: /FIRESTORE_EMULATOR_HOST/,
+    },
+    {
+      label: "non-loopback Firestore host",
+      authHost: "127.0.0.1:9099",
+      firestoreHost: "192.0.2.10:8080",
+      errorPattern: /FIRESTORE_EMULATOR_HOST/,
+    },
+  ];
+  const writeHelpers = [
+    {
+      name: "createInternalBuyerDraft",
+      run: () => createInternalBuyerDraft(guardedEnvironment, "buyer01", "TEST-GUARD-DRAFT"),
+    },
+    {
+      name: "createInternalTargetedRfq",
+      run: () => createInternalTargetedRfq(guardedEnvironment),
+    },
+    {
+      name: "submitInternalQuotation",
+      run: () => submitInternalQuotation(guardedEnvironment, {
+        rfqId: "TEST-GUARD-RFQ",
+        supplierKey: "supplier01",
+        price: 1,
+      }),
+    },
+  ];
+
+  globalThis.fetch = async () => {
+    authRequestCount += 1;
+    throw new Error("Auth request must not occur before Emulator host validation.");
+  };
+
+  try {
+    for (const configuration of invalidConfigurations) {
+      if (configuration.authHost === undefined) {
+        delete process.env.FIREBASE_AUTH_EMULATOR_HOST;
+      } else {
+        process.env.FIREBASE_AUTH_EMULATOR_HOST = configuration.authHost;
+      }
+      if (configuration.firestoreHost === undefined) {
+        delete process.env.FIRESTORE_EMULATOR_HOST;
+      } else {
+        process.env.FIRESTORE_EMULATOR_HOST = configuration.firestoreHost;
+      }
+
+      assert.throws(
+        () => internalAccountContext(guardedEnvironment, "buyer01"),
+        configuration.errorPattern,
+        `${configuration.label}: internalAccountContext must reject`,
+      );
+      for (const helper of writeHelpers) {
+        await assert.rejects(
+          helper.run(),
+          configuration.errorPattern,
+          `${configuration.label}: ${helper.name} must reject`,
+        );
+      }
+      assert.equal(
+        authenticatedContextCount,
+        0,
+        `${configuration.label}: no Firestore context may be created`,
+      );
+      assert.equal(authRequestCount, 0, `${configuration.label}: no Auth request may occur`);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalAuthHost === undefined) {
+      delete process.env.FIREBASE_AUTH_EMULATOR_HOST;
+    } else {
+      process.env.FIREBASE_AUTH_EMULATOR_HOST = originalAuthHost;
+    }
+    if (originalFirestoreHost === undefined) {
+      delete process.env.FIRESTORE_EMULATOR_HOST;
+    } else {
+      process.env.FIRESTORE_EMULATOR_HOST = originalFirestoreHost;
+    }
+  }
+});
+
 test("Buyer access states and verified-token requirement match the current model", async () => {
   await assert.doesNotReject(createInternalBuyerDraft(environment, "buyer01", "TEST-BUYER-01-DRAFT"));
   await assert.doesNotReject(createInternalBuyerDraft(environment, "buyer02", "TEST-BUYER-02-TRIAL-DRAFT"));

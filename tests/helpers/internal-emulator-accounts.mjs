@@ -417,6 +417,7 @@ export async function signInInternalEmulatorAccount(accountKey) {
 }
 
 export function internalAccountContext(environment, accountKey, claims = {}) {
+  requireInternalEmulatorConfiguration();
   const account = internalEmulatorAccounts[accountKey];
   if (!account) throw new Error(`Unknown internal Emulator account: ${accountKey}`);
   return environment.authenticatedContext(account.uid, {
