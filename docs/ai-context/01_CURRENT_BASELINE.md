@@ -1,7 +1,7 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-07-27-post-pr28-rfq-revision-uat`
-Updated: 2026-07-27
+Baseline ID: `baseline-2026-07-28-post-pr30-internal-emulator-foundation`
+Updated: 2026-07-28
 Canonical Production URL: `https://mujahiz.com`
 
 This is the only frequently changing context document. Update it after a behavior-affecting code merge, deployment, Production-data change, or infrastructure change. Keep the current repository state, merged-but-undeployed changes, and last verified Production state distinct.
@@ -10,9 +10,10 @@ This is the only frequently changing context document. Update it after a behavio
 
 - Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - Approved branch: `main`.
-- Current verified `main` commit: `3f7a1e56c481c6ef72d3d43bcfcb0a4c81ab986d`.
+- Current verified `main` commit: `0182ff5ca0d557b5616469b84bd8b803e77bb1a6`.
 - PR #23 is merged. Its merge commit is `8fc818c432e66eac387d0c57f06214a7db5aacc6`.
-- PR #28 is merged. Its source commit is `6c6edeff6a8ca06ec4dd412d51e7378c6e29b0f2`; its merge commit, and the current `main`, is `3f7a1e56c481c6ef72d3d43bcfcb0a4c81ab986d`.
+- PR #28 is merged. Its source commit is `6c6edeff6a8ca06ec4dd412d51e7378c6e29b0f2`; its merge commit is `3f7a1e56c481c6ef72d3d43bcfcb0a4c81ab986d`.
+- PR #30 merged on 28 July 2026. Its merge commit, and the current `main`, is `0182ff5ca0d557b5616469b84bd8b803e77bb1a6`.
 - PR #25 is merged. Its documentation-only merge commit is `a660f9921d688424b3d7574fc06a400197230130`.
 
 The repository SHA identifies source-control state. It must not be described as the active Production application version unless a Hosting deployment is separately verified.
@@ -23,11 +24,10 @@ Codex must verify the live `main` SHA before making changes.
 
 - Repository tests: **128/128 passed**.
 - Firebase bundle tests: **3/3 passed**.
-- Firestore Emulator tests: **66/66 passed**, including diagnostics.
-- Total: **197 passing tests**.
+- Auth/Firestore Emulator tests: **73/73 passed**, including diagnostics.
+- Total: **204 passing tests**.
 - Production build: **passed**.
-- Evidence source: the complete verification recorded for PR #28 against source commit `6c6edeff6a8ca06ec4dd412d51e7378c6e29b0f2`, which is contained in current `main`.
-- GitHub exposes no separate combined status checks for current merge commit `3f7a1e56c481c6ef72d3d43bcfcb0a4c81ab986d`; do not describe these results as a fresh CI run on that merge commit.
+- Evidence source: the complete verification recorded for PR #30, which is contained in current `main`.
 - `npm audit --omit=dev` reported two pre-existing moderate React Router advisories. PR #28 did not change dependencies or the lockfile.
 
 ## 2. Merged but not yet deployed
@@ -36,6 +36,8 @@ No known PR #23 or PR #28 application change remains merged but undeployed:
 
 - PR #23 was deployed through its required staged index, Rules, and Hosting sequence.
 - PR #28 was subsequently deployed to Hosting only because it required no Rules or index change.
+- PR #30 added an Internal Emulator foundation only. It required no Firebase deployment, and none was performed.
+- No Production access or data change occurred for PR #30.
 
 This does not authorize a future deployment. Any later merged change requires its own deployment-scope verification and approval.
 
@@ -139,8 +141,9 @@ Do not hard-code 622 as the current value in future high-risk prompts.
 ## 7. Future scope and recommended next task
 
 - Buyer quotation decision / Award Status remains future scope. It was not implemented, started, or exercised by this UAT.
-- The recommended next task is an internal automated test environment with **4 Buyer and 4 Supplier Emulator accounts**.
-- This baseline update does not start or authorize that test-environment task.
+- The Internal Emulator foundation now deterministically provides **4 Buyer accounts**, **4 Supplier accounts**, a reset/reseed lifecycle, competing quotation fixtures, and loopback-only, fail-closed Auth/Firestore write guards.
+- The recommended next task is **Password Reset and Account Recovery**.
+- Browser-level Production UX validation remains a separate later task.
 
 ## 8. Domain state
 
@@ -156,6 +159,7 @@ Do not hard-code 622 as the current value in future high-risk prompts.
 - Do not assume Storage, Functions, Extensions, or Firebase AI services are active.
 - PR #23 required index, Rules, and Hosting deployment; that sequence is complete for the verified deployment above.
 - PR #28 required Hosting only; its verified Hosting deployment supersedes the PR #23 Hosting version without changing Rules or indexes.
+- PR #30 required no Firebase deployment, and none was performed.
 - Do not deploy, merge, write Production UAT records, clean up TEST artifacts, or change infrastructure without explicit approval.
 
 ## 10. Baseline verification rule
