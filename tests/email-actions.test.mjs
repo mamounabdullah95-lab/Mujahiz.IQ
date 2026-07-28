@@ -5,7 +5,9 @@ import {
   buildResetPasswordSearch,
   completeEmailAction,
   emailActionErrorState,
+  getEmailActionCompletion,
   parseEmailAction,
+  presentEmailActionResult,
   safeContinuePath,
 } from "../src/services/emailActions.ts";
 
@@ -142,9 +144,81 @@ test("unknown or missing modes and missing action codes fail without an action",
   assert.equal(emailActionErrorState({ code: "email-action/missing-code" }), "invalid");
 });
 
-test("continue URL allowlist preserves approved internal paths and rejects open redirects", () => {
+test("success cleans the visible URL before publishing the success state", () => {
+  let visibleUrl = "/auth/action?mode=verifyEmail&oobCode=synthetic&apiKey=synthetic&continueUrl=%2Flogin&lang=en";
+  let renderedState = "checking";
+  const events = [];
+
+  const presented = presentEmailActionResult({
+    result: "success",
+    current: true,
+    replaceCurrentUrl: (path) => {
+      events.push("replace");
+      visibleUrl = path;
+    },
+    publish: (result) => {
+      assert.equal(visibleUrl, "/auth/action");
+      events.push("publish");
+      renderedState = result;
+    },
+  });
+
+  assert.equal(presented, true);
+  assert.equal(visibleUrl, "/auth/action");
+  assert.equal(renderedState, "success");
+  assert.deepEqual(events, ["replace", "publish"]);
+});
+
+test("a second navigation starts a new operation and cannot inherit the first success", async () => {
+  let starts = 0;
+  const first = getEmailActionCompletion(null, "navigation-one", async () => {
+    starts += 1;
+    return "success";
+  });
+  const duplicate = getEmailActionCompletion(first, "navigation-one", async () => {
+    starts += 1;
+    return "invalid";
+  });
+  const second = getEmailActionCompletion(first, "navigation-two", async () => {
+    starts += 1;
+    return "invalid";
+  });
+
+  assert.equal(duplicate, first);
+  assert.notEqual(second, first);
+  assert.equal(starts, 2);
+  const firstResult = await first.promise;
+  const secondResult = await second.promise;
+  let renderedState = "checking";
+
+  assert.equal(firstResult, "success");
+  assert.equal(secondResult, "invalid");
+  assert.equal(presentEmailActionResult({
+    result: firstResult,
+    current: first === second,
+    replaceCurrentUrl: () => {
+      throw new Error("A stale navigation must not replace the current URL.");
+    },
+    publish: (result) => {
+      renderedState = result;
+    },
+  }), false);
+  assert.equal(renderedState, "checking");
+  assert.equal(presentEmailActionResult({
+    result: secondResult,
+    current: true,
+    replaceCurrentUrl: () => {},
+    publish: (result) => {
+      renderedState = result;
+    },
+  }), true);
+  assert.equal(renderedState, "invalid");
+});
+
+test("continue URL allowlist normalizes only strict approved destinations", () => {
   const accepted = [
-    ["/login?from=email#done", "/login?from=email#done"],
+    ["/login", "/login"],
+    ["/verify-email?from=action", "/verify-email?from=action"],
     ["https://mujahiz.com/verify-email?from=action", "/verify-email?from=action"],
     ["https://www.mujahiz.com/login", "/login"],
     ["https://mujahiziq.web.app/login?legacy=1", "/login?legacy=1"],
@@ -152,13 +226,26 @@ test("continue URL allowlist preserves approved internal paths and rejects open 
   for (const [input, expected] of accepted) assert.equal(safeContinuePath(input), expected);
 
   for (const input of [
+    "https://MuJaHiZ.com/dashboard",
+    "https://mujahiz.com:443/dashboard",
+    "https://mujahiz.com:8443/dashboard",
+    "/login#done",
+    "https://user@mujahiz.com/login",
+    "https://user:password@mujahiz.com/login",
+    "//evil.example/login",
+    "/%2F%2Fevil.example/login",
+    "/https%3A%2F%2Fevil.example/login",
+    "https://mujahiz.com/%2F%2Fevil.example/login",
+    "https://mujahiziq.web.app/https%3A%2F%2Fevil.example/login",
+    "/login?next=https%3A%2F%2Fevil.example",
+    "/login?next=%2F%2Fevil.example",
+    "/login?next=%2Flogin%3Ftarget%3Dhttps%253A%252F%252Fevil.example",
+    "/%ZZ",
     "https://evil.example/login",
     "http://mujahiz.com/login",
-    "//evil.example/login",
     "/\\evil.example/login",
     "javascript:alert(1)",
     "https://mujahiz.com.evil.example/login",
-    "https://user:password@mujahiz.com/login",
   ]) {
     assert.equal(safeContinuePath(input), "/login", input);
   }

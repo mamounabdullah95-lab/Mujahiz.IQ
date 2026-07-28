@@ -10,7 +10,10 @@ import {
   buildResetPasswordSearch,
   completeEmailAction,
   emailActionErrorState,
+  getEmailActionCompletion,
   parseEmailAction,
+  presentEmailActionResult,
+  type EmailActionCompletion,
   type EmailActionState,
 } from "../services/emailActions";
 
@@ -19,7 +22,7 @@ export function EmailActionPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const fallbackLocale = useRef(i18n.language.startsWith("ar") ? "ar" as const : "en" as const).current;
-  const completion = useRef<Promise<EmailActionState> | null>(null);
+  const completion = useRef<EmailActionCompletion | null>(null);
   const action = useMemo(() => {
     try {
       return parseEmailAction(location.search, fallbackLocale);
@@ -58,6 +61,7 @@ export function EmailActionPage() {
 
   useEffect(() => {
     let active = true;
+    setState("checking");
 
     if ("error" in action) {
       setState(emailActionErrorState(action.error));
@@ -84,21 +88,29 @@ export function EmailActionPage() {
     }
 
     configuredAuth.languageCode = action.locale;
-    setState("checking");
-    const pending = completion.current || completeEmailAction({
-      action,
-      checkCode: (code) => checkActionCode(configuredAuth, code),
-      applyCode: (code) => applyActionCode(configuredAuth, code),
-    });
-    completion.current = pending;
-    void pending.then((result) => {
-      if (active) setState(result);
+    const currentCompletion = getEmailActionCompletion(
+      completion.current,
+      location.key,
+      () => completeEmailAction({
+        action,
+        checkCode: (code) => checkActionCode(configuredAuth, code),
+        applyCode: (code) => applyActionCode(configuredAuth, code),
+      }),
+    );
+    completion.current = currentCompletion;
+    void currentCompletion.promise.then((result) => {
+      presentEmailActionResult({
+        result,
+        current: active && completion.current === currentCompletion,
+        replaceCurrentUrl: (path) => window.history.replaceState(window.history.state, "", path),
+        publish: setState,
+      });
     });
 
     return () => {
       active = false;
     };
-  }, [action, i18n, navigate]);
+  }, [action, i18n, location.key, navigate]);
 
   const isSuccess = state === "success" && !("error" in action);
   const message = isSuccess
