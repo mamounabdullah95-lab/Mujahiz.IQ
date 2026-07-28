@@ -27,6 +27,8 @@ import { Button } from "./ui";
 const publicRoutes = new Set([
   "/",
   "/login",
+  "/forgot-password",
+  "/reset-password",
   "/register",
   "/verify-email",
   "/complete-profile",

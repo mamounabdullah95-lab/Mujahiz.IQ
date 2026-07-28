@@ -25,6 +25,8 @@ const DashboardRouterPage = lazy(() => import("./pages/DashboardRouterPage").the
 const DirectoryPage = lazy(() => import("./pages/DirectoryPage").then((m) => ({ default: m.DirectoryPage })));
 const LandingPage = lazy(() => import("./pages/LandingPage").then((m) => ({ default: m.LandingPage })));
 const LoginPage = lazy(() => import("./pages/LoginPage").then((m) => ({ default: m.LoginPage })));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage").then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage").then((m) => ({ default: m.ResetPasswordPage })));
 const MyAccessPage = lazy(() => import("./pages/MyAccessPage").then((m) => ({ default: m.MyAccessPage })));
 const MyReviewsPage = lazy(() => import("./pages/MyReviewsPage").then((m) => ({ default: m.MyReviewsPage })));
 const MySubmissionsPage = lazy(() => import("./pages/MySubmissionsPage").then((m) => ({ default: m.MySubmissionsPage })));
@@ -72,6 +74,8 @@ export function AppV2() {
   return <Suspense fallback={<AuthLoadingScreen />}><Routes><Route element={<AppLayoutV2 />}>
     <Route index element={<LandingPage />} />
     <Route path="login" element={<LoginPage />} />
+    <Route path="forgot-password" element={<ForgotPasswordPage />} />
+    <Route path="reset-password" element={<ResetPasswordPage />} />
     <Route path="register" element={<RegisterPage />} />
     <Route path="verify-email" element={<VerifyEmailPage />} />
     <Route path="complete-profile" element={<CompleteProfilePage />} />
