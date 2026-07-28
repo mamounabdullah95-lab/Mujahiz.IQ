@@ -13,6 +13,7 @@ import {
   getEmailActionCompletion,
   parseEmailAction,
   presentEmailActionResult,
+  resolveEmailActionLanguage,
   type EmailActionCompletion,
   type EmailActionState,
 } from "../services/emailActions";
@@ -24,14 +25,17 @@ export function EmailActionPage() {
   const fallbackLocale = useRef(i18n.language.startsWith("ar") ? "ar" as const : "en" as const).current;
   const completion = useRef<EmailActionCompletion | null>(null);
   const action = useMemo(() => {
+    const language = resolveEmailActionLanguage(location.search, fallbackLocale);
     try {
       return parseEmailAction(location.search, fallbackLocale);
     } catch (error) {
-      return { error };
+      return { error, ...language };
     }
   }, [fallbackLocale, location.search]);
-  const locale = "error" in action ? fallbackLocale : action.locale;
-  const [state, setState] = useState<"checking" | EmailActionState>("checking");
+  const locale = action.locale;
+  const [state, setState] = useState<"checking" | EmailActionState>(
+    () => "error" in action ? emailActionErrorState(action.error) : "checking",
+  );
 
   const text = locale === "ar" ? {
     title: "إجراء آمن للبريد الإلكتروني",
@@ -63,14 +67,14 @@ export function EmailActionPage() {
     let active = true;
     setState("checking");
 
+    if (i18n.language !== action.locale) void i18n.changeLanguage(action.locale);
+
     if ("error" in action) {
       setState(emailActionErrorState(action.error));
       return () => {
         active = false;
       };
     }
-
-    if (i18n.language !== action.locale) void i18n.changeLanguage(action.locale);
 
     if (action.mode === "resetPassword") {
       navigate(`/reset-password${buildResetPasswordSearch(action)}`, { replace: true });

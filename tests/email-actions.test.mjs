@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MemoryRouter } from "react-router-dom";
+import { createServer } from "vite";
 import {
   buildResetPasswordSearch,
   completeEmailAction,
@@ -9,6 +14,7 @@ import {
   parseEmailAction,
   presentEmailActionResult,
   safeContinuePath,
+  resolveEmailActionLanguage,
 } from "../src/services/emailActions.ts";
 
 const app = readFileSync(new URL("../src/AppV2.tsx", import.meta.url), "utf8");
@@ -20,6 +26,62 @@ const actionSources = `${actionPage}\n${actionService}`;
 function firebaseError(code) {
   return Object.assign(new Error("Synthetic Firebase error"), { code });
 }
+
+let renderedHarness;
+
+async function loadRenderedHarness() {
+  if (renderedHarness) return renderedHarness;
+
+  const storedValues = new Map();
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    value: {
+      getItem: (key) => storedValues.get(key) ?? null,
+      removeItem: (key) => storedValues.delete(key),
+      setItem: (key, value) => storedValues.set(key, String(value)),
+    },
+  });
+
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: fileURLToPath(new URL("..", import.meta.url)),
+    server: { middlewareMode: true },
+  });
+  const [{ EmailActionPage }, { default: i18n }] = await Promise.all([
+    vite.ssrLoadModule("/src/pages/EmailActionPage.tsx"),
+    vite.ssrLoadModule("/src/i18n.ts"),
+  ]);
+  renderedHarness = {
+    async close() {
+      await vite.close();
+    },
+    async render(search, fallbackLocale = "en") {
+      const originalConsoleError = console.error;
+      console.error = (message, ...details) => {
+        if (String(message).startsWith("Warning: useLayoutEffect does nothing on the server")) return;
+        originalConsoleError(message, ...details);
+      };
+      try {
+        await i18n.changeLanguage(fallbackLocale);
+        return renderToStaticMarkup(
+          createElement(
+            MemoryRouter,
+            { initialEntries: [`/auth/action${search}`] },
+            createElement(EmailActionPage),
+          ),
+        );
+      } finally {
+        console.error = originalConsoleError;
+      }
+    },
+  };
+  return renderedHarness;
+}
+
+test.after(async () => {
+  await renderedHarness?.close();
+});
 
 test("unified email action handler is a public route without broadening protected routes", () => {
   assert.match(app, /path="auth\/action" element=\{<EmailActionPage \/>\}/);
@@ -266,6 +328,42 @@ test("valid Firebase language parameters select separated Arabic RTL or English 
   const englishValues = [...englishBlock[1].matchAll(/:\s*"([^"]+)"/g)].map((match) => match[1]);
   for (const value of arabicValues) assert.doesNotMatch(value, /[A-Za-z]/);
   for (const value of englishValues) assert.doesNotMatch(value, /[\u0600-\u06ff]/);
+});
+
+test("malformed action requests render in the resolved supported locale and direction", async () => {
+  const arabicSearches = [
+    "?lang=ar",
+    "?mode=verifyEmail&lang=ar",
+    "?mode=unknown&oobCode=synthetic&lang=ar",
+  ];
+  const englishSearches = [
+    "?lang=en",
+    "?mode=verifyEmail&lang=en",
+    "?mode=unknown&oobCode=synthetic&lang=en",
+  ];
+
+  const harness = await loadRenderedHarness();
+  for (const search of arabicSearches) {
+    assert.equal(resolveEmailActionLanguage(search, "en").locale, "ar");
+    const markup = await harness.render(search, "en");
+    assert.match(markup, /dir="rtl"/);
+    assert.match(markup, /[\u0600-\u06ff]/);
+    assert.doesNotMatch(markup, /Secure email action|This link is invalid or has already been used/);
+  }
+
+  for (const search of englishSearches) {
+    assert.equal(resolveEmailActionLanguage(search, "ar").locale, "en");
+    const markup = await harness.render(search, "ar");
+    assert.match(markup, /dir="ltr"/);
+    assert.match(markup, /Secure email action/);
+    assert.match(markup, /This link is invalid or has already been used/);
+  }
+
+  assert.equal(resolveEmailActionLanguage("?lang=fr", "en").locale, "en");
+  assert.equal(resolveEmailActionLanguage("?lang=fr", "ar").locale, "ar");
+  const unsupported = await harness.render("?lang=fr", "en");
+  assert.match(unsupported, /dir="ltr"/);
+  assert.match(unsupported, /Secure email action/);
 });
 
 test("action codes and action URLs are never logged, stored, analyzed, or written to profiles", () => {
