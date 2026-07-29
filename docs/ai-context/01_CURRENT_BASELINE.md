@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-07-29-post-pr34-production-email-action-ready`
+Baseline ID: `baseline-2026-07-29-post-pr36-hosting-deployment`
 Updated: 2026-07-29
 Canonical Production URL: `https://mujahiz.com`
 
@@ -10,42 +10,46 @@ This is the only frequently changing context document. Update it after a behavio
 
 - Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - Approved branch: `main`.
-- Current verified `main` commit: `0feed4696f5e98885ac6e567c74c2d515d8f4211`.
+- Current verified `main` commit: `d66a04c18ab7260e5444e67d0ca62795ccc39fce`.
 - PR #30 merged the deterministic Internal Auth/Firestore Emulator account foundation.
 - PR #32 merged Password Reset and Account Recovery.
 - PR #33 merged the unified Firebase email action handler at `/auth/action`.
 - PR #34 merged the Arabic/English locale-initialization correction for malformed email action requests.
+- PR #36 merged the password-recovery neutral-success-message locale correction, was deployed to Firebase Hosting, and passed post-deployment smoke verification.
 
 The repository SHA identifies source-control state. It must not be described as the active Production application version unless a Hosting deployment is separately verified.
 
 ### Latest verified automated-test baseline
 
-Evidence recorded for PR #34 and the deployed Production build:
+Latest verified evidence recorded for PR #36 and the deployed Production build:
 
-- Repository tests: **153/153 passed**.
+- Focused password-recovery tests: **15/15 passed**.
+- Repository tests: **156/156 passed**.
 - Firebase production-bundle tests: **3/3 passed**.
-- Auth/Firestore Emulator tests: **76/76 passed**, including diagnostics.
 - Production build: **passed**.
-- Focused email-action/localization tests: **13/13 passed**.
-- `git diff --check`: **passed**.
+- GitHub PR gate #55: **passed**.
+- CI Firestore Emulator step: **passed**.
 
-Do not add the focused 13 tests to 153 unless a future official report states they are distinct; they are included in the repository suite.
+Do not invent or combine Emulator totals that were not rerun on the exact PR head. The focused password-recovery tests must not be added to the repository total unless an official report states they are distinct.
 
 ## 2. Current verified Production deployment state
 
 Keep repository, Hosting, Rules, indexes, and Console configuration distinct:
 
 - Firebase project: `mujahiziq`.
-- Current Hosting release: `1785303212286000`.
-- Current Hosting version: `ce0ccb0776da3601`.
-- Deployed application commit: `0feed4696f5e98885ac6e567c74c2d515d8f4211`.
+- Current Hosting release: `1785332157811000`.
+- Current Hosting version: `42b95b8aad86e7a0`.
+- Hosting deployment time: `2026-07-29T13:35:57.811Z`.
+- Deployed application commit: `d66a04c18ab7260e5444e67d0ca62795ccc39fce`.
+- Deployment scope: Firebase Hosting only.
+- Current rollback reference: Hosting release `1785303212286000`, version `ce0ccb0776da3601`.
 - Canonical Production domain: `mujahiz.com`.
 - `www.mujahiz.com` is connected and redirects to the canonical domain.
 - `mujahiziq.web.app` and `mujahiziq.firebaseapp.com` remain available as Firebase Hosting origins and must not be broken.
 - Active Firestore Ruleset remains the last verified RFQ lifecycle/security deployment unless a newer live verification records another ID.
 - All **15** required composite indexes were last verified `READY`.
 
-The Hosting release/version above supersedes the older post-PR #28 Hosting release recorded in the previous baseline.
+The Hosting release/version above supersedes the rollback reference, which remains the previous verified Hosting deployment.
 
 ## 3. Firebase Authentication and email actions
 
@@ -60,6 +64,19 @@ The Hosting release/version above supersedes the older post-PR #28 Hosting relea
 - Sensitive action parameters are cleaned from the visible URL after successful verification/recovery.
 - No action code, API key, token, password, recovered email, or full action URL is logged or persisted.
 - Arabic-only RTL and English-only LTR states are implemented and tested.
+- Password recovery and the neutral-success-message localization issue are completed.
+
+### Verified Production password-recovery UAT
+
+Final result: **PASS**.
+
+- Buyer functional UAT passed.
+- Supplier functional UAT passed.
+- Protected Auth/Firestore state remained unchanged except for approved TEST password changes.
+- The original Firebase action handler remains active.
+- The custom action URL remains blocked by `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED`.
+- The localization defect found during UAT was fixed by PR #36 and verified after deployment.
+- Post-deployment smoke passed for the canonical URL, legacy Firebase Hosting redirect, English and Arabic Forgot Password copy, English LTR, Arabic RTL, absence of raw Firebase errors, and absence of redirect loops or blank pages.
 
 ### Current Firebase Console configuration
 
@@ -154,11 +171,7 @@ Do not reopen these areas without new evidence:
 
 Ordered priorities:
 
-1. **Production email/password recovery UAT using the original Firebase handler**
-   - Buyer and Supplier controlled TEST accounts.
-   - Real email delivery, reset, re-login, and unchanged role/access/linkage verification.
-
-2. **Claim Supplier Profile**
+1. **Claim Supplier Profile** — next recommended task
    - Search for an existing company.
    - Submit a claim request.
    - Admin review and approve/reject.
@@ -166,22 +179,22 @@ Ordered priorities:
    - Canonical account/profile ownership link.
    - Immutable audit evidence and Supplier result notification.
 
-3. **Buyer quotation decision / Award Status**
+2. **Buyer quotation decision / Award Status**
    - Under review, shortlisted, awarded, not selected, procurement cancelled.
    - Buyer-controlled decision, Supplier read-only result, deterministic notification, and durable decision history.
    - Must not represent a legal Purchase Order or contract.
 
-4. **Browser-level role UAT**
+3. **Browser-level role UAT**
    - Buyer, Supplier, Admin, and Owner critical paths.
    - Arabic, English, RTL/LTR, and common mobile widths.
 
-5. **Focused launch-readiness gate**
+4. **Focused launch-readiness gate**
    - Verify `main` versus deployed Hosting.
    - Verify GitHub Actions on the deployed commit.
    - Verify Rules/index state where relevant.
    - Verify no Critical/High blocker, safe rollback target, and no unsafe Production data operation.
 
-6. **Closed Beta**
+5. **Closed Beta**
    - Start with approximately 5 real Buyers and 15–30 RFQ-ready Suppliers in focused categories.
    - Measure claimed profiles, RFQ-ready Suppliers, RFQs, quotations per RFQ, first-response time, response rate, decision completion, and user-blocking issues.
 
