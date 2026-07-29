@@ -55,6 +55,11 @@ function parseRequestedLanguage(value: string | null, fallback: Locale) {
   };
 }
 
+export function resolveEmailActionLanguage(search: string, fallback: Locale = "en") {
+  const parameters = new URLSearchParams(search);
+  return parseRequestedLanguage(parameters.get("lang"), fallback);
+}
+
 function decodedVariants(value: string) {
   const variants = [value];
   let current = value;
@@ -165,6 +170,7 @@ export function presentEmailActionResult({
 
 export function parseEmailAction(search: string, fallbackLocale: Locale = "en"): ParsedEmailAction {
   const parameters = new URLSearchParams(search);
+  const language = parseRequestedLanguage(parameters.get("lang"), fallbackLocale);
   const mode = parameters.get("mode");
   const code = parameters.get("oobCode") || "";
 
@@ -173,7 +179,6 @@ export function parseEmailAction(search: string, fallbackLocale: Locale = "en"):
   }
   if (!code) throw emailActionError("email-action/missing-code");
 
-  const language = parseRequestedLanguage(parameters.get("lang"), fallbackLocale);
   const apiKey = parameters.get("apiKey") || undefined;
 
   return {
