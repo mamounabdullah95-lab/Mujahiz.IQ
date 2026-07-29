@@ -117,5 +117,5 @@ test("Firestore rules preserve supplier ownership and document verification fiel
   assert.match(rules, /request\.resource\.data\.supplierId == resource\.data\.supplierId/);
   assert.match(rules, /request\.resource\.data\.ownerUserId == resource\.data\.ownerUserId/);
   assert.match(rules, /request\.resource\.data\.verificationStatus == resource\.data\.verificationStatus/);
-  assert.match(rules, /resource\.data\.supplierId == myUser\(\)\.supplierProfileId/);
+  assert.match(rules, /currentSupplierCanWrite\(resource\.data\.supplierId\)/);
 });

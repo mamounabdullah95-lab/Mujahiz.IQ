@@ -12,6 +12,7 @@ test("Firebase emulators require an explicit development-only flag", () => {
   assert.match(firebaseSource, /resolveFirebaseRuntime/);
   assert.match(firebaseSource, /connectAuthEmulator/);
   assert.match(firebaseSource, /connectFirestoreEmulator/);
+  assert.match(firebaseSource, /connectFunctionsEmulator/);
   assert.match(firebaseSource, /runtimeTarget === "emulator"/);
   assert.match(envExample, /VITE_USE_FIREBASE_EMULATORS=false/);
   assert.match(envExample, /VITE_FORCE_DEMO=false/);
@@ -24,6 +25,7 @@ test("App Check is never initialized for emulator UAT", () => {
 test("all security-sensitive feature flags use strict true semantics", () => {
   assert.match(featureSource, /isStrictlyEnabled\(import\.meta\.env\.VITE_FILE_UPLOADS_ENABLED\)/);
   assert.match(featureSource, /isStrictlyEnabled\(import\.meta\.env\.VITE_SUPPLIER_EXCEL_IMPORT_ENABLED\)/);
+  assert.match(featureSource, /isStrictlyEnabled\(import\.meta\.env\.VITE_SUPPLIER_PROFILE_CLAIM_ENABLED\)/);
   assert.match(aiSource, /isStrictlyEnabled\(import\.meta\.env\.VITE_FIREBASE_AI_ENABLED\)/);
 });
 

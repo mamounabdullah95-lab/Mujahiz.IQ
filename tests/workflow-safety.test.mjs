@@ -2,15 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const firestore = fs.readFileSync(new URL("../src/services/firestore.ts", import.meta.url), "utf8");
+const trustedAdminUsers = fs.readFileSync(new URL("../functions/src/adminUsers.ts", import.meta.url), "utf8");
 const taxonomy = fs.readFileSync(new URL("../src/contexts/TaxonomyContext.tsx", import.meta.url), "utf8");
 const main = fs.readFileSync(new URL("../src/main.tsx", import.meta.url), "utf8");
 const bootstrap = fs.readFileSync(new URL("../src/bootstrap.tsx", import.meta.url), "utf8");
 const migration = fs.readFileSync(new URL("../scripts/migrate-linked-supplier-accounts.mjs", import.meta.url), "utf8");
 
 test("supplier RFQ eligibility follows the linked account status", () => {
-  assert.match(firestore, /targetUser\.accountType === "supplier" && targetUser\.supplierProfileId/);
-  assert.match(firestore, /canReceiveRfqs: status === "approved"/);
+  assert.match(trustedAdminUsers, /target\.accountType === "supplier" && typeof target\.supplierProfileId === "string"/);
+  assert.match(trustedAdminUsers, /canReceiveRfqs: status === "approved"/);
 });
 
 test("public pages use local taxonomy without protected Firestore reads", () => {

@@ -91,9 +91,9 @@ export interface RfqResponseRevision {
 export interface WorkspaceNotification {
   id: string;
   userId: string;
-  type: "approval" | "rfq" | "message" | "access" | "submission" | "system";
+  type: "approval" | "rfq" | "message" | "access" | "submission" | "system" | "supplier_ownership";
   actorId?: string;
-  referenceType?: "rfq" | "conversation" | "submission" | "supplier";
+  referenceType?: "rfq" | "conversation" | "submission" | "supplier" | "supplierOwnershipClaim";
   referenceId?: string;
   eventId?: string;
   responseId?: string;

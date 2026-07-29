@@ -7,6 +7,7 @@ const firebaseCli = fileURLToPath(new URL("../node_modules/firebase-tools/lib/bi
 const testCommand = [
   "node --test --test-concurrency=1",
   "tests/firestore-emulator.mjs",
+  "tests/supplier-ownership-claim-firestore-emulator.mjs",
   "tests/rfq-firestore-emulator.mjs",
   "tests/conversation-firestore-emulator.mjs",
   "tests/internal-emulator-accounts.mjs",
