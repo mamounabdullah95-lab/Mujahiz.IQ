@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createServer } from "vite";
 import {
   completePasswordReset,
   MINIMUM_PASSWORD_LENGTH,
@@ -24,6 +28,47 @@ const actionSettings = { url: "https://mujahiz.com/login", handleCodeInApp: fals
 function firebaseError(code) {
   return Object.assign(new Error("Synthetic Firebase error"), { code });
 }
+
+function deferred() {
+  let resolve;
+  const promise = new Promise((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
+let renderedFeedbackHarness;
+
+async function loadRenderedFeedbackHarness() {
+  if (renderedFeedbackHarness) return renderedFeedbackHarness;
+
+  const vite = await createServer({
+    appType: "custom",
+    logLevel: "silent",
+    root: fileURLToPath(new URL("..", import.meta.url)),
+    server: { middlewareMode: true },
+  });
+  const { PasswordRecoveryFeedback } = await vite.ssrLoadModule("/src/pages/ForgotPasswordPage.tsx");
+  renderedFeedbackHarness = {
+    async close() {
+      await vite.close();
+    },
+    render(locale, result) {
+      return renderToStaticMarkup(
+        createElement(PasswordRecoveryFeedback, {
+          locale,
+          result: result.status,
+          failure: null,
+        }),
+      );
+    },
+  };
+  return renderedFeedbackHarness;
+}
+
+test.after(async () => {
+  await renderedFeedbackHarness?.close();
+});
 
 test("login links to public forgot-password and reset-completion routes", () => {
   assert.match(loginPage, /to="\/forgot-password"/);
@@ -81,6 +126,53 @@ test("unknown email returns the same accepted result without enumeration", async
   assert.match(passwordResetRequestMessage("en"), /Spam or Junk/);
 });
 
+test("resolved reset request renders neutral English feedback in LTR", async () => {
+  const result = await requestPasswordReset({
+    email: "buyer@example.test",
+    actionSettings,
+    sendResetEmail: async () => {},
+  });
+  const markup = (await loadRenderedFeedbackHarness()).render("en", result);
+
+  assert.match(markup, /role="status"/);
+  assert.match(markup, /dir="ltr"/);
+  assert.match(markup, /If an account is linked/);
+  assert.doesNotMatch(markup, /[\u0600-\u06ff]/);
+});
+
+test("resolved reset request renders neutral Arabic feedback in RTL", async () => {
+  const result = await requestPasswordReset({
+    email: "buyer@example.test",
+    actionSettings,
+    sendResetEmail: async () => {},
+  });
+  const markup = (await loadRenderedFeedbackHarness()).render("ar", result);
+
+  assert.match(markup, /role="status"/);
+  assert.match(markup, /dir="rtl"/);
+  assert.match(markup, /[\u0600-\u06ff]/);
+  assert.doesNotMatch(markup, /If an account is linked/);
+});
+
+test("in-flight locale change renders final feedback in the current locale", async () => {
+  const request = deferred();
+  const pendingResult = requestPasswordReset({
+    email: "buyer@example.test",
+    actionSettings,
+    sendResetEmail: async () => request.promise,
+  });
+
+  let currentLocale = "ar";
+  currentLocale = "en";
+  request.resolve();
+  const result = await pendingResult;
+  const markup = (await loadRenderedFeedbackHarness()).render(currentLocale, result);
+
+  assert.match(markup, /dir="ltr"/);
+  assert.match(markup, /If an account is linked/);
+  assert.doesNotMatch(markup, /[\u0600-\u06ff]/);
+});
+
 test("request rate-limit and network errors map to safe bilingual messages", () => {
   for (const code of ["auth/too-many-requests", "auth/network-request-failed"]) {
     const english = passwordRecoveryErrorMessage(firebaseError(code), "en", "request");
@@ -96,6 +188,8 @@ test("request page shows loading and prevents duplicate submission", () => {
   assert.match(forgotPage, /if \(busy\) return/);
   assert.match(forgotPage, /disabled=\{busy\}/);
   assert.match(forgotPage, /busy \? text\.sending : text\.submit/);
+  assert.match(forgotPage, /setResult\(requestResult\.status\)/);
+  assert.doesNotMatch(forgotPage, /setMessage\(passwordResetRequestMessage\(locale\)\)/);
 });
 
 test("valid password-reset action code is checked before password entry", async () => {

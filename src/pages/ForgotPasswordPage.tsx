@@ -11,15 +11,57 @@ import {
   passwordRecoveryErrorMessage,
   passwordResetRequestMessage,
   requestPasswordReset,
+  type PasswordResetRequestResult,
 } from "../services/passwordRecovery";
+import type { Locale } from "../types/domain";
+
+type PasswordRecoveryFailure = {
+  error: unknown;
+};
+
+export function PasswordRecoveryFeedback({
+  locale,
+  result,
+  failure,
+}: {
+  locale: Locale;
+  result: PasswordResetRequestResult["status"] | null;
+  failure: PasswordRecoveryFailure | null;
+}) {
+  if (result) {
+    return (
+      <div
+        className="rounded-xl bg-successBg px-3 py-3 text-sm font-bold leading-6 text-mint"
+        dir={locale === "ar" ? "rtl" : "ltr"}
+        role="status"
+      >
+        {passwordResetRequestMessage(locale)}
+      </div>
+    );
+  }
+
+  if (failure) {
+    return (
+      <div
+        className="rounded-xl border border-clay/30 bg-clay/10 px-3 py-3 text-sm font-bold leading-6 text-clay"
+        dir={locale === "ar" ? "rtl" : "ltr"}
+        role="alert"
+      >
+        {passwordRecoveryErrorMessage(failure.error, locale, "request")}
+      </div>
+    );
+  }
+
+  return null;
+}
 
 export function ForgotPasswordPage() {
   const { i18n } = useTranslation();
   const locale = i18n.language.startsWith("ar") ? "ar" : "en";
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [result, setResult] = useState<PasswordResetRequestResult["status"] | null>(null);
+  const [failure, setFailure] = useState<PasswordRecoveryFailure | null>(null);
   const text = locale === "ar" ? {
     title: "استعادة الحساب",
     description: "أدخل بريدك الإلكتروني لطلب رابط آمن لإعادة تعيين كلمة المرور.",
@@ -42,19 +84,19 @@ export function ForgotPasswordPage() {
     event.preventDefault();
     if (busy) return;
     setBusy(true);
-    setMessage("");
-    setError("");
+    setResult(null);
+    setFailure(null);
     try {
       const configuredAuth = auth;
       if (!configuredAuth) throw new Error("password-recovery/unavailable");
-      await requestPasswordReset({
+      const requestResult = await requestPasswordReset({
         email,
         actionSettings: getEmailActionSettings("/login"),
         sendResetEmail: (normalizedEmail, settings) => sendPasswordResetEmail(configuredAuth, normalizedEmail, settings),
       });
-      setMessage(passwordResetRequestMessage(locale));
+      setResult(requestResult.status);
     } catch (caught) {
-      setError(passwordRecoveryErrorMessage(caught, locale, "request"));
+      setFailure({ error: caught });
     } finally {
       setBusy(false);
     }
@@ -76,8 +118,7 @@ export function ForgotPasswordPage() {
           placeholder={text.emailPlaceholder}
           required
         />
-        {message ? <div className="rounded-xl bg-successBg px-3 py-3 text-sm font-bold leading-6 text-mint" role="status">{message}</div> : null}
-        {error ? <div className="rounded-xl border border-clay/30 bg-clay/10 px-3 py-3 text-sm font-bold leading-6 text-clay" role="alert">{error}</div> : null}
+        <PasswordRecoveryFeedback locale={locale} result={result} failure={failure} />
         <Button className="w-full" disabled={busy} type="submit">
           <Send className="h-4 w-4" aria-hidden="true" />
           {busy ? text.sending : text.submit}
