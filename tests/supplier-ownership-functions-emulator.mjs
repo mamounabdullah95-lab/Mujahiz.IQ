@@ -283,6 +283,48 @@ test("bounded search returns safe unowned display fields without duplicate-index
   await expectCallableError(call("buyer", "searchSupplierProfilesForClaim", { query: "acme", mode: "prefix" }), "permission-denied");
 });
 
+test("Claim search matches canonical and capped legacy numeric-name forms without crossing numbered Suppliers", async () => {
+  const batch = adminDb.batch();
+  const profiles = [
+    ["profile-number-02", "test internal supplier 02", "TEST Internal Supplier 02", "", "TEST Internal Supplier 02"],
+    ["profile-branch-01", "01 supplier 01", "Supplier 01", "", "Supplier 01"],
+    ["profile-branch-02", "02 supplier 02", "Supplier 02", "", "Supplier 02"],
+    ["profile-arabic-digits", "الاختبار ٠٢", "شركة الاختبار ٠٢", "شركة الاختبار ٠٢", ""],
+    ["profile-mixed-02", "02 test 02", "شركة TEST 02", "شركة TEST 02", "شركة TEST 02"],
+  ];
+  for (const [id, normalizedName, nameOriginal, nameAr, nameEn] of profiles) {
+    batch.set(adminDb.doc(`suppliers/${id}`), supplierData(id, {
+      normalizedName,
+      nameOriginal,
+      displayName: nameOriginal,
+      nameAr,
+      nameEn,
+    }));
+  }
+  await batch.commit();
+
+  const exactNumeric = await call("claimant1", "searchSupplierProfilesForClaim", {
+    query: "TEST Internal Supplier 02",
+    mode: "exact",
+  });
+  assert.deepEqual(exactNumeric.items.map((item) => item.supplierProfileId), ["profile-number-02"]);
+
+  const prefix = await call("claimant1", "searchSupplierProfilesForClaim", {
+    query: "TEST Internal Supplier",
+    mode: "prefix",
+  });
+  assert.ok(prefix.items.some((item) => item.supplierProfileId === "profile-number-02"));
+
+  const supplier01 = await call("claimant1", "searchSupplierProfilesForClaim", { query: "Supplier 01", mode: "exact" });
+  const supplier02 = await call("claimant1", "searchSupplierProfilesForClaim", { query: "Supplier 02", mode: "exact" });
+  assert.deepEqual(supplier01.items.map((item) => item.supplierProfileId), ["profile-branch-01"]);
+  assert.deepEqual(supplier02.items.map((item) => item.supplierProfileId), ["profile-branch-02"]);
+
+  const arabic = await call("claimant1", "searchSupplierProfilesForClaim", { query: "شركة الاختبار 02", mode: "exact" });
+  assert.deepEqual(arabic.items.map((item) => item.supplierProfileId), ["profile-arabic-digits"]);
+  const mixed = await call("claimant1", "searchSupplierProfilesForClaim", { query: "شركة TEST 02", mode: "exact" });
+  assert.deepEqual(mixed.items.map((item) => item.supplierProfileId), ["profile-mixed-02"]);
+});
 test("claim creation and claimant lock are atomic, powerless, and duplicate-safe", async () => {
   const created = await call("claimant1", "createSupplierOwnershipClaim", validClaimInput());
   const [claim, lock, user, supplier] = await Promise.all([
@@ -611,6 +653,18 @@ test("withdrawal requires current claimant eligibility and exact live lock consi
 });
 
 test("trusted duplicate checks are bounded, role-restricted, and return no normalized contact data", async () => {
+  await adminDb.doc("supplierDuplicateIndex/profile-numeric-legacy").set({
+    supplierId: "profile-numeric-legacy",
+    supplierName: "TEST Numeric Supplier 02",
+    normalizedName: "02 test numeric supplier 02",
+    normalizedPhones: [],
+    normalizedEmail: "",
+    website: "",
+    facebook: "",
+    governorate: "baghdad",
+    governorates: ["baghdad"],
+    categories: ["tools_equipment"],
+  });
   const [check] = (await call("buyer", "checkSupplierDuplicatesTrusted", {
     items: [{ supplierData: approvalSupplierData("Acme Industrial", {
       email: "private@example.test",
@@ -618,6 +672,13 @@ test("trusted duplicate checks are bounded, role-restricted, and return no norma
     }) }],
   })).checks;
   assert.equal(check.hasPossibleDuplicate, true);
+  const [numericCheck] = (await call("buyer", "checkSupplierDuplicatesTrusted", {
+    items: [{ supplierData: approvalSupplierData("TEST Numeric Supplier 02", {
+      email: "numeric-02@example.test",
+    }) }],
+  })).checks;
+  assert.equal(numericCheck.hasExactDuplicate, true);
+  assert.ok(numericCheck.matches.some((match) => match.supplierId === "profile-numeric-legacy"));
   assert.ok(check.matches.length <= 6);
   for (const match of check.matches) {
     assert.deepEqual(Object.keys(match).sort(), ["confidence", "reason", "score", "supplierId", "supplierName"]);

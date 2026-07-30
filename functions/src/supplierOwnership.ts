@@ -23,7 +23,7 @@ import {
   MAX_SEARCH_READS,
   MAX_SEARCH_RESULTS,
   OwnershipValidationError,
-  normalizeSupplierSearchQuery,
+  normalizeSupplierSearchQueryVariants,
   ownershipAuditId,
   ownershipEventId,
   ownershipNotificationId,
@@ -212,35 +212,50 @@ export const searchSupplierProfilesForClaim = onCall(callableOptions, async (req
     const auth = request.auth!;
     const authUser = await requireCurrentVerifiedAuth(auth);
     const data = request.data as { query?: unknown; mode?: unknown };
-    const normalizedQuery = normalizeSupplierSearchQuery(data?.query);
+    const normalizedQueries = normalizeSupplierSearchQueryVariants(data?.query);
     const mode = validateSearchMode(data?.mode ?? "prefix");
     const userSnapshot = await db.doc(`users/${auth.uid}`).get();
     if (!userSnapshot.exists) throw new HttpsError("failed-precondition", "The Supplier account profile is missing.");
     assertClaimantAccount(userSnapshot.data() as UserData, auth, authUser);
     await enforceSearchRateLimit(auth.uid);
 
-    let supplierQuery: Query<DocumentData> = db.collection("suppliers");
-    supplierQuery = mode === "exact"
-      ? supplierQuery.where("normalizedName", "==", normalizedQuery)
-      : supplierQuery.orderBy("normalizedName").startAt(normalizedQuery).endAt(`${normalizedQuery}\uf8ff`);
-    const snapshot = await supplierQuery
-      .limit(MAX_SEARCH_READS)
-      .select(
-        "nameAr",
-        "nameEn",
-        "nameOriginal",
-        "displayName",
-        "governorate",
-        "city",
-        "categories",
-        "website",
-        "status",
-        "verificationStatus",
-        "accountOwnerId",
-      )
-      .get();
+    // Compatibility queries share the original aggregate read budget; no fallback scan is allowed.
+    const primaryReadLimit = normalizedQueries.length === 1
+      ? MAX_SEARCH_READS
+      : Math.min(MAX_SEARCH_RESULTS, MAX_SEARCH_READS);
+    const remainingReadLimit = MAX_SEARCH_READS - primaryReadLimit;
+    const compatibilityCount = normalizedQueries.length - 1;
+    const snapshots = await Promise.all(normalizedQueries.map((normalizedQuery, index) => {
+      const readLimit = index === 0
+        ? primaryReadLimit
+        : Math.floor(remainingReadLimit / compatibilityCount)
+          + (index <= remainingReadLimit % compatibilityCount ? 1 : 0);
+      let supplierQuery: Query<DocumentData> = db.collection("suppliers");
+      supplierQuery = mode === "exact"
+        ? supplierQuery.where("normalizedName", "==", normalizedQuery)
+        : supplierQuery.orderBy("normalizedName").startAt(normalizedQuery).endAt(`${normalizedQuery}\uf8ff`);
+      return supplierQuery
+        .limit(readLimit)
+        .select(
+          "nameAr",
+          "nameEn",
+          "nameOriginal",
+          "displayName",
+          "governorate",
+          "city",
+          "categories",
+          "website",
+          "status",
+          "verificationStatus",
+          "accountOwnerId",
+        )
+        .get();
+    }));
+    const uniqueProfiles = new Map(
+      snapshots.flatMap((snapshot) => snapshot.docs).map((profile) => [profile.id, profile]),
+    );
 
-    const items = snapshot.docs
+    const items = [...uniqueProfiles.values()]
       .filter((item) => {
         const supplier = item.data();
         return supplier.status === "approved"

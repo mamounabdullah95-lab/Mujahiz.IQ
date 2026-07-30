@@ -1,21 +1,13 @@
+import {
+  normalizeSupplierName,
+  supplierNameSearchVariants,
+} from "./supplierNameNormalization.js";
+
 export const CLAIM_TTL_DAYS = 30;
 export const MAX_REFERENCE_LINKS = 3;
 export const MAX_CONFLICTING_CLAIMS = 20;
 export const MAX_SEARCH_RESULTS = 10;
 export const MAX_SEARCH_READS = 25;
-
-const ARABIC_COMMON_WORDS = new Set([
-  "\u0634\u0631\u0643\u0647", "\u0645\u0643\u062a\u0628", "\u0645\u062c\u0645\u0648\u0639\u0647",
-  "\u0644\u0644\u062a\u062c\u0627\u0631\u0647", "\u0627\u0644\u062a\u062c\u0627\u0631\u0647",
-  "\u0627\u0644\u0639\u0627\u0645\u0647", "\u0627\u0644\u0645\u062d\u062f\u0648\u062f\u0647",
-  "\u0644\u0644\u0645\u0642\u0627\u0648\u0644\u0627\u062a", "\u0645\u062c\u0647\u0632",
-  "\u0645\u062c\u0647\u064a\u0632", "\u0645\u0624\u0633\u0633\u0647",
-]);
-
-const ENGLISH_COMMON_WORDS = new Set([
-  "company", "co", "ltd", "llc", "trading", "general", "group", "office", "services",
-  "contracting", "corp", "corporation",
-]);
 
 export const EVIDENCE_TYPES = Object.freeze([
   "company_domain_email",
@@ -170,28 +162,20 @@ export function validateClaimInput(value) {
 
 export function normalizeSupplierSearchQuery(value) {
   const text = sanitizeBoundedText(value, "query", 2, 80);
-  const arabic = text
-    .replace(/[\u0623\u0625\u0622]/g, "\u0627")
-    .replace(/\u0629/g, "\u0647")
-    .replace(/\u0649/g, "\u064A")
-    .replace(/[^\u0600-\u06FF0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter((word) => word && !ARABIC_COMMON_WORDS.has(word))
-    .join(" ")
-    .trim();
-  const english = text
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter((word) => word && !ENGLISH_COMMON_WORDS.has(word))
-    .join(" ")
-    .trim();
-  const normalized = `${arabic} ${english}`.replace(/\s+/g, " ").trim();
+  const normalized = normalizeSupplierName(text);
   if (normalized.length < 2 || normalized.length > 80) {
     throw new OwnershipValidationError("invalid-argument", "query must normalize to 2-80 characters.");
   }
   return normalized;
+}
+
+export function normalizeSupplierSearchQueryVariants(value) {
+  const text = sanitizeBoundedText(value, "query", 2, 80);
+  const canonical = normalizeSupplierSearchQuery(text);
+  return [...new Set([
+    canonical,
+    ...supplierNameSearchVariants(text).filter((variant) => variant.length <= 200),
+  ])];
 }
 
 export function validateSearchMode(value) {

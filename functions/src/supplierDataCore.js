@@ -1,5 +1,9 @@
 import { createHash } from "node:crypto";
 import { OwnershipValidationError } from "./supplierOwnershipCore.js";
+import {
+  normalizeSupplierName,
+  supplierNameSearchVariants,
+} from "./supplierNameNormalization.js";
 
 const SPECIAL_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 const SUPPLIER_KEYS = new Set([
@@ -23,18 +27,6 @@ const SOURCE_TYPES = new Set([
 ]);
 const CONFIDENCE_LEVELS = new Set(["high", "medium", "low", "needs_verification"]);
 const CREDIT_STARTS = new Set(["invoice_date", "delivery_date", "invoice_approval"]);
-const ARABIC_COMMON_WORDS = new Set([
-  "\u0634\u0631\u0643\u0647", "\u0645\u0643\u062a\u0628", "\u0645\u062c\u0645\u0648\u0639\u0647",
-  "\u0644\u0644\u062a\u062c\u0627\u0631\u0647", "\u0627\u0644\u062a\u062c\u0627\u0631\u0647",
-  "\u0627\u0644\u0639\u0627\u0645\u0647", "\u0627\u0644\u0645\u062d\u062f\u0648\u062f\u0647",
-  "\u0644\u0644\u0645\u0642\u0627\u0648\u0644\u0627\u062a", "\u0645\u062c\u0647\u0632",
-  "\u0645\u062c\u0647\u064a\u0632", "\u0645\u0624\u0633\u0633\u0647",
-]);
-const ENGLISH_COMMON_WORDS = new Set([
-  "company", "co", "ltd", "llc", "trading", "general", "group", "office", "services",
-  "contracting", "corp", "corporation",
-]);
-
 function fail(message) {
   throw new OwnershipValidationError("invalid-argument", message);
 }
@@ -70,16 +62,6 @@ function stringList(value, fieldName, maximumItems, maximumLength, required = tr
   if (value == null && !required) return [];
   if (!Array.isArray(value) || value.length > maximumItems) fail(`${fieldName} is invalid.`);
   return [...new Set(value.map((item, index) => cleanText(item, `${fieldName}[${index}]`, 1, maximumLength, true)))];
-}
-
-export function normalizeSupplierName(value) {
-  const text = typeof value === "string" ? value.normalize("NFKC") : "";
-  const arabic = text.replace(/[\u0623\u0625\u0622]/g, "\u0627").replace(/\u0629/g, "\u0647")
-    .replace(/\u0649/g, "\u064A").replace(/[^\u0600-\u06FF0-9\s]/g, " ").split(/\s+/)
-    .filter((word) => word && !ARABIC_COMMON_WORDS.has(word)).join(" ");
-  const english = text.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/).filter((word) => word && !ENGLISH_COMMON_WORDS.has(word)).join(" ");
-  return `${arabic} ${english}`.replace(/\s+/g, " ").trim().slice(0, 200);
 }
 
 export function normalizeSupplierPhone(value) {
@@ -193,8 +175,12 @@ export function duplicateIdentityFromSupplierData(value) {
   const nameAr = cleanText(source.nameAr, "nameAr", 0, 200) || "";
   const nameEn = cleanText(source.nameEn, "nameEn", 0, 200) || "";
   const phones = stringList(source.phones ?? [], "phones", 10, 40);
+  const nameVariants = supplierNameSearchVariants(
+    [...new Set([nameOriginal, nameAr, nameEn].filter(Boolean))].join(" "),
+  );
   return {
-    normalizedName: normalizeSupplierName([...new Set([nameOriginal, nameAr, nameEn].filter(Boolean))].join(" ")),
+    normalizedName: nameVariants[0],
+    normalizedNameVariants: nameVariants,
     normalizedPhones: [...new Set(phones.map(normalizeSupplierPhone).filter(Boolean))],
     normalizedEmail: normalizeSupplierEmail(source.email),
     website: normalizeSupplierUrl(source.website), facebook: normalizeSupplierUrl(source.facebook),
@@ -204,7 +190,10 @@ export function duplicateIdentityFromSupplierData(value) {
 }
 
 export function canonicalSupplierFingerprints(data) {
-  const descriptors = [["name", data.normalizedName], ["email", data.normalizedEmail],
+  const nameVariants = supplierNameSearchVariants(
+    [...new Set([data.nameOriginal, data.nameAr, data.nameEn].filter(Boolean))].join(" "),
+  );
+  const descriptors = [...nameVariants.map((value) => ["name", value]), ["email", data.normalizedEmail],
     ["website", normalizeSupplierUrl(data.website)], ["facebook", normalizeSupplierUrl(data.facebook)],
     ...data.normalizedPhones.map((phone) => ["phone", phone])].filter(([, value]) => Boolean(value));
   return [...new Map(descriptors.map(([kind, value]) => {
