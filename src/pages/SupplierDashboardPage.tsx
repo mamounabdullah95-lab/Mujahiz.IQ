@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { DashboardError, DashboardPageHeader, DashboardPanel, DashboardSkeleton, InlineEmptyState, MetricCard, ProgressBar } from "../components/DashboardPrimitives";
 import { StatusBadge } from "../components/StatusBadge";
+import { SupplierOwnershipDashboardCard } from "../components/supplierOwnership/SupplierOwnershipDashboardCard";
+import { features } from "../config/features";
 import { Button } from "../components/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { listMySubmissions } from "../services/firestore";
@@ -158,6 +160,7 @@ export function SupplierDashboardPage() {
       <DashboardPageHeader eyebrow={text.eyebrow} title={text.title} description={text.description} actions={<Link to="/suppliers/new"><Button><Plus className="h-4 w-4" />{text.action}</Button></Link>} />
       <div className="grid gap-5 p-5 sm:p-7">
         {error ? <DashboardError message={error} retry={() => void load()} /> : null}
+        {features.supplierProfileClaim ? <SupplierOwnershipDashboardCard /> : null}
         {!error && loadErrors.some((item) => !item.critical) ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-amber/30 bg-cream px-4 py-3 text-sm font-bold text-ink">
             <span>{partialWarning}</span><Button variant="secondary" onClick={() => void load()}>{locale === "ar" ? "\u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u0645\u062d\u0627\u0648\u0644\u0629" : "Retry"}</Button>

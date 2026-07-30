@@ -1,12 +1,27 @@
 import { httpsCallable } from "firebase/functions";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  startAfter,
+  where,
+  type DocumentData,
+  type QueryConstraint,
+  type QueryDocumentSnapshot,
+} from "firebase/firestore";
 import { features } from "../config/features";
-import { cloudFunctions } from "../config/firebase";
+import { cloudFunctions, db, isFirebaseConfigured } from "../config/firebase";
 import { findDuplicateMatches } from "../utils/normalization";
 import * as demo from "./localDemo";
 import type {
   DuplicateCheck,
   SupplierClaimSearchResult,
   SupplierDraft,
+  SupplierOwnershipClaim,
   SupplierOwnershipClaimStatus,
   SupplierOwnershipEvidenceType,
 } from "../types/domain";
@@ -28,11 +43,132 @@ export interface SupplierOwnershipDecisionResult {
   idempotent: boolean;
 }
 
+export type SupplierOwnershipClaimCursor = QueryDocumentSnapshot<DocumentData> | null;
+
+export interface SupplierOwnershipClaimPage {
+  items: SupplierOwnershipClaim[];
+  cursor: SupplierOwnershipClaimCursor;
+  hasMore: boolean;
+}
+
+export interface SupplierOwnershipReviewProfile {
+  supplierProfileId: string;
+  nameAr: string;
+  nameEn: string;
+  displayName: string;
+  nameOriginal: string;
+  governorate: string;
+  city: string;
+  categories: string[];
+  website?: string;
+  status: string;
+  verificationStatus: string;
+  owned: boolean;
+}
+
 function requireClaimFeature() {
   if (!features.supplierProfileClaim || !cloudFunctions) {
     throw new Error("SUPPLIER_PROFILE_CLAIM_DISABLED");
   }
   return cloudFunctions;
+}
+
+function requireClaimReads() {
+  if (!features.supplierProfileClaim || !isFirebaseConfigured) {
+    throw new Error("SUPPLIER_PROFILE_CLAIM_DISABLED");
+  }
+}
+
+function boundedPageSize(value: number, maximum = 50) {
+  return Math.max(1, Math.min(maximum, Math.trunc(value) || 20));
+}
+
+function claimPage(documents: QueryDocumentSnapshot<DocumentData>[], pageSize: number): SupplierOwnershipClaimPage {
+  return {
+    items: documents.map((item) => ({ id: item.id, ...item.data() }) as SupplierOwnershipClaim),
+    cursor: documents.length ? documents[documents.length - 1] : null,
+    hasMore: documents.length === pageSize,
+  };
+}
+
+async function listClaims(constraints: QueryConstraint[], pageSize: number, cursor: SupplierOwnershipClaimCursor) {
+  requireClaimReads();
+  const bounded = boundedPageSize(pageSize);
+  const snapshot = await getDocs(query(
+    collection(db, "supplierOwnershipClaims"),
+    ...constraints,
+    ...(cursor ? [startAfter(cursor)] : []),
+    limit(bounded),
+  ));
+  return claimPage(snapshot.docs, bounded);
+}
+
+export function listMySupplierOwnershipClaims(
+  claimantUserId: string,
+  pageSize = 20,
+  cursor: SupplierOwnershipClaimCursor = null,
+) {
+  if (!claimantUserId.trim()) throw new Error("AUTHENTICATION_REQUIRED");
+  return listClaims([
+    where("claimantUserId", "==", claimantUserId),
+    orderBy("createdAt", "desc"),
+  ], pageSize, cursor);
+}
+
+export function listAdminSupplierOwnershipClaims(
+  status: SupplierOwnershipClaimStatus = "pending_review",
+  pageSize = 25,
+  cursor: SupplierOwnershipClaimCursor = null,
+) {
+  return listClaims([
+    where("status", "==", status),
+    orderBy("createdAt", "desc"),
+  ], pageSize, cursor);
+}
+
+export function listSupplierProfileOwnershipClaims(
+  supplierProfileId: string,
+  status: SupplierOwnershipClaimStatus = "pending_review",
+  pageSize = 21,
+  cursor: SupplierOwnershipClaimCursor = null,
+) {
+  if (!supplierProfileId.trim()) throw new Error("INVALID_SUPPLIER_PROFILE");
+  return listClaims([
+    where("supplierProfileId", "==", supplierProfileId),
+    where("status", "==", status),
+    orderBy("createdAt", "desc"),
+  ], pageSize, cursor);
+}
+
+export async function getSupplierOwnershipClaim(claimId: string) {
+  requireClaimReads();
+  if (!claimId.trim() || claimId.includes("/")) throw new Error("INVALID_CLAIM_ID");
+  const snapshot = await getDoc(doc(db, "supplierOwnershipClaims", claimId));
+  return snapshot.exists() ? ({ id: snapshot.id, ...snapshot.data() } as SupplierOwnershipClaim) : null;
+}
+
+export async function getSupplierOwnershipReviewProfile(supplierProfileId: string) {
+  requireClaimReads();
+  if (!supplierProfileId.trim() || supplierProfileId.includes("/")) throw new Error("INVALID_SUPPLIER_PROFILE");
+  const snapshot = await getDoc(doc(db, "suppliers", supplierProfileId));
+  if (!snapshot.exists()) return null;
+  const value = snapshot.data();
+  return {
+    supplierProfileId: snapshot.id,
+    nameAr: typeof value.nameAr === "string" ? value.nameAr : "",
+    nameEn: typeof value.nameEn === "string" ? value.nameEn : "",
+    displayName: typeof value.displayName === "string" ? value.displayName : "",
+    nameOriginal: typeof value.nameOriginal === "string" ? value.nameOriginal : "",
+    governorate: typeof value.governorate === "string" ? value.governorate : "",
+    city: typeof value.city === "string" ? value.city : "",
+    categories: Array.isArray(value.categories)
+      ? value.categories.filter((item): item is string => typeof item === "string").slice(0, 20)
+      : [],
+    ...(typeof value.website === "string" && value.website ? { website: value.website } : {}),
+    status: typeof value.status === "string" ? value.status : "",
+    verificationStatus: typeof value.verificationStatus === "string" ? value.verificationStatus : "",
+    owned: typeof value.accountOwnerId === "string" && Boolean(value.accountOwnerId.trim()),
+  } satisfies SupplierOwnershipReviewProfile;
 }
 
 export async function searchSupplierProfilesForClaim(

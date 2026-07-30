@@ -33,6 +33,7 @@ const callableOptions = {
 
 interface DuplicateIdentity {
   normalizedName: string;
+  normalizedNameVariants: string[];
   normalizedPhones: string[];
   normalizedEmail: string;
   website: string;
@@ -87,9 +88,9 @@ function safePublicText(value: unknown, fallback: string) {
 function queryShapes(collectionName: string, identity: DuplicateIdentity) {
   const collection = db.collection(collectionName);
   const queries: Query<DocumentData>[] = [];
-  if (identity.normalizedName) {
-    queries.push(collection.where("normalizedName", "==", identity.normalizedName).limit(MAX_QUERY_RESULTS));
-    const prefix = identity.normalizedName.slice(0, Math.min(12, Math.max(2, identity.normalizedName.indexOf(" ") + 1 || 8)));
+  for (const normalizedName of identity.normalizedNameVariants) {
+    queries.push(collection.where("normalizedName", "==", normalizedName).limit(MAX_QUERY_RESULTS));
+    const prefix = normalizedName.slice(0, Math.min(12, Math.max(2, normalizedName.indexOf(" ") + 1 || 8)));
     queries.push(collection.orderBy("normalizedName").startAt(prefix).endAt(`${prefix}\uf8ff`).limit(MAX_PREFIX_RESULTS));
   }
   if (identity.normalizedPhones.length) {
@@ -139,7 +140,10 @@ function toMatch(identity: DuplicateIdentity, source: DuplicateSource) {
   } else if (identity.facebook && normalizeSupplierUrl(item.facebook) === identity.facebook) {
     reason = "same_facebook"; score = 90; exact = true;
   } else {
-    const nameScore = diceCoefficient(identity.normalizedName, typeof item.normalizedName === "string" ? item.normalizedName : "");
+    const itemNormalizedName = typeof item.normalizedName === "string" ? item.normalizedName : "";
+    const nameScore = Math.max(...identity.normalizedNameVariants.map(
+      (normalizedName) => diceCoefficient(normalizedName, itemNormalizedName),
+    ));
     const itemGovernorates = Array.isArray(item.governorates)
       ? item.governorates
       : typeof item.governorate === "string" ? [item.governorate] : [];
@@ -149,7 +153,8 @@ function toMatch(identity: DuplicateIdentity, source: DuplicateSource) {
     if (nameScore >= 0.72 && (sameGovernorate || sharedCategory || nameScore === 1)) {
       reason = "similar_name";
       score = Math.round(nameScore * 100);
-      exact = nameScore === 1 && (sameGovernorate || !identity.governorates.length);
+      exact = identity.normalizedNameVariants.includes(itemNormalizedName)
+        && (sameGovernorate || !identity.governorates.length);
     }
   }
   if (!reason) return null;
@@ -218,7 +223,9 @@ function exactQueries(identity: DuplicateIdentity) {
   const queries: Query<DocumentData>[] = [];
   for (const collectionName of ["supplierDuplicateIndex", "supplierSubmissionDuplicateIndex"]) {
     const collection = db.collection(collectionName);
-    queries.push(collection.where("normalizedName", "==", identity.normalizedName).limit(MAX_QUERY_RESULTS));
+    for (const normalizedName of identity.normalizedNameVariants) {
+      queries.push(collection.where("normalizedName", "==", normalizedName).limit(MAX_QUERY_RESULTS));
+    }
     if (identity.normalizedPhones.length) {
       queries.push(collection.where("normalizedPhones", "array-contains-any", identity.normalizedPhones).limit(MAX_QUERY_RESULTS));
     }
@@ -226,8 +233,10 @@ function exactQueries(identity: DuplicateIdentity) {
     if (identity.website) queries.push(collection.where("website", "==", identity.website).limit(MAX_QUERY_RESULTS));
     if (identity.facebook) queries.push(collection.where("facebook", "==", identity.facebook).limit(MAX_QUERY_RESULTS));
   }
-  queries.push(db.collection("suppliers").where("normalizedName", "==", identity.normalizedName).limit(MAX_QUERY_RESULTS));
-  queries.push(db.collection("supplierSubmissions").where("supplierData.normalizedName", "==", identity.normalizedName).limit(MAX_QUERY_RESULTS));
+  for (const normalizedName of identity.normalizedNameVariants) {
+    queries.push(db.collection("suppliers").where("normalizedName", "==", normalizedName).limit(MAX_QUERY_RESULTS));
+    queries.push(db.collection("supplierSubmissions").where("supplierData.normalizedName", "==", normalizedName).limit(MAX_QUERY_RESULTS));
+  }
   return queries;
 }
 

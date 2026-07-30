@@ -24,6 +24,7 @@ export const portalNavigation: Record<PortalRole, PortalNavItem[]> = {
   supplier: [
     { to: "/supplier", label: { ar: "نظرة عامة", en: "Overview" }, icon: Gauge, end: true },
     { to: "/suppliers/new", label: { ar: "ملف الشركة", en: "Company profile" }, icon: Building2 },
+    ...(features.supplierProfileClaim ? [{ to: "/supplier/claim-company", label: { ar: "المطالبة بملف شركة", en: "Claim company profile" }, icon: ShieldCheck }] : []),
     { to: "/supplier/products", label: { ar: "المنتجات والخدمات", en: "Products & services" }, icon: Boxes },
     { to: "/supplier/categories", label: { ar: "التصنيفات", en: "Categories" }, icon: Tags },
     { to: "/supplier/documents", label: { ar: "المستندات والشهادات", en: "Documents" }, icon: FileText },
@@ -39,6 +40,7 @@ export const portalNavigation: Record<PortalRole, PortalNavItem[]> = {
     { to: "/admin/suppliers/new", label: { ar: "إضافة مجهز", en: "Add supplier" }, icon: FilePlus2 },
     ...(features.supplierExcelImport ? [{ to: "/suppliers/import", label: { ar: "استيراد مجهزين", en: "Import suppliers" }, icon: FileSpreadsheet }] : []),
     { to: "/admin/submissions", label: { ar: "طلبات اعتماد الشركات", en: "Company approvals" }, icon: ClipboardCheck },
+    ...(features.supplierProfileClaim ? [{ to: "/admin/ownership-claims", label: { ar: "مطالبات ملكية الملفات", en: "Profile ownership claims" }, icon: ShieldCheck }] : []),
     { to: "/admin/buyers", label: { ar: "إدارة المشترين", en: "Buyers" }, icon: Users },
     { to: "/admin/users", label: { ar: "إدارة المستخدمين", en: "Users" }, icon: UserCog },
     { to: "/admin/categories", label: { ar: "التصنيفات", en: "Categories" }, icon: Tags },
@@ -55,6 +57,7 @@ export const portalNavigation: Record<PortalRole, PortalNavItem[]> = {
     { to: "/admin/suppliers/new", label: { ar: "إضافة مجهز", en: "Add supplier" }, icon: FilePlus2 },
     ...(features.supplierExcelImport ? [{ to: "/suppliers/import", label: { ar: "استيراد مجهزين", en: "Import suppliers" }, icon: FileSpreadsheet }] : []),
     { to: "/admin/submissions", label: { ar: "طلبات اعتماد الشركات", en: "Company approvals" }, icon: ClipboardCheck },
+    ...(features.supplierProfileClaim ? [{ to: "/admin/ownership-claims", label: { ar: "مطالبات ملكية الملفات", en: "Profile ownership claims" }, icon: ShieldCheck }] : []),
     { to: "/super-admin/admins", label: { ar: "حسابات المديرين", en: "Admin accounts" }, icon: UserCog },
     { to: "/super-admin/users", label: { ar: "جميع المستخدمين", en: "All users" }, icon: Users },
     { to: "/super-admin/roles", label: { ar: "الأدوار والصلاحيات", en: "Roles & permissions" }, icon: SlidersHorizontal },

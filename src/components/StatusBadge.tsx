@@ -12,6 +12,8 @@ const toneMap = {
   rejected: "bg-clay/10 text-clay ring-clay/20",
   suspended: "bg-clay/10 text-clay ring-clay/20",
   expired: "bg-clay/10 text-clay ring-clay/20",
+  withdrawn: "bg-slate-100 text-slate-600 ring-slate-200",
+  superseded: "bg-slate-100 text-slate-600 ring-slate-200",
   archived: "bg-slate-100 text-slate-600 ring-slate-200",
   default: "bg-slate-100 text-slate-600 ring-slate-200",
 };

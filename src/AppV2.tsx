@@ -18,6 +18,10 @@ const AdminSupplierFeedbackPage = lazy(() => import("./pages/admin/AdminSupplier
 const SupplierSubmissionDetailPage = lazy(() => import("./pages/admin/SupplierSubmissionDetailPage").then((m) => ({ default: m.SupplierSubmissionDetailPage })));
 const BuyerDashboardPage = lazy(() => import("./pages/BuyerDashboardPage").then((m) => ({ default: m.BuyerDashboardPage })));
 const SupplierDashboardPage = lazy(() => import("./pages/SupplierDashboardPage").then((m) => ({ default: m.SupplierDashboardPage })));
+const SupplierOwnershipClaimPage = lazy(() => import("./pages/supplier/SupplierOwnershipClaimPage").then((m) => ({ default: m.SupplierOwnershipClaimPage })));
+const SupplierOwnershipClaimHistoryPage = lazy(() => import("./pages/supplier/SupplierOwnershipClaimHistoryPage").then((m) => ({ default: m.SupplierOwnershipClaimHistoryPage })));
+const AdminSupplierOwnershipClaimsPage = lazy(() => import("./pages/admin/AdminSupplierOwnershipClaimsPage").then((m) => ({ default: m.AdminSupplierOwnershipClaimsPage })));
+const SupplierOwnershipClaimDetailPage = lazy(() => import("./pages/admin/SupplierOwnershipClaimDetailPage").then((m) => ({ default: m.SupplierOwnershipClaimDetailPage })));
 const AdminOperationsDashboardPage = lazy(() => import("./pages/AdminOperationsDashboardPage").then((m) => ({ default: m.AdminOperationsDashboardPage })));
 const SuperAdminDashboardPage = lazy(() => import("./pages/SuperAdminDashboardPage").then((m) => ({ default: m.SuperAdminDashboardPage })));
 const AdminUsersTablePage = lazy(() => import("./pages/AdminUsersTablePage").then((m) => ({ default: m.AdminUsersTablePage })));
@@ -133,6 +137,13 @@ export function AppV2() {
       <Route path="suppliers/:id" element={<SupplierProfilePage />} />
     </Route>
 
+    {features.supplierProfileClaim ? (
+      <Route element={<RoleProtectedRoute allowedRoles={supplierRoles} />}>
+        <Route path="supplier/claim-company" element={<SupplierOwnershipClaimPage />} />
+        <Route path="supplier/ownership-claims" element={<SupplierOwnershipClaimHistoryPage />} />
+      </Route>
+    ) : null}
+
     <Route element={<RoleProtectedRoute allowedRoles={supplierRoles} allowPending />}>
       <Route path="supplier" element={<SupplierDashboardPage />} />
       <Route path="supplier/company-preview" element={<SupplierOwnedProfilePreviewPage />} />
@@ -146,6 +157,13 @@ export function AppV2() {
       <Route path="supplier/notifications" element={<SupplierNotificationsPage />} />
       <Route path="supplier/settings" element={<SupplierSettingsPage />} />
     </Route>
+
+    {features.supplierProfileClaim ? (
+      <Route element={<RoleProtectedRoute allowedRoles={adminRoles} />}>
+        <Route path="admin/ownership-claims" element={<AdminSupplierOwnershipClaimsPage />} />
+        <Route path="admin/ownership-claims/:claimId" element={<SupplierOwnershipClaimDetailPage />} />
+      </Route>
+    ) : null}
 
     <Route element={<RoleProtectedRoute allowedRoles={adminRoles} />}>
       <Route path="admin" element={<AdminOperationsDashboardPage />} />

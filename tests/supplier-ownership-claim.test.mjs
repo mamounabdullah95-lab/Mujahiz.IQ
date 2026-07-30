@@ -7,6 +7,7 @@ import {
   OwnershipValidationError,
   isClaimExpired,
   normalizeSupplierSearchQuery,
+  normalizeSupplierSearchQueryVariants,
   ownershipAuditId,
   ownershipEventId,
   ownershipNotificationId,
@@ -19,9 +20,16 @@ import {
   validateReferenceLinks,
 } from "../functions/src/supplierOwnershipCore.js";
 import {
+  duplicateIdentityFromSupplierData,
   stablePayloadHash,
   validateAndNormalizeSupplierData,
 } from "../functions/src/supplierDataCore.js";
+import {
+  MAX_SUPPLIER_NAME_SEARCH_VARIANTS,
+  normalizeLegacySupplierName,
+  normalizeSupplierName,
+  supplierNameSearchVariants,
+} from "../functions/src/supplierNameNormalization.js";
 
 const claimFunctionSource = fs.readFileSync(
   new URL("../functions/src/supplierOwnership.ts", import.meta.url),
@@ -32,6 +40,7 @@ const appNavigationSource = fs.readFileSync(
   new URL("../src/components/AppLayoutV2.tsx", import.meta.url),
   "utf8",
 );
+const portalNavigationSource = fs.readFileSync(new URL("../src/config/portalNavigation.ts", import.meta.url), "utf8");
 
 const validClaim = {
   supplierProfileId: "supplier-profile-1",
@@ -119,17 +128,55 @@ test("reference evidence is HTTPS-only, unique, bounded, and never accepts embed
   assert.throws(() => validateReferenceLinks(["https://example.test", "https://example.test"]), /Duplicate/);
 });
 
-test("claim search normalization matches the directory index and contains no contact matching", () => {
-  assert.equal(normalizeSupplierSearchQuery("  ACME Company & Industrial  "), "acme and industrial");
-  assert.equal(normalizeSupplierSearchQuery("\u0623\u0641\u0642"), "\u0627\u0641\u0642");
+test("Supplier creation and Claim search normalize language and numeric tokens consistently", () => {
+  const cases = [
+    ["TEST Internal Supplier 02", "test internal supplier 02"],
+    ["TEST Internal Supplier", "test internal supplier"],
+    ["Supplier 01", "supplier 01"],
+    ["Supplier 02", "supplier 02"],
+    ["Company 01", "01"],
+    ["Company 02", "02"],
+    ["شركة الاختبار 02", "الاختبار 02"],
+    ["شركة TEST 02", "test 02"],
+    ["  Supplier   (02), Branch  ", "supplier 02 branch"],
+    ["شركة الاختبار ٠٢", "الاختبار 02"],
+    ["شركة الاختبار ۰۲", "الاختبار 02"],
+  ];
+  for (const [input, expected] of cases) {
+    assert.equal(normalizeSupplierName(input), expected);
+    assert.equal(normalizeSupplierSearchQuery(input), expected);
+  }
+  assert.equal(normalizeLegacySupplierName("TEST Internal Supplier 02"), "02 test internal supplier 02");
+  assert.deepEqual(normalizeSupplierSearchQueryVariants("TEST Internal Supplier 02"), [
+    "test internal supplier 02",
+    "02 test internal supplier 02",
+    "٠٢ test internal supplier",
+    "۰۲ test internal supplier",
+  ]);
+  assert.ok(supplierNameSearchVariants("شركة TEST 02").length <= MAX_SUPPLIER_NAME_SEARCH_VARIANTS);
+  const supplier01 = new Set(supplierNameSearchVariants("Supplier 01"));
+  const supplier02 = new Set(supplierNameSearchVariants("Supplier 02"));
+  assert.deepEqual([...supplier01].filter((variant) => supplier02.has(variant)), []);
+  const company01 = new Set(supplierNameSearchVariants("Company 01"));
+  const company02 = new Set(supplierNameSearchVariants("Company 02"));
+  assert.ok(company01.has("company 01"));
+  assert.ok(company02.has("company 02"));
+  assert.deepEqual([...company01].filter((variant) => company02.has(variant)), []);
   assert.throws(() => normalizeSupplierSearchQuery("a"), /2-80/);
   assert.throws(() => normalizeSupplierSearchQuery("x".repeat(81)), /2-80/);
 });
 
-test("claim search never reads the duplicate/contact index and PR1 exposes no route or navigation", () => {
+test("claim search never reads the duplicate/contact index and UI entry points remain client-gated", () => {
   assert.doesNotMatch(claimFunctionSource, /supplierDuplicateIndex/);
-  assert.doesNotMatch(appRoutesSource, /supplierProfileClaim|supplierOwnershipClaim|claim-supplier/i);
-  assert.doesNotMatch(appNavigationSource, /supplierProfileClaim|supplierOwnershipClaim|claim-supplier/i);
+  assert.match(claimFunctionSource, /primaryReadLimit[\s\S]*MAX_SEARCH_READS/);
+  assert.match(claimFunctionSource, /remainingReadLimit = MAX_SEARCH_READS - primaryReadLimit/);
+  assert.match(claimFunctionSource, /\.limit\(readLimit\)/);
+  assert.match(claimFunctionSource, /new Map\([\s\S]*profile\.id/);
+  assert.match(appRoutesSource, /features\.supplierProfileClaim[\s\S]*?supplier\/claim-company/);
+  assert.match(appRoutesSource, /features\.supplierProfileClaim[\s\S]*?admin\/ownership-claims/);
+  assert.match(portalNavigationSource, /features\.supplierProfileClaim[\s\S]*?supplier\/claim-company/);
+  assert.match(portalNavigationSource, /features\.supplierProfileClaim[\s\S]*?admin\/ownership-claims/);
+  assert.doesNotMatch(appNavigationSource, /supplierOwnershipClaim|claim-supplier/i);
 });
 
 test("the decision state machine permits only pending to approved or rejected", () => {
@@ -187,6 +234,17 @@ test("claim idempotency keys are bounded and payload hashes are stable", () => {
 test("Supplier approval data uses exact nested schemas and re-derives normalized fields", () => {
   const result = validateAndNormalizeSupplierData(validSupplierDraft);
   assert.equal(result.normalizedName, "synthetic industrial supplier");
+  const numericDraft = {
+    ...validSupplierDraft,
+    nameOriginal: "TEST Internal Supplier 02",
+    displayName: "TEST Internal Supplier 02",
+    nameEn: "TEST Internal Supplier 02",
+  };
+  assert.equal(validateAndNormalizeSupplierData(numericDraft).normalizedName, "test internal supplier 02");
+  assert.deepEqual(duplicateIdentityFromSupplierData(numericDraft).normalizedNameVariants.slice(0, 2), [
+    "test internal supplier 02",
+    "02 test internal supplier 02",
+  ]);
   assert.deepEqual(result.normalizedPhones, ["9647700000000"]);
   assert.equal(result.normalizedEmail, "synthetic@example.test");
   assert.notDeepEqual(result.searchKeywords, ["forged"]);
