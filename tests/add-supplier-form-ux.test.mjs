@@ -66,7 +66,7 @@ test("manual and bulk validation require the primary phone and core company fiel
   assert.match(page, /!form\.primaryPhone\.trim\(\)/);
   assert.match(page, /missingRequiredFormFieldKeys\(input, itemDraft\)/);
   assert.match(page, /missingRequiredFormFieldKeys\(itemForm, itemDraft\)/);
-  assert.match(page, /missingRequiredFormFieldKeys\(item\.form, itemDraft\)/);
+  assert.match(page, /missingRequiredFormFieldKeys\(item\.form, item\.draft\)/);
 
   for (const key of [
     "businessType",

@@ -14,7 +14,12 @@ service cloud.firestore {
     function hasActiveAccess() { return isAdmin() || (isApproved() && myUser().accessStatus in ["active", "temporary"] && myUser().accessExpiresAt is timestamp && myUser().accessExpiresAt > request.time); }
     function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
     function canSubmitCompany() { return signedIn() && myUser().status != "suspended" && (isBuyer() || isSupplierAccount() || isAdmin()); }
-    function isOwnSupplierProfile(supplierId) { return isSupplierAccount() && "supplierProfileId" in myUser() && myUser().supplierProfileId == supplierId; }
+    function isOwnSupplierProfile(supplierId) {
+      return isSupplierAccount()
+        && "supplierProfileId" in myUser()
+        && myUser().supplierProfileId == supplierId
+        && supplierDoc(supplierId).data.accountOwnerId == request.auth.uid;
+    }
     function supplierDoc(supplierId) { return get(/databases/$(database)/documents/suppliers/$(supplierId)); }
     function isVerifiedRequest() { return signedIn() && request.auth.token.email_verified == true; }
     function buyerDataHasPortalIdentity(user) {
@@ -135,6 +140,35 @@ service cloud.firestore {
         && noStoredFileFields(data)
         && noStoredFileFields(data.supplierData);
     }
+    function validManualSubmissionCreate(data) {
+      return canSubmitCompany()
+        && data.keys().hasOnly(["submittedBy", "submissionStatus", "supplierData", "duplicateCheck", "countsForAccess", "creditConsumed", "source", "createdAt"])
+        && (!("source" in data) || data.source == "manual")
+        && data.submittedBy == request.auth.uid
+        && data.submissionStatus in ["draft", "pending_review", "possible_duplicate"]
+        && data.supplierData is map
+        && data.duplicateCheck is map
+        && data.countsForAccess == false
+        && data.creditConsumed == false
+        && data.createdAt is timestamp
+        && noStoredFileFields(data)
+        && noStoredFileFields(data.supplierData);
+    }
+    function validManualSubmissionUpdate() {
+      return canSubmitCompany()
+        && resource.data.submittedBy == request.auth.uid
+        && resource.data.submissionStatus in ["draft", "needs_correction"]
+        && request.resource.data.submittedBy == resource.data.submittedBy
+        && request.resource.data.submissionStatus in ["draft", "pending_review", "possible_duplicate"]
+        && request.resource.data.supplierData is map
+        && request.resource.data.duplicateCheck is map
+        && request.resource.data.countsForAccess == false
+        && request.resource.data.creditConsumed == false
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["submissionStatus", "supplierData", "duplicateCheck", "countsForAccess", "creditConsumed"])
+        && noStoredFileFields(request.resource.data)
+        && noStoredFileFields(request.resource.data.supplierData);
+    }
     function validSupplierImportBatch(data) {
       return canImportSupplierExcel()
         && data.keys().hasOnly(["source", "importedBy", "importedByRole", "originalFileName", "fileSizeBytes", "totalRowsDetected", "acceptedRows", "incompleteRows", "invalidRows", "exactDuplicateRows", "possibleDuplicateRows", "averageCompleteness", "createdAt", "completedAt", "status"])
@@ -179,12 +213,6 @@ service cloud.firestore {
         && request.resource.data.targetType == "supplierImportBatch";
     }
 
-    function canAdminUpdateUser() {
-      return isOwner() || (hasAnyRole(["admin"])
-        && resource.data.role in ["contributor", "viewer", "suspended"]
-        && request.resource.data.role in ["contributor", "viewer", "suspended"]
-        && ((!("accountType" in resource.data) && !("accountType" in request.resource.data)) || ("accountType" in resource.data && "accountType" in request.resource.data && request.resource.data.accountType == resource.data.accountType)));
-    }
     function onlySelfEditableProfileFields() {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["fullName", "phone", "jobTitle", "organization", "governorate", "city", "sector", "otherSector", "reasonForJoining", "language", "updatedAt"]);
     }
@@ -362,46 +390,65 @@ service cloud.firestore {
     match /users/{userId} {
       allow create: if isValidSelfRegistration(userId);
       allow read: if isSelf(userId) || isAdmin();
-      allow update: if canAdminUpdateUser() || (isSelf(userId) && (onlySelfEditableProfileFields() || isValidEmailVerificationSync(userId) || isValidBuyerTrialActivation(userId)));
-      allow delete: if isOwner() && userId != request.auth.uid;
+      allow update: if isSelf(userId) && (onlySelfEditableProfileFields() || isValidEmailVerificationSync(userId) || isValidBuyerTrialActivation(userId));
+      allow delete: if false;
     }
 
     match /suppliers/{supplierId} {
       allow read: if isAdmin() || (isBuyer() && hasActiveAccess()) || isOwnSupplierProfile(supplierId);
-      allow create: if isAdmin();
-      allow update: if isAdmin() || (isOwnSupplierProfile(supplierId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["categories", "subcategories", "updatedAt"]));
-      allow delete: if isOwner();
+      allow create: if isAdmin()
+        && !request.resource.data.keys().hasAny(["accountOwnerId", "canReceiveRfqs"]);
+      allow update: if (isAdmin()
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(["accountOwnerId", "canReceiveRfqs"]))
+        || (isOwnSupplierProfile(supplierId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["categories", "subcategories", "updatedAt"]));
+      allow delete: if isOwner()
+        && (!("accountOwnerId" in resource.data) || resource.data.accountOwnerId == "");
     }
 
     match /supplierDuplicateIndex/{supplierId} {
-      allow read: if canSubmitCompany();
+      allow read: if false;
       allow create, update, delete: if isAdmin();
     }
 
     match /supplierSubmissions/{submissionId} {
-      allow create: if validExcelImportSubmission(request.resource.data, submissionId) || (
-        canSubmitCompany()
-        && (!("source" in request.resource.data) || request.resource.data.source == "manual")
-        && request.resource.data.submittedBy == request.auth.uid
-        && request.resource.data.submissionStatus in ["draft", "pending_review", "possible_duplicate"]
-        && request.resource.data.supplierData is map
-        && noStoredFileFields(request.resource.data)
-        && noStoredFileFields(request.resource.data.supplierData)
-      );
+      allow create: if request.resource.data.get("source", "manual") == "excel_import"
+        ? validExcelImportSubmission(request.resource.data, submissionId)
+        : validManualSubmissionCreate(request.resource.data);
       allow read: if isAdmin() || (signedIn() && resource.data.submittedBy == request.auth.uid);
-      allow update: if isAdmin() || (
-        canSubmitCompany()
+      allow update: if validManualSubmissionUpdate();
+      allow delete: if canSubmitCompany()
         && resource.data.submittedBy == request.auth.uid
-        && resource.data.submissionStatus in ["draft", "needs_correction"]
-        && request.resource.data.submittedBy == request.auth.uid
-        && request.resource.data.submissionStatus in ["draft", "pending_review", "possible_duplicate"]
-        && request.resource.data.supplierData is map
-        && noStoredFileFields(request.resource.data)
-        && noStoredFileFields(request.resource.data.supplierData)
-      );
-      allow delete: if isAdmin() || (canSubmitCompany() && resource.data.submittedBy == request.auth.uid && resource.data.submissionStatus == "draft");
+        && resource.data.submissionStatus == "draft";
     }
 
+
+    match /supplierOwnershipClaims/{claimId} {
+      allow read: if isAdmin()
+        || (isVerifiedRequest() && isSupplierAccount() && isApproved() && resource.data.claimantUserId == request.auth.uid)
+        || (isVerifiedRequest() && isOwnSupplierProfile(resource.data.supplierProfileId));
+      allow create, update, delete: if false;
+    }
+
+    match /supplierClaimantLocks/{userId} {
+      allow read, create, update, delete: if false;
+    }
+
+    match /supplierOwnershipEvents/{eventId} {
+      allow read, create, update, delete: if false;
+    }
+
+    match /supplierOwnershipClaimRequests/{requestId} {
+      allow read, create, update, delete: if false;
+    }
+
+    match /supplierClaimSearchRateLimits/{userId} {
+      allow read, create, update, delete: if false;
+    }
+
+    match /supplierCanonicalUniqueness/{fingerprintId} {
+      allow read, create, update, delete: if false;
+    }
     match /supplierImportBatches/{batchId} {
       allow create: if validSupplierImportBatch(request.resource.data);
       allow read: if isAdmin() || (signedIn() && resource.data.importedBy == request.auth.uid);
@@ -409,7 +456,7 @@ service cloud.firestore {
     }
 
     match /supplierSubmissionDuplicateIndex/{indexId} {
-      allow read: if canSubmitCompany();
+      allow read: if false;
       allow create: if validPendingSubmissionIndex(request.resource.data, indexId);
       allow update: if isAdmin() || (
         signedIn()
@@ -1039,21 +1086,23 @@ service cloud.firestore {
         && request.resource.data.read == true
         && request.resource.data.readAt == request.time
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read", "readAt"]);
-      allow delete: if isAdmin();
+      allow delete: if isAdmin()
+        && resource.data.get("type", "") != "supplier_ownership"
+        && resource.data.get("referenceType", "") != "supplierOwnershipClaim";
     }
 
     match /supplierProducts/{productId} {
-      allow read: if isAdmin() || (isBuyer() && hasActiveAccess()) || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
-      allow create: if isSupplierAccount() && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.supplierId == myUser().supplierProfileId && request.resource.data.mediaStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data);
-      allow update: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId && request.resource.data.ownerUserId == resource.data.ownerUserId && request.resource.data.supplierId == resource.data.supplierId && request.resource.data.mediaStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data));
-      allow delete: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
+      allow read: if isAdmin() || (isBuyer() && hasActiveAccess()) || (currentSupplierCanWrite(resource.data.supplierId) && resource.data.ownerUserId == request.auth.uid);
+      allow create: if currentSupplierCanWrite(request.resource.data.supplierId) && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.mediaStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data);
+      allow update: if isAdmin() || (currentSupplierCanWrite(resource.data.supplierId) && resource.data.ownerUserId == request.auth.uid && request.resource.data.ownerUserId == resource.data.ownerUserId && request.resource.data.supplierId == resource.data.supplierId && request.resource.data.mediaStatus == "upload_pending_launch" && noStoredFileFields(request.resource.data));
+      allow delete: if isAdmin() || (currentSupplierCanWrite(resource.data.supplierId) && resource.data.ownerUserId == request.auth.uid);
     }
 
     match /supplierDocuments/{documentId} {
-      allow read: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
-      allow create: if isSupplierAccount() && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.supplierId == myUser().supplierProfileId && request.resource.data.storageStatus in ["metadata_only", "upload_pending_launch"] && request.resource.data.verificationStatus == "unverified" && noStoredFileFields(request.resource.data);
-      allow update: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId && request.resource.data.ownerUserId == resource.data.ownerUserId && request.resource.data.supplierId == resource.data.supplierId && request.resource.data.verificationStatus == resource.data.verificationStatus && request.resource.data.storageStatus in ["metadata_only", "upload_pending_launch"] && noStoredFileFields(request.resource.data));
-      allow delete: if isAdmin() || (isSupplierAccount() && resource.data.ownerUserId == request.auth.uid && resource.data.supplierId == myUser().supplierProfileId);
+      allow read: if isAdmin() || (currentSupplierCanWrite(resource.data.supplierId) && resource.data.ownerUserId == request.auth.uid);
+      allow create: if currentSupplierCanWrite(request.resource.data.supplierId) && request.resource.data.ownerUserId == request.auth.uid && request.resource.data.storageStatus in ["metadata_only", "upload_pending_launch"] && request.resource.data.verificationStatus == "unverified" && noStoredFileFields(request.resource.data);
+      allow update: if isAdmin() || (currentSupplierCanWrite(resource.data.supplierId) && resource.data.ownerUserId == request.auth.uid && request.resource.data.ownerUserId == resource.data.ownerUserId && request.resource.data.supplierId == resource.data.supplierId && request.resource.data.verificationStatus == resource.data.verificationStatus && request.resource.data.storageStatus in ["metadata_only", "upload_pending_launch"] && noStoredFileFields(request.resource.data));
+      allow delete: if isAdmin() || (currentSupplierCanWrite(resource.data.supplierId) && resource.data.ownerUserId == request.auth.uid);
     }
 
     match /contentPages/{pageId} {
@@ -1097,7 +1146,7 @@ service cloud.firestore {
     }
     match /auditLogs/{logId} {
       allow read: if isAdmin() || (signedIn() && logId == verificationAuditId(request.auth.uid));
-      allow create: if isAdmin() || isValidOwnVerificationAudit(logId) || isValidOwnSupplierImportAudit();
+      allow create: if (isAdmin() && request.resource.data.action is string && !request.resource.data.action.matches('supplier_ownership\\..*') && !request.resource.data.action.matches('supplier_submission\\..*') && request.resource.data.targetType != "supplierOwnershipClaim") || isValidOwnVerificationAudit(logId) || isValidOwnSupplierImportAudit();
       allow update, delete: if false;
     }
   }

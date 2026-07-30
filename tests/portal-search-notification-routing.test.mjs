@@ -92,9 +92,9 @@ test("portal search routes buyers and administrators while hiding the misleading
 });
 
 test("future supplier approval notifications use the role-safe submissions route", () => {
-  const service = read("src/services/firestore.ts");
+  const service = read("functions/src/supplierSubmissionApproval.ts");
   const app = read("src/AppV2.tsx");
-  assert.match(service, /userId: submission\.submittedBy/);
+  assert.match(service, /userId: contributorId/);
   assert.match(service, /link: "\/my-submissions"/);
   assert.doesNotMatch(service, /link: "\/buyer\/suppliers\/submissions"/);
   assert.match(app, /allowedRoles=\{supplierRoles\}[\s\S]*?path="my-submissions"/);
@@ -116,10 +116,8 @@ test("notifications remain one self-only bounded source with loading, error, and
 });
 
 test("approval recipient stays the supplier and no admin cross-user notification is introduced", () => {
-  const service = read("src/services/firestore.ts");
-  const approvalStart = service.indexOf("export async function approveSupplierSubmission");
-  const approvalEnd = service.indexOf("export async function rejectSupplierSubmission", approvalStart);
-  const approval = service.slice(approvalStart, approvalEnd);
-  assert.match(approval, /userId: submission\.submittedBy/);
+  const service = read("functions/src/supplierSubmissionApproval.ts");
+  const approval = service.slice(service.indexOf("export const approveSupplierSubmissionTrusted"));
+  assert.match(approval, /userId: contributorId/);
   assert.doesNotMatch(approval, /reviewNotifications|adminIds|ownerIds|super_admin/);
 });

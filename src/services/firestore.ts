@@ -22,6 +22,12 @@ import {
 import { db, isFirebaseConfigured } from "../config/firebase";
 import * as demo from "./localDemo";
 import {
+  approveSupplierSubmissionTrusted,
+  decideSupplierSubmissionTrusted,
+  grantTemporaryAccessTrusted,
+  setUserRoleAndStatusTrusted,
+} from "./supplierOwnership";
+import {
   badgeDefinitions,
   capabilityTags,
   confidenceLevels,
@@ -53,7 +59,7 @@ import type {
   TimestampLike,
 } from "../types/domain";
 import { addDays, maxDate, toDate } from "../utils/date";
-import { calculateAccessGrant, deriveBadges, qualityRatio } from "../utils/scoring";
+import { qualityRatio } from "../utils/scoring";
 import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
 import { normalizeEmail, normalizeUrl } from "../utils/normalization";
 import { normalizeDictionaryText } from "../utils/materialDictionary";
@@ -194,23 +200,12 @@ export async function approveUser(userId: string, actorId: string) {
   if (!isFirebaseConfigured) {
     return demo.demoApproveUser(userId, actorId);
   }
-  const batch = writeBatch(db);
-  batch.update(doc(usersRef, userId), {
-    status: "approved",
-    updatedAt: serverTimestamp(),
-  });
-  batch.set(doc(auditLogsRef), {
-    actorId,
-    action: "user.approved",
-    targetType: "user",
-    targetId: userId,
-    details: {},
-    createdAt: serverTimestamp(),
-  } satisfies Omit<AuditLog, "id">);
-  await batch.commit();
+  const targetSnapshot = await getDoc(doc(usersRef, userId));
+  if (!targetSnapshot.exists()) throw new Error("User profile was not found.");
+  const target = targetSnapshot.data() as AppUser;
+  await setUserRoleAndStatusTrusted(userId, target.role, "approved");
   window.dispatchEvent(new CustomEvent("mujahiz-iq-taxonomy-updated"));
 }
-
 export async function setUserRoleAndStatus(
   userId: string,
   actorId: string,
@@ -220,87 +215,15 @@ export async function setUserRoleAndStatus(
   if (!isFirebaseConfigured) {
     return demo.demoSetUserRoleAndStatus(userId, actorId, role, status);
   }
-  const targetRef = doc(usersRef, userId);
-  const targetSnapshot = await getDoc(targetRef);
-  if (!targetSnapshot.exists()) throw new Error("User profile was not found.");
-  const targetUser = targetSnapshot.data() as AppUser;
-  const removesOwnerAccess = targetUser.role === "owner" && (role !== "owner" || status === "suspended");
-  if (removesOwnerAccess) {
-    const ownerSnapshot = await getDocs(query(usersRef, where("role", "==", "owner"), limit(2)));
-    if (ownerSnapshot.size <= 1) throw new Error("last_owner_protected");
-  }
-
-  const batch = writeBatch(db);
-  const patch: Partial<AppUser> = {
-    role,
-    status,
-    updatedAt: serverTimestamp(),
-  };
-  if (status === "suspended") {
-    patch.accessStatus = "suspended";
-  }
-  batch.update(targetRef, patch);
-  if (targetUser.accountType === "supplier" && targetUser.supplierProfileId) {
-    batch.update(doc(suppliersRef, targetUser.supplierProfileId), {
-      canReceiveRfqs: status === "approved",
-      updatedAt: serverTimestamp(),
-    });
-  }
-  batch.set(doc(auditLogsRef), {
-    actorId,
-    action: "user.role_status_updated",
-    targetType: "user",
-    targetId: userId,
-    details: { role, status },
-    createdAt: serverTimestamp(),
-  } satisfies Omit<AuditLog, "id">);
-  await batch.commit();
+  return setUserRoleAndStatusTrusted(userId, role, status);
 }
 
 export async function grantTemporaryAccess(userId: string, actorId: string, days: number) {
   if (!isFirebaseConfigured) {
     return demo.demoGrantTemporaryAccess(userId, actorId, days);
   }
-  const userDocRef = doc(usersRef, userId);
-  const creditDoc = doc(accessCreditsRef);
-  const auditDoc = doc(auditLogsRef);
-
-  await runTransaction(db, async (transaction) => {
-    const userSnapshot = await transaction.get(userDocRef);
-    if (!userSnapshot.exists()) {
-      throw new Error("User profile was not found.");
-    }
-    const user = userSnapshot.data() as AppUser;
-    const existingAccessDate = toDate(user.accessExpiresAt);
-    const now = new Date();
-    const baseAccessDate = existingAccessDate ? maxDate(now, existingAccessDate) : now;
-    const newAccessExpiresAt = addDays(baseAccessDate, days);
-
-    transaction.update(userDocRef, {
-      accessStatus: "temporary",
-      accessExpiresAt: newAccessExpiresAt,
-      updatedAt: serverTimestamp(),
-    });
-    transaction.set(creditDoc, {
-      userId,
-      source: "manual_grace",
-      approvedSupplierCount: 0,
-      daysGranted: days,
-      status: "applied",
-      createdAt: serverTimestamp(),
-      appliedAt: serverTimestamp(),
-    } satisfies Omit<AccessCredit, "id">);
-    transaction.set(auditDoc, {
-      actorId,
-      action: "access.temporary_granted",
-      targetType: "user",
-      targetId: userId,
-      details: { days },
-      createdAt: serverTimestamp(),
-    } satisfies Omit<AuditLog, "id">);
-  });
+  return grantTemporaryAccessTrusted(userId, days);
 }
-
 export async function getPlatformSettings() {
   if (!isFirebaseConfigured) {
     return demo.demoGetPlatformSettings();
@@ -376,13 +299,6 @@ export async function seedDefaultLists(actorId: string) {
   await batch.commit();
 }
 
-export async function fetchDuplicateIndexes() {
-  if (!isFirebaseConfigured) {
-    return demo.demoFetchDuplicateIndexes();
-  }
-  const snapshot = await getDocs(duplicateIndexRef);
-  return snapshot.docs.map((item) => item.data() as SupplierDuplicateIndex);
-}
 
 export async function submitSupplierDraft(userId: string, draft: SupplierDraft, duplicateCheck: DuplicateCheck) {
   if (!isFirebaseConfigured) {
@@ -430,7 +346,6 @@ export async function resubmitSupplierSubmission(
     return demo.demoResubmitSupplierSubmission(submissionId, userId, draft, duplicateCheck);
   }
   const submissionDoc = doc(submissionsRef, submissionId);
-  const auditDoc = doc(auditLogsRef);
   await runTransaction(db, async (transaction) => {
     const snapshot = await transaction.get(submissionDoc);
     if (!snapshot.exists()) {
@@ -442,14 +357,11 @@ export async function resubmitSupplierSubmission(
     }
     transaction.update(submissionDoc, {
       submissionStatus: duplicateCheck.hasPossibleDuplicate ? "possible_duplicate" : "pending_review",
-      adminDecision: "resubmitted",
-      adminNotes: "",
       supplierData: withoutUndefinedFields(draft),
       duplicateCheck: {
         ...duplicateCheck,
         checkedAt: serverTimestamp(),
       },
-      reviewedAt: null,
       countsForAccess: false,
       creditConsumed: false,
     });
@@ -467,14 +379,6 @@ export async function resubmitSupplierSubmission(
       source: "pending_submission",
       createdAt: serverTimestamp(),
     }));
-    transaction.set(auditDoc, {
-      actorId: userId,
-      action: "supplier_submission.resubmitted",
-      targetType: "supplierSubmission",
-      targetId: submissionId,
-      details: {},
-      createdAt: serverTimestamp(),
-    } satisfies Omit<AuditLog, "id">);
   });
 }
 
@@ -782,180 +686,12 @@ export async function approveSupplierSubmission(
   actorId: string,
   settings: PlatformSettings,
   editedSupplierData?: SupplierDraft,
+  duplicateOverrideReason?: string,
 ) {
   if (!isFirebaseConfigured) {
     return demo.demoApproveSupplierSubmission(submission, actorId, settings, editedSupplierData);
   }
-  const supplierData = editedSupplierData || submission.supplierData;
-  const supplierDoc = doc(suppliersRef);
-  const submissionDoc = doc(submissionsRef, submission.id);
-  const userDocRef = doc(usersRef, submission.submittedBy);
-  const duplicateDoc = doc(duplicateIndexRef, supplierDoc.id);
-  const accessCreditDoc = doc(accessCreditsRef);
-  const accessGrantDoc = doc(accessGrantsRef);
-  const notificationDoc = doc(notificationsRef);
-  const contributionLogDoc = doc(contributionLogsRef);
-  const auditDoc = doc(auditLogsRef);
-
-  await runTransaction(db, async (transaction) => {
-    const userSnapshot = await transaction.get(userDocRef);
-    if (!userSnapshot.exists()) {
-      throw new Error("Contributor profile was not found.");
-    }
-
-    const user = userSnapshot.data() as AppUser;
-    const approvedSubmissions = (user.approvedSubmissions || 0) + 1;
-    const rejectedSubmissions = user.rejectedSubmissions || 0;
-    const duplicateSubmissions = user.duplicateSubmissions || 0;
-    const approvedNewSupplierContributions = (user.approvedNewSupplierContributions || 0) + 1;
-    const pendingSubmissionIds = [...(user.unconsumedApprovedSubmissionIds || []), submission.id];
-    const previewUser = {
-      ...user,
-      approvedSubmissions,
-      rejectedSubmissions,
-      duplicateSubmissions,
-      approvedNewSupplierContributions,
-    };
-    const accessGrant = calculateAccessGrant(previewUser, settings);
-    const existingAccessDate = toDate(user.accessExpiresAt);
-    const now = new Date();
-    const baseAccessDate = existingAccessDate ? maxDate(now, existingAccessDate) : now;
-    const maxStackDate = addDays(now, settings.maximumStackableMonths * settings.daysGrantedPerBatch);
-    let daysToGrant = accessGrant.daysToGrant;
-    let consumedForAccess = accessGrant.consumed;
-    if (daysToGrant > 0 && addDays(baseAccessDate, daysToGrant).getTime() > maxStackDate.getTime()) {
-      const allowedDays = Math.max(0, Math.floor((maxStackDate.getTime() - baseAccessDate.getTime()) / 86_400_000));
-      const allowedMonths = Math.floor(allowedDays / settings.daysGrantedPerBatch);
-      daysToGrant = allowedMonths * settings.daysGrantedPerBatch;
-      consumedForAccess = allowedMonths * settings.requiredApprovedSuppliersPerMonth;
-    }
-    const newAccessExpiresAt =
-      daysToGrant > 0 ? addDays(baseAccessDate, daysToGrant) : user.accessExpiresAt || null;
-    const nextQualityRatio = qualityRatio(approvedSubmissions, rejectedSubmissions, duplicateSubmissions);
-    const nextBadges = deriveBadges({
-      ...previewUser,
-      qualityRatio: nextQualityRatio,
-      badges: user.badges || [],
-      approvedReviews: user.approvedReviews || 0,
-    });
-
-    transaction.set(supplierDoc, {
-      ...supplierData,
-      id: supplierDoc.id,
-      status: "approved",
-      verificationStatus: "community_submitted",
-      sourceSummary: supplierData.sourceNote || supplierData.sourceType,
-      averageRating: 0,
-      reviewCount: 0,
-      createdBy: submission.submittedBy,
-      accountOwnerId: user.accountType === "supplier" ? submission.submittedBy : "",
-      canReceiveRfqs: user.accountType === "supplier",
-      approvedBy: actorId,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    } satisfies Supplier);
-
-    transaction.set(duplicateDoc, {
-      supplierId: supplierDoc.id,
-      supplierName: supplierData.displayName || supplierData.nameOriginal,
-      normalizedName: supplierData.normalizedName,
-      normalizedPhones: supplierData.normalizedPhones,
-      normalizedEmail: normalizeEmail(supplierData.email),
-      website: normalizeUrl(supplierData.website),
-      facebook: normalizeUrl(supplierData.facebook),
-      contactPerson: supplierData.contactPerson || "",
-      governorate: supplierData.governorate,
-      governorates: supplierData.governorates || (supplierData.governorate ? [supplierData.governorate] : []),
-      categories: supplierData.categories,
-    } satisfies SupplierDuplicateIndex);
-
-    transaction.update(submissionDoc, {
-      submissionStatus: "approved",
-      adminDecision: "approved",
-      countsForAccess: true,
-      creditConsumed: consumedForAccess > 0,
-      reviewedAt: serverTimestamp(),
-      adminNotes: "",
-    });
-    transaction.delete(doc(db, "supplierSubmissionDuplicateIndex", submission.id));
-
-    transaction.update(userDocRef, {
-      ...(user.accountType === "supplier" && !user.supplierProfileId
-        ? { supplierProfileId: supplierDoc.id }
-        : {}),
-      approvedSubmissions,
-      approvedNewSupplierContributions,
-      consumedApprovedSupplierContributions:
-        (user.consumedApprovedSupplierContributions || 0) + consumedForAccess,
-      unconsumedApprovedSubmissionIds: consumedForAccess > 0 ? pendingSubmissionIds.slice(Math.min(consumedForAccess, pendingSubmissionIds.length)) : pendingSubmissionIds,
-      accessStatus: daysToGrant > 0 || (existingAccessDate && existingAccessDate > now) ? "active" : user.accessStatus,
-      accessExpiresAt: newAccessExpiresAt,
-      points: (user.points || 0) + 10 + (supplierData.phones.length || supplierData.email ? 2 : 0) + (supplierData.categories.length && supplierData.capabilityTags.length ? 2 : 0),
-      qualityRatio: nextQualityRatio,
-      badges: nextBadges,
-      updatedAt: serverTimestamp(),
-    });
-
-    transaction.set(contributionLogDoc, {
-      userId: submission.submittedBy,
-      type: "new_supplier",
-      supplierSubmissionId: submission.id,
-      supplierId: supplierDoc.id,
-      points: 10,
-      countsForAccess: true,
-      createdAt: serverTimestamp(),
-    });
-
-    if (daysToGrant > 0) {
-      transaction.set(accessCreditDoc, {
-        userId: submission.submittedBy,
-        source: "supplier_contribution",
-        approvedSupplierCount: consumedForAccess,
-        daysGranted: daysToGrant,
-        status: "applied",
-        createdAt: serverTimestamp(),
-        appliedAt: serverTimestamp(),
-      } satisfies Omit<AccessCredit, "id">);
-      transaction.set(accessGrantDoc, {
-        userId: submission.submittedBy,
-        grantType: "supplier_contribution",
-        approvedSubmissionIds: pendingSubmissionIds.slice(0, Math.min(consumedForAccess, pendingSubmissionIds.length)),
-        approvedSupplierCount: consumedForAccess,
-        daysGranted: daysToGrant,
-        grantedAt: serverTimestamp(),
-        previousExpiry: existingAccessDate || null,
-        newExpiry: newAccessExpiresAt,
-        createdBy: actorId,
-        auditReference: auditDoc.id,
-        createdAt: serverTimestamp(),
-      });
-    }
-
-    transaction.set(notificationDoc, {
-      userId: submission.submittedBy,
-      type: "submission",
-      titleAr: "تم اعتماد المجهز",
-      titleEn: "Supplier submission approved",
-      bodyAr: daysToGrant > 0 ? "تم اعتماد السجل ومنح فترة وصول إضافية." : "تم اعتماد سجل المجهز وإضافته إلى الدليل.",
-      bodyEn: daysToGrant > 0 ? "The record was approved and additional access was granted." : "The supplier record was approved and added to the directory.",
-      link: "/my-submissions",
-      read: false,
-      createdAt: serverTimestamp(),
-    });
-
-    transaction.set(auditDoc, {
-      actorId,
-      action: "supplier_submission.approved",
-      targetType: "supplierSubmission",
-      targetId: submission.id,
-      details: {
-        supplierId: supplierDoc.id,
-        contributorId: submission.submittedBy,
-        daysGranted: daysToGrant,
-      },
-      createdAt: serverTimestamp(),
-    } satisfies Omit<AuditLog, "id">);
-  });
+  return approveSupplierSubmissionTrusted(submission.id, editedSupplierData, duplicateOverrideReason);
 }
 
 export async function decideSupplierSubmission(
@@ -967,49 +703,8 @@ export async function decideSupplierSubmission(
   if (!isFirebaseConfigured) {
     return demo.demoDecideSupplierSubmission(submission, actorId, decision, adminNotes);
   }
-  const userRef = doc(usersRef, submission.submittedBy);
-  const submissionRef = doc(submissionsRef, submission.id);
-  await runTransaction(db, async (transaction) => {
-    const userSnapshot = await transaction.get(userRef);
-    const user = userSnapshot.exists() ? (userSnapshot.data() as AppUser) : null;
-    const rejectedSubmissions = decision === "rejected" ? (user?.rejectedSubmissions || 0) + 1 : user?.rejectedSubmissions || 0;
-    const duplicateSubmissions =
-      decision === "possible_duplicate" || decision === "merged"
-        ? (user?.duplicateSubmissions || 0) + 1
-        : user?.duplicateSubmissions || 0;
-    const approvedSubmissions = user?.approvedSubmissions || 0;
-
-    transaction.update(submissionRef, {
-      submissionStatus: decision,
-      adminDecision: decision,
-      adminNotes,
-      countsForAccess: false,
-      creditConsumed: false,
-      reviewedAt: serverTimestamp(),
-    });
-    transaction.delete(doc(db, "supplierSubmissionDuplicateIndex", submission.id));
-
-    if (user) {
-      transaction.update(userRef, {
-        rejectedSubmissions,
-        duplicateSubmissions,
-        points: decision === "rejected" ? Math.max(0, (user.points || 0) - 2) : user.points || 0,
-        qualityRatio: qualityRatio(approvedSubmissions, rejectedSubmissions, duplicateSubmissions),
-        updatedAt: serverTimestamp(),
-      });
-    }
-
-    transaction.set(doc(auditLogsRef), {
-      actorId,
-      action: `supplier_submission.${decision}`,
-      targetType: "supplierSubmission",
-      targetId: submission.id,
-      details: { adminNotes },
-      createdAt: serverTimestamp(),
-    } satisfies Omit<AuditLog, "id">);
-  });
+  return decideSupplierSubmissionTrusted(submission.id, decision, adminNotes);
 }
-
 export async function listSupplierReviews(supplierId: string, includePending = false) {
   if (!isFirebaseConfigured) {
     return demo.demoListSupplierReviews(supplierId, includePending);

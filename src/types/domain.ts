@@ -221,6 +221,8 @@ export interface SupplierSubmission {
   creditConsumed: boolean;
   createdAt: TimestampLike;
   reviewedAt?: TimestampLike;
+  reviewedBy?: string;
+  approvedSupplierId?: string;
   source?: "manual" | "excel_import";
   importBatchId?: string;
   originalRowNumber?: number;
@@ -247,6 +249,88 @@ export interface SupplierDuplicateIndex {
   categories: string[];
 }
 
+export type SupplierOwnershipClaimStatus =
+  | "pending_review"
+  | "approved"
+  | "rejected"
+  | "withdrawn"
+  | "expired"
+  | "superseded";
+
+export type SupplierOwnershipEvidenceType =
+  | "company_domain_email"
+  | "company_website"
+  | "commercial_registration"
+  | "authorization_letter"
+  | "other";
+
+export interface SupplierOwnershipClaimantSnapshot {
+  fullName: string;
+  organization: string;
+  jobTitle: string;
+  email: string;
+  phone: string;
+}
+
+export interface SupplierOwnershipClaim {
+  id: string;
+  claimantUserId: string;
+  supplierProfileId: string;
+  status: SupplierOwnershipClaimStatus;
+  claimantSnapshot: SupplierOwnershipClaimantSnapshot;
+  claimReason: string;
+  evidenceType: SupplierOwnershipEvidenceType;
+  evidenceSummary: string;
+  referenceLinks: string[];
+  createdAt: TimestampLike;
+  updatedAt: TimestampLike;
+  expiresAt: TimestampLike;
+  reviewedAt?: TimestampLike;
+  reviewedBy?: string;
+  adminNotes?: string;
+  withdrawnAt?: TimestampLike;
+  withdrawnBy?: string;
+  supersededByClaimId?: string;
+  decisionEventId?: string;
+}
+
+export interface SupplierClaimantLock {
+  claimantUserId: string;
+  claimId: string;
+  supplierProfileId: string;
+  createdAt: TimestampLike;
+  expiresAt: TimestampLike;
+}
+
+export interface SupplierOwnershipEvent {
+  id: string;
+  type:
+    | "supplier_ownership.approved"
+    | "supplier_ownership.rejected"
+    | "supplier_ownership.withdrawn"
+    | "supplier_ownership.expired"
+    | "supplier_ownership.superseded"
+    | "supplier_ownership.submission_approved";
+  claimId: string | null;
+  supplierSubmissionId?: string;
+  supplierProfileId: string;
+  claimantUserId: string;
+  previousOwnerUserId: string | null;
+  newOwnerUserId: string | null;
+  actorUserId: string;
+  adminNotes: string;
+  createdAt: TimestampLike;
+}
+
+export interface SupplierClaimSearchResult {
+  supplierProfileId: string;
+  nameAr: string;
+  nameEn: string;
+  governorate: string;
+  city: string;
+  categories: string[];
+  website?: string;
+}
 export interface SupplierReview {
   id: string;
   supplierId: string;
