@@ -32,6 +32,7 @@ const appNavigationSource = fs.readFileSync(
   new URL("../src/components/AppLayoutV2.tsx", import.meta.url),
   "utf8",
 );
+const portalNavigationSource = fs.readFileSync(new URL("../src/config/portalNavigation.ts", import.meta.url), "utf8");
 
 const validClaim = {
   supplierProfileId: "supplier-profile-1",
@@ -126,10 +127,13 @@ test("claim search normalization matches the directory index and contains no con
   assert.throws(() => normalizeSupplierSearchQuery("x".repeat(81)), /2-80/);
 });
 
-test("claim search never reads the duplicate/contact index and PR1 exposes no route or navigation", () => {
+test("claim search never reads the duplicate/contact index and UI entry points remain client-gated", () => {
   assert.doesNotMatch(claimFunctionSource, /supplierDuplicateIndex/);
-  assert.doesNotMatch(appRoutesSource, /supplierProfileClaim|supplierOwnershipClaim|claim-supplier/i);
-  assert.doesNotMatch(appNavigationSource, /supplierProfileClaim|supplierOwnershipClaim|claim-supplier/i);
+  assert.match(appRoutesSource, /features\.supplierProfileClaim[\s\S]*?supplier\/claim-company/);
+  assert.match(appRoutesSource, /features\.supplierProfileClaim[\s\S]*?admin\/ownership-claims/);
+  assert.match(portalNavigationSource, /features\.supplierProfileClaim[\s\S]*?supplier\/claim-company/);
+  assert.match(portalNavigationSource, /features\.supplierProfileClaim[\s\S]*?admin\/ownership-claims/);
+  assert.doesNotMatch(appNavigationSource, /supplierOwnershipClaim|claim-supplier/i);
 });
 
 test("the decision state machine permits only pending to approved or rejected", () => {
