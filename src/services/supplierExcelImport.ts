@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, serverTimestamp, writeBatch } from "firebase/firestore";
+import { collection, doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "../config/firebase";
 import { features } from "../config/features";
 import type { AppUser, DuplicateCheck, SupplierDraft } from "../types/domain";
@@ -11,7 +11,8 @@ import {
   type SupplierImportRow,
 } from "../utils/supplierExcelCore.js";
 import { readSupplierWorkbook } from "../utils/supplierWorkbookReader";
-import { fetchDuplicateIndexes, submitSupplierDraft } from "./firestore";
+import { submitSupplierDraft } from "./firestore";
+import { checkSupplierDuplicatesTrusted } from "./supplierOwnership";
 
 export interface SupplierExcelImportPreview {
   batchId: string;
@@ -38,26 +39,59 @@ export interface SupplierExcelImportOptions extends Record<string, string[]> {
 
 const activeImportUsers = new Set<string>();
 
+type TrustedDuplicateCheck = DuplicateCheck & { hasExactDuplicate: boolean };
+
+function mergeTrustedDuplicateCheck(row: SupplierImportRow, check: TrustedDuplicateCheck): SupplierImportRow {
+  const duplicateMatches = [...row.duplicateMatches, ...check.matches]
+    .filter((item, index, items) => items.findIndex((candidate) =>
+      candidate.supplierId === item.supplierId && candidate.reason === item.reason) === index);
+  let validationStatus = row.validationStatus;
+  if (!row.errors.length && !row.missingFields.length) {
+    if (check.hasExactDuplicate) validationStatus = "exact_duplicate";
+    else if (check.hasPossibleDuplicate && validationStatus !== "exact_duplicate") validationStatus = "possible_duplicate";
+  }
+  return {
+    ...row,
+    duplicateMatches,
+    validationStatus,
+    excluded: !["valid", "needs_review"].includes(validationStatus),
+  };
+}
+
+async function applyTrustedDuplicateChecks(rows: SupplierImportRow[]) {
+  const eligible = rows.map((row, index) => ({ row, index }))
+    .filter(({ row }) => row.draft.nameOriginal.trim().length >= 2);
+  if (!eligible.length) return rows;
+  const checks = await checkSupplierDuplicatesTrusted(
+    eligible.map(({ row }) => ({ supplierData: row.draft })),
+  );
+  const byIndex = new Map(eligible.map((item, index) => [item.index, checks[index]]));
+  return rows.map((row, index) => {
+    const check = byIndex.get(index);
+    return check ? mergeTrustedDuplicateCheck(row, check) : row;
+  });
+}
+
 export async function createSupplierExcelImportPreview(file: File, options: SupplierExcelImportOptions): Promise<SupplierExcelImportPreview> {
   assertFeatureEnabled();
   const workbook = await readSupplierWorkbook(file);
   if (workbook.rows.length < 2) throw new Error("supplierImportNoRows");
-  const duplicateIndexes = await fetchSupplierImportDuplicateIndexes();
   const parsed = parseSupplierImportRows({
     headers: workbook.rows[0],
     rows: workbook.rows.slice(1),
     rowNumbers: workbook.rowNumbers.slice(1),
     formulaColumnsByRow: workbook.formulaColumnsByRow,
-    duplicateIndexes,
+    duplicateIndexes: [],
     options,
   });
+  const rows = await applyTrustedDuplicateChecks(parsed.rows);
   return {
     batchId: createBatchId(),
     fileName: sanitizeFileName(file.name),
     fileSizeBytes: file.size,
     sheetName: workbook.sheetName,
-    rows: parsed.rows,
-    summary: parsed.summary,
+    rows,
+    summary: summarizeSupplierImportRows(rows),
     unknownColumns: parsed.headerMap.unknownColumns,
     missingOptionalColumns: parsed.headerMap.missingOptionalColumns,
   };
@@ -69,9 +103,14 @@ export function revalidateSupplierImportRows(rows: SupplierImportRow[]) {
 
 export async function revalidateSupplierImportRow(values: Record<string, unknown>, options: SupplierExcelImportOptions, originalRowNumber: number): Promise<SupplierImportRow> {
   assertFeatureEnabled();
-  const duplicateIndexes = await fetchSupplierImportDuplicateIndexes();
-  const result = validateSupplierImportValues(values, { options, duplicateIndexes });
-  return { ...result, originalRowNumber, excluded: !["valid", "needs_review"].includes(result.validationStatus), overrideReason: "" };
+  const result = validateSupplierImportValues(values, { options, duplicateIndexes: [] });
+  const [checked] = await applyTrustedDuplicateChecks([{
+    ...result,
+    originalRowNumber,
+    excluded: !["valid", "needs_review"].includes(result.validationStatus),
+    overrideReason: "",
+  }]);
+  return checked;
 }
 
 export async function submitSupplierExcelImportBatch(user: AppUser, preview: SupplierExcelImportPreview) {
@@ -166,13 +205,6 @@ export async function submitSupplierExcelImportBatch(user: AppUser, preview: Sup
   } finally {
     activeImportUsers.delete(user.uid);
   }
-}
-
-async function fetchSupplierImportDuplicateIndexes() {
-  const approved = (await fetchDuplicateIndexes()).map((item) => ({ ...item, source: "approved_supplier" }));
-  if (!isFirebaseConfigured || !db) return approved;
-  const pending = await getDocs(collection(db, "supplierSubmissionDuplicateIndex"));
-  return [...approved, ...pending.docs.map((item) => ({ id: item.id, ...item.data() }))];
 }
 
 function duplicateCheckForRow(row: SupplierImportRow): DuplicateCheck {

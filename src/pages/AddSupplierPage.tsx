@@ -19,15 +19,15 @@ import {
   supplierCapabilityGroups,
 } from "../data/constants";
 import {
-  fetchDuplicateIndexes,
   getSupplier,
   getSupplierSubmission,
   resubmitSupplierSubmission,
   submitSupplierDraft,
   updateApprovedSupplier,
 } from "../services/firestore";
+import { checkSupplierDuplicatesTrusted } from "../services/supplierOwnership";
 import type { DuplicateCheck, SupplierDraft } from "../types/domain";
-import { createSearchKeywords, findDuplicateMatches, normalizeEmail, normalizeName, normalizePhone } from "../utils/normalization";
+import { createSearchKeywords, normalizeEmail, normalizeName, normalizePhone } from "../utils/normalization";
 import { calculateCompletionScore, missingRequiredSupplierFieldKeys } from "../utils/scoring";
 import { readWorkbookRows } from "../utils/workbookImport";
 
@@ -384,12 +384,14 @@ export function AddSupplierPage() {
 
   async function evaluateBulkForm(input: FormState) {
     const itemDraft = buildDraft(input);
-    const indexes = await fetchDuplicateIndexes();
-    const matches = findDuplicateMatches(itemDraft, indexes);
+    const [duplicateCheck] = await checkSupplierDuplicatesTrusted([{
+      supplierData: itemDraft,
+      ...(supplierId ? { excludeSupplierId: supplierId } : {}),
+    }]);
     return {
       draft: itemDraft,
       missing: missingRequiredFormFieldKeys(input, itemDraft),
-      duplicateCheck: { hasPossibleDuplicate: matches.length > 0, matches },
+      duplicateCheck,
     };
   }
 
@@ -475,13 +477,11 @@ export function AddSupplierPage() {
     }
 
     const requestKey = duplicateLookupKey;
-    const promise = withTimeout(fetchDuplicateIndexes(), duplicateCheckTimeoutMs)
-      .then((indexes) => {
-        const matches = findDuplicateMatches(
-          draft,
-          supplierId ? indexes.filter((item) => item.supplierId !== supplierId) : indexes,
-        );
-        const nextCheck = { hasPossibleDuplicate: matches.length > 0, matches };
+    const promise = withTimeout(checkSupplierDuplicatesTrusted([{
+      supplierData: draft,
+      ...(supplierId ? { excludeSupplierId: supplierId } : {}),
+    }]), duplicateCheckTimeoutMs)
+      .then(([nextCheck]) => {
         if (duplicateCheckRequestRef.current?.key === requestKey) {
           setDuplicateCheck(nextCheck);
           setCheckedKey(requestKey);
@@ -520,15 +520,14 @@ export function AddSupplierPage() {
       };
       const forms = extractSupplierImportForms(workbook.rows, form, importOptions);
       if (forms.length > 1) {
-        const indexes = await fetchDuplicateIndexes();
-        const bulk = forms.slice(0, 50).map((item) => {
-          const itemDraft = buildDraft(item.form);
-          const matches = findDuplicateMatches(itemDraft, indexes);
+        const prepared = forms.slice(0, 50).map((item) => ({ ...item, draft: buildDraft(item.form) }));
+        const checks = await checkSupplierDuplicatesTrusted(prepared.map((item) => ({ supplierData: item.draft })));
+        const bulk = prepared.map((item, index) => {
           return {
             form: item.form,
             rowNumber: item.rowNumber,
-            missing: missingRequiredFormFieldKeys(item.form, itemDraft),
-            duplicateCheck: { hasPossibleDuplicate: matches.length > 0, matches },
+            missing: missingRequiredFormFieldKeys(item.form, item.draft),
+            duplicateCheck: checks[index],
           };
         });
         setBulkItems(bulk);

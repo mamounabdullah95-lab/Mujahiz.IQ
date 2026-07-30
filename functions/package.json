@@ -5,7 +5,7 @@
   "type": "module",
   "main": "lib/index.js",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "scripts": {
     "build": "tsc",
@@ -16,7 +16,7 @@
     "firebase-functions": "^7.3.2"
   },
   "devDependencies": {
-    "@types/node": "^20.19.0",
+    "@types/node": "^22.0.0",
     "typescript": "^5.6.3"
   },
   "overrides": {

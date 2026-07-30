@@ -67,6 +67,42 @@ export function validateEvidenceType(value) {
   return value;
 }
 
+function isPrivateIpv4(hostname) {
+  const parts = hostname.split(".").map((item) => Number(item));
+  if (parts.length !== 4 || parts.some((item) => !Number.isInteger(item) || item < 0 || item > 255)) return false;
+  const [first, second] = parts;
+  return first === 0
+    || first === 10
+    || first === 127
+    || (first === 169 && second === 254)
+    || (first === 172 && second >= 16 && second <= 31)
+    || (first === 192 && second === 168);
+}
+
+function isPrivateIpv6(hostname) {
+  const host = hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  if (host === "::" || host === "::1") return true;
+  if (/^f[cd][0-9a-f]{2}:/.test(host) || /^fe[89ab][0-9a-f]:/.test(host)) return true;
+  if (host.startsWith("::ffff:")) {
+    const mapped = host.slice(7);
+    if (mapped.includes(".")) return isPrivateIpv4(mapped);
+    const match = /^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(mapped);
+    if (match) {
+      const high = Number.parseInt(match[1], 16);
+      const low = Number.parseInt(match[2], 16);
+      return isPrivateIpv4(`${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`);
+    }
+  }
+  return false;
+}
+
+function unsafeEvidenceHost(hostname) {
+  const host = hostname.replace(/\.$/, "").toLowerCase();
+  return host === "localhost"
+    || host.endsWith(".localhost")
+    || isPrivateIpv4(host)
+    || isPrivateIpv6(host);
+}
 export function validateReferenceLinks(value) {
   if (!Array.isArray(value) || value.length > MAX_REFERENCE_LINKS) {
     throw new OwnershipValidationError(
@@ -86,6 +122,9 @@ export function validateReferenceLinks(value) {
     if (url.protocol !== "https:" || url.username || url.password) {
       throw new OwnershipValidationError("invalid-argument", "Each reference link must be an HTTPS URL without credentials.");
     }
+    if (unsafeEvidenceHost(url.hostname) || (url.port && url.port !== "443")) {
+      throw new OwnershipValidationError("invalid-argument", "Each reference link must use a public HTTPS host on the standard port.");
+    }
     const canonical = url.toString();
     if (seen.has(canonical)) {
       throw new OwnershipValidationError("invalid-argument", "Duplicate reference links are not allowed.");
@@ -95,9 +134,29 @@ export function validateReferenceLinks(value) {
   });
 }
 
+export function validateIdempotencyKey(value) {
+  if (typeof value !== "string" || !/^[A-Za-z0-9._~-]{8,128}$/.test(value)) {
+    throw new OwnershipValidationError(
+      "invalid-argument",
+      "idempotencyKey must contain 8-128 safe URL characters.",
+    );
+  }
+  return value;
+}
+
 export function validateClaimInput(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new OwnershipValidationError("invalid-argument", "Claim input must be an object.");
+  }
+  const prototype = Object.getPrototypeOf(value);
+  const allowedKeys = new Set([
+    "supplierProfileId", "claimReason", "evidenceType", "evidenceSummary", "referenceLinks", "idempotencyKey",
+  ]);
+  if (
+    (prototype !== Object.prototype && prototype !== null)
+    || Object.keys(value).some((key) => ["__proto__", "constructor", "prototype"].includes(key) || !allowedKeys.has(key))
+  ) {
+    throw new OwnershipValidationError("invalid-argument", "Claim input contains unsupported fields.");
   }
   return {
     supplierProfileId: validateDocumentId(value.supplierProfileId, "supplierProfileId"),
@@ -105,6 +164,7 @@ export function validateClaimInput(value) {
     evidenceType: validateEvidenceType(value.evidenceType),
     evidenceSummary: sanitizeBoundedText(value.evidenceSummary, "evidenceSummary", 20, 1600),
     referenceLinks: validateReferenceLinks(value.referenceLinks ?? []),
+    idempotencyKey: validateIdempotencyKey(value.idempotencyKey),
   };
 }
 

@@ -24,9 +24,13 @@ test("review creation is buyer only", () => {
   assert.match(rules, /match \/reviews\/\{reviewId\}[\s\S]*?allow create: if isBuyer\(\)/);
 });
 
-test("regular admins cannot modify admin or owner roles", () => {
-  assert.match(rules, /resource\.data\.role in \["contributor", "viewer", "suspended"\]/);
-  assert.match(rules, /request\.resource\.data\.role in \["contributor", "viewer", "suspended"\]/);
+test("all role, status, and access changes require the trusted backend", () => {
+  const userRules = rules.match(/match \/users\/\{userId\}[\s\S]*?(?=\n    match \/)/)?.[0] || "";
+  assert.match(userRules, /allow update: if isSelf\(userId\)/);
+  assert.match(userRules, /onlySelfEditableProfileFields\(\)/);
+  const updateRule = userRules.match(/allow update:[^;]+;/)?.[0] || "";
+  assert.doesNotMatch(updateRule, /isAdmin\(\)/);
+  assert.match(userRules, /allow delete: if false;/);
 });
 
 test("audit logs remain append-only", () => {

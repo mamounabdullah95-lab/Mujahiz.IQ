@@ -48,7 +48,13 @@ export function SupplierSubmissionDetailPage() {
     setBusy(true);
     if (decision === "approved") {
       const settings = await getPlatformSettings();
-      await approveSupplierSubmission(submission, firebaseUser.uid, settings);
+      await approveSupplierSubmission(
+        submission,
+        firebaseUser.uid,
+        settings,
+        undefined,
+        submission.submissionStatus === "possible_duplicate" ? notes : undefined,
+      );
       await refreshUser();
     } else {
       await decideSupplierSubmission(submission, firebaseUser.uid, decision, notes);

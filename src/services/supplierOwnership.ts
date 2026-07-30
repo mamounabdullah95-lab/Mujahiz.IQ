@@ -1,7 +1,10 @@
 import { httpsCallable } from "firebase/functions";
 import { features } from "../config/features";
 import { cloudFunctions } from "../config/firebase";
+import { findDuplicateMatches } from "../utils/normalization";
+import * as demo from "./localDemo";
 import type {
+  DuplicateCheck,
   SupplierClaimSearchResult,
   SupplierDraft,
   SupplierOwnershipClaimStatus,
@@ -16,6 +19,7 @@ export interface CreateSupplierOwnershipClaimInput {
   evidenceType: SupplierOwnershipEvidenceType;
   evidenceSummary: string;
   referenceLinks: string[];
+  idempotencyKey: string;
 }
 
 export interface SupplierOwnershipDecisionResult {
@@ -77,17 +81,58 @@ export async function decideSupplierOwnershipClaim(
 export async function approveSupplierSubmissionTrusted(
   submissionId: string,
   editedSupplierData?: SupplierDraft,
+  duplicateOverrideReason?: string,
 ) {
   if (!cloudFunctions) throw new Error("FIREBASE_FUNCTIONS_UNAVAILABLE");
   const callable = httpsCallable<
-    { submissionId: string; editedSupplierData?: SupplierDraft },
+    { submissionId: string; editedSupplierData?: SupplierDraft; duplicateOverrideReason?: string },
     { supplierProfileId: string; idempotent: boolean }
   >(cloudFunctions, "approveSupplierSubmissionTrusted");
   const result = await callable({
     submissionId,
     ...(editedSupplierData ? { editedSupplierData } : {}),
+    ...(duplicateOverrideReason ? { duplicateOverrideReason } : {}),
   });
   return result.data;
+}
+
+export async function decideSupplierSubmissionTrusted(
+  submissionId: string,
+  decision: "needs_correction" | "rejected" | "possible_duplicate" | "merged" | "archived",
+  adminNotes: string,
+) {
+  if (!cloudFunctions) throw new Error("FIREBASE_FUNCTIONS_UNAVAILABLE");
+  const callable = httpsCallable<
+    { submissionId: string; decision: string; adminNotes: string },
+    { submissionId: string; status: string; idempotent: boolean }
+  >(cloudFunctions, "decideSupplierSubmissionTrusted");
+  const result = await callable({ submissionId, decision, adminNotes });
+  return result.data;
+}
+
+export async function checkSupplierDuplicatesTrusted(
+  items: Array<{ supplierData: SupplierDraft; excludeSupplierId?: string; excludeSubmissionId?: string }>,
+) {
+  if (!cloudFunctions) {
+    const indexes = await demo.demoFetchDuplicateIndexes();
+    return items.map((item) => {
+      const matches = findDuplicateMatches(
+        item.supplierData,
+        indexes.filter((index) => index.supplierId !== item.excludeSupplierId),
+      );
+      return {
+        hasPossibleDuplicate: matches.length > 0,
+        hasExactDuplicate: matches.some((match) => match.reason !== "similar_name"),
+        matches,
+      };
+    });
+  }
+  const callable = httpsCallable<
+    { items: Array<{ supplierData: SupplierDraft; excludeSupplierId?: string; excludeSubmissionId?: string }> },
+    { checks: Array<DuplicateCheck & { hasExactDuplicate: boolean }> }
+  >(cloudFunctions, "checkSupplierDuplicatesTrusted");
+  const result = await callable({ items });
+  return result.data.checks;
 }
 
 export async function setUserRoleAndStatusTrusted(
@@ -101,5 +146,14 @@ export async function setUserRoleAndStatusTrusted(
     { userId: string; idempotent: boolean }
   >(cloudFunctions, "setUserRoleAndStatusTrusted");
   const result = await callable({ userId, role, status });
+  return result.data;
+}
+export async function grantTemporaryAccessTrusted(userId: string, days: number) {
+  if (!cloudFunctions) throw new Error("FIREBASE_FUNCTIONS_UNAVAILABLE");
+  const callable = httpsCallable<
+    { userId: string; days: number },
+    { userId: string; accessExpiresAt: string }
+  >(cloudFunctions, "grantTemporaryAccessTrusted");
+  const result = await callable({ userId, days });
   return result.data;
 }

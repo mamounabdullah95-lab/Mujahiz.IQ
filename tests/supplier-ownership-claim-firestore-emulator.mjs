@@ -14,6 +14,7 @@ import {
   getDoc,
   getDocs,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   where,
@@ -155,6 +156,46 @@ before(async () => {
       claimantUserId: users.other.uid,
       actorUserId: users.admin.uid,
       createdAt: Timestamp.now(),
+    });    await setDoc(doc(database, "supplierSubmissions", "protected-submission"), {
+      submittedBy: users.claimant.uid,
+      submissionStatus: "pending_review",
+      supplierData: { nameOriginal: "Protected Supplier", normalizedName: "protected supplier" },
+      duplicateCheck: { hasPossibleDuplicate: false, matches: [] },
+      countsForAccess: false,
+      creditConsumed: false,
+      createdAt: Timestamp.now(),
+    });
+    await setDoc(doc(database, "supplierSubmissions", "protected-correction"), {
+      submittedBy: users.claimant.uid,
+      submissionStatus: "needs_correction",
+      supplierData: { nameOriginal: "Correction Supplier", normalizedName: "correction supplier" },
+      duplicateCheck: { hasPossibleDuplicate: false, matches: [] },
+      countsForAccess: false,
+      creditConsumed: false,
+      adminDecision: "needs_correction",
+      adminNotes: "Correct the company details.",
+      reviewedAt: Timestamp.now(),
+      reviewedBy: users.admin.uid,
+      createdAt: Timestamp.now(),
+    });    await setDoc(doc(database, "supplierDuplicateIndex", "protected-profile"), {
+      supplierId: "protected-profile",
+      supplierName: "Protected Supplier",
+      normalizedName: "protected supplier",
+      normalizedPhones: ["9647000000000"],
+      normalizedEmail: "private@example.test",
+    });
+    await setDoc(doc(database, "notifications", "ownership-result"), {
+      userId: users.claimant.uid,
+      actorId: users.admin.uid,
+      type: "supplier_ownership",
+      referenceType: "supplierOwnershipClaim",
+      referenceId: "claim-own",
+      titleAr: "نتيجة المطالبة",
+      titleEn: "Claim result",
+      bodyAr: "نتيجة اصطناعية",
+      bodyEn: "Synthetic result",
+      read: false,
+      createdAt: Timestamp.now(),
     });
     await setDoc(doc(database, "supplierProducts", "partial-product"), {
       supplierId: "partial-profile",
@@ -230,6 +271,7 @@ test("claimant and privileged clients cannot mutate ownership fields independent
     canReceiveRfqs: false,
   }));
   await assertFails(deleteDoc(doc(context("owner"), "users", users.linked.uid)));
+  await assertFails(deleteDoc(doc(context("owner"), "users", users.other.uid)));
 });
 
 test("claimant locks and ownership events are backend-only and immutable", async () => {
@@ -278,4 +320,81 @@ test("existing canonical linked TEST-compatible Supplier access remains intact",
     categories: ["tools_equipment", "maintenance_services"],
     updatedAt: Timestamp.now(),
   }));
+});
+test("Admin and Owner browser writes cannot bypass trusted role, status, or access operations", async () => {
+  for (const key of ["admin", "owner"]) {
+    const database = context(key);
+    await assertFails(updateDoc(doc(database, "users", users.claimant.uid), { role: "admin" }));
+    await assertFails(updateDoc(doc(database, "users", users.claimant.uid), { status: "suspended" }));
+    await assertFails(updateDoc(doc(database, "users", users.claimant.uid), { accessStatus: "suspended" }));
+  }
+});
+
+test("Admin and Owner browser writes cannot approve, reject, or rewrite submitted Supplier data", async () => {
+  for (const key of ["admin", "owner"]) {
+    const submissionRef = doc(context(key), "supplierSubmissions", "protected-submission");
+    await assertFails(updateDoc(submissionRef, {
+      submissionStatus: "approved",
+      adminDecision: "approved",
+      approvedSupplierId: "forged-profile",
+    }));
+    await assertFails(updateDoc(submissionRef, {
+      submissionStatus: "rejected",
+      adminDecision: "rejected",
+    }));
+    await assertFails(updateDoc(submissionRef, {
+      submittedBy: users.other.uid,
+      supplierData: { nameOriginal: "Rewritten", normalizedName: "rewritten" },
+    }));
+    await assertFails(deleteDoc(submissionRef));
+  }
+});
+
+test("contributors can resubmit only draft fields and cannot forge protected review metadata", async () => {
+  const database = context("claimant");
+  const correctionRef = doc(database, "supplierSubmissions", "protected-correction");
+  await assertFails(updateDoc(correctionRef, { adminDecision: "approved" }));
+  await assertFails(updateDoc(correctionRef, { reviewedBy: users.claimant.uid }));
+  await assertFails(setDoc(doc(database, "supplierSubmissions", "forged-metadata"), {
+    submittedBy: users.claimant.uid,
+    submissionStatus: "pending_review",
+    supplierData: { nameOriginal: "Forged Supplier", normalizedName: "forged supplier" },
+    duplicateCheck: { hasPossibleDuplicate: false, matches: [] },
+    countsForAccess: false,
+    creditConsumed: false,
+    source: "manual",
+    approvedSupplierId: "forged-profile",
+    createdAt: serverTimestamp(),
+  }));
+  await assertSucceeds(updateDoc(correctionRef, {
+    submissionStatus: "pending_review",
+    supplierData: { nameOriginal: "Corrected Supplier", normalizedName: "corrected supplier" },
+    duplicateCheck: { hasPossibleDuplicate: false, matches: [] },
+    countsForAccess: false,
+    creditConsumed: false,
+  }));
+  const corrected = (await assertSucceeds(getDoc(correctionRef))).data();
+  assert.equal(corrected.adminDecision, "needs_correction");
+  assert.equal(corrected.reviewedBy, users.admin.uid);
+});
+test("duplicate indexes and backend guard collections are unreadable to every client", async () => {
+  for (const key of ["claimant", "admin", "owner"]) {
+    const database = context(key);
+    await assertFails(getDoc(doc(database, "supplierDuplicateIndex", "protected-profile")));
+    await assertFails(getDocs(collection(database, "supplierDuplicateIndex")));
+    for (const collectionName of [
+      "supplierCanonicalUniqueness",
+      "supplierOwnershipClaimRequests",
+      "supplierClaimSearchRateLimits",
+    ]) {
+      await assertFails(getDoc(doc(database, collectionName, "probe")));
+      await assertFails(setDoc(doc(database, collectionName, "probe"), { forged: true }));
+    }
+  }
+});
+
+test("ownership-result notifications cannot be deleted by Admin or Owner clients", async () => {
+  for (const key of ["admin", "owner"]) {
+    await assertFails(deleteDoc(doc(context(key), "notifications", "ownership-result")));
+  }
 });

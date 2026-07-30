@@ -67,7 +67,7 @@ export function AdminSubmissionsPage() {
                 <Eye className="h-4 w-4" aria-hidden="true" />
                 {t("details")}
               </Link>
-              <Button disabled={busyId === item.id} type="button" onClick={() => void approve(item)}>
+              <Button disabled={busyId === item.id || item.submissionStatus === "possible_duplicate"} type="button" onClick={() => void approve(item)}>
                 <Check className="h-4 w-4" aria-hidden="true" />
                 {t("approve")}
               </Button>

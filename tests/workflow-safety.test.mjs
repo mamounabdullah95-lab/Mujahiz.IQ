@@ -10,7 +10,9 @@ const migration = fs.readFileSync(new URL("../scripts/migrate-linked-supplier-ac
 
 test("supplier RFQ eligibility follows the linked account status", () => {
   assert.match(trustedAdminUsers, /target\.accountType === "supplier" && typeof target\.supplierProfileId === "string"/);
-  assert.match(trustedAdminUsers, /canReceiveRfqs: status === "approved"/);
+  assert.match(trustedAdminUsers, /const canReceiveRfqs = Boolean\([\s\S]*?role === "contributor"[\s\S]*?status === "approved"[\s\S]*?\["active", "temporary"\]\.includes\(accessStatus\)[\s\S]*?hasCurrentAccess\(targetAfter\)/);
+  assert.match(trustedAdminUsers, /supplierSnapshot\.data\(\)\?\.accountOwnerId !== userId/);
+  assert.match(trustedAdminUsers, /transaction\.update\(supplierSnapshot\.ref, \{ canReceiveRfqs: true/);
 });
 
 test("public pages use local taxonomy without protected Firestore reads", () => {

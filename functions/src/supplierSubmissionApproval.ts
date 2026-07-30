@@ -1,9 +1,19 @@
 import { FieldValue, Timestamp, type DocumentData } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import {
+  assertCurrentAdminOrOwner,
+  assertCurrentSupplierContributorUser,
+  getCurrentVerifiedAuthUser,
+  requireCurrentVerifiedAuth,
+  type CallableAuthContext,
+} from "./callableAuth.js";
 import { db } from "./firebaseAdmin.js";
+import { validateAndNormalizeSupplierData } from "./supplierDataCore.js";
+import { readApprovalDuplicateGuard } from "./supplierDuplicate.js";
 import {
   OwnershipValidationError,
+  sanitizeBoundedText,
   submissionSideEffectId,
   validateDocumentId,
 } from "./supplierOwnershipCore.js";
@@ -22,23 +32,6 @@ const defaultSettings = {
   maximumStackableMonths: 12,
 };
 
-const supplierDraftFields = new Set([
-  "nameOriginal", "displayName", "nameLanguage", "nameAr", "nameEn", "shortDescription",
-  "businessType", "governorate", "governorates", "branches", "branchDetails", "city",
-  "marketArea", "address", "googleMapsLink", "coverageAreas", "phones", "normalizedPhones",
-  "whatsappAvailable", "email", "normalizedEmail", "website", "facebook", "instagramLinkedin",
-  "contactPerson", "contactPersonRole", "categories", "subcategories", "capabilityTags",
-  "paymentOptions", "acceptsCredit", "creditDays", "creditStart", "creditTermsNote", "sourceType",
-  "confidenceLevel", "hasDirectExperience", "lastInteractionYear", "relatedMaterialService",
-  "sourceNote", "completionScore", "normalizedName", "searchKeywords",
-]);
-
-const forbiddenPayloadKeys = new Set([
-  "fileUrl", "downloadUrl", "storagePath", "fileContent", "base64", "attachmentUrl", "imageUrl",
-  "workbook", "workbookData", "rawWorkbook", "rawFile", "rawFileData", "fileBytes", "blob",
-  "arrayBuffer", "binary", "rawData", "filePayload",
-]);
-
 function throwCallableError(error: unknown): never {
   if (error instanceof HttpsError) throw error;
   if (error instanceof OwnershipValidationError) throw new HttpsError(error.code, error.message);
@@ -49,60 +42,21 @@ function throwCallableError(error: unknown): never {
   throw new HttpsError("internal", "The Supplier submission approval could not be completed.");
 }
 
-function assertAdminActor(actor: DocumentData | undefined, tokenVerified: boolean) {
-  if (
-    !tokenVerified
-    || !actor
-    || !["admin", "owner"].includes(actor.role)
-    || actor.status === "suspended"
-    || actor.accessStatus === "suspended"
-  ) {
-    throw new HttpsError("permission-denied", "Admin or Owner authorization is required.");
-  }
-}
-
-function assertNoStoredPayloads(value: unknown, depth = 0) {
-  if (depth > 6) throw new HttpsError("invalid-argument", "Supplier data is nested too deeply.");
-  if (typeof value === "string" && /^data:.*;base64,/i.test(value.trim())) {
-    throw new HttpsError("invalid-argument", "Embedded file payloads are not allowed.");
-  }
-  if (Array.isArray(value)) {
-    if (value.length > 250) throw new HttpsError("invalid-argument", "Supplier data contains an oversized list.");
-    value.forEach((item) => assertNoStoredPayloads(item, depth + 1));
-    return;
-  }
-  if (!value || typeof value !== "object") return;
-  Object.entries(value as Record<string, unknown>).forEach(([key, child]) => {
-    if (forbiddenPayloadKeys.has(key)) throw new HttpsError("invalid-argument", "Stored file payloads are not allowed.");
-    assertNoStoredPayloads(child, depth + 1);
-  });
+function assertAdminActor(
+  auth: CallableAuthContext,
+  authUser: Awaited<ReturnType<typeof requireCurrentVerifiedAuth>>,
+  actor: DocumentData | undefined,
+) {
+  assertCurrentAdminOrOwner(auth, authUser, actor);
 }
 
 function validateSupplierData(value: unknown) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new HttpsError("invalid-argument", "Supplier data is invalid.");
+  try {
+    return validateAndNormalizeSupplierData(value) as Record<string, unknown>;
+  } catch (error) {
+    if (error instanceof OwnershipValidationError) throw new HttpsError(error.code, error.message);
+    throw error;
   }
-  const source = value as Record<string, unknown>;
-  const unexpected = Object.keys(source).filter((key) => !supplierDraftFields.has(key));
-  if (unexpected.length) throw new HttpsError("invalid-argument", "Supplier data contains protected or unsupported fields.");
-  assertNoStoredPayloads(source);
-  if (
-    typeof source.nameOriginal !== "string"
-    || source.nameOriginal.trim().length < 2
-    || source.nameOriginal.length > 200
-    || typeof source.normalizedName !== "string"
-    || source.normalizedName.length < 2
-    || source.normalizedName.length > 200
-    || !Array.isArray(source.phones)
-    || !Array.isArray(source.normalizedPhones)
-    || !Array.isArray(source.categories)
-    || !Array.isArray(source.capabilityTags)
-  ) {
-    throw new HttpsError("invalid-argument", "Supplier data is incomplete or invalid.");
-  }
-  const serializedLength = Buffer.byteLength(JSON.stringify(source), "utf8");
-  if (serializedLength > 50_000) throw new HttpsError("invalid-argument", "Supplier data is too large.");
-  return source;
 }
 
 function numberValue(value: unknown) {
@@ -141,7 +95,6 @@ function deriveBadges(user: DocumentData, approvedSubmissions: number, nextQuali
   if (approvedSubmissions >= 25 && nextQualityRatio >= 0.75) badges.add("trusted_contributor");
   return [...badges];
 }
-
 function normalizeEmail(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
@@ -154,20 +107,38 @@ function normalizeUrl(value: unknown) {
 
 export const approveSupplierSubmissionTrusted = onCall(callableOptions, async (request) => {
   try {
-    if (!request.auth?.uid) throw new HttpsError("unauthenticated", "Authentication is required.");
-    const auth = request.auth;
-    const data = request.data as { submissionId?: unknown; editedSupplierData?: unknown };
+    const auth = request.auth!;
+    const authUser = await requireCurrentVerifiedAuth(auth);
+    const data = request.data as {
+      submissionId?: unknown;
+      editedSupplierData?: unknown;
+      duplicateOverrideReason?: unknown;
+    };
     const submissionId = validateDocumentId(data?.submissionId, "submissionId");
     const actorRef = db.doc(`users/${auth.uid}`);
     const submissionRef = db.doc(`supplierSubmissions/${submissionId}`);
     const supplierId = submissionSideEffectId(submissionId, "profile");
+    const submissionPreview = await submissionRef.get();
+    if (!submissionPreview.exists) throw new HttpsError("not-found", "The Supplier submission was not found.");
+    const contributorIdPreview = validateDocumentId(submissionPreview.data()?.submittedBy, "submittedBy");
+    const contributorPreview = await db.doc(`users/${contributorIdPreview}`).get();
+    if (!contributorPreview.exists) throw new HttpsError("failed-precondition", "The contributor profile was not found.");
+    const contributorAuthUser = contributorPreview.data()?.accountType === "supplier"
+      ? await getCurrentVerifiedAuthUser(contributorIdPreview)
+      : null;
+    const duplicateOverrideReason = data.duplicateOverrideReason == null
+      ? ""
+      : sanitizeBoundedText(data.duplicateOverrideReason, "duplicateOverrideReason", 10, 500);
 
     return await db.runTransaction(async (transaction) => {
       const [actorInTransaction, submissionSnapshot] = await transaction.getAll(actorRef, submissionRef);
-      assertAdminActor(actorInTransaction.data(), auth.token.email_verified === true);
+      assertAdminActor(auth, authUser, actorInTransaction.data());
       if (!submissionSnapshot.exists) throw new HttpsError("not-found", "The Supplier submission was not found.");
       const submission = submissionSnapshot.data() as DocumentData;
       const contributorId = validateDocumentId(submission.submittedBy, "submittedBy");
+      if (contributorId !== contributorIdPreview) {
+        throw new HttpsError("aborted", "The Supplier submission contributor changed during authorization.");
+      }
       const contributorRef = db.doc(`users/${contributorId}`);
       const supplierRef = db.doc(`suppliers/${supplierId}`);
       const settingsRef = db.doc("settings/platform");
@@ -190,7 +161,35 @@ export const approveSupplierSubmissionTrusted = onCall(callableOptions, async (r
       if (supplierSnapshot.exists) throw new HttpsError("already-exists", "The deterministic Supplier profile already exists.");
 
       const contributor = contributorSnapshot.data() as DocumentData;
+      if (
+        !["buyer", "supplier"].includes(contributor.accountType)
+        && !(contributor.accountType == null && contributor.role === "contributor")
+      ) {
+        throw new HttpsError("failed-precondition", "The contributor accountType is invalid.");
+      }
       const supplierData = validateSupplierData(data?.editedSupplierData ?? submission.supplierData);
+      const establishOwnership = contributor.accountType === "supplier";
+      if (submission.submissionStatus === "possible_duplicate" && !duplicateOverrideReason) {
+        throw new HttpsError("failed-precondition", "An explicit duplicate override reason is required.");
+      }
+      if (establishOwnership) {
+        if (!contributorAuthUser) throw new HttpsError("permission-denied", "The Supplier contributor Auth account is unavailable.");
+        assertCurrentSupplierContributorUser(
+          contributorId,
+          contributorAuthUser,
+          contributor,
+        );
+        const ownedProfiles = await transaction.get(
+          db.collection("suppliers").where("accountOwnerId", "==", contributorId).limit(2),
+        );
+        if (!ownedProfiles.empty) {
+          throw new HttpsError("failed-precondition", "The Supplier contributor already has a canonical ownership relationship.");
+        }
+      }
+      const duplicateGuard = await readApprovalDuplicateGuard(transaction, supplierData, submissionId);
+      if (duplicateGuard.conflicts.length) {
+        throw new HttpsError("already-exists", "An approved or pending Supplier record already represents this company.");
+      }
       const configuredSettings = settingsSnapshot.data() ?? {};
       const settings = {
         requiredApprovedSuppliersPerMonth: positiveIntegerSetting(
@@ -236,9 +235,16 @@ export const approveSupplierSubmissionTrusted = onCall(callableOptions, async (r
       }
       const newAccessExpiresAt = daysToGrant > 0 ? addDays(baseAccessDate, daysToGrant) : contributor.accessExpiresAt || null;
       const nextQualityRatio = qualityRatio(approvedSubmissions, rejectedSubmissions, duplicateSubmissions);
-      const establishOwnership = contributor.accountType === "supplier"
-        && !(typeof contributor.supplierProfileId === "string" && contributor.supplierProfileId.trim());
 
+      duplicateGuard.fingerprints.forEach((fingerprint, index) => {
+        transaction.create(duplicateGuard.fingerprintRefs[index], {
+          fingerprintHash: fingerprint.id,
+          kind: fingerprint.kind,
+          supplierId,
+          supplierSubmissionId: submissionId,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      });
       transaction.create(supplierRef, {
         ...supplierData,
         id: supplierId,
@@ -275,6 +281,7 @@ export const approveSupplierSubmissionTrusted = onCall(callableOptions, async (r
         reviewedAt: FieldValue.serverTimestamp(),
         reviewedBy: auth.uid,
         adminNotes: "",
+        ...(duplicateOverrideReason ? { duplicateOverrideReason } : {}),
       });
       transaction.delete(db.doc(`supplierSubmissionDuplicateIndex/${submissionId}`));
       transaction.update(contributorRef, {
@@ -349,7 +356,7 @@ export const approveSupplierSubmissionTrusted = onCall(callableOptions, async (r
         action: "supplier_submission.approved",
         targetType: "supplierSubmission",
         targetId: submissionId,
-        details: { supplierId, contributorId, daysGranted: daysToGrant },
+        details: { supplierId, contributorId, daysGranted: daysToGrant, ...(duplicateOverrideReason ? { duplicateOverrideReason } : {}) },
         createdAt: FieldValue.serverTimestamp(),
       });
       if (establishOwnership) {
@@ -367,6 +374,90 @@ export const approveSupplierSubmissionTrusted = onCall(callableOptions, async (r
         });
       }
       return { supplierProfileId: supplierId, idempotent: false };
+    });
+  } catch (error) {
+    throwCallableError(error);
+  }
+});
+const supplierSubmissionDecisions = new Set([
+  "needs_correction", "rejected", "possible_duplicate", "merged", "archived",
+]);
+
+export const decideSupplierSubmissionTrusted = onCall(callableOptions, async (request) => {
+  try {
+    const auth = request.auth!;
+    const authUser = await requireCurrentVerifiedAuth(auth);
+    const data = request.data as { submissionId?: unknown; decision?: unknown; adminNotes?: unknown };
+    const submissionId = validateDocumentId(data?.submissionId, "submissionId");
+    if (typeof data?.decision !== "string" || !supplierSubmissionDecisions.has(data.decision)) {
+      throw new HttpsError("invalid-argument", "The Supplier submission decision is invalid.");
+    }
+    const decision = data.decision;
+    const adminNotes = sanitizeBoundedText(data.adminNotes ?? "", "adminNotes", 0, 1000);
+    const submissionRef = db.doc(`supplierSubmissions/${submissionId}`);
+    const preview = await submissionRef.get();
+    if (!preview.exists) throw new HttpsError("not-found", "The Supplier submission was not found.");
+    const contributorId = validateDocumentId(preview.data()?.submittedBy, "submittedBy");
+    const actorRef = db.doc(`users/${auth.uid}`);
+    const contributorRef = db.doc(`users/${contributorId}`);
+
+    return await db.runTransaction(async (transaction) => {
+      const [actorSnapshot, submissionSnapshot, contributorSnapshot] = await transaction.getAll(
+        actorRef,
+        submissionRef,
+        contributorRef,
+      );
+      if (!actorSnapshot.exists) throw new HttpsError("permission-denied", "The administrative account profile is missing.");
+      assertAdminActor(auth, authUser, actorSnapshot.data());
+      if (!submissionSnapshot.exists) throw new HttpsError("not-found", "The Supplier submission was not found.");
+      const submission = submissionSnapshot.data() as DocumentData;
+      if (submission.submittedBy !== contributorId) {
+        throw new HttpsError("aborted", "The Supplier submission contributor changed during authorization.");
+      }
+      if (submission.submissionStatus === decision && submission.adminDecision === decision) {
+        return { submissionId, status: decision, idempotent: true };
+      }
+      if (!["pending_review", "possible_duplicate"].includes(submission.submissionStatus)) {
+        throw new HttpsError("failed-precondition", "The Supplier submission is not reviewable.");
+      }
+      const contributor = contributorSnapshot.data() as DocumentData | undefined;
+      const alreadyCountedDuplicate = submission.submissionStatus === "possible_duplicate";
+      const countsDuplicate = ["possible_duplicate", "merged"].includes(decision) && !alreadyCountedDuplicate;
+      const countsRejection = decision === "rejected";
+      const approvedSubmissions = numberValue(contributor?.approvedSubmissions);
+      const rejectedSubmissions = numberValue(contributor?.rejectedSubmissions) + (countsRejection ? 1 : 0);
+      const duplicateSubmissions = numberValue(contributor?.duplicateSubmissions) + (countsDuplicate ? 1 : 0);
+      transaction.update(submissionRef, {
+        submissionStatus: decision,
+        adminDecision: decision,
+        adminNotes,
+        countsForAccess: false,
+        creditConsumed: false,
+        reviewedAt: FieldValue.serverTimestamp(),
+        reviewedBy: auth.uid,
+      });
+      if (contributorSnapshot.exists) {
+        transaction.update(contributorRef, {
+          rejectedSubmissions,
+          duplicateSubmissions,
+          points: countsRejection ? Math.max(0, numberValue(contributor?.points) - 2) : numberValue(contributor?.points),
+          qualityRatio: qualityRatio(approvedSubmissions, rejectedSubmissions, duplicateSubmissions),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+      if (["rejected", "merged", "archived"].includes(decision)) {
+        transaction.delete(db.doc(`supplierSubmissionDuplicateIndex/${submissionId}`));
+      }
+      const auditId = submissionSideEffectId(submissionId, `decision-${decision}-audit`);
+      transaction.create(db.doc(`auditLogs/${auditId}`), {
+        actorId: auth.uid,
+        action: `supplier_submission.${decision}`,
+        targetType: "supplierSubmission",
+        targetId: submissionId,
+        details: { adminNotes },
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      return { submissionId, status: decision, idempotent: false };
     });
   } catch (error) {
     throwCallableError(error);

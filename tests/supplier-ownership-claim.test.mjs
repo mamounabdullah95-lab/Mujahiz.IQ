@@ -15,8 +15,13 @@ import {
   submissionSideEffectId,
   terminalStatusReleasesLock,
   validateClaimInput,
+  validateIdempotencyKey,
   validateReferenceLinks,
 } from "../functions/src/supplierOwnershipCore.js";
+import {
+  stablePayloadHash,
+  validateAndNormalizeSupplierData,
+} from "../functions/src/supplierDataCore.js";
 
 const claimFunctionSource = fs.readFileSync(
   new URL("../functions/src/supplierOwnership.ts", import.meta.url),
@@ -34,6 +39,39 @@ const validClaim = {
   evidenceType: "company_domain_email",
   evidenceSummary: "My verified company role and domain establish this relationship.",
   referenceLinks: ["https://example.test/about"],
+  idempotencyKey: "claim-request-0001",
+};
+
+const validSupplierDraft = {
+  nameOriginal: "Synthetic Industrial Supplier",
+  displayName: "Synthetic Industrial Supplier",
+  nameLanguage: "english",
+  nameAr: "",
+  nameEn: "Synthetic Industrial Supplier",
+  businessType: "company",
+  governorate: "baghdad",
+  governorates: ["baghdad"],
+  branches: [{ governorate: "baghdad", city: "baghdad", phone: "+9647700000000" }],
+  city: "baghdad",
+  marketArea: "industrial",
+  coverageAreas: ["baghdad"],
+  phones: ["+9647700000000"],
+  normalizedPhones: ["forged-phone"],
+  whatsappAvailable: "unknown",
+  email: "Synthetic@Example.Test",
+  normalizedEmail: "forged@example.test",
+  website: "https://synthetic.example.test/",
+  categories: ["tools_equipment"],
+  subcategories: [],
+  capabilityTags: ["local_stock"],
+  paymentOptions: [],
+  creditDays: [],
+  sourceType: "found_online",
+  confidenceLevel: "medium",
+  hasDirectExperience: "not_sure",
+  completionScore: 80,
+  normalizedName: "forged-normalized-name",
+  searchKeywords: ["forged"],
 };
 
 test("claim input is bounded, sanitized, and preserves only supported evidence", () => {
@@ -59,6 +97,19 @@ test("reference evidence is HTTPS-only, unique, bounded, and never accepts embed
   assert.throws(() => validateReferenceLinks(["http://example.test"]), /HTTPS/);
   assert.throws(() => validateReferenceLinks(["data:text/plain;base64,Zm9yZ2Vk"]), /HTTPS/);
   assert.throws(() => validateReferenceLinks(["https://user:secret@example.test"]), /without credentials/);
+  for (const unsafe of [
+    "https://localhost/evidence",
+    "https://127.0.0.1/evidence",
+    "https://10.0.0.1/evidence",
+    "https://169.254.1.1/evidence",
+    "https://192.168.1.1/evidence",
+    "https://[::1]/evidence",
+    "https://[::ffff:127.0.0.1]/evidence",
+    "https://[::ffff:10.0.0.1]/evidence",
+    "https://[fc00::1]/evidence",
+    "https://[fe80::1]/evidence",
+    "https://example.test:8443/evidence",
+  ]) assert.throws(() => validateReferenceLinks([unsafe]), /public HTTPS host/);
   assert.throws(() => validateReferenceLinks([
     "https://one.example.test",
     "https://two.example.test",
@@ -125,4 +176,31 @@ test("expiry is fail closed and every terminal status releases its claimant lock
     assert.equal(terminalStatusReleasesLock(status), true);
   }
   assert.equal(terminalStatusReleasesLock("pending_review"), false);
+});
+test("claim idempotency keys are bounded and payload hashes are stable", () => {
+  assert.equal(validateIdempotencyKey("request-key_123"), "request-key_123");
+  assert.throws(() => validateIdempotencyKey("short"), /8-128/);
+  assert.equal(stablePayloadHash(validClaim), stablePayloadHash({ ...validClaim }));
+  assert.notEqual(stablePayloadHash(validClaim), stablePayloadHash({ ...validClaim, claimReason: `${validClaim.claimReason} changed` }));
+});
+
+test("Supplier approval data uses exact nested schemas and re-derives normalized fields", () => {
+  const result = validateAndNormalizeSupplierData(validSupplierDraft);
+  assert.equal(result.normalizedName, "synthetic industrial supplier");
+  assert.deepEqual(result.normalizedPhones, ["9647700000000"]);
+  assert.equal(result.normalizedEmail, "synthetic@example.test");
+  assert.notDeepEqual(result.searchKeywords, ["forged"]);
+  assert.throws(() => validateAndNormalizeSupplierData({ ...validSupplierDraft, unexpected: true }), /unsupported fields/);
+  assert.throws(() => validateAndNormalizeSupplierData({
+    ...validSupplierDraft,
+    branches: [{ governorate: "baghdad", city: "baghdad", prototype: "unsafe" }],
+  }), /unsafe key/);
+  assert.throws(() => validateAndNormalizeSupplierData({
+    ...validSupplierDraft,
+    branches: [{ governorate: "baghdad", city: "baghdad", unexpected: "unsafe" }],
+  }), /unsupported fields/);
+  assert.throws(() => validateAndNormalizeSupplierData({
+    ...validSupplierDraft,
+    categories: Array.from({ length: 21 }, (_, index) => `category-${index}`),
+  }), /categories is invalid/);
 });

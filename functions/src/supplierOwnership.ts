@@ -6,8 +6,17 @@ import {
   type Query,
 } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
-import { HttpsError, onCall, type CallableRequest } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
+import {
+  assertCurrentAdminOrOwner,
+  assertCurrentSupplierContributor,
+  assertCurrentSupplierContributorUser,
+  getCurrentVerifiedAuthUser,
+  requireCurrentVerifiedAuth,
+  type CallableAuthContext,
+} from "./callableAuth.js";
 import { db } from "./firebaseAdmin.js";
+import { stablePayloadHash } from "./supplierDataCore.js";
 import {
   CLAIM_TTL_DAYS,
   MAX_CONFLICTING_CLAIMS,
@@ -39,6 +48,7 @@ interface UserData extends DocumentData {
   accountType?: string;
   status?: string;
   accessStatus?: string;
+  accessExpiresAt?: Timestamp;
   emailVerified?: boolean;
   supplierProfileId?: string;
   fullName?: string;
@@ -74,42 +84,26 @@ function throwCallableError(error: unknown): never {
   throw new HttpsError("internal", "The ownership request could not be completed.");
 }
 
-function requireAuth(request: CallableRequest<unknown>) {
-  if (!request.auth?.uid) throw new HttpsError("unauthenticated", "Authentication is required.");
-  return request.auth;
-}
-
 function requireClaimFeature() {
   if (process.env.CLAIM_SUPPLIER_PROFILE_ENABLED !== "true") {
     throw new HttpsError("failed-precondition", "Supplier profile claims are disabled.");
   }
 }
 
-function assertClaimantAccount(user: UserData, tokenVerified: boolean) {
-  if (
-    !tokenVerified
-    || user.emailVerified !== true
-    || user.role !== "contributor"
-    || user.accountType !== "supplier"
-    || user.status !== "approved"
-    || !["active", "temporary"].includes(user.accessStatus || "")
-  ) {
-    throw new HttpsError("permission-denied", "An active verified Supplier account is required.");
-  }
-  if (typeof user.supplierProfileId === "string" && user.supplierProfileId.trim()) {
-    throw new HttpsError("failed-precondition", "The Supplier account is already linked.");
-  }
+function assertClaimantAccount(
+  user: UserData,
+  auth: CallableAuthContext,
+  authUser: Awaited<ReturnType<typeof getCurrentVerifiedAuthUser>>,
+) {
+  assertCurrentSupplierContributor(auth, authUser, user);
 }
 
-function assertAdminActor(user: UserData, tokenVerified: boolean) {
-  if (
-    !tokenVerified
-    || !["admin", "owner"].includes(user.role || "")
-    || user.status === "suspended"
-    || user.accessStatus === "suspended"
-  ) {
-    throw new HttpsError("permission-denied", "Admin or Owner authorization is required.");
-  }
+function assertAdminActor(
+  user: UserData,
+  auth: CallableAuthContext,
+  authUser: Awaited<ReturnType<typeof requireCurrentVerifiedAuth>>,
+) {
+  assertCurrentAdminOrOwner(auth, authUser, user);
 }
 
 function assertEligibleSupplierProfile(profile: DocumentData | undefined) {
@@ -127,7 +121,7 @@ function timestampIsFuture(value: unknown, now: Timestamp) {
 
 function safeSnapshotText(value: unknown, maximumLength: number) {
   if (typeof value !== "string") return "";
-  return sanitizeBoundedText(value, "snapshotField", 0, maximumLength);
+  return value.replace(/[\u0000-\u001F\u007F]/g, " ").trim().slice(0, maximumLength);
 }
 
 function safeWebsiteDomain(value: unknown) {
@@ -181,25 +175,49 @@ function assertPendingClaimConsistency(
     throw new HttpsError("failed-precondition", "The claimant lock is missing, stale, or inconsistent.");
   }
   if (!claimantSnapshot.exists) throw new HttpsError("failed-precondition", "The claimant account no longer exists.");
-  const claimant = claimantSnapshot.data() as UserData;
-  assertClaimantAccount(claimant, true);
   if (claim.claimantUserId !== claimantSnapshot.id || claim.supplierProfileId !== supplierSnapshot.id) {
     throw new HttpsError("failed-precondition", "The claim target is inconsistent.");
   }
   if (!supplierSnapshot.exists) throw new HttpsError("not-found", "The Supplier profile no longer exists.");
-  assertEligibleSupplierProfile(supplierSnapshot.data());
+}
+
+const SEARCH_RATE_WINDOW_MS = 60_000;
+const SEARCH_RATE_MAX_REQUESTS = 10;
+
+async function enforceSearchRateLimit(uid: string) {
+  const limitRef = db.doc(`supplierClaimSearchRateLimits/${uid}`);
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(limitRef);
+    const now = Timestamp.now();
+    const stored = snapshot.data();
+    const windowStartedAt = stored?.windowStartedAt instanceof Timestamp ? stored.windowStartedAt : now;
+    const inWindow = now.toMillis() - windowStartedAt.toMillis() < SEARCH_RATE_WINDOW_MS;
+    const requestCount = inWindow && Number.isInteger(stored?.requestCount) ? stored?.requestCount as number : 0;
+    if (requestCount >= SEARCH_RATE_MAX_REQUESTS) {
+      throw new HttpsError("resource-exhausted", "The Claim search rate limit was exceeded.");
+    }
+    transaction.set(limitRef, {
+      userId: uid,
+      windowStartedAt: inWindow ? windowStartedAt : now,
+      requestCount: requestCount + 1,
+      lastRequestAt: now,
+      expiresAt: Timestamp.fromMillis(now.toMillis() + 86_400_000),
+    });
+  });
 }
 
 export const searchSupplierProfilesForClaim = onCall(callableOptions, async (request) => {
   try {
     requireClaimFeature();
-    const auth = requireAuth(request);
+    const auth = request.auth!;
+    const authUser = await requireCurrentVerifiedAuth(auth);
     const data = request.data as { query?: unknown; mode?: unknown };
     const normalizedQuery = normalizeSupplierSearchQuery(data?.query);
     const mode = validateSearchMode(data?.mode ?? "prefix");
     const userSnapshot = await db.doc(`users/${auth.uid}`).get();
     if (!userSnapshot.exists) throw new HttpsError("failed-precondition", "The Supplier account profile is missing.");
-    assertClaimantAccount(userSnapshot.data() as UserData, auth.token.email_verified === true);
+    assertClaimantAccount(userSnapshot.data() as UserData, auth, authUser);
+    await enforceSearchRateLimit(auth.uid);
 
     let supplierQuery: Query<DocumentData> = db.collection("suppliers");
     supplierQuery = mode === "exact"
@@ -258,20 +276,60 @@ export const searchSupplierProfilesForClaim = onCall(callableOptions, async (req
 export const createSupplierOwnershipClaim = onCall(callableOptions, async (request) => {
   try {
     requireClaimFeature();
-    const auth = requireAuth(request);
+    const auth = request.auth!;
+    const authUser = await requireCurrentVerifiedAuth(auth);
     const input = validateClaimInput(request.data);
     const claimRef = db.collection("supplierOwnershipClaims").doc();
     const userRef = db.doc(`users/${auth.uid}`);
     const supplierRef = db.doc(`suppliers/${input.supplierProfileId}`);
     const lockRef = db.doc(`supplierClaimantLocks/${auth.uid}`);
+    const idempotencyRef = db.doc(`supplierOwnershipClaimRequests/${stablePayloadHash(input.idempotencyKey)}`);
+    const payloadHash = stablePayloadHash({
+      supplierProfileId: input.supplierProfileId,
+      claimReason: input.claimReason,
+      evidenceType: input.evidenceType,
+      evidenceSummary: input.evidenceSummary,
+      referenceLinks: input.referenceLinks,
+    });
     const now = Timestamp.now();
     const expiresAt = Timestamp.fromMillis(now.toMillis() + CLAIM_TTL_DAYS * 86_400_000);
 
-    await db.runTransaction(async (transaction) => {
-      const [userSnapshot, supplierSnapshot, lockSnapshot] = await transaction.getAll(userRef, supplierRef, lockRef);
+    const result = await db.runTransaction(async (transaction) => {
+      const [userSnapshot, supplierSnapshot, lockSnapshot, idempotencySnapshot] = await transaction.getAll(
+        userRef,
+        supplierRef,
+        lockRef,
+        idempotencyRef,
+      );
       if (!userSnapshot.exists) throw new HttpsError("failed-precondition", "The Supplier account profile is missing.");
       const user = userSnapshot.data() as UserData;
-      assertClaimantAccount(user, auth.token.email_verified === true);
+      assertClaimantAccount(user, auth, authUser);
+
+      if (idempotencySnapshot.exists) {
+        const stored = idempotencySnapshot.data() as DocumentData;
+        if (stored.claimantUserId !== auth.uid) {
+          throw new HttpsError("permission-denied", "The idempotency key belongs to another account.");
+        }
+        if (stored.payloadHash !== payloadHash) {
+          throw new HttpsError("failed-precondition", "The idempotency key was already used for different claim data.");
+        }
+        const storedClaimId = validateDocumentId(stored.claimId, "claimId");
+        const storedClaim = await transaction.get(db.doc(`supplierOwnershipClaims/${storedClaimId}`));
+        if (!storedClaim.exists || storedClaim.data()?.claimantUserId !== auth.uid) {
+          throw new HttpsError("failed-precondition", "The idempotent claim result is inconsistent.");
+        }
+        const storedExpiry = storedClaim.data()?.expiresAt;
+        if (!(storedExpiry instanceof Timestamp)) {
+          throw new HttpsError("failed-precondition", "The idempotent claim expiry is invalid.");
+        }
+        return {
+          claimId: storedClaimId,
+          status: storedClaim.data()?.status,
+          expiresAt: storedExpiry.toDate().toISOString(),
+          idempotent: true,
+        };
+      }
+
       if (!supplierSnapshot.exists) throw new HttpsError("not-found", "The Supplier profile was not found.");
       assertEligibleSupplierProfile(supplierSnapshot.data());
 
@@ -327,33 +385,58 @@ export const createSupplierOwnershipClaim = onCall(callableOptions, async (reque
         createdAt: FieldValue.serverTimestamp(),
         expiresAt,
       });
+      transaction.create(idempotencyRef, {
+        claimantUserId: auth.uid,
+        payloadHash,
+        claimId: claimRef.id,
+        createdAt: FieldValue.serverTimestamp(),
+        expiresAt,
+      });
+      return {
+        claimId: claimRef.id,
+        status: "pending_review" as const,
+        expiresAt: expiresAt.toDate().toISOString(),
+        idempotent: false,
+      };
     });
 
-    return { claimId: claimRef.id, status: "pending_review" as const, expiresAt: expiresAt.toDate().toISOString() };
+    return result;
   } catch (error) {
     throwCallableError(error);
   }
 });
-
 export const withdrawSupplierOwnershipClaim = onCall(callableOptions, async (request) => {
   try {
     requireClaimFeature();
-    const auth = requireAuth(request);
+    const auth = request.auth!;
+    const authUser = await requireCurrentVerifiedAuth(auth);
     const claimId = validateDocumentId((request.data as { claimId?: unknown })?.claimId, "claimId");
     const now = Timestamp.now();
     const result = await db.runTransaction(async (transaction) => {
       const claimRef = db.doc(`supplierOwnershipClaims/${claimId}`);
-      const claimSnapshot = await transaction.get(claimRef);
+      const userRef = db.doc(`users/${auth.uid}`);
+      const lockRef = db.doc(`supplierClaimantLocks/${auth.uid}`);
+      const [claimSnapshot, userSnapshot, lockSnapshot] = await transaction.getAll(claimRef, userRef, lockRef);
       if (!claimSnapshot.exists) throw new HttpsError("not-found", "The ownership claim was not found.");
+      if (!userSnapshot.exists) throw new HttpsError("failed-precondition", "The claimant account profile is missing.");
+      const user = userSnapshot.data() as UserData;
+      assertClaimantAccount(user, auth, authUser);
       const claim = claimSnapshot.data() as ClaimData;
       if (claim.claimantUserId !== auth.uid) throw new HttpsError("permission-denied", "Only the claimant may withdraw this claim.");
       if (claim.status === "withdrawn") return { claimId, status: "withdrawn" as const, idempotent: true };
       if (claim.status !== "pending_review") {
         throw new HttpsError("failed-precondition", `A ${claim.status} claim cannot be withdrawn.`);
       }
-      const lockRef = db.doc(`supplierClaimantLocks/${auth.uid}`);
-      const lockSnapshot = await transaction.get(lockRef);
-      const status = timestampIsFuture(claim.expiresAt, now) ? "withdrawn" : "expired";
+      const claimIsCurrent = timestampIsFuture(claim.expiresAt, now);
+      const lock = lockSnapshot.data() as LockData | undefined;
+      if (
+        !lockSnapshot.exists
+        || !lockMatchesClaim(lock, claimId, claim)
+        || (claimIsCurrent && !timestampIsFuture(lock?.expiresAt, now))
+      ) {
+        throw new HttpsError("failed-precondition", "The claimant lock is missing, stale, or inconsistent.");
+      }
+      const status = claimIsCurrent ? "withdrawn" : "expired";
       const eventId = ownershipEventId(claimId, status);
       transaction.update(claimRef, {
         status,
@@ -363,8 +446,8 @@ export const withdrawSupplierOwnershipClaim = onCall(callableOptions, async (req
           ? { withdrawnAt: FieldValue.serverTimestamp(), withdrawnBy: auth.uid }
           : {}),
       });
-      if (lockSnapshot.exists && lockMatchesClaim(lockSnapshot.data(), claimId, claim)) transaction.delete(lockRef);
-      transaction.set(
+      transaction.delete(lockRef);
+      transaction.create(
         db.doc(`supplierOwnershipEvents/${eventId}`),
         ownershipEvent(status, claimId, claim, auth.uid, "", null),
       );
@@ -378,23 +461,31 @@ export const withdrawSupplierOwnershipClaim = onCall(callableOptions, async (req
     throwCallableError(error);
   }
 });
-
 export const decideSupplierOwnershipClaim = onCall(callableOptions, async (request) => {
   try {
     requireClaimFeature();
-    const auth = requireAuth(request);
+    const auth = request.auth!;
+    const authUser = await requireCurrentVerifiedAuth(auth);
     const input = request.data as { claimId?: unknown; decision?: unknown; adminNotes?: unknown };
     const claimId = validateDocumentId(input?.claimId, "claimId");
     const decision = input?.decision;
     const adminNotes = sanitizeBoundedText(input?.adminNotes ?? "", "adminNotes", 0, 1000);
     const now = Timestamp.now();
+    let approvalClaimantAuthUser: Awaited<ReturnType<typeof getCurrentVerifiedAuthUser>> | null = null;
+    if (decision === "approve") {
+      const preview = await db.doc(`supplierOwnershipClaims/${claimId}`).get();
+      if (preview.exists) {
+        const claimantUserId = validateDocumentId(preview.data()?.claimantUserId, "claimantUserId");
+        approvalClaimantAuthUser = await getCurrentVerifiedAuthUser(claimantUserId);
+      }
+    }
 
     const result = await db.runTransaction(async (transaction) => {
       const actorRef = db.doc(`users/${auth.uid}`);
       const claimRef = db.doc(`supplierOwnershipClaims/${claimId}`);
       const [actorSnapshot, claimSnapshot] = await transaction.getAll(actorRef, claimRef);
       if (!actorSnapshot.exists) throw new HttpsError("permission-denied", "The administrative account profile is missing.");
-      assertAdminActor(actorSnapshot.data() as UserData, auth.token.email_verified === true);
+      assertAdminActor(actorSnapshot.data() as UserData, auth, authUser);
       if (!claimSnapshot.exists) throw new HttpsError("not-found", "The ownership claim was not found.");
       const claim = claimSnapshot.data() as ClaimData;
       const transition = resolveDecisionTransition(claim.status, decision);
@@ -425,6 +516,18 @@ export const decideSupplierOwnershipClaim = onCall(callableOptions, async (reque
         supplierRef,
       );
       assertPendingClaimConsistency(claimId, claim, lockSnapshot, claimantSnapshot, supplierSnapshot, now);
+      if (transition.targetStatus === "approved") {
+        if (!approvalClaimantAuthUser) {
+          throw new HttpsError("permission-denied", "The claimant Firebase Auth account is unavailable.");
+        }
+        const claimant = claimantSnapshot.data() as UserData;
+        assertCurrentSupplierContributorUser(
+          claim.claimantUserId,
+          approvalClaimantAuthUser,
+          claimant,
+        );
+        assertEligibleSupplierProfile(supplierSnapshot.data());
+      }
 
       const eventId = ownershipEventId(claimId, transition.targetStatus);
       const commonClaimUpdate = {
