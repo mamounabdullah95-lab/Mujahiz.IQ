@@ -15,6 +15,7 @@ import {
   requireCurrentVerifiedAuth,
   type CallableAuthContext,
 } from "./callableAuth.js";
+import { FIREBASE_FUNCTIONS_REGION } from "./callableRegion.js";
 import { db } from "./firebaseAdmin.js";
 import { stablePayloadHash } from "./supplierDataCore.js";
 import {
@@ -35,7 +36,7 @@ import {
 } from "./supplierOwnershipCore.js";
 
 const callableOptions = {
-  region: "us-central1",
+  region: FIREBASE_FUNCTIONS_REGION,
   timeoutSeconds: 30,
   memory: "256MiB" as const,
   maxInstances: 10,

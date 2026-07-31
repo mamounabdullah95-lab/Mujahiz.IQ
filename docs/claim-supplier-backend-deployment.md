@@ -6,8 +6,8 @@ Status: implementation only; not deployed. The visible Claim Supplier Profile fe
 
 - Functions generation: Firebase Functions v2 callable functions.
 - Runtime: Node.js 22 in both `functions/package.json` and `firebase.json`; CI installs and validates with Node 22.
-- Region: `us-central1`, explicitly matching Firebase's documented default because this repository has no prior Functions/location configuration.
-- Before any Production deployment, verify the actual Firestore database location read-only. If cross-region latency or cost is not acceptable, stop for architecture review.
+- Region: `europe-west1`, selected before the first Functions deployment to align callable compute with the Firestore `eur3` multi-region location.
+- Before any Production deployment, verify the Firestore database location remains `eur3`. If it differs, stop for architecture review.
 - Client gate: `VITE_SUPPLIER_PROFILE_CLAIM_ENABLED` uses strict `true` semantics and must remain absent or `false`.
 - Backend claim gate: `CLAIM_SUPPLIER_PROFILE_ENABLED` uses strict `true` semantics and must remain absent or `false`.
 - Submission decisions, protected user administration, temporary access grants, and duplicate checks are trusted callable-only paths. Firestore Rules deny browser writes to protected decision, role, account-status, access-status, ownership, audit, event, notification-result, rate-limit, idempotency, and canonical-uniqueness state.
@@ -38,7 +38,7 @@ Do not deploy from this implementation task. After second independent review, me
 1. Re-verify `main`, the exact release commit, current Hosting release, active Ruleset, index readiness, Production Supplier counts, and protected TEST records using bounded read-only checks.
 2. Confirm the Firebase project's existing billing eligibility and Firestore location read-only. Do not link or change a billing account.
 3. Deploy only `firestore:indexes` and wait until all three `supplierOwnershipClaims` indexes are `READY`.
-4. Deploy only these Node 22 Functions in `us-central1`:
+4. Deploy only these Node 22 Functions in `europe-west1`:
    - `searchSupplierProfilesForClaim`
    - `createSupplierOwnershipClaim`
    - `withdrawSupplierOwnershipClaim`
@@ -48,6 +48,7 @@ Do not deploy from this implementation task. After second independent review, me
    - `decideSupplierSubmissionTrusted`
    - `setUserRoleAndStatusTrusted`
    - `grantTemporaryAccessTrusted`
+   No regional aliases, duplicate Functions, redirects, or compatibility wrappers are required because none of these Functions has been deployed previously.
 5. Verify both Claim gates remain false. Do not create a Production claim or run a write-capable smoke test.
 6. In the same maintenance window, deploy Hosting for the exact reviewed commit. Hosting must switch existing Admin submission, role/status, temporary-access, and Add Supplier duplicate-check clients to trusted callables before restrictive Rules become active.
 7. Perform bounded read-only verification that the application loads, the Claim UI remains absent, authentication works, and Admin/Owner review routes load without invoking a decision.

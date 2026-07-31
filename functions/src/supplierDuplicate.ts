@@ -10,6 +10,7 @@ import {
   assertCurrentDuplicateCheckActor,
   requireCurrentVerifiedAuth,
 } from "./callableAuth.js";
+import { FIREBASE_FUNCTIONS_REGION } from "./callableRegion.js";
 import { db } from "./firebaseAdmin.js";
 import {
   canonicalSupplierFingerprints,
@@ -24,7 +25,7 @@ const MAX_PREFIX_RESULTS = 12;
 const MAX_RETURNED_MATCHES = 6;
 
 const callableOptions = {
-  region: "us-central1",
+  region: FIREBASE_FUNCTIONS_REGION,
   timeoutSeconds: 60,
   memory: "256MiB" as const,
   maxInstances: 10,

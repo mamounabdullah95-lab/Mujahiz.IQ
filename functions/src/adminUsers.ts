@@ -8,11 +8,12 @@ import {
   hasCurrentAccess,
   requireCurrentVerifiedAuth,
 } from "./callableAuth.js";
+import { FIREBASE_FUNCTIONS_REGION } from "./callableRegion.js";
 import { adminAuth, db } from "./firebaseAdmin.js";
 import { OwnershipValidationError, validateDocumentId } from "./supplierOwnershipCore.js";
 
 const callableOptions = {
-  region: "us-central1",
+  region: FIREBASE_FUNCTIONS_REGION,
   timeoutSeconds: 30,
   memory: "256MiB" as const,
   maxInstances: 10,
