@@ -103,7 +103,7 @@ async function createClient(key) {
   const auth = getAuth(app);
   connectAuthEmulator(auth, `http://${authHost}`, { disableWarnings: true });
   await signInWithEmailAndPassword(auth, account.email, password);
-  const functions = getFunctions(app, "us-central1");
+  const functions = getFunctions(app, "europe-west1");
   connectFunctionsEmulator(functions, functionsHost, functionsPort);
   clients.set(key, { app, auth, functions });
 }

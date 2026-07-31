@@ -75,7 +75,8 @@ if (runtimeTarget === "firebase" && appCheckSiteKey && typeof window !== "undefi
 
 export const auth = isFirebaseConfigured ? getAuth(app) : null;
 export const db = getFirestore(app);
-export const cloudFunctions = isFirebaseConfigured ? getFunctions(app, "us-central1") : null;
+export const FIREBASE_FUNCTIONS_REGION = "europe-west1";
+export const cloudFunctions = isFirebaseConfigured ? getFunctions(app, FIREBASE_FUNCTIONS_REGION) : null;
 
 const emulatorState = globalThis as typeof globalThis & { __mujahizFirebaseEmulatorsConnected?: boolean };
 if (useFirebaseEmulators && auth && !emulatorState.__mujahizFirebaseEmulatorsConnected) {
