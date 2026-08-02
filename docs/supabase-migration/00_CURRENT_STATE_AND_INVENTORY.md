@@ -12,7 +12,9 @@ Verification snapshot: **2026-08-03T01:42:22+03:00** (Asia/Baghdad)
 
 ## Executive finding
 
-- **[Verified current fact]** GitHub `main`, live Firebase Hosting, active Firestore Rules, deployed indexes, deployed Functions, and the new Supabase project are separate states and must remain separately versioned. Sources: Git and the read-only Firebase APIs/CLI used on 2026-08-03.
+- **[Verified current fact]** GitHub `main`, live Firebase Hosting, active Firestore Rules, deployed indexes, and deployed Functions are separate repository/Firebase states and must remain separately versioned. Sources: Git and the read-only Firebase APIs/CLI used on 2026-08-03.
+- **[Assumption]** The user reports a hosted Supabase project named "Mujahiz IQ" in Central EU (Frankfurt) on the Free plan. Its project identity, region, plan, and intended environment role were not independently verified.
+- **[Unknown]** The hosted Supabase schemas, tables, RLS policies, Auth configuration, Storage buckets, Edge Functions, backups, compute, GitHub integration, and deployment settings were not observable with the access available in this task.
 - **[Verified current fact]** GitHub `main` is ahead of live Firebase: current source includes Claim Supplier UI/backend, 18 composite-index definitions, restrictive Claim-aware Rules, and nine callable Functions; live Firebase has the older Hosting release and Rules, 15 READY indexes, zero deployed Functions, and no Claim collections with records. Sources: `firebase.json`, `firestore.indexes.json`, `firestore.rbac.rules`, `functions/src/index.ts`, PRs #38-#40, and live metadata/count checks.
 - **[Verified current fact]** The migration is not a collection export. The application relies on denormalized arrays and snapshots, deterministic IDs, atomic batches, transactions, immutable quotation revisions, event-bound notifications, canonical duplicate fingerprints, idempotency records, protected ownership links, and trusted server writes. Sources: `src/services/workspace.ts`, `src/services/registration.ts`, `src/services/supplierExcelImport.ts`, `functions/src/`, and `firestore.rbac.rules`.
 - **[Future plan]** Introduce Supabase behind the existing frontend service boundary. Do not rebuild the React UI and do not make two backends authoritative for the same Production feature.
@@ -34,7 +36,8 @@ Verification snapshot: **2026-08-03T01:42:22+03:00** (Asia/Baghdad)
 
 - **[Latest known historical fact]** PR #40 recorded the following on exact head `5ebb5c50d9a64cafe9d5c53a5eedc0183475c190`, whose merge commit is current `main` `3fbcf93…`: repository tests **181/181**, Firestore Emulator tests **89/89**, Functions Emulator tests **21/21**, Firebase Production bundle validation **3/3**, application TypeScript/Production build passed, and Functions typecheck/build passed. Source: merged PR #40.
 - **[Verified current fact]** PR #40 is merged and its merge commit is the exact current `main`. Source: GitHub PR metadata and local Git history.
-- **[Verified current fact]** No expensive application or Emulator suite was rerun for this documentation-only task; no code/configuration changed and the task explicitly permits reuse of exact-head evidence.
+- **[Verified current fact]** Expensive runtime suites were not rerun locally before documentation commit `31b5894fb90e1adf776bdd2c918fe62e1c970a39`; no code or configuration changed.
+- **[Verified current fact]** GitHub PR gate run 62 later ran on exact PR head `31b5894fb90e1adf776bdd2c918fe62e1c970a39` and completed successfully. It validated the repository test, build, and Emulator workflow defined by `.github/workflows/pr-gate.yml`.
 - **[Verified current fact]** No combined automated-test total is stated here because no current authoritative report defines one.
 
 ## Firebase live state

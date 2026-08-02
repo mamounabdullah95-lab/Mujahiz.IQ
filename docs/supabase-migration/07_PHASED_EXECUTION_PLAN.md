@@ -134,7 +134,7 @@
 - **Dependencies:** **[Future plan]** Supplier directory rehearsal, RLS/Auth POC, decision whether Claim first deploys on Firebase, zero/current Claim inventory refresh.
 - **Risk:** **[Future plan]** Critical.
 - **Expected files:** **[Future plan]** Schema/RLS/trusted commands, provider adapter, security/concurrency tests, migration manifest.
-- **Required tests:** **[Future plan]** Current 21 Functions and 89 Rules behaviors translated; parallel conflict/idempotency/final-owner/role/token/rate-limit/evidence URL cases; browser UAT.
+- **Required tests:** **[Future plan]** Translate the behavior of the repository's nine callable Functions while preserving the established exact-head baselines: Functions Emulator suite **21/21 passed**; Firestore Emulator suite **89/89 passed**. Add parallel conflict/idempotency/final-owner/role/token/rate-limit/evidence URL cases and browser UAT.
 - **Data impact:** **[Future plan]** TEST claims only until cutover task; current live count is zero but must be reverified.
 - **Firebase impact:** **[Future plan]** Remains authoritative until approved cutover; no dual write.
 - **Supabase impact:** **[Future plan]** TEST implementation/data.
