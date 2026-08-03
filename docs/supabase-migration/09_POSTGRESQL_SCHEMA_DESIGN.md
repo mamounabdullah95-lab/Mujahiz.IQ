@@ -1,6 +1,6 @@
 # Authoritative PostgreSQL schema design
 
-Status: **Recommended design; not implemented**
+Status: **Recommended logical design; first local migration-control slice implemented on the Draft branch**
 Design base: `1a4e5a59a37b2f1eb05d5cf8fa555d8f7dfe84d6`
 Evidence date: 3 August 2026
 Primary task profile: Documentation
@@ -9,11 +9,11 @@ Primary task profile: Documentation
 
 This document is the authoritative logical design for a future Mujahiz IQ PostgreSQL schema. It is documentation only.
 
-- No Mujahiz application SQL exists.
-- No Mujahiz application table exists locally or in a verified hosted environment.
-- No migration, seed, database function, trigger, grant, database role, or RLS policy is implemented.
+- At the design base, no Mujahiz application SQL existed. The first local migration-control slice is now documented in `12_POSTGRESQL_SQL_FOUNDATION.md`.
+- No Mujahiz business/application table exists locally or in a verified hosted environment; the Draft slice contains only non-exposed internal governance tables.
+- The Draft slice implements one local schema migration only. No seed, custom database function, trigger, grant, database role, or RLS policy is implemented.
 - No hosted Supabase project was linked, authenticated, queried, or independently verified.
-- The local Supabase runtime was not started for this design.
+- The local Supabase runtime was not started for the documentation-only design; the separate SQL slice was later verified in the disposable local runtime.
 - Firebase Production remains operational, authoritative, and unchanged.
 - Claim Supplier Profile exists on GitHub `main` but is not deployed, enabled, or populated in Firebase Production.
 - Future procurement decisions, awards, multi-user Supplier memberships, file uploads, saved searches, and Stripe billing are designs, not implemented product behavior.
@@ -43,7 +43,7 @@ The design was derived from the migration documents `00_CURRENT_STATE_AND_INVENT
 | Topic | Recommended decision | Reason and boundary |
 |---|---|---|
 | Primary keys | Use database-generated UUID primary keys for new relational identities. | Business relationships use UUID FKs, never email or mutable display values. Deterministic legacy keys remain unique alternate keys, not primary keys. |
-| UUID generation | Prefer database-generated UUIDv7 if the selected PostgreSQL environment supports it through a reviewed built-in or approved mechanism; UUIDv4 is the fallback. | UUIDv7 improves index locality. The exact mechanism is **Open** until the target PostgreSQL version and extensions are verified. Clients never choose authoritative IDs. |
+| UUID generation | Use database-generated UUIDv4 through `pg_catalog.gen_random_uuid()` for the first local slice; retain UUIDv7 as a later option only when an approved environment exposes a stable reviewed mechanism. | Local PostgreSQL `17.6` exposes no UUIDv7 function and does expose the standard UUIDv4 mechanism. Hosted compatibility remains unverified. Clients never choose authoritative IDs. |
 | Firebase identity | Store each Firebase UID as `identity_provider_links.provider_subject` with provider `firebase`, and preserve `users/{uid}` as `user_profiles.legacy_firestore_id`. | The Firebase subject is bounded text, not a PostgreSQL UUID. The provider link is the initial RLS identity bridge and can coexist with a later Supabase Auth subject. |
 | Firestore document IDs | Require `legacy_firestore_id` on a row that directly represents a migrated Firestore root document or authoritative legacy event; keep it nullable for new PostgreSQL-created rows and normalized child rows. Preserve each source collection/document/version in a disposition record, then map targets through exactly one deterministic child key or ordinal, non-forking active slot uniqueness, reverse target uniqueness, and reviewed merge groups. | This supports idempotent replay, zero-to-many normalized children without target forks, exceptional reviewed many-source merges, bidirectional reconciliation, rollback comparison, and deterministic event verification without inventing legacy IDs for derived children. |
 | Timestamps | Use timezone-aware timestamps for all instants; preserve source `created_at` and `updated_at` separately from migration timestamps. | New trusted writes use database/server time. Ordering uses a stable tie-breaker such as UUID or preserved legacy ID, never physical row order. |
@@ -300,6 +300,8 @@ All candidate indexes below are conceptual, not SQL. `legacy_firestore_id` is nu
 | `migration_record_mappings` | Migration; distinct source-disposition and source-to-target mapping layers, plus separately reviewed merge-group records for exceptional many-source-to-one reconciliation, in one internal relation. PK UUID. | batch, record kind, created-at; dispositions require source collection/type, document ID, source-version key, disposition, transformation version; target mappings require parent disposition, target logical table/type, target UUID, mapping role/type, and exactly one deterministic child key or child ordinal | source version/hash evidence, classification including TEST, reason/error/quarantine state, superseded state/record, replay/rollback state; merge-group review, canonical target, and contributor evidence | migration batch; mappings and merge contributors reference their disposition; supersession self-reference | one disposition per batch/source/document/version; target fields forbidden on dispositions; active logical-slot uniqueness excludes target UUID and uses parent disposition + target logical type + mapping role + child key/ordinal; active reverse uniqueness uses target logical type + target UUID + mapping role; child key and ordinal are mutually exclusive; ordinary mappings cannot bypass a merge group | source/version; parent/child slot; reverse target; merge group; batch/disposition; active/superseded/replay state | all facts trusted-only; corrections append and supersede; inactive history never authorizes replay; no in-place rewrite | Internal restricted schema; legacy identifiers may be sensitive; retain through rollback/audit horizon | Zero targets are valid. At most one active target may occupy a logical child slot, and one active ordinary source child normally owns a target. Reviewed many-source-to-one cases bind the canonical target once to a merge-group record; contributors reference that group instead of duplicating ordinary target mappings. |
 | `migration_validation_results` | Migration; immutable check outcome and aggregate reconciliation. PK UUID. | batch, check code, scope, status, expected/actual counts, executed-at | source/target query version, safe sample keys, notes, evidence digest | migration batch | unique batch/check code/scope; non-negative counts; bounded samples | batch/status; check/status | execution/result fields trusted-only immutable | Restricted; samples must be minimized and never contain full Production records | Future migration verification only. This documentation records expected transformations, not results. |
 
+**First SQL-slice physical decomposition:** the logical `migration_record_mappings` concept is implemented by `migration_source_dispositions`, shared ordinary/merge target bindings in `migration_record_mappings`, and `migration_merge_group_members`. Keeping ordinary mappings and merge-group headers in the same target-binding relation lets one active reverse-target unique index cover both paths without a trigger. The member relation is the dedicated place where the future Migration Engine must list every contributing `merged` source child; member-set completeness remains a runtime activation check. This physical decomposition preserves the 79-concept logical catalog while implementing the distinct disposition/mapping layers and reviewed merge isolation required by section `I`.
+
 ### D8. Future billing and entitlement compatibility
 
 | Table | Domain and purpose / primary key | Required columns | Optional columns | Foreign keys | Unique and check constraints | Candidate indexes | Immutable and trusted-only fields | Sensitivity and deletion | Firestore source, transformation, open question |
@@ -522,9 +524,9 @@ Transformation code chooses semantic keys whenever stable normalized meaning exi
 - Rollback/reverse trace starts from active mappings, verifies current target identity/content and external dependencies, and reverses in dependency order. It never deletes a shared canonical merge target through one contributor; a reviewed merge-group rollback plan must reconcile all contributors. Superseded mappings and dispositions remain audit evidence.
 - Invalid child identity, unstable ordering, unknown target, conflicting reverse trace, or unreviewed merge becomes a deterministic error/quarantine/no-target outcome with no partial target graph. Retry is idempotent after evidence or transformation version is corrected.
 
-### Supersession of older cutover wording
+### Synchronized cutover wording
 
-For normalized child expansion, this two-layer model supersedes the older statement in `06_CUTOVER_AND_ROLLBACK_PRINCIPLES.md` that one source ID cannot map to multiple targets. One source document may map to multiple target rows only through deterministic child slots with non-forking active uniqueness and unambiguous reverse trace. The original intent remains unchanged: deterministic traceability, no ambiguous duplicates, replay safety, and rollback comparison. Updating document 06 is separate documentation debt for a follow-up PR; after this explicit supersession note, it is not an architecture blocker for this design review.
+PR #46 synchronized `06_CUTOVER_AND_ROLLBACK_PRINCIPLES.md` with this two-layer mapping model. One source document may map to multiple target rows only through deterministic child slots with non-forking active uniqueness and unambiguous reverse trace. Both documents now preserve the same intent: deterministic traceability, no ambiguous duplicates, replay safety, reconciliation, and rollback comparison.
 
 Historical RFQ publish and quotation events are migrated as durable history, not newly available outbox work. Related existing notifications are migrated as already materialized. Delivery state and fan-out suppression are explicit, so no migration, retry, or reconciliation step emits the six old notifications again.
 
@@ -617,7 +619,7 @@ This index is semantically synchronized to the canonical register in `10_SCHEMA_
 
 | ID | Canonical topic | Status | Resolve before |
 |---|---|---|---|
-| DB-001 | Primary keys | Open | First migration SQL PR |
+| DB-001 | Primary keys | Resolved for local first slice | Hosted capability validation before remote promotion |
 | DB-002 | Status representation | Recommended | First migration SQL PR |
 | DB-003 | Soft deletion | Recommended | Per-domain SQL PR |
 | DB-004 | Money and quantity | Recommended | RFQ data transformation |
@@ -649,7 +651,7 @@ This index is semantically synchronized to the canonical register in `10_SCHEMA_
 | BILL-002 | Billing event integrity | Recommended | Billing implementation |
 | AUD-001 | Audit/security retention | Open | Audit migration |
 | RES-001 | Data residency | Open | Hosted environment creation |
-| MIG-001 | Legacy identifiers and zero-to-many trace | Recommended | First data migration |
+| MIG-001 | Legacy identifiers and zero-to-many trace | Partially implemented | Migration Engine runtime / first data migration |
 | MIG-002 | Environment strategy | Open | Any hosted project creation |
 | SEC-001 | RLS delivery | Recommended | First client-accessible SQL migration |
 | REL-001 | Domain events/idempotency/fan-out | Recommended | First trusted-operation implementation |

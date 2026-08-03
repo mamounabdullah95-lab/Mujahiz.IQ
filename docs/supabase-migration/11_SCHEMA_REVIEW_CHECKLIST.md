@@ -19,7 +19,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] The phase manifest lists all 79 proposed tables exactly once and reconciles Core Phase 1 36, Core Later 10, Future-Compatible 13, Deferred 13, and Remove/Merge 7; `supplier_ownership_claims` remains authoritative but is Core Later, not in the initial slice.
 - [ ] Future-Compatible and Deferred entries explicitly say "do not create yet," and every Remove/Merge entry identifies its replacement.
 - [ ] All 36 decision IDs have one canonical topic/status across design, register, checklist, and cross-references; resolution date, evidence/reference, and resolved state fields are present.
-- [ ] DB-001, ID-001, ORG-001, ORG-002, SUP-003, SUP-004, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates.
+- [ ] ID-001, ORG-001, ORG-002, SUP-003, SUP-004, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates; DB-001 is resolved only for the local first slice.
 
 ## B. Relational model and integrity
 
@@ -140,7 +140,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] Historical RFQ/quotation events and six existing notifications are classified/mapped as already materialized with explicit fan-out suppression and are never replayed.
 - [ ] Local/dev/staging/Production project separation, region, backups, secrets, CI, promotion, rollback, and observability are approved before hosted work.
 - [ ] Read-path cutover, dual-write policy, freeze window, rollback authority, and evidence retention are resolved in a later migration runbook.
-- [ ] Design section `I` explicitly supersedes document 06's stale one-source/one-target wording only for deterministic normalized child expansion while preserving traceability, non-ambiguity, replay, and rollback intent; the document-06 wording update is separate non-blocking documentation debt.
+- [ ] Design section `I` and document 06 use the PR #46-synchronized deterministic zero-to-many child-expansion contract while preserving traceability, non-ambiguity, replay, reconciliation, and rollback intent.
 
 ## J. Query and performance review
 
@@ -172,3 +172,15 @@ Check an item only when the cited design is explicit and evidence supports it. R
 Final design disposition: **Not reviewed / Approved for implementation planning / Changes required**
 Approval commit SHA:
 Next authorized phase and explicit exclusions:
+
+## M. First SQL-slice implementation evidence (not part of the 119 design-review items)
+
+- [x] The implementation starts from verified `main` merge commit `206f7daa524228abfa83793c39a03045491f1316` after PR #46.
+- [x] The local-only `internal` schema contains the five requested governance relations plus only the required `migration_merge_group_members` physical relation.
+- [x] DB-001 is resolved for this local slice from PostgreSQL `17.6` catalog evidence to `pg_catalog.gen_random_uuid()` UUIDv4; no UUIDv7 function, custom function, extension, or client-selected primary key was added.
+- [x] The MIG-001 declarative schema portion is implemented; Migration Engine locking, replay lookup, atomic graph supersession, transformation, reconciliation orchestration, and rollback execution remain unimplemented.
+- [x] MIG-002 remains Open because no hosted environment strategy, project, secret, backup, promotion, or deployment evidence was created.
+- [x] Active source identity and parent coupling, batch transformation/version coupling, key/ordinal child slots, reverse targets, target-qualified merge contributors, same-lineage reasoned supersession, validation consistency, bounded error severity/retry state, and referenced-evidence delete protection have 60 focused local database assertions.
+- [x] Ordinary and merge-group target bindings share one reverse-target unique index; ordinary uniqueness was not weakened for many-source-to-one cases.
+- [x] All metadata, messages, paths, references, and evidence values are bounded; full source records, workbooks, credentials, tokens, and unrestricted raw payloads remain prohibited.
+- [x] No RLS, policy, browser/API grant, view, RPC, trigger, custom function, seed, business table, Auth integration, Storage, frontend integration, data migration, hosted linkage, or deployment is included.
