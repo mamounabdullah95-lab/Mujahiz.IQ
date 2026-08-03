@@ -3,7 +3,7 @@
 Status: Reviewer gate for documentation only
 Baseline: `main` at `1a4e5a59a37b2f1eb05d5cf8fa555d8f7dfe84d6`
 Review together: `09_POSTGRESQL_SCHEMA_DESIGN.md` and `10_SCHEMA_DECISION_REGISTER.md`
-Checklist items: 111
+Checklist items: 119
 
 Check an item only when the cited design is explicit and evidence supports it. Record disagreements as stable decision IDs or review comments; do not resolve ambiguity by implementing SQL.
 
@@ -16,7 +16,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] GitHub-only ownership-claim code is not described as deployed.
 - [ ] Empty collections and future tables are not described as implemented or populated.
 - [ ] Every asserted invariant is either evidenced, recommended, or explicitly Open/Deferred.
-- [ ] The phase manifest lists all 79 proposed tables exactly once and reconciles Core Phase 1 37, Core Later 9, Future-Compatible 13, Deferred 13, and Remove/Merge 7.
+- [ ] The phase manifest lists all 79 proposed tables exactly once and reconciles Core Phase 1 36, Core Later 10, Future-Compatible 13, Deferred 13, and Remove/Merge 7; `supplier_ownership_claims` remains authoritative but is Core Later, not in the initial slice.
 - [ ] Future-Compatible and Deferred entries explicitly say "do not create yet," and every Remove/Merge entry identifies its replacement.
 - [ ] All 36 decision IDs have one canonical topic/status across design, register, checklist, and cross-references; resolution date, evidence/reference, and resolved state fields are present.
 - [ ] DB-001, ID-001, ORG-001, ORG-002, SUP-003, SUP-004, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates.
@@ -37,9 +37,11 @@ Check an item only when the cited design is explicit and evidence supports it. R
 ## C. Identity, organization, and authorization readiness
 
 - [ ] Application user UUID is separated from provider subject/Firebase UID under ID-002.
-- [ ] Authentication authority and migration duration remain Open under ID-001.
+- [ ] Authentication authority and migration duration remain Open under ID-001; Stage 1 idempotently bootstraps an unverified Firebase profile/link with current account context and no verified-only benefit, while Stage 2 refreshes Firebase-authoritative verification/disablement and grants the first verified trial/access benefit at most once.
 - [ ] Platform Owner/Admin assignments follow ID-003: temporal, trusted-only, one effective active role absent reviewed exception, and Owner/Admin incompatible.
-- [ ] Platform-role and account/provider-status commands cannot disable, unlink, demote, or revoke the final usable Owner.
+- [ ] The usable-Owner predicate requires an active profile, approved account status, compatible current account context, active Firebase link, Firebase-verified/non-disabled identity, active Owner assignment, valid trusted administration access, and all repository-backed trusted-admin/security eligibility conditions.
+- [ ] Provider unlink/disable, verification loss/mirror correction, profile suspension, account-status/context change, role demotion/removal/expiry, access revocation/correction/expiry, identity disablement, and future eligibility corrections all serialize on and re-evaluate the complete usable-Owner set.
+- [ ] Direct commands and background expiry/correction/reconciliation jobs share the same locks, fail-closed postcondition, audit/security outcome, compensation, and recovery contract; the role-backed Owner administration grant is non-expiring while usable authority is held, so expiry cannot silently strand administration.
 - [ ] ORG-001/ORG-002 keep organization linkage nullable/deferred; current users and 480 Suppliers migrate without fabricated organizations or inferred memberships.
 - [ ] Free-text organization/sector, legacy role, `accountType`, and Buyer/Supplier context remain restricted migration evidence through bootstrap.
 - [ ] Supplier verified ownership is separate from future operational Supplier membership, and current Supplier profiles exist independently of both organization and membership rows.
@@ -56,8 +58,8 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] Supplier profile, contacts, locations/coverage, category assignments, capabilities, payment options, products, and documents have distinct visibility/retention rules.
 - [ ] Physical locations and service coverage are distinguishable; area FK is conditional, original text/exceptions are retained, and `all_iraq`/`imports_outside_iraq` are not treated as administrative areas.
 - [ ] One-active-primary-owner and current one-profile-per-owner constraints are represented without blocking future memberships.
-- [ ] Claim creation, expiry, approval, rejection, withdrawal, supersession, transfer, and revoke history can be expressed.
-- [ ] Claim evidence is merged as bounded immutable private Claim content; `supplier_ownership_claim_evidence` and `supplier_ownership_events` are not created.
+- [ ] Claim creation, expiry, approval, rejection, withdrawal, supersession, transfer, and revoke history remains in the authoritative Core Later design; zero Production rows and undeployed GitHub-only behavior do not require a Core Phase 1 Claim table.
+- [ ] Claim evidence is merged as bounded immutable private Claim metadata/snapshot with the controlled pre-FILE-001 reference rules; `supplier_ownership_claim_evidence` and `supplier_ownership_events` are not created.
 - [ ] Approval revalidates current Auth/app eligibility, current canonical owner, and claimant lock within one trusted operation.
 - [ ] Exact duplicate fingerprints are protected, key/normalizer-versioned, trusted-only, unique while active, and promoted from pending to approved atomically.
 - [ ] Fuzzy duplicate candidates use versioned normalized names, bounded Dice/equivalent lookup, area/category/supporting evidence, a review queue, and never auto-merge/delete.
@@ -112,7 +114,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] Uploads remain disabled until storage provider, signed access, size/media limits, scanning, retention, and authorization are implemented and tested.
 - [ ] File authorization/custody comes from typed parent relationships; opaque object keys, uploader identity, and creating user alone confer no continuing access.
 - [ ] File finalization validates object proof/scan/parent authority atomically and defines quarantine plus provider-orphan compensation.
-- [ ] Existing HTTPS reference links are preserved as links and placeholders do not create fake file objects.
+- [ ] Before FILE-001, RFQ/quotation attachments, later message attachments, and Claim evidence permit only allowlisted HTTPS or preserved restricted legacy references; reject unsafe schemes/local paths, retain source/provider/reference metadata, allow unknown legacy size/MIME/hash, include no `file_objects` column/FK, assume no Storage, prohibit permanent public URLs for private files, and preserve an audited later path to provider-neutral file IDs.
 - [ ] Directory/search queries are server-side, field-minimized, keyset-paginated, and do not depend on Supplier keyword arrays.
 - [ ] FTS/trigram/external-search choice is supported by bilingual relevance and query-plan evidence before index implementation.
 - [ ] Taxonomy, administrative area, registration sector, and content localization models have stable codes and explicit fallback behavior.
@@ -125,14 +127,20 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] All 35 verified Firestore collections retain a complete destination/no-target, transformation, legacy-ID rule, relationship validation, classification, and exception path.
 - [ ] Count reconciliation does not substitute for relationship/content validation.
 - [ ] Migration batches record source snapshot marker, environment, schema/code version, actor, status, and rollback marker.
-- [ ] Every source record receives exactly one disposition: migrated, skipped, quarantined, merged, rejected, no-target, or pending.
-- [ ] Each disposition has zero, one, or many target mappings with target table/UUID, mapping type, transformation version, and deterministic child key or ordinal.
-- [ ] Migration mapping supports rollback, deterministic replay, exception resolution, and reconciliation in both source-to-target and target-to-source directions.
+- [ ] Every batch/source collection/document/source-version key has exactly one active disposition with transformation version, migrated/skipped/quarantined/merged/rejected/no-target/pending state, reason/error/quarantine evidence, and explicit supersession history.
+- [ ] Every active target mapping has exactly one mutually exclusive semantic `child_key` or deterministic `child_ordinal`; active logical-slot uniqueness excludes target UUID, so a source child slot cannot fork.
+- [ ] Active reverse uniqueness over target logical type/UUID/mapping role normally maps a target to exactly one active source child.
+- [ ] Reviewed many-source-to-one exceptions use a separate merge-group/reconciliation record that binds the canonical target once and lists every contributing source child; ordinary uniqueness is never relaxed.
+- [ ] Supplier contacts, categories, capabilities, payment options, physical locations, service coverage, and map/array children use versioned semantic keys where possible and deterministic canonical ordering/ordinals otherwise, not transient array indexes alone.
+- [ ] Insertion locks logical slots/reverse targets; identical replay returns existing targets; corrections atomically supersede mappings; inactive history cannot authorize replay or active counts.
+- [ ] Reconciliation and rollback prove forward/reverse traces, merge contributors, target fingerprints and dependency order; exceptions quarantine deterministically with no partial graph or shared-target deletion.
+- [ ] No Firestore mapping has an active destination in any Remove/Merge concept: Claim evidence, term-suggestion samples, and review tags remain bounded parent representations, and other removed concepts retain explicit no-target/replacement handling.
 - [ ] Validation results contain counts and safe sample keys only, not complete Production records.
 - [ ] Source-to-target checks cover identity/account context, Supplier ownership agreement, exact/fuzzy evidence, recipient eligibility, revision sequence/parent integrity, event/notification idempotency, and access ledgers.
 - [ ] Historical RFQ/quotation events and six existing notifications are classified/mapped as already materialized with explicit fan-out suppression and are never replayed.
 - [ ] Local/dev/staging/Production project separation, region, backups, secrets, CI, promotion, rollback, and observability are approved before hosted work.
 - [ ] Read-path cutover, dual-write policy, freeze window, rollback authority, and evidence retention are resolved in a later migration runbook.
+- [ ] Design section `I` explicitly supersedes document 06's stale one-source/one-target wording only for deterministic normalized child expansion while preserving traceability, non-ambiguity, replay, and rollback intent; the document-06 wording update is separate non-blocking documentation debt.
 
 ## J. Query and performance review
 
