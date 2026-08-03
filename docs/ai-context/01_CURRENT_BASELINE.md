@@ -1,155 +1,155 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-07-29-post-pr36-hosting-deployment`
-Updated: 2026-07-29
+Baseline ID: `baseline-2026-08-03-post-pr41-supabase-migration-plan`
+Updated: 2026-08-03
 Canonical Production URL: `https://mujahiz.com`
 
-This is the only frequently changing context document. Update it after a behavior-affecting code merge, deployment, Production-data change, or infrastructure change. Keep repository `main`, merged-but-undeployed work, deployed Hosting, active Firestore Rules/indexes, Firebase Console configuration, and Production data distinct.
+This is the single authoritative, frequently changing project baseline. Keep GitHub `main`, merged-but-undeployed work, Firebase Hosting, active Firestore Rules and indexes, deployed Functions and Storage, bounded Production data, and hosted Supabase state distinct.
 
-## 1. Current repository `main`
+Evidence labels used below:
 
-- Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
-- Approved branch: `main`.
-- Current verified `main` commit: `d66a04c18ab7260e5444e67d0ca62795ccc39fce`.
-- PR #30 merged the deterministic Internal Auth/Firestore Emulator account foundation.
-- PR #32 merged Password Reset and Account Recovery.
-- PR #33 merged the unified Firebase email action handler at `/auth/action`.
-- PR #34 merged the Arabic/English locale-initialization correction for malformed email action requests.
-- PR #36 merged the password-recovery neutral-success-message locale correction, was deployed to Firebase Hosting, and passed post-deployment smoke verification.
+- **Verified current fact** — confirmed from the current repository, merged GitHub evidence, or the bounded read-only verification recorded on 3 August 2026.
+- **Latest known historical fact** — previously verified evidence that was not independently re-proved as current.
+- **User-reported context** — supplied by the user but not independently verified.
+- **Unknown** — not safely or independently observed.
+- **Plan/recommendation** — future direction, not implemented state.
 
-The repository SHA identifies source-control state. It must not be described as the active Production application version unless a Hosting deployment is separately verified.
+## 1. Repository State
 
-### Latest verified automated-test baseline
+- **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
+- **Verified current fact:** Approved branch: `main`.
+- **Verified current fact:** Current GitHub `main`: `e8979a2f241d35016ba91e85f85bcf4d326ad9ee`.
+- **Verified current fact:** PR #41 is merged through that merge commit. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
+- **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
+- Local branches and future PRs must start from this current `main` unless a newer commit appears.
 
-Latest verified evidence recorded for PR #36 and the deployed Production build:
+The repository SHA identifies source-control state. It must not be described as the active Firebase application version unless a separate Hosting deployment verifies that mapping.
 
-- Focused password-recovery tests: **15/15 passed**.
-- Repository tests: **156/156 passed**.
-- Firebase production-bundle tests: **3/3 passed**.
-- Production build: **passed**.
-- GitHub PR gate #55: **passed**.
-- CI Firestore Emulator step: **passed**.
+## 2. Firebase Live State
 
-Do not invent or combine Emulator totals that were not rerun on the exact PR head. The focused password-recovery tests must not be added to the repository total unless an official report states they are distinct.
+Firebase live is behind GitHub `main`. Do not imply that the current repository code, Rules, indexes, or callable Functions are deployed.
 
-## 2. Current verified Production deployment state
+- **Verified current fact:** Firebase project: `mujahiziq`.
+- **Verified current fact:** Current Hosting release: `1785332157811000`.
+- **Verified current fact:** Current Hosting version: `42b95b8aad86e7a0`.
+- **Verified current fact:** Hosting deployment time: `2026-07-29T13:35:57.811Z`.
+- **Latest known historical fact:** Repository evidence maps that unchanged Hosting release/version to commit `d66a04c18ab7260e5444e67d0ca62795ccc39fce`. The Hosting API does not expose a commit SHA, so this is a historical source mapping, not a new live assertion and not the current GitHub `main`.
+- **Verified current fact:** Active Firestore Ruleset: `e6948804-1333-433a-ac69-f0f963d07355`. Its normalized content matches the older deployed commit, not current `main`.
+- **Verified current fact:** Firebase has 15 deployed composite indexes, all `READY`.
+- **Verified current fact:** The repository defines 18 composite indexes; the three Claim-related indexes are not deployed.
+- **Verified current fact:** Zero Firebase Functions are deployed.
+- **Verified current fact:** Current `main` defines nine callable Functions for `europe-west1`; repository presence does not mean deployment.
+- **Verified current fact:** Zero Firebase Storage buckets are deployed.
+- **Verified current fact:** Claim Supplier Profile exists on GitHub `main` but is not deployed, active, enabled, or populated on Firebase Production. No Claim UI is present in the historically mapped Hosting version, no Claim indexes or Functions are deployed, and the bounded Claim/ownership-foundation counts are zero.
 
-Keep repository, Hosting, Rules, indexes, and Console configuration distinct:
+### Firebase Authentication and email actions
 
-- Firebase project: `mujahiziq`.
-- Current Hosting release: `1785332157811000`.
-- Current Hosting version: `42b95b8aad86e7a0`.
-- Hosting deployment time: `2026-07-29T13:35:57.811Z`.
-- Deployed application commit: `d66a04c18ab7260e5444e67d0ca62795ccc39fce`.
-- Deployment scope: Firebase Hosting only.
-- Current rollback reference: Hosting release `1785303212286000`, version `ce0ccb0776da3601`.
-- Canonical Production domain: `mujahiz.com`.
-- `www.mujahiz.com` is connected and redirects to the canonical domain.
-- `mujahiziq.web.app` and `mujahiziq.firebaseapp.com` remain available as Firebase Hosting origins and must not be broken.
-- Active Firestore Ruleset remains the last verified RFQ lifecycle/security deployment unless a newer live verification records another ID.
-- All **15** required composite indexes were last verified `READY`.
+- **Latest known historical fact:** Firebase Auth remains the password, session, verification, password-reset, recovery, and email-action authority for the deployed application.
+- **Latest known historical fact:** The deployed application includes the unified public `/auth/action` route for `resetPassword`, `verifyEmail`, and `recoverEmail`, with strict continuation-URL handling and sensitive-parameter cleanup.
+- **Latest known historical fact:** Controlled Production password-recovery UAT passed for Buyer and Supplier paths, including Arabic/English and RTL/LTR behavior.
+- **Latest known historical fact:** Firebase rejected the custom email action URL change with `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED`; the original Firebase handler remains active. This is an external Firebase backend/Console blocker, not an application-code blocker.
 
-The Hosting release/version above supersedes the rollback reference, which remains the previous verified Hosting deployment.
+Do not change Auth, sender settings, templates, Authorized Domains, DNS, Hosting, or billing to work around that blocker without a separate reviewed task and explicit approval.
 
-## 3. Firebase Authentication and email actions
+## 3. Current Data Snapshot
 
-### Implemented and deployed
+The following are **verified current facts** from bounded, count-only Firestore checks recorded on **3 August 2026**. The counts may change. Fresh bounded verification is required before any migration, deletion, import, cleanup, or Production decision that depends on them.
 
-- Forgot Password route.
-- Reset Password completion route.
-- Unified public `/auth/action` route.
-- Supported modes: `resetPassword`, `verifyEmail`, and `recoverEmail`.
-- Firebase Auth remains the source of truth.
-- Strict `continueUrl` and open-redirect protection.
-- Sensitive action parameters are cleaned from the visible URL after successful verification/recovery.
-- No action code, API key, token, password, recovered email, or full action URL is logged or persisted.
-- Arabic-only RTL and English-only LTR states are implemented and tested.
-- Password recovery and the neutral-success-message localization issue are completed.
+| Data set | Count |
+|---|---:|
+| Suppliers | 480 |
+| Supplier duplicate-index records | 480 |
+| Supplier submissions | 540 |
+| Supplier import batches | 1 |
+| Application user documents | 4 |
+| Access credits | 8 |
+| Access grants | 2 |
+| Contribution logs | 528 |
+| RFQs | 2 |
+| RFQ publish events | 2 |
+| RFQ responses | 2 |
+| Immutable quotation revisions | 2 |
+| RFQ response events | 3 |
+| Notifications | 6 |
+| Audit logs | 623 |
+| Material terms | 1 |
+| Term suggestions | 11 |
+| Settings documents | 1 |
+| Conversations | 0 |
+| Messages | 0 |
+| Claim/ownership-foundation records | 0 |
 
-### Verified Production password-recovery UAT
+- The 480 Suppliers are listed/approved Supplier records. They must not be described as claimed, active, RFQ-ready, verified-owner, or paying Suppliers.
+- The former count of 479 is superseded by the bounded count of 480 as of 3 August 2026.
+- The two RFQs and related quotation records are controlled TEST artifacts. They remain preserved and must not be deleted without explicit approval.
+- Four Firestore application user documents do not prove exact Firebase Auth user parity; the exact Auth user count remains **Unknown**.
 
-Final result: **PASS**.
+## 4. Quality and Testing
 
-- Buyer functional UAT passed.
-- Supplier functional UAT passed.
-- Protected Auth/Firestore state remained unchanged except for approved TEST password changes.
-- The original Firebase action handler remains active.
-- The custom action URL remains blocked by `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED`.
-- The localization defect found during UAT was fixed by PR #36 and verified after deployment.
-- Post-deployment smoke passed for the canonical URL, legacy Firebase Hosting redirect, English and Arabic Forgot Password copy, English LTR, Arabic RTL, absence of raw Firebase errors, and absence of redirect loops or blank pages.
+The latest runtime evidence is inherited from PR #40. PR #41 was documentation-only and did not introduce runtime changes.
 
-### Current Firebase Console configuration
+- **Latest known historical fact, PR #40 exact-head evidence:** Repository tests: **181/181 passed**.
+- **Latest known historical fact, PR #40 exact-head evidence:** Firestore Emulator suite: **89/89 passed**.
+- **Latest known historical fact, PR #40 exact-head evidence:** Functions Emulator suite: **21/21 passed**.
+- **Latest known historical fact, PR #40 exact-head evidence:** Firebase Production-bundle validation: **3/3 passed**.
+- **Latest known historical fact, PR #40 exact-head evidence:** Application Production build: **passed**.
+- **Latest known historical fact, PR #40 exact-head evidence:** Functions typecheck/build: **passed**.
+- **Verified current fact:** GitHub PR gate run 63 passed for PR #41 documentation head `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 
-The Firebase Authentication Custom action URL remains the original Firebase handler:
+Do not combine these results into a new automated-test total. Do not attribute PR #40 runtime evidence to PR #41, and do not describe PR #41 as a runtime change.
 
-`https://mujahiziq.firebaseapp.com/__/auth/action`
+## 5. Supabase Migration State
 
-The application-owned target is ready and deployed:
+- **Verified current fact:** The migration baseline documentation is merged under `docs/supabase-migration/` and is the authoritative detailed source for migration inventory, architecture, mapping, identity, Storage, risk, rollback, and sequencing.
+- **Plan/recommendation:** Use a gradual migration, not a direct Firestore collection export.
+- **Plan/recommendation:** Retain one React/Vite frontend and the existing visual identity; do not rewrite the frontend or visual identity.
+- **Plan/recommendation:** Retain Firebase Hosting initially; no DNS or Hosting migration belongs to the initial phase.
+- **Plan/recommendation:** Retain Firebase Auth initially, pending a separately reviewed TEST proof of concept.
+- **Plan/recommendation:** Introduce Supabase gradually behind explicit provider/service boundaries.
+- **Plan/recommendation:** Give every feature exactly one source of truth at a time. Do not use Production dual writes or silent Firebase fallback after a Supabase failure.
+- **User-reported context:** A hosted Supabase project named Mujahiz IQ exists in Central EU (Frankfurt) on the Free plan.
+- **Unknown:** The hosted project identity, region, plan, schemas, tables, RLS, Auth, Storage, Edge Functions, backups, compute, GitHub integration, and automatic deployment were not independently verified.
+- **Verified current fact:** No Supabase implementation has started in the repository.
+- **Verified current fact:** No Supabase dependency, CLI configuration, environment-variable name, repository integration, or workflow exists in the repository.
+- **Verified current fact:** The Supabase CLI has not been initialized in the repository.
+- **Verified current fact:** No application tables, SQL migrations, RLS policies, Storage buckets, Auth users, or Edge Functions have been created through the repository.
 
-`https://mujahiz.com/auth/action`
+Supabase is currently a planned migration/integration environment, not Production.
 
-A final read-only Production preflight returned `READY FOR CONSOLE CHANGE`, and the route was verified reachable. However, Firebase rejected the Console update immediately with:
+## 6. Current Priorities
 
-- HTTP `400`
-- status `INVALID_ARGUMENT`
-- message `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED`
+Migration sequencing and product priorities are separate.
 
-This is recorded as a **known external Firebase backend/Console blocker**, not an application-code blocker. The Closed Beta may proceed using the original Firebase handler. Do not change DNS, Authorized Domains, Hosting, sender settings, templates, Auth settings, or billing solely to work around this blocker without a separately reviewed task.
+### Recommended technical next task
 
-## 4. Last verified Production RFQ lifecycle state
+**Phase 2 — Local Supabase CLI Foundation**
 
-Final result: **PASS**. No known RFQ quotation-revision UAT issue remains.
+This next task must:
 
-Verified in controlled Production UAT:
+- remain local;
+- create only the Supabase local project foundation;
+- not run `supabase link`;
+- not authenticate to or change the hosted Supabase project;
+- not add `supabase-js`;
+- not create application tables, SQL migrations for application data, RLS policies, Production data, Storage buckets, Auth users, or Edge Functions;
+- not deploy; and
+- stop at a Draft PR.
 
-- RFQ creation and publication.
-- First Supplier quotation V1.
-- Material update to V2.
-- Immutable V1 after V2.
-- Identical-value resubmission is a no-op and does not create V3.
-- Deterministic response events and Buyer notifications without duplication.
-- RFQ closure and movement to Supplier History.
-- Buyer and Supplier read-only access to V1/V2 revision history after closure.
-- Controlled TEST artifacts remain preserved and must not be deleted without explicit approval.
+### Product priorities
 
-Buyer quotation decision / Award Status remains future scope. It was not implemented by the completed quotation-revision work.
+1. Claim Supplier Profile.
+2. `supplierProfileId` and verified ownership.
+3. Onboarding.
+4. Real RFQ cycles.
+5. Permissions.
+6. Notifications, messages, quotations, and comparison.
+7. Value measurement.
+8. Catalog Lite and quotation builder.
+9. Auto-Draft before Auto-Send.
 
-## 5. Last verified Production data evidence
+Claim Supplier exists on GitHub `main` but is not deployed. Do not suggest or perform its deployment as part of a documentation or migration-foundation task.
 
-The final bounded RFQ UAT audit recorded:
-
-- RFQ responses: **2**.
-- RFQ response revisions: **2**.
-- RFQ response events: **3**.
-- Notifications: **6**.
-
-Older last-verified global counts, not fresh current assertions:
-
-- Suppliers: **480**.
-- Supplier submissions/requests: **540**.
-- Users: **4**.
-- Conversations: **0**.
-- Messages: **0**.
-
-Two controlled TEST RFQs are preserved:
-
-- `UAT-RFQ-20260720-01`
-- `UAT-RFQ-REVISION-20260721-01`
-
-The exact current global RFQ count, current audit-log count, and current Supplier fingerprints require fresh bounded read-only verification before a task that depends on them.
-
-## 6. Supplier account and ownership state
-
-The platform already supports a linked, approved Supplier account with:
-
-- `supplierProfileId` on the user record.
-- matching canonical ownership through `suppliers/{profileId}.accountOwnerId == uid`.
-- approved profile and `canReceiveRfqs: true` requirements for sensitive RFQ access.
-- role-safe Supplier profile preview, products, documents, RFQs, quotation history, and messages.
-
-This proves the linked-account workflow can operate for a controlled approved Supplier. It does **not** mean a complete self-service Claim Supplier Profile workflow exists for all listed Suppliers.
-
-## 7. Completed security and operational foundations
+## 7. Completed Security and Operational Foundations
 
 Do not reopen these areas without new evidence:
 
@@ -167,79 +167,54 @@ Do not reopen these areas without new evidence:
 - One-time Buyer Trial rules and Supplier/Admin/Owner Trial exclusion.
 - Deterministic loopback-only Internal Emulator accounts and reset/reseed lifecycle.
 
-## 8. Actual remaining pre-Closed-Beta work
+## 8. Explicitly Deferred Items
 
-Ordered priorities:
+These are not implied by the current plan and require separate approval and evidence:
 
-1. **Claim Supplier Profile** — next recommended task
-   - Search for an existing company.
-   - Submit a claim request.
-   - Admin review and approve/reject.
-   - Conflict/duplicate prevention.
-   - Canonical account/profile ownership link.
-   - Immutable audit evidence and Supplier result notification.
-
-2. **Buyer quotation decision / Award Status**
-   - Under review, shortlisted, awarded, not selected, procurement cancelled.
-   - Buyer-controlled decision, Supplier read-only result, deterministic notification, and durable decision history.
-   - Must not represent a legal Purchase Order or contract.
-
-3. **Browser-level role UAT**
-   - Buyer, Supplier, Admin, and Owner critical paths.
-   - Arabic, English, RTL/LTR, and common mobile widths.
-
-4. **Focused launch-readiness gate**
-   - Verify `main` versus deployed Hosting.
-   - Verify GitHub Actions on the deployed commit.
-   - Verify Rules/index state where relevant.
-   - Verify no Critical/High blocker, safe rollback target, and no unsafe Production data operation.
-
-5. **Closed Beta**
-   - Start with approximately 5 real Buyers and 15–30 RFQ-ready Suppliers in focused categories.
-   - Measure claimed profiles, RFQ-ready Suppliers, RFQs, quotations per RFQ, first-response time, response rate, decision completion, and user-blocking issues.
-
-## 9. Explicitly deferred items
-
-These are not required to start the first Closed Beta unless new evidence makes one a blocker:
-
-- Changing the Firebase Custom action URL from the original handler.
+- Firebase Custom action URL changes.
+- Production Claim Supplier deployment or enablement.
+- Supabase hosted-project linking or authentication.
+- Auth-provider migration.
+- DNS or Hosting migration.
+- Production data export, migration, seed, backfill, repair, cleanup, or deletion.
 - Auto-Send quotations.
 - Full CPQ or advanced catalog.
-- Complete subscription/billing system.
+- Complete subscription/billing system or Stripe configuration.
 - ERP integrations.
 - Native mobile applications.
 - Broad performance refactor or redesign.
-- Admin/Owner review-bell backend notifications; the review queue may be checked manually during the first Beta.
-- Large-scale Supplier imports or a target of 5,000 records.
+- Large-scale Supplier imports.
 
-## 10. Production protection and stop rules
+## 9. Production Protection and Stop Rules
 
-- Never merge, deploy, publish, change billing, change DNS, or change Production Firebase configuration without explicit approval.
+- Never merge, deploy, publish, link a hosted project, change billing, change DNS, or change Production Firebase or Supabase configuration without explicit approval.
 - Never delete, migrate, seed, backfill, bulk-update, reformat, or clean Production data without explicit approval.
 - Do not delete controlled TEST records without explicit approval.
-- Use Emulator and isolated temporary data for write-capable tests.
-- Production smoke tests should be safe and read-only where possible.
+- Do not export Production data or inspect secrets as part of a baseline or local-foundation task.
+- Use Emulator, local Supabase, and isolated synthetic data for write-capable tests.
+- Production checks should be bounded and read-only where required.
 - File uploads remain disabled unless separately approved.
-- Do not assume Storage, Functions, Extensions, or Firebase AI services are active.
+- Do not assume Storage, Functions, Supabase resources, Extensions, or Firebase AI services are active.
 - Do not treat `C:\tmp` as permanent backup storage.
 
-## 11. Baseline verification rule
+## 10. Baseline Verification Rule
 
 For ordinary UI or isolated application changes:
 
-- Verify current `main`.
-- Use this baseline.
-- Review the affected module and diff only.
-- Run the smallest affected tests first.
+- verify current `main`;
+- use this baseline;
+- inspect the affected module and current diff only; and
+- run the smallest affected tests first.
 
-For security, data, Rules, deployment, RFQ lifecycle, notifications, imports, authentication, supplier linking, or infrastructure tasks, record the relevant current:
+For security, data, Rules, deployment, RFQ lifecycle, notifications, imports, authentication, supplier linking, infrastructure, or migration tasks, refresh the relevant current facts before acting:
 
-- `main` SHA.
-- Hosting release/version.
-- Ruleset and index readiness.
-- bounded Production counts.
-- audit-log count.
-- Supplier fingerprints if Supplier data could be affected.
-- controlled TEST/UAT records that must be preserved.
+- GitHub `main` SHA;
+- Hosting release/version and historical source mapping;
+- active Ruleset and deployed-index readiness;
+- deployed Functions and Storage state;
+- bounded Production counts;
+- audit-log count and Supplier fingerprints when Supplier data could be affected;
+- controlled TEST/UAT records that must be preserved; and
+- hosted Supabase identity, environment role, plan, configuration, and resource state when the task depends on them.
 
-If any value differs unexpectedly, stop and report the delta before writing, merging, cleaning up, or deploying.
+If any value differs unexpectedly, stop and report the delta before writing, merging, linking, cleaning, migrating, or deploying.
