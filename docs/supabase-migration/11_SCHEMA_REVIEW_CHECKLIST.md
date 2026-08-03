@@ -3,6 +3,7 @@
 Status: Reviewer gate for documentation only
 Baseline: `main` at `1a4e5a59a37b2f1eb05d5cf8fa555d8f7dfe84d6`
 Review together: `09_POSTGRESQL_SCHEMA_DESIGN.md` and `10_SCHEMA_DECISION_REGISTER.md`
+Checklist items: 111
 
 Check an item only when the cited design is explicit and evidence supports it. Record disagreements as stable decision IDs or review comments; do not resolve ambiguity by implementing SQL.
 
@@ -15,72 +16,90 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] GitHub-only ownership-claim code is not described as deployed.
 - [ ] Empty collections and future tables are not described as implemented or populated.
 - [ ] Every asserted invariant is either evidenced, recommended, or explicitly Open/Deferred.
+- [ ] The phase manifest lists all 79 proposed tables exactly once and reconciles Core Phase 1 37, Core Later 9, Future-Compatible 13, Deferred 13, and Remove/Merge 7.
+- [ ] Future-Compatible and Deferred entries explicitly say "do not create yet," and every Remove/Merge entry identifies its replacement.
+- [ ] All 36 decision IDs have one canonical topic/status across design, register, checklist, and cross-references; resolution date, evidence/reference, and resolved state fields are present.
+- [ ] DB-001, ID-001, ORG-001, ORG-002, SUP-003, SUP-004, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates.
 
 ## B. Relational model and integrity
 
-- [ ] Every proposed table has a clear purpose, UUID primary key strategy, required/optional columns, foreign keys, uniqueness/check rules, candidate indexes, sensitivity, deletion behavior, and Firestore transformation note.
-- [ ] Legacy Firestore IDs are preserved as alternate keys and migration mappings, not reused blindly as relational PKs.
+- [ ] Every proposed table concept has a clear logical purpose/catalog entry and exactly one phase disposition; Remove/Merge entries are not mistaken for tables to create.
+- [ ] `legacy_firestore_id` is required for directly migrated root/event rows, nullable for new and normalized-child rows, preserved as an alternate key when present, and never reused blindly as the relational PK.
 - [ ] Arrays/maps used for relationships are normalized into child/join tables.
 - [ ] JSONB is limited to bounded/versioned snapshots or flexible metadata that does not require relational filtering or integrity.
 - [ ] Exact numerics are specified for money/quantities; floats are rejected.
 - [ ] Timestamp, locale, URL, normalized-identifier, and status conventions are consistent.
-- [ ] Derived quality/search/aggregate/access fields have one canonical source or are explicitly trusted projections.
+- [ ] Derived quality/search/aggregate/access fields have one canonical source or are explicitly versioned trusted projections with invalidation, recomputation, reason, and reconciliation contracts.
 - [ ] Foreign-key delete behavior defaults to restrict; cascades are limited to unpublished drafts/disposable preferences.
 - [ ] Immutability, supersession, and archive semantics are unambiguous for historical rows.
+- [ ] Every required trusted command contract names authoritative inputs, actor/authorization, locks/reads, transaction, idempotency, validation, outputs, audit, events/notices, failure, compensation, and browser/server authority.
 
 ## C. Identity, organization, and authorization readiness
 
-- [ ] Application user UUID is separated from provider subject/Firebase UID.
-- [ ] Authentication authority and migration duration remain an explicit decision.
-- [ ] Platform roles are separated from user profile and recorded temporally.
-- [ ] Buyer organization and membership model has an owner and resolution deadline.
-- [ ] Supplier verified ownership is separate from operational Supplier membership.
+- [ ] Application user UUID is separated from provider subject/Firebase UID under ID-002.
+- [ ] Authentication authority and migration duration remain Open under ID-001.
+- [ ] Platform Owner/Admin assignments follow ID-003: temporal, trusted-only, one effective active role absent reviewed exception, and Owner/Admin incompatible.
+- [ ] Platform-role and account/provider-status commands cannot disable, unlink, demote, or revoke the final usable Owner.
+- [ ] ORG-001/ORG-002 keep organization linkage nullable/deferred; current users and 480 Suppliers migrate without fabricated organizations or inferred memberships.
+- [ ] Free-text organization/sector, legacy role, `accountType`, and Buyer/Supplier context remain restricted migration evidence through bootstrap.
+- [ ] Supplier verified ownership is separate from future operational Supplier membership, and current Supplier profiles exist independently of both organization and membership rows.
+- [ ] Active-row uniqueness is explicit for provider links, organization memberships, Supplier ownerships, and Supplier memberships.
 - [ ] Authorization never relies on cached display names, client-supplied role, email, or object key.
 - [ ] Owner/Admin/support access is not assumed without an explicit policy.
+- [ ] `can_receive_rfqs` has exact derivation inputs, policy version, invalidation-to-false behavior, reason codes, recomputation triggers, timestamp, and reconciliation path.
 - [ ] The future RLS PR is classified Extra High Security and requires positive and negative tests.
 - [ ] No client-accessible table can ship before its RLS and trusted-operation design is approved.
 
 ## D. Supplier integrity and duplicate prevention
 
-- [ ] Supplier profile, contacts, locations, category assignments, capabilities, payment options, products, and documents have distinct visibility/retention rules.
+- [ ] Base Supplier tables are non-public; approved audiences use field-minimized security-invoker view/RPC projections, and anonymous exposure is a future approval.
+- [ ] Supplier profile, contacts, locations/coverage, category assignments, capabilities, payment options, products, and documents have distinct visibility/retention rules.
+- [ ] Physical locations and service coverage are distinguishable; area FK is conditional, original text/exceptions are retained, and `all_iraq`/`imports_outside_iraq` are not treated as administrative areas.
 - [ ] One-active-primary-owner and current one-profile-per-owner constraints are represented without blocking future memberships.
 - [ ] Claim creation, expiry, approval, rejection, withdrawal, supersession, transfer, and revoke history can be expressed.
-- [ ] Claim evidence is separate, bounded, private, and retention-controlled.
+- [ ] Claim evidence is merged as bounded immutable private Claim content; `supplier_ownership_claim_evidence` and `supplier_ownership_events` are not created.
 - [ ] Approval revalidates current Auth/app eligibility, current canonical owner, and claimant lock within one trusted operation.
-- [ ] Duplicate fingerprints are protected, versioned, exact, trusted-only, and reserved/released atomically.
+- [ ] Exact duplicate fingerprints are protected, key/normalizer-versioned, trusted-only, unique while active, and promoted from pending to approved atomically.
+- [ ] Fuzzy duplicate candidates use versioned normalized names, bounded Dice/equivalent lookup, area/category/supporting evidence, a review queue, and never auto-merge/delete.
 - [ ] `supplierDuplicateIndex`, canonical uniqueness, and submission duplicate guards map to one coherent relational design.
 - [ ] Supplier import keeps safe metadata and row results but never persists the raw workbook by default.
-- [ ] Submission approval can atomically write Supplier graph, review state, contribution/access ledgers, ownership event, notification, and audit evidence.
-- [ ] Bilingual category/address mappings define an exception path rather than inventing values.
+- [ ] Submission approval atomically writes Supplier graph, review state, contribution/access ledgers, temporal ownership where justified, audit, and a domain event; only the worker creates notifications.
+- [ ] SUP-003 category and SUP-004 address/coverage mappings define explicit exception paths rather than inventing values.
 
 ## E. RFQ, quotation, and Buyer privacy
 
-- [ ] RFQ ownership is organization-scoped and publication fixes an auditable Supplier recipient set.
-- [ ] Recipient visibility is anchored to Supplier profile/membership, not owner UID arrays.
-- [ ] A Supplier can access only its own invitation/quotation; a Buyer can access only its organization's RFQs; competitors cannot read each other.
-- [ ] One canonical quotation per RFQ/Supplier is enforced.
-- [ ] First submission and every material update create an atomic immutable revision, item snapshot, event, notification, and current projection update.
-- [ ] Identical updates are no-ops under a documented normalized-content comparison.
-- [ ] Revision numbers are monotonic and browser-unwritable.
+- [ ] RFQ-001 preserves transitional Buyer creator/context while organization linkage is Open; publication still fixes an auditable Supplier recipient set.
+- [ ] Recipient visibility and quotation authorization are anchored to exactly one `rfq_recipients` row, not owner UID arrays or duplicated RFQ/Supplier fields.
+- [ ] A Supplier can access only its recipient/quotation; a Buyer can access only its own transitional or future organization party RFQs; competitors cannot read each other.
+- [ ] One canonical quotation per `rfq_recipient_id` is enforced.
+- [ ] First submission creates quotation with a temporarily nullable pointer, inserts immutable revision/items/attachments, then sets the pointer in one trusted transaction before commit.
+- [ ] Composite same-parent integrity guarantees `current_revision_id` belongs to that quotation; revision number is unique/monotonic per quotation and browser-unwritable.
+- [ ] `quotation_items` is Remove/Merge; current items are queried through the current immutable revision and any later projection is derived/rebuildable.
+- [ ] Identical updates are no-ops under the exact versioned field/order/rounding/null/attachment hash contract and create no revision, audit, event, or notification.
 - [ ] Legacy `price`, currency, totals, tax/freight, alternate, and partial-bid semantics are resolved before data transformation.
 - [ ] Buyer notes, shortlists, approvals, awards, value baselines, and Supplier disclosure are Buyer-private and remain disabled until their decisions are approved.
 - [ ] Published procurement data, quotation revisions, decisions, and events cannot be cascade-deleted.
 
 ## F. Messaging, notifications, events, and idempotency
 
-- [ ] Conversation party identity and participant history replace participant arrays/maps.
-- [ ] Message sender must be an active participant and message body/history is private.
+- [ ] MSG-001 conversation party identity and temporal participant history replace participant arrays/maps.
+- [ ] Participant `valid_from` is inclusive, `valid_until` is exclusive, and reads are limited to messages created inside the reader's authorized interval.
+- [ ] Ownership transfer/revocation and RFQ close/cancel forbid later messages; a new Supplier owner does not inherit prior private history automatically.
+- [ ] Message sender is active at creation time and message body/history remains private under the same interval rule.
 - [ ] Receipt mutation is self-only and monotonic.
-- [ ] Message edit/delete, attachment, export, moderation, and retention policies remain explicit gates.
-- [ ] Domain events are transactional outbox facts and do not replace domain-specific history or security audit.
-- [ ] Notifications are idempotent per event/recipient/channel and recipients may mutate only their own read state.
+- [ ] MSG-002 message edit/delete, attachment, export, moderation, exceptional quarantine, and retention policies remain explicit gates.
+- [ ] REL-001 `domain_events` is a transactional outbox plus durable minimal integration fact, not full event sourcing and not a replacement for domain history/audit.
+- [ ] Exactly one worker creates notifications; domain commands write only their aggregate, audit, and domain event.
+- [ ] Notifications include channel, are unique per event/recipient/channel, and recipients may mutate only their own read state.
 - [ ] Notification body/reference contains the minimum information and class-based retention is approved.
 - [ ] Idempotency scope, subject, request digest, replay result, expiry, and mismatch handling are defined per trusted command.
-- [ ] Retry behavior cannot duplicate ownership, revisions, access grants, audit facts, or notifications.
+- [ ] Retry/lease/dead-letter behavior cannot duplicate ownership, revisions, access grants, audit facts, or notifications, and poison events have bounded failure handling.
 
 ## G. Security, privacy, deletion, and audit
 
 - [ ] Public, authenticated, self, organization, Supplier-member, reviewer, Owner/Admin, server-only, and migration-service visibility classes are distinguishable.
+- [ ] RLS is not treated as column security; private Supplier/contact/ownership/fingerprint/source fields never appear in a public/anonymous projection.
+- [ ] Audit, event, idempotency, security, import-error, and migration relations are recommended in a non-exposed internal schema with trusted-only access.
 - [ ] PII, claimant evidence, Supplier contacts, commercial responses, messages, billing data, fingerprints, and security signals receive least-privilege treatment.
 - [ ] Secrets, credentials, raw tokens, payment credentials, full source documents, raw workbooks, and permanent object URLs are prohibited.
 - [ ] Audit fields are trusted, immutable, safely summarized, and correlated without copying sensitive records.
@@ -91,23 +110,27 @@ Check an item only when the cited design is explicit and evidence supports it. R
 ## H. Files, search, content, and billing compatibility
 
 - [ ] Uploads remain disabled until storage provider, signed access, size/media limits, scanning, retention, and authorization are implemented and tested.
-- [ ] File authorization comes from typed parent relationships; opaque object keys alone confer no access.
+- [ ] File authorization/custody comes from typed parent relationships; opaque object keys, uploader identity, and creating user alone confer no continuing access.
+- [ ] File finalization validates object proof/scan/parent authority atomically and defines quarantine plus provider-orphan compensation.
 - [ ] Existing HTTPS reference links are preserved as links and placeholders do not create fake file objects.
 - [ ] Directory/search queries are server-side, field-minimized, keyset-paginated, and do not depend on Supplier keyword arrays.
 - [ ] FTS/trigram/external-search choice is supported by bilingual relevance and query-plan evidence before index implementation.
 - [ ] Taxonomy, administrative area, registration sector, and content localization models have stable codes and explicit fallback behavior.
-- [ ] Term suggestions store bounded/minimized examples and atomic counts.
+- [ ] Term suggestions store only a bounded/minimized evidence sample and atomic count; `term_suggestion_examples` is not created initially.
 - [ ] Billing customer/subscription/event/entitlement tables cannot be client-authored and store no payment credentials.
 - [ ] Organization-versus-user billing ownership and finance/legal retention are resolved before billing implementation.
 
 ## I. Migration traceability and operability
 
-- [ ] Every Firestore collection in the verified baseline has a destination, transformation, legacy-ID rule, relationship validation, classification, and exception path.
+- [ ] All 35 verified Firestore collections retain a complete destination/no-target, transformation, legacy-ID rule, relationship validation, classification, and exception path.
 - [ ] Count reconciliation does not substitute for relationship/content validation.
 - [ ] Migration batches record source snapshot marker, environment, schema/code version, actor, status, and rollback marker.
-- [ ] Every source record receives a mapping/disposition, including skipped, duplicate, TEST, invalid, and superseded records.
+- [ ] Every source record receives exactly one disposition: migrated, skipped, quarantined, merged, rejected, no-target, or pending.
+- [ ] Each disposition has zero, one, or many target mappings with target table/UUID, mapping type, transformation version, and deterministic child key or ordinal.
+- [ ] Migration mapping supports rollback, deterministic replay, exception resolution, and reconciliation in both source-to-target and target-to-source directions.
 - [ ] Validation results contain counts and safe sample keys only, not complete Production records.
-- [ ] Source-to-target checks cover identity agreement, Supplier ownership, fingerprints, recipient eligibility, revision sequence, event/notification idempotency, and access ledgers.
+- [ ] Source-to-target checks cover identity/account context, Supplier ownership agreement, exact/fuzzy evidence, recipient eligibility, revision sequence/parent integrity, event/notification idempotency, and access ledgers.
+- [ ] Historical RFQ/quotation events and six existing notifications are classified/mapped as already materialized with explicit fan-out suppression and are never replayed.
 - [ ] Local/dev/staging/Production project separation, region, backups, secrets, CI, promotion, rollback, and observability are approved before hosted work.
 - [ ] Read-path cutover, dual-write policy, freeze window, rollback authority, and evidence retention are resolved in a later migration runbook.
 
