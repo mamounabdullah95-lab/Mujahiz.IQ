@@ -31,9 +31,14 @@
 
 ## Mapping verification
 
-- **[Future plan]** Every source document has exactly one disposition: mapped, intentionally excluded with reason, quarantined for owner decision, or blocked.
-- **[Future plan]** Every migrated entity has a unique legacy ID and source collection; no generated key may erase traceability.
-- **[Future plan]** Arrays/nested values that affect access or relationships are reconciled by per-parent cardinality and deterministic value hash.
+- **[Future plan]** Keep source-record disposition separate from source-to-target mappings. Every migration batch/source collection/document/source-version key has exactly one active disposition: migrated, skipped, quarantined, merged, rejected, or no-target, with reason or exception evidence where applicable.
+- **[Future plan]** One source document/version may map to zero target rows, one target row, or multiple normalized child rows. Every active target mapping belongs to its disposition and has exactly one deterministic semantic `child_key` or deterministic `child_ordinal`, plus source identity, transformation version, migration batch, mapping role, target logical type, and target UUID.
+- **[Future plan]** Active logical-child-slot uniqueness excludes the target UUID, so no active child slot can fork into multiple target UUIDs. Active reverse target uniqueness provides target-to-source traceability; a reviewed many-source-to-one merge instead uses an explicit merge-group/reconciliation record that names the canonical target and every contributor.
+- **[Future plan]** Every migrated root entity preserves its Firestore ID and source collection as a legacy alternate key where applicable; normalized child rows retain traceability through their source mapping, and no generated key may erase the original source evidence.
+- **[Future plan]** Replay recomputes the same mapping plan idempotently. Identical replay returns existing targets; reviewed corrections atomically supersede active mappings without deleting predecessor/successor history or silently replacing a target.
+- **[Future plan]** Reconciliation compares dispositions, active mappings, reverse traces, merge contributors, counts, relationships, and deterministic content evidence. Exceptions quarantine or reject the bounded source unit without a partial target graph; rollback follows verified active mappings in dependency order and preserves superseded evidence.
+- **[Future plan]** Ambiguous one-to-many mappings, duplicate active child mappings, uncontrolled many-source-to-one merges, silent target replacement, lost Firestore IDs, source-evidence deletion before validation, and cutover without reconciliation are prohibited.
+- **[Future plan]** Duplicate-index records are reconciliation evidence, not normal business data. Imported historical events and notifications are marked already materialized or fan-out suppressed and are never replayed as new notifications.
 - **[Future plan]** Two-sided Supplier ownership, RFQ recipient eligibility, quotation ownership, conversation participation, and message receipts have explicit integrity queries.
 - **[Future plan]** Unknown enum/field/type variants fail into an exception report; they are not coerced to a convenient default.
 - **[Future plan]** Transformation algorithms for names, contacts, fingerprints, currency/number values, timestamps, and deterministic IDs are versioned and tested.
@@ -42,8 +47,8 @@
 
 | Gate | Required evidence |
 |---|---|
-| Collection/table counts | **[Future plan]** Source snapshot count equals mapped + excluded + quarantined; target counts match mapped rows by entity and status. |
-| Primary/legacy uniqueness | **[Future plan]** No duplicate target primary key or legacy ID; no source ID maps to multiple targets. |
+| Collection/table counts | **[Future plan]** Source snapshot counts reconcile to the explicit dispositions; target counts reconcile to active zero-to-many mapping rows by logical type, mapping role, child slot, and status. |
+| Primary/legacy and mapping uniqueness | **[Future plan]** No duplicate target primary key or applicable legacy ID; no active logical child slot forks, no reverse target is ambiguous, and every approved merge is represented by one reviewed merge group. |
 | Foreign keys | **[Future plan]** Zero unexpected orphan users, Suppliers, claims, RFQs, recipients, quotations, revisions, conversations, participants, messages, notifications, files, events, or audits. |
 | Ownership | **[Future plan]** Exactly one active canonical owner under current rules and complete agreement with source two-sided links. |
 | Revision integrity | **[Future plan]** Positive monotonic sequence; current pointer equals maximum revision; immutable snapshot/event relationships exist. |
