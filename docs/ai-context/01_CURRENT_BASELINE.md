@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-03-post-pr41-supabase-migration-plan`
+Baseline ID: `baseline-2026-08-03-post-pr43-local-supabase-foundation`
 Updated: 2026-08-03
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,9 +18,11 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `e8979a2f241d35016ba91e85f85bcf4d326ad9ee`.
-- **Verified current fact:** PR #41 is merged through that merge commit. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
+- **Verified current fact:** Current GitHub `main`: `c75e1526e5ed04907664b1d448bf91a55ba80575`.
+- **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
+- **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
+- **Verified current fact:** PR #43 added local Supabase infrastructure scaffolding only. It did not deploy, link or access a hosted Supabase project, or change Firebase or other Production state.
 - Local branches and future PRs must start from this current `main` unless a newer commit appears.
 
 The repository SHA identifies source-control state. It must not be described as the active Firebase application version unless a separate Hosting deployment verifies that mapping.
@@ -86,7 +88,7 @@ The following are **verified current facts** from bounded, count-only Firestore 
 
 ## 4. Quality and Testing
 
-The latest runtime evidence is inherited from PR #40. PR #41 was documentation-only and did not introduce runtime changes.
+PR #43 repeated the repository test and build checks and validated the local Supabase foundation on its exact head. PR #40 remains the latest known evidence for the Firestore Emulator, Functions Emulator, Firebase Production-bundle, and Functions build suites.
 
 - **Latest known historical fact, PR #40 exact-head evidence:** Repository tests: **181/181 passed**.
 - **Latest known historical fact, PR #40 exact-head evidence:** Firestore Emulator suite: **89/89 passed**.
@@ -95,8 +97,15 @@ The latest runtime evidence is inherited from PR #40. PR #41 was documentation-o
 - **Latest known historical fact, PR #40 exact-head evidence:** Application Production build: **passed**.
 - **Latest known historical fact, PR #40 exact-head evidence:** Functions typecheck/build: **passed**.
 - **Verified current fact:** GitHub PR gate run 63 passed for PR #41 documentation head `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
+- **Verified current fact, PR #43 exact-head evidence (`443f48abe5607ecbf731b25542293f028e6afa99`):** `npm ci` passed.
+- **Verified current fact, PR #43 exact-head evidence:** Repository tests: **181/181 passed**.
+- **Verified current fact, PR #43 exact-head evidence:** Application Production build passed.
+- **Verified current fact, PR #43 exact-head evidence:** Supplier-template generation passed and reproduced with a clean generated diff.
+- **Verified current fact, PR #43 exact-head evidence:** Supabase CLI version check passed at exactly `2.111.0`.
+- **Verified current fact, PR #43 exact-head evidence:** Local Supabase start, status, Studio HTTP `200` probe, and normal project-scoped stop passed; the final local stack state was stopped.
+- **Verified current fact, PR #43 exact-head evidence:** Secret scan passed, and GitHub PR gate run 65 passed.
 
-Do not combine these results into a new automated-test total. Do not attribute PR #40 runtime evidence to PR #41, and do not describe PR #41 as a runtime change.
+Do not combine these results into a new automated-test total. Do not attribute PR #40 Emulator or Firebase bundle evidence to PR #43, and do not describe local Supabase validation as a Production test.
 
 ## 5. Supabase Migration State
 
@@ -109,12 +118,19 @@ Do not combine these results into a new automated-test total. Do not attribute P
 - **Plan/recommendation:** Give every feature exactly one source of truth at a time. Do not use Production dual writes or silent Firebase fallback after a Supabase failure.
 - **User-reported context:** A hosted Supabase project named Mujahiz IQ exists in Central EU (Frankfurt) on the Free plan.
 - **Unknown:** The hosted project identity, region, plan, schemas, tables, RLS, Auth, Storage, Edge Functions, backups, compute, GitHub integration, and automatic deployment were not independently verified.
-- **Verified current fact:** No Supabase implementation has started in the repository.
-- **Verified current fact:** No Supabase dependency, CLI configuration, environment-variable name, repository integration, or workflow exists in the repository.
-- **Verified current fact:** The Supabase CLI has not been initialized in the repository.
-- **Verified current fact:** No application tables, SQL migrations, RLS policies, Storage buckets, Auth users, or Edge Functions have been created through the repository.
+- **Verified current fact:** Local Supabase infrastructure scaffolding has started and is merged. Supabase CLI `2.111.0` is pinned as a local development dependency.
+- **Verified current fact:** `supabase/config.toml` exists for local project ID `mujahiz-iq-local`; local start, status, Studio access, and normal stop were validated, and the local stack is currently stopped.
+- **Verified current fact:** No hosted Supabase implementation or linkage exists. No hosted project was authenticated, accessed, queried, changed, or independently verified through this repository work.
+- **Verified current fact:** No Mujahiz application schema implementation exists. No application SQL migrations, tables, RLS policies, Auth integration or users, Storage buckets, Edge Functions, or `supabase-js` frontend integration exist.
 
-Supabase is currently a planned migration/integration environment, not Production.
+The merged local infrastructure foundation, a future application schema, any hosted Supabase project, and Firebase Production are separate states. Supabase is not currently a Production authority.
+
+### Local Supabase security state
+
+- **Verified current fact:** Local Supabase is disposable, development-only infrastructure and must remain stopped when unused.
+- **Verified current fact:** On the validated Windows/Docker Desktop host, enabled ports `54321` through `54324` may bind to wildcard IPv4 and IPv6 interfaces while the stack runs. This is a local-development network exposure limitation, not a Firebase or Production vulnerability.
+- **Plan/recommendation:** Use host firewall and network isolation before starting the stack on an untrusted or shared network. Never expose it through router forwarding, public tunnels, or other external ingress.
+- **Verified current fact:** Local Analytics is disabled. Docker daemon TCP port `2375` was not enabled and must not be enabled as part of this work.
 
 ## 6. Current Priorities
 
@@ -122,16 +138,17 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**Phase 2 — Local Supabase CLI Foundation**
+**PostgreSQL Schema Design and Review**
 
 This next task must:
 
-- remain local;
-- create only the Supabase local project foundation;
-- not run `supabase link`;
-- not authenticate to or change the hosted Supabase project;
+- remain documentation and design only;
+- refine entities, keys, relationships, constraints, indexes, trusted-server fields, audit requirements, deletion rules, and Firestore-to-PostgreSQL migration mappings;
+- not create SQL migrations or application tables;
+- not implement RLS;
+- not run `supabase db reset`;
 - not add `supabase-js`;
-- not create application tables, SQL migrations for application data, RLS policies, Production data, Storage buckets, Auth users, or Edge Functions;
+- not link, authenticate to, access, or change a hosted Supabase project;
 - not deploy; and
 - stop at a Draft PR.
 
