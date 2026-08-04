@@ -33,7 +33,8 @@ Evidence labels used below:
 - **Verified current fact:** PR #49 is merged as commit `77179728d9b2a942f210790cbb31f0a7842dcbda`. Its approved head was `6e22d8acd0e7c9e94cd7934a23af1a42d113cdcf`.
 - **Verified current fact:** PR #51 is closed and merged into `main` as commit `b631de2f657a6f870f7d764d36cdcf38d42c2fb2`; its approved implementation head was `a56ed15097a39cb36feebcc2e9e604e7b34aeb57`.
 - **Verified current fact:** PR #51 implemented and merged the second local SQL slice: `public.user_profiles` and `internal.identity_provider_links`.
-- The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.`n- Local branches and future PRs must start from this current `main` unless a newer commit appears.
+- The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.
+- Local branches and future PRs must start from this current `main` unless a newer commit appears.
 
 The repository SHA identifies source-control state. It must not be described as the active Firebase application version unless a separate Hosting deployment verifies that mapping.
 
@@ -158,7 +159,7 @@ The merged local infrastructure and migration-governance SQL, a future business/
 
 #### Merged second-slice boundary
 
-A future SQL implementation PR may create only:
+PR #51 created exactly:
 
 - `public.user_profiles`;
 - `internal.identity_provider_links`.
