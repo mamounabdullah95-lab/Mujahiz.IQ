@@ -1,17 +1,17 @@
 # Core Phase 1 third SQL slice selection
 
-Status: **Recommended planning boundary; implementation is not authorized by this document**
+Status: **Planning boundary implemented by a separate local-only SQL slice; this selection does not authorize any further scope**
 Selection date: 4 August 2026
 Planning start: `origin/main` `e191a044471a192819d6e029e7e08d7b4d82b6c1`
 Primary task profile: Documentation
 
 ## 1. Recommendation
 
-Select the smallest Supplier prerequisite: create exactly one local-only, synthetic-data-only table, `public.supplier_profiles`.
+The selected smallest Supplier prerequisite is exactly one local-only, synthetic-data-only table, `public.supplier_profiles`. Its implementation evidence is recorded in `16_THIRD_SQL_SLICE_IMPLEMENTATION_EVIDENCE.md`.
 
 This is a schema root for later Supplier child relations, temporal ownership, submissions/imports, duplicate protection, RFQ recipients, and Supplier-linked audit/event facts. It can reference the merged provider-neutral profile key for trusted actors while leaving ownership, categories, locations, contacts, eligibility, browser access, and all data movement out of scope.
 
-This selection does **not** authorize SQL implementation. A later implementation task must receive separate approval and preserve every boundary in section 7.
+This selection did **not** itself authorize SQL implementation. The separately approved implementation task preserved every boundary in section 7; that boundary remains binding for all later work.
 
 ## 2. Reconciled current state
 

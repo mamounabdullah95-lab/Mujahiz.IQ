@@ -27,6 +27,13 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Local warning-level lint and catalog checks verify expected constraints/indexes and zero application triggers, functions, policies, and direct anon/authenticated/service API table privileges.
 - [ ] ID-001, MIG-002, RES-001, and every other listed Open gate remain unresolved; Firebase Auth remains authoritative and a later trusted validation/reconciliation phase is required before integration.
 
+### Third SQL-slice implementation evidence
+
+- [x] Local implementation branch adds exactly `public.supplier_profiles` in migration `20260804000300`; no Supplier child, ownership, organization, eligibility, Auth, RLS, policy, browser/API grant, hosted operation, or data operation is included.
+- [x] Synthetic focused pgTAP covers the Supplier root shape, UUID default, bounded bilingual names and lifecycle/provenance values, nullable/restricting actor references, legacy-ID uniqueness, migration-control compatibility, deferred-table absence, and absent API access.
+- [x] Local warning-level lint and catalog checks verify expected constraints/indexes and zero application triggers, functions, policies, and direct anon/authenticated/service API table privileges.
+- [ ] ID-001, ORG-001, ORG-002, SUP-003, SUP-004, MIG-002, RES-001, and every other listed Open gate remain unresolved; Firebase Auth remains authoritative and Supplier ownership/RLS/Auth work remains a later separately approved phase.
+
 ## B. Relational model and integrity
 
 - [ ] Every proposed table concept has a clear logical purpose/catalog entry and exactly one phase disposition; Remove/Merge entries are not mistaken for tables to create.
