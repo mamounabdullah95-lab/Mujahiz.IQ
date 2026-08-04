@@ -1,13 +1,16 @@
 # Core Phase 1 second SQL slice selection
 
-Status: **Draft implementation recommendation; documentation only**
+Status: **Approved repository-merged selection; implementation not started**
 Selection date: 4 August 2026
-Verified starting `main`: `a77f20a57f308365d408b16a823e6502f940b595`
+Selection-planning starting `main`: `a77f20a57f308365d408b16a823e6502f940b595`
+Merged PR: [#49](https://github.com/mamounabdullah95-lab/Mujahiz.IQ/pull/49)
+Approved PR head: `6e22d8acd0e7c9e94cd7934a23af1a42d113cdcf`
+Merge commit and current verified `main`: `77179728d9b2a942f210790cbb31f0a7842dcbda`
 Primary task profile: Documentation
 
 ## 1. Decision
 
-Recommend a reduced Identity Foundation as the second local SQL slice:
+The approved second local SQL slice is the reduced Identity Foundation:
 
 - `public.user_profiles`
 - `internal.identity_provider_links`
@@ -20,6 +23,8 @@ This is the smallest remaining Core Phase 1 subset that establishes stable provi
 
 - `git fetch origin main` completed and clean local `main` fast-forwarded to `a77f20a57f308365d408b16a823e6502f940b595`; local `main`, `origin/main`, and task-start `HEAD` matched before branch creation.
 - PR #48 is merged at that SHA. It synchronized the authoritative baseline after the PR #47 SQL Foundation merge.
+- PR #49 merged this selection through merge commit `77179728d9b2a942f210790cbb31f0a7842dcbda`; its approved head was `6e22d8acd0e7c9e94cd7934a23af1a42d113cdcf`.
+- The selection is repository-approved for a future local implementation PR. No implementation has started.
 - The only repository SQL migration is `supabase/migrations/20260804000136_migration_control_foundation.sql`.
 - The only repository pgTAP file is `supabase/tests/migration_control_foundation.sql`; its merged evidence records 60/60 local synthetic assertions.
 - The first slice creates six physical governance tables in the non-exposed `internal` schema: `migration_batches`, `migration_source_dispositions`, `migration_record_mappings`, `migration_merge_group_members`, `migration_validation_results`, and `import_errors`.
@@ -33,7 +38,7 @@ The task brief used earlier names for documents 02 through 04. Current `main` us
 
 Risk-oriented cells use Low as safer/smaller. Benefit-oriented cells (`Migration use`, `Unlocks`) use High as better.
 
-| Criterion | A: all three Identity tables | B: access/trial ledgers | C: full Supplier directory | D: audit/events/idempotency | Recommended A1: profile + provider link |
+| Criterion | A: all three Identity tables | B: access/trial ledgers | C: full Supplier directory | D: audit/events/idempotency | Approved A1: profile + provider link |
 |---|---|---|---|---|---|
 | Dependency risk | Medium | High | High | Medium | Low |
 | Blocking Open gates | 0 for DDL; dependency-blocked | 0 for DDL; prerequisite-blocked | 2: SUP-003 and SUP-004 | 1: AUD-001 | 0 for local DDL; ID-001 explicitly deferred |
@@ -95,7 +100,7 @@ Actor references could remain nullable for system/migration events, and append-o
 
 Legend: **B** = must be resolved before implementing the candidate as described; **D** = explicitly deferred without weakening the candidate's table schema; **—** = not applicable to that candidate. A gate marked D remains Open and must be resolved before its registered later phase.
 
-| Open gate | A: full Identity | B: access ledgers | C: Supplier set | D: audit/events | A1: recommended two-table slice |
+| Open gate | A: full Identity | B: access ledgers | C: Supplier set | D: audit/events | A1: approved two-table slice |
 |---|---|---|---|---|---|
 | ID-001 Authentication authority | D | D; required before verification integration | D for actor/ownership integration | D for authenticated actor integration | D; no Auth authority or integration selected |
 | ORG-001 Organization model | D | — | D; Supplier organization remains nullable | — | D; free-text organization remains evidence only |
@@ -133,7 +138,7 @@ Legend: **B** = must be resolved before implementing the candidate as described;
 
 No gate is resolved by this document.
 
-## 6. Recommended table contracts
+## 6. Approved future implementation boundary
 
 ### `public.user_profiles`
 
@@ -261,7 +266,7 @@ The future PR should contain only one new migration, one focused pgTAP file, and
 - `09_POSTGRESQL_SCHEMA_DESIGN.md` only for implemented-status wording;
 - `10_SCHEMA_DECISION_REGISTER.md` only for actual implementation evidence, without resolving ID-001 or another Open gate;
 - `11_SCHEMA_REVIEW_CHECKLIST.md` with a separate second-slice evidence section;
-- the authoritative current baseline after the implementation is merged, not while it is a Draft; and
+- the authoritative current baseline after the implementation is merged, not while its implementation PR is unmerged; and
 - a new implementation evidence note rather than rewriting `12_POSTGRESQL_SQL_FOUNDATION.md`, which remains the first-slice record.
 
 Stop that future PR if:
@@ -281,4 +286,4 @@ If that contract cannot be completed without weakening FKs or Owner safety, stop
 
 ## 13. Stop point
 
-This selection stops at an implementation-ready documentation recommendation. It authorizes no SQL, RLS, policy, grant, Auth bridge, Supabase runtime, hosted project access, Firebase access, data operation, deployment, Ready-for-review transition, or merge.
+This repository-merged selection approves only a future local implementation PR for `public.user_profiles` and `internal.identity_provider_links`. Implementation has not started. The selection itself performs and authorizes no current SQL, RLS, policy, grant, Auth bridge, Supabase runtime, hosted project access, Firebase access, data operation, or deployment; any future implementation remains subject to the boundaries and stop conditions above.
