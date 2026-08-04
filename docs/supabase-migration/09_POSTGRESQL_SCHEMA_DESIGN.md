@@ -131,6 +131,8 @@ No counts above authorize a Production read or write; bounded facts must be refr
 
 The implementation branch adds only public.user_profiles and internal.identity_provider_links through migration 20260804000200_provider_neutral_identity_foundation.sql. It applies the approved provider-neutral UUID/profile and provider-subject contracts, bounded lifecycle checks, partial active-link uniqueness, migration-batch provenance, ON DELETE RESTRICT relationships, and zero direct API-role table privileges. No RLS, policy, Auth bridge, Auth user, runtime command, data migration, or deferred identity/access table is included. This is local implementation evidence only; ID-001, MIG-002, and RES-001 remain Open, and Firebase Auth remains authoritative during the hybrid phase.
 
+The third local SQL slice adds only `public.supplier_profiles` through migration `20260804000300_supplier_profile_foundation.sql`. It applies the approved organization- and Auth-independent Supplier root contract: UUIDv4 identity, bounded legacy alternate ID, distinct original/display/Arabic/English names, bounded business/lifecycle/provenance fields, nullable `ON DELETE RESTRICT` trusted actor references, and zero direct API-role table privileges. It creates no Supplier ownership, location, contact, category, capability, payment, submission, import, duplicate, eligibility, organization, Auth, RLS, policy, view, RPC, trigger, function, browser/API, data-migration, hosted, or Production behavior. This remains local implementation evidence only; all fourteen approval gates remain Open.
+
 
 ### Identity and access conclusions
 

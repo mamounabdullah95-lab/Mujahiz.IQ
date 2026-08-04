@@ -1,28 +1,28 @@
 # Core Phase 1 third SQL slice selection
 
-Status: **Recommended planning boundary; implementation is not authorized by this document**
+Status: **Planning boundary implemented on the separate local-only PR branch; this selection does not authorize any further scope**
 Selection date: 4 August 2026
 Planning start: `origin/main` `e191a044471a192819d6e029e7e08d7b4d82b6c1`
 Primary task profile: Documentation
 
 ## 1. Recommendation
 
-Select the smallest Supplier prerequisite: create exactly one local-only, synthetic-data-only table, `public.supplier_profiles`.
+The selected smallest Supplier prerequisite is exactly one local-only, synthetic-data-only table, `public.supplier_profiles`. Its implementation evidence is recorded in `16_THIRD_SQL_SLICE_IMPLEMENTATION_EVIDENCE.md`.
 
 This is a schema root for later Supplier child relations, temporal ownership, submissions/imports, duplicate protection, RFQ recipients, and Supplier-linked audit/event facts. It can reference the merged provider-neutral profile key for trusted actors while leaving ownership, categories, locations, contacts, eligibility, browser access, and all data movement out of scope.
 
-This selection does **not** authorize SQL implementation. A later implementation task must receive separate approval and preserve every boundary in section 7.
+This selection did **not** itself authorize SQL implementation. The separately approved implementation task preserved every boundary in section 7; that boundary remains binding for all later work.
 
 ## 2. Reconciled current state
 
-The two merged local slices represent six of the 36 Core Phase 1 logical concepts; 30 remain deferred before this selection and 29 would remain after its one-table implementation.
+Current merged `main` contains two local slices representing six of the 36 Core Phase 1 logical concepts, with 30 deferred. On the separate implementation branch, `supplier_profiles` is the seventh implemented concept and 29 remain deferred.
 
 | State | Logical concepts | Count |
 |---|---|---:|
 | Implemented by first local slice | `migration_batches`, `migration_record_mappings` (physically decomposed with source-disposition and merge-member relations), `migration_validation_results`, `import_errors` | 4 |
 | Implemented by second local slice | `user_profiles`, `identity_provider_links` | 2 |
-| Recommended next local slice | `supplier_profiles` | 1 |
-| Still deferred after that implementation | Remaining Core Phase 1 concepts | 29 |
+| Implemented only on the separate third-slice branch | `supplier_profiles` | 1 |
+| Still deferred on that implementation branch | Remaining Core Phase 1 concepts | 29 |
 
 The fetched branch tip is the merged PR #52 documentation commit. Its baseline records `b631de2f657a6f870f7d764d36cdcf38d42c2fb2` as the pre-merge verified PR #51 state; this selection uses the actual fetched `origin/main` SHA above and does not alter the baseline for planning-only work.
 
@@ -53,7 +53,7 @@ Risk and size use Low as safer/smaller. Migration usefulness is higher when the 
 
 - `public.supplier_profiles`
 
-The table is a provider- and organization-independent canonical Supplier business profile. A later implementation may use the existing `public.user_profiles` UUID only for nullable trusted creation/update actor references. It must not add ownership, member, category, area, contact, capability, payment, product, document, submission, duplicate, eligibility, RLS, policy, privilege, trigger, function, view, RPC, API, Auth, or data behavior.
+The table is a provider- and organization-independent canonical Supplier business profile. The implementation branch uses the existing `public.user_profiles` UUID only for nullable trusted creation/update actor references. It adds no ownership, member, category, area, contact, capability, payment, product, document, submission, duplicate, eligibility, RLS, policy, privilege, trigger, function, view, RPC, API, Auth, or data behavior.
 
 ### Exact Core Phase 1 exclusions
 
@@ -93,9 +93,9 @@ For this narrow table, none is a required decision for empty local DDL:
 
 The other gates do not apply to the selected table, but remain Open and block their registered later phases.
 
-## 7. Future implementation boundary and stop conditions
+## 7. Implemented boundary and continuing stop conditions
 
-The later task should contain one new migration for `public.supplier_profiles`, one focused synthetic pgTAP file, and the minimum direct evidence/status updates. It should prove the exact table contract, UUID default, bounded fields and status checks, nullable/restricting actor references, uniqueness for a non-null legacy Supplier ID, zero API-role privileges, no RLS/policy/function/trigger/view/RPC, and compatibility with the existing migration mapping contract. It must leave the local stack stopped after verification.
+The implementation branch contains one new migration for `public.supplier_profiles`, one focused synthetic pgTAP file, and the minimum direct evidence/status updates. It proves the exact table contract, UUID default, bounded fields and status checks, nullable/restricting actor references, uniqueness for a non-null legacy Supplier ID, zero API-role privileges, no RLS/policy/function/trigger/view/RPC, and compatibility with the existing migration mapping contract. The local stack must remain stopped after verification.
 
 Stop immediately, with no scope expansion, if any of these occurs:
 
@@ -106,12 +106,10 @@ Stop immediately, with no scope expansion, if any of these occurs:
 - Firebase, a hosted Supabase project, remote SQL, Production/TEST data, an import/export/seed/backfill, or deployment becomes necessary;
 - the selected table cannot remain empty except for synthetic local test rows.
 
-Recommended later-task configuration: **Terra, High reasoning**. The task is small in SQL surface but needs high-attention review of Supplier data sensitivity, future authorization boundaries, and zero-access validation.
-
 ## 8. Why this is safer
 
 `supplier_profiles` is the first remaining real domain root whose prerequisite—the provider-neutral actor key—is now merged. Unlike the access ledgers, it does not force a verified-benefit lifecycle or the complete usable-Owner predicate. Unlike Supplier ownership and children, it does not encode mapping, custody, duplicate, or authorization decisions that are still gated. Unlike audit/event tables, it does not invent durable command scopes, retention, or event payloads. Its empty local schema gains a stable FK destination for later work while retaining an uncomplicated local rollback and no Production or Auth consequence.
 
 ## 9. Stop point
 
-This document selects only the future one-table local planning boundary. It creates no SQL, pgTAP, RLS, policy, grant, Auth bridge, provider integration, application code, hosted Supabase linkage, Firebase access/change, data operation, or deployment. Await explicit approval before starting the later implementation task.
+This document selected only the one-table local planning boundary now realized on the separate PR branch. That branch adds no RLS, policy, grant, Auth bridge, provider integration, application code, hosted Supabase linkage, Firebase access/change, data operation, or deployment. Await explicit approval before any later Supplier SQL, ownership, access, integration, migration, or deployment work.
