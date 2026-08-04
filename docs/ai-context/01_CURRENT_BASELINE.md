@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-04-pr46-synchronized-sql-foundation-draft`
+Baseline ID: `baseline-2026-08-04-post-pr47-merged-sql-foundation`
 Updated: 2026-08-04
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,15 +18,18 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `206f7daa524228abfa83793c39a03045491f1316`.
+- **Verified current fact:** Current GitHub `main`: `0760ee6f498c58ceb966ef766b1928c7549bc702`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
 - **Verified current fact:** PR #43 added local Supabase infrastructure scaffolding only. It did not deploy, link or access a hosted Supabase project, or change Firebase or other Production state.
 - **Verified current fact:** PR #45 is merged through the current `main` merge commit. Its reviewed head was `9db67cf781ebf79523219a34e11149969542248a`.
 - **Verified current fact:** PR #45 added PostgreSQL schema-design documentation only. It made no runtime, deployment, hosted Supabase, Firebase, Auth, DNS, billing, or data-state change.
-- **Verified current fact:** PR #46 is merged as current `main` commit `206f7daa524228abfa83793c39a03045491f1316`.
+- **Verified current fact:** PR #46 is merged as commit `206f7daa524228abfa83793c39a03045491f1316`.
 - **Verified current fact:** PR #46 synchronized the post-PR-45 baseline and deterministic zero-to-many cutover/mapping principles; it added no runtime SQL, deployment, hosted Supabase, Firebase, Auth, DNS, billing, or data-state change.
+- **Verified current fact:** PR #47 SQL Foundation is integrated into `main` by merge commit `0760ee6f498c58ceb966ef766b1928c7549bc702`. Its parents are previous `main` `206f7daa524228abfa83793c39a03045491f1316` and approved PR head `217f3b49b697c03fae78396d0730d39d30486f94`; the approved head is fully contained in `main` with no file differences.
+- **Verified current fact:** Git history proves PR #47's integration, but GitHub PR metadata incorrectly still reports PR #47 as Open/Not merged. This metadata anomaly must not trigger a merge retry, replacement PR, history rewrite, or ordinary unmerged-PR closure.
+- **Verified current fact:** No later SQL Foundation, RLS, Auth, hosted Supabase, data-migration, or deployment work is merged after PR #47.
 - Local branches and future PRs must start from this current `main` unless a newer commit appears.
 
 The repository SHA identifies source-control state. It must not be described as the active Firebase application version unless a separate Hosting deployment verifies that mapping.
@@ -92,7 +95,7 @@ The following are **verified current facts** from bounded, count-only Firestore 
 
 ## 4. Quality and Testing
 
-PR #45 validated the schema-design documentation on its exact reviewed head. PR #43 repeated the repository test and build checks and validated the local Supabase foundation on its exact head. PR #40 remains the latest known evidence for the Firestore Emulator, Functions Emulator, Firebase Production-bundle, and Functions build suites.
+PR #47 validated the first local SQL slice on its exact approved head. PR #45 validated the schema-design documentation on its exact reviewed head. PR #43 repeated the repository test and build checks and validated the local Supabase foundation on its exact head. PR #40 remains the latest known evidence for the Firestore Emulator, Functions Emulator, Firebase Production-bundle, and Functions build suites.
 
 - **Latest known historical fact, PR #40 exact-head evidence (`5ebb5c50d9a64cafe9d5c53a5eedc0183475c190`):** Repository tests: **181/181 passed**.
 - **Latest known historical fact, PR #40 exact-head evidence:** Firestore Emulator suite: **89/89 passed**.
@@ -109,9 +112,10 @@ PR #45 validated the schema-design documentation on its exact reviewed head. PR 
 - **Verified current fact, PR #43 exact-head evidence:** Local Supabase start, status, Studio HTTP `200` probe, and normal project-scoped stop passed; the final local stack state was stopped.
 - **Verified current fact, PR #43 exact-head evidence:** Secret scan passed, and GitHub PR gate run 65 passed.
 - **Verified current fact, PR #45 exact-head evidence (`9db67cf781ebf79523219a34e11149969542248a`):** GitHub PR gate run 70 / Actions run `30848082396` passed. Documentation structure, mappings, decision synchronization, Mermaid diagrams, secret scans, and diff checks passed.
-- **Verified branch-local fact, first SQL-slice evidence:** A clean local PostgreSQL `17.6` reset applied migration `20260804000136`; pgTAP passed **60/60** and warning-level database lint returned no errors.
-- **Verified branch-local fact:** Repository tests passed **181/181**, the Production application build passed, and supplier-template generation reproduced the tracked workbook byte-for-byte.
-- **Verified branch-local fact:** Focused independent SQL review completed with no residual actionable finding after active-parent, version-coupling, merge-slot, validation, metadata, and supersession-lineage fixes.
+- **Verified current fact, PR #47 exact-head evidence (`217f3b49b697c03fae78396d0730d39d30486f94`):** A clean local PostgreSQL `17.6` reset applied migration `20260804000136`; pgTAP passed **60/60** and warning-level database lint returned no errors.
+- **Verified current fact, PR #47 exact-head evidence:** Repository tests passed **181/181**, the Production application build passed, and supplier-template generation reproduced the tracked workbook byte-for-byte.
+- **Verified current fact, PR #47 exact-head evidence:** Focused independent SQL review completed with no residual actionable finding after active-parent, version-coupling, merge-slot, validation, metadata, and supersession-lineage fixes.
+- **Verified current fact, PR #47 exact-head evidence:** GitHub PR gate run `30856547810` passed. This check result is separate from the local PostgreSQL, pgTAP, repository-test, and build evidence above.
 
 Do not combine results from different commits or PRs into a new automated-test total. Do not attribute PR #40 Emulator or Firebase bundle evidence to PR #43 or PR #45, and do not describe documentation or local Supabase validation as a Production test.
 
@@ -128,18 +132,21 @@ Do not combine results from different commits or PRs into a new automated-test t
 - **Unknown:** The hosted project identity, region, plan, schemas, tables, RLS, Auth, Storage, Edge Functions, backups, compute, GitHub integration, and automatic deployment were not independently verified.
 - **Verified current fact:** Local Supabase infrastructure scaffolding has started and is merged. Supabase CLI `2.111.0` is pinned as a local development dependency.
 - **Verified current fact:** `supabase/config.toml` exists for local project ID `mujahiz-iq-local`; local start, status, Studio access, and normal stop were validated, and the local stack is currently stopped.
-- **Verified current fact:** No hosted Supabase implementation or linkage exists. No hosted project was authenticated, accessed, queried, changed, or independently verified through this repository work.
-- **Verified current fact:** GitHub `main` has no Mujahiz application schema implementation. This Draft branch adds only the first local `internal` migration-control SQL slice; it adds no business tables, RLS, Auth integration or users, Storage buckets, Edge Functions, or `supabase-js` frontend integration.
+- **Verified current fact:** No hosted Supabase implementation or linkage exists. No hosted project was authenticated, accessed, queried, changed, or independently verified through this repository work, and the merged SQL migration has not been applied remotely.
+- **Verified current fact:** GitHub `main` contains the first local migration-control SQL slice: migration `supabase/migrations/20260804000136_migration_control_foundation.sql` creates six governance tables in the non-exposed `internal` schema, and `supabase/tests/migration_control_foundation.sql` supplies repository-tracked synthetic pgTAP coverage.
+- **Verified current fact:** No business/application PostgreSQL tables, RLS, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
+- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47.
 
-The merged local infrastructure foundation, a future application schema, any hosted Supabase project, and Firebase Production are separate states. Supabase is not currently a Production authority.
+The merged local infrastructure and migration-governance SQL, a future business/application schema, any hosted Supabase project, and Firebase Production are separate states. Supabase is not currently a Production authority.
 
 ### PostgreSQL schema-design state
 
-- **Verified current fact:** The authoritative logical PostgreSQL schema design is merged. This Draft branch implements only its first local migration-control/traceability slice; the business/application schema remains unimplemented.
+- **Verified current fact:** The authoritative logical PostgreSQL schema design and its first local migration-control/traceability slice are merged; the business/application schema remains unimplemented.
 - **Verified current fact:** The design classifies 79 logical concepts: 36 Core Phase 1, 10 Core Later, 13 Future-Compatible, 13 Deferred, and 7 Remove/Merge.
-- **Verified current fact:** Core Phase 1 is the maximum candidate set, not approval to create all 36 concepts in one PR. The first SQL implementation must select the smallest dependency-safe approved subset and must not create all 79 concepts.
-- **Verified current fact:** The design maps all 35 verified Firestore collections, registers 36 synchronized decisions, and provides a 119-item schema review checklist. This Draft resolves DB-001 for the local first slice and leaves 14 Open approval gates.
-- **Verified current fact:** This Draft adds one local SQL migration with six physical `internal` governance tables and synthetic pgTAP tests. No business/application schema, RLS, seed data, Storage, Edge Functions, Auth bridge, or frontend integration exists.
+- **Verified current fact:** Core Phase 1 is the maximum candidate set, not approval to create all 36 concepts in one PR. Each later SQL slice must select the smallest dependency-safe approved subset and must not create all 79 concepts.
+- **Verified current fact:** The design maps all 35 verified Firestore collections, registers 36 synchronized decisions, and provides a 119-item schema review checklist. DB-001 is resolved for the local first slice to database-generated UUIDv4 through `pg_catalog.gen_random_uuid()`; hosted compatibility remains a later validation gate.
+- **Verified current fact:** MIG-001 is partially implemented only at the declarative schema-contract level. Migration Engine locking, replay lookup, transformation, reconciliation, graph supersession, and rollback execution remain unimplemented.
+- **Verified current fact:** MIG-002 remains Open, and 14 approval gates remain Open in total.
 
 #### Open approval gates
 
@@ -173,25 +180,18 @@ The 14 remaining Open approval gates are:
 
 Migration sequencing and product priorities are separate.
 
-### Active Draft technical task
+### Recommended technical next task
 
-**PostgreSQL SQL Foundation — Core Phase 1 Slice**
+**Core Phase 1 Second SQL Slice — Dependency and Approval-Gate Selection**
 
-This Draft task must:
+This next task must remain documentation and analysis only while it identifies the smallest safe second slice from the remaining Core Phase 1 concepts. It must compare:
 
-- remain local only;
-- first determine the smallest safe, dependency-safe subset of the 36 Core Phase 1 concepts;
-- create the first reviewed SQL migration and implement only the approved Core Phase 1 tables required by that slice;
-- include schemas, tables, keys, constraints, and indexes only as approved;
-- resolve or explicitly defer every Open decision that blocks the selected tables;
-- not implement all 36 Core Phase 1 concepts automatically;
-- not implement RLS;
-- not implement browser access;
-- not add `supabase-js`;
-- not link, authenticate to, access, or change hosted Supabase;
-- not migrate data or seed Production-like data;
-- not deploy; and
-- stop at a Draft PR.
+- Identity foundation;
+- access/trial ledger foundation;
+- Supplier-directory foundation; and
+- internal audit/domain-event foundation.
+
+Selection must be based on dependency ordering, Open approval gates, RLS implications, the Firebase Auth boundary, migration-mapping needs, and the ability to validate locally without Production data. The task must not implement the selected SQL slice, link or change hosted Supabase, access or change Firebase Production, migrate data, deploy, or merge.
 
 ### Product priorities
 

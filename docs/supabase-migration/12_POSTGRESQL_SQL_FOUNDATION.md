@@ -1,7 +1,7 @@
 # PostgreSQL SQL Foundation — Migration Control and Traceability
 
-Status: branch-local implementation; not merged, hosted, deployed, or Production-active
-Starting `main`: `206f7daa524228abfa83793c39a03045491f1316`
+Status: merged in repository `main`; not hosted, remotely applied, deployed, or Production-active
+Merged by PR #47: `0760ee6f498c58ceb966ef766b1928c7549bc702` (approved head `217f3b49b697c03fae78396d0730d39d30486f94`; review parent `206f7daa524228abfa83793c39a03045491f1316`)
 Migration: `supabase/migrations/20260804000136_migration_control_foundation.sql`
 
 ## Scope
@@ -80,4 +80,4 @@ This table-only slice cannot declaratively require an active merge-group header 
 - Repository tests passed 181/181; the Production application build and supplier-template reproducibility check passed.
 - Scoped secret/sensitive-data scans and `git diff --check` passed; final independent SQL review found no residual actionable issue.
 
-Firebase Production, hosted Supabase, Production data, Auth, Storage, DNS, billing, and deployment are outside this slice and remain untouched. GitHub-check evidence is reported on the Draft PR.
+Firebase Production, hosted Supabase, Production data, Auth, Storage, DNS, billing, and deployment were outside this slice and remain untouched. PR #47's exact-head GitHub gate passed; the authoritative baseline separately records the stale GitHub PR metadata anomaly and the verified merge history.
