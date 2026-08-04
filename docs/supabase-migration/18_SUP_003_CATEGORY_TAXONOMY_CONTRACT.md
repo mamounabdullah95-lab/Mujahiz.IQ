@@ -1,30 +1,39 @@
 # SUP-003 Supplier category and taxonomy contract
 
-Status: **Pending - Product owner approved; Data owner approval pending; SUP-003 remains Open**
+Status: **Approved - SUP-003 approved through this PR; implementation remains unimplemented**
 Verified repository start: `origin/main` `82fe945bcd1e4472fdc13b6dddb363e384ac75b6`
 Decision owners: Product owner and data owner
 Primary task profile: Documentation
 
 ## 1. Decision posture and evidence labels
 
-This document makes SUP-003 approval-ready without approving it. It uses these labels throughout:
+This document records the approved SUP-003 contract and the governance decision introduced by this PR. It uses these labels throughout:
 
 - **Fact**: verified from the current repository or the authoritative migration documents.
-- **Recommendation**: the proposed contract that takes effect only if SUP-003 is explicitly approved.
+- **Recommendation**: the proposed contract direction recorded as approved by this PR; implementation remains separately gated.
 - **Assumption**: a bounded premise that must be confirmed or replaced at approval.
 - **Approval required**: a material choice that the Product owner and data owner must accept or change.
 
-SUP-003 remains **Open**. The other thirteen Open gates remain unchanged: `ID-001`, `ORG-001`, `ORG-002`, `SUP-004`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+SUP-003 is **Approved**. The other thirteen approval gates remain Open and unchanged: `ID-001`, `ORG-001`, `ORG-002`, `SUP-004`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
 
-Approval of this document would approve only the taxonomy contract and the planning boundary in section 12. It would not authorize SQL, taxonomy rows, aliases, Supplier assignments, source mappings, data movement, application work, hosted work, or Production access.
+This PR approves only the taxonomy contract and the planning boundary in section 12. It does not authorize SQL, taxonomy rows, aliases, Supplier assignments, source mappings, data movement, application work, hosted work, or Production access.
 
 ## 2. Current-state findings
+
+### 2.0 Founder-led governance decision introduced by this PR
+
+- **Governance decision:** During the current founder-led phase of Mujahiz IQ, the same individual serves as both Product Owner and Data Owner.
+- **Effective date:** 5 August 2026, through this PR.
+- **Duration:** This applies only until a future governance document explicitly delegates or separates these roles.
+- **Authority boundary:** This is a new governance decision introduced by this PR. It is not asserted as a prior repository fact, and no personal name is added here.
+
+
 
 ### 2.1 Verified facts
 
 - **Fact:** The authoritative schema design proposes one hierarchical `categories` relation with stable codes, paired Arabic/English labels, an optional parent, and Supplier assignments that record whether an assignment is primary.
 - **Fact:** The design merges `category_translations` into `categories` for the bounded Arabic/English launch languages. `category_translations` remains a Remove/Merge concept and must not be created.
-- **Fact:** The schema decision register remains Open because the Data owner approval is pending; the contract decisions are recorded but SUP-003 is not resolved.
+- **Fact:** Before this PR, the schema decision register recorded SUP-003 as Open. This PR introduces the founder-led governance decision and synchronizes the register to Approved; it does not claim that this dual-role authority previously existed in the repository.
 - **Fact:** The fourth-slice review concluded that `categories` and `supplier_category_assignments` cannot be implemented safely until SUP-003 is approved. It selected no fourth SQL slice.
 - **Fact:** Core Phase 1 remains 7 implemented and 29 deferred concepts. `categories` and `supplier_category_assignments` are among the deferred concepts.
 - **Fact:** The current Firebase `categories` collection has zero verified Production documents. Repository code can seed category documents shaped as `group`, `value`, `labelEn`, `labelAr`, `active`, and `updatedAt`, but repository capability is not evidence that those documents exist in Production.
@@ -196,7 +205,7 @@ Apply stages in order and stop at the first deterministic single result:
 - **Recommendation:** No Production export, import, seed, migration, backfill, or read is authorized by this contract.
 - **Decision recorded:** Approved as recorded in section 13.
 
-## 12. Exact future SQL boundary if SUP-003 is approved
+## 12. Exact future SQL boundary under the approved SUP-003 contract
 
 ### 12.1 Minimum physical relations
 
@@ -272,7 +281,7 @@ Decisions 1-8 and 10-13 are **Approved exactly as recommended**. Decision 9 is *
 
 ## 14. Explicit approval checklist
 
-The following decisions are recorded from the owner outcome. SUP-003 may change from Open only after both required owner approvals are legitimately recorded:
+The following decisions are recorded from the owner outcome. Both owner approvals and the founder-led dual-role governance decision are effective through this PR:
 
 - [x] The purpose and `supplier_offering` boundary are approved.
 - [x] Category, capability, product/service, phrase, keyword, synonym, brand, and part-number distinctions are approved.
@@ -287,13 +296,13 @@ The following decisions are recorded from the owner outcome. SUP-003 may change 
 - [x] Two-relation complete taxonomy model, permissible `categories`-only first slice, and later assignment slice are approved.
 - [x] Zero API-role access, no RLS in the local-only first slice, and all exclusions are approved.
 - [x] The Product owner approval is recorded for 4 August 2026.
-- [ ] The Data owner approval remains Pending because repository/project authority does not identify the same authorized owner for both Product and Data owner roles.
-- [ ] A follow-up commit may update the schema decision register from Open only after the Data owner approval is legitimately recorded; until then SUP-003 remains Open.
+- [x] The Data owner approval is recorded under the founder-led dual-role governance decision introduced by this PR.
+- [x] The schema decision register is updated by this PR from Open to Approved for SUP-003 only.
 
-Approval result: **Pending - Product approved; Data pending; SUP-003 remains Open**
-Product owner: **Approved - 4 August 2026** (personal name not recorded because no authoritative repository/project name was found)
-Data owner: **Pending** (no authoritative evidence identifies the same owner as authorized for both roles)
-Approval commit SHA:
+Approval result: **Approved - Product and Data owner approvals recorded through this PR**
+Product owner: **Approved - 4 August 2026**
+Data owner: **Approved - 5 August 2026 under the founder-led dual-role governance decision introduced by this PR**
+Approval commit SHA: this PR head (recorded in Git history)
 Approved exceptions or changes: Decisions 1-8 and 10-13 are approved exactly as recommended. Decision 9 is approved with this modification: at most one primary category; secondary assignments allowed; 10 is initial product/UI guidance only; future operational limits are configurable; 10 is not a database CHECK constraint, immutable schema limit, or migration rejection boundary; valid records above guidance are preserved for review and never silently deleted or rejected.
 
 ## 15. Exact exclusions
@@ -318,14 +327,14 @@ This document and Draft PR exclude:
 - English abbreviations and technical phrases can collide across branches. Source namespace and manual review are required for deterministic classification.
 - Immutable active parentage increases replacement work but prevents historical path drift and non-reproducible migration results.
 - Leaf-only assignments may leave some current Suppliers temporarily unmapped when evidence identifies only a broad parent. Zero assignments are preferable to invented precision.
-- Adding `category_aliases` increases the eventual physical table count but remains a physical child of the existing logical `categories` concept; it does not reclassify the 79 logical concepts or change 7 implemented/29 deferred Core Phase 1 state in this Open document.
+- Adding `category_aliases` increases the eventual physical table count but remains a physical child of the existing logical `categories` concept; it does not reclassify the 79 logical concepts or change 7 implemented/29 deferred Core Phase 1 state in this governance-only document.
 - No FK should be applied to transformed Supplier category data until every relevant source value has a deterministic outcome and reconciliation passes.
 
 ## 17. Validation, stop conditions, and next authorized action
 
 ### Validation required for this decision document
 
-- SUP-003 remains Open and all other thirteen gates remain unchanged.
+- SUP-003 is Approved and all other thirteen gates remain Open and unchanged.
 - The document remains consistent with the authoritative schema design, decision register, review checklist, fourth-slice no-go, phase counts, and current category/import contracts.
 - Arabic/English terminology remains paired and no translation is silently invented.
 - Markdown paths/references, stale-state markers, sensitive-value scan, and `git diff --check` pass.
@@ -337,7 +346,7 @@ Stop without SQL or further gate work if either decision owner requests changes,
 
 ### Next action after explicit approval
 
-After both decision owners approve SUP-003 in a reviewed commit, create a new focused task to synchronize the decision register and select the exact first taxonomy SQL slice. For an isolated local implementation, use **Terra with High reasoning** as recommended by the fourth-slice selection. Keep the slice empty, synthetic-data-only, local-only, API-inaccessible, and separately reviewed. Do not begin that work from this Open contract.
+The decision register is synchronized by this PR. The next authorized action is a new focused task to select the exact first taxonomy SQL slice. For an isolated local implementation, use **Terra with High reasoning** as recommended by the fourth-slice selection. Keep the slice empty, synthetic-data-only, local-only, API-inaccessible, and separately reviewed. Do not begin implementation from this governance document.
 
 ## 18. References
 
