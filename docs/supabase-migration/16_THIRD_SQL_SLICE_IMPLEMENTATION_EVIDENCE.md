@@ -28,13 +28,13 @@ All fourteen approval gates remain Open: `ID-001`, `ORG-001`, `ORG-002`, `SUP-00
 
 The table needs none of those decisions while it is an empty, local-only root. The existing migration-control contract can map a synthetic `suppliers/{id}` source disposition to the `supplier_profiles` logical target without creating or running a Migration Engine.
 
-The Core Phase 1 count is now 7 implemented and 29 deferred, out of 36. Firebase remains the live Production backend and Auth authority. Supabase remains local-only.
+On this PR branch only, the Core Phase 1 count is 7 implemented and 29 deferred, out of 36; merged `main` remains at 6 implemented and 30 deferred until this PR is approved and merged. Firebase remains the live Production backend and Auth authority. Supabase remains local-only.
 
 ## Validation record
 
 - Clean local Supabase reset applied all three local migrations successfully.
-- Focused synthetic `supplier_profile_foundation.sql` pgTAP passed 52/52.
-- Complete local pgTAP suite passed 190/190.
+- Focused synthetic `supplier_profile_foundation.sql` pgTAP passed 84/84.
+- Complete local pgTAP suite passed 222/222.
 - Warning-level database lint returned no schema errors. Catalog checks found 21 columns, 22 constraints, 6 indexes, two `ON DELETE RESTRICT` foreign keys, and zero policies, application triggers, public functions/views, or direct API-role table privileges.
 - The required non-Emulator PR-gate checks passed: repository tests, Production build, Functions typecheck, and byte-stable Supplier-template generation.
 - Scoped prohibited-SQL and sensitive-value scans returned no matches, and `git diff --check` passed.

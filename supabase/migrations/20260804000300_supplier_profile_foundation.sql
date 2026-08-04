@@ -64,7 +64,8 @@ create table public.supplier_profiles (
     verification_status in ('verified', 'community_submitted', 'needs_more_info', 'watchlist')
   ),
   constraint supplier_profiles_lifecycle_coherence_ck check (
-    (listing_status = 'watchlist') = (verification_status = 'watchlist')
+    listing_status = 'archived'
+    or (listing_status = 'watchlist') = (verification_status = 'watchlist')
   ),
   constraint supplier_profiles_source_type_ck check (
     source_type in (
@@ -79,7 +80,8 @@ create table public.supplier_profiles (
     has_direct_experience in ('yes', 'no', 'not_sure')
   ),
   constraint supplier_profiles_last_interaction_year_ck check (
-    last_interaction_year is null or last_interaction_year between 1900 and 2100
+    last_interaction_year is null
+    or last_interaction_year between 1900 and extract(year from current_date)::integer
   ),
   constraint supplier_profiles_related_material_service_ck check (
     related_material_service is null or octet_length(btrim(related_material_service)) between 1 and 200

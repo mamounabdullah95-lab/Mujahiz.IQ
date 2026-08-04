@@ -5,7 +5,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, pg_catalog;
 
-select plan(52);
+select plan(84);
 
 select has_table('public', 'supplier_profiles', 'supplier_profiles exists');
 select has_column('public', 'supplier_profiles', 'id', 'supplier profiles have a UUID identity');
@@ -29,6 +29,34 @@ select is(
   ),
   'd682d99a637aa5eeba7ac8f0bd100d87',
   'supplier profiles exact columns, types, order, and nullability match the approved contract'
+);
+select is(
+  (select count(*) from pg_catalog.pg_constraint where conrelid = 'public.supplier_profiles'::regclass),
+  22::bigint,
+  'supplier profiles have exactly the approved constraint count'
+);
+select is(
+  (select count(*) from pg_catalog.pg_index where indrelid = 'public.supplier_profiles'::regclass),
+  6::bigint,
+  'supplier profiles have exactly the primary-key and five approved indexes'
+);
+select is(
+  (
+    select string_agg(
+      c.relname || ':' || i.indisunique::text || ':' || (i.indpred is not null)::text || ':' ||
+      (
+        select string_agg(a.attname::text, ',' order by k.ordinality)
+        from unnest(i.indkey::smallint[]) with ordinality k(attnum, ordinality)
+        join pg_catalog.pg_attribute a on a.attrelid = i.indrelid and a.attnum = k.attnum
+      ),
+      '|' order by c.relname
+    )
+    from pg_catalog.pg_index i
+    join pg_catalog.pg_class c on c.oid = i.indexrelid
+    where i.indrelid = 'public.supplier_profiles'::regclass
+  ),
+  'supplier_profiles_created_by_idx:false:true:created_by_user_profile_id,created_at,id|supplier_profiles_legacy_firestore_id_uidx:true:true:legacy_firestore_id|supplier_profiles_listing_display_created_idx:false:false:listing_status,display_name,created_at,id|supplier_profiles_pkey:true:false:id|supplier_profiles_updated_by_idx:false:true:updated_by_user_profile_id,updated_at,id|supplier_profiles_verification_created_idx:false:false:verification_status,created_at,id',
+  'supplier profile index names, uniqueness, partiality, and key order match the approved contract'
 );
 select matches(
   (
@@ -61,10 +89,16 @@ create temporary table supplier_test_ids (name text primary key, id uuid not nul
 
 with inserted as (
   insert into public.user_profiles (full_name, account_context)
-  values ('Synthetic Supplier Actor', 'buyer')
-  returning id
+  values
+    ('Synthetic Supplier Creation Actor', 'buyer'),
+    ('Synthetic Supplier Update Actor', 'buyer')
+  returning full_name, id
 )
-insert into supplier_test_ids (name, id) select 'actor', id from inserted;
+insert into supplier_test_ids (name, id)
+select case full_name
+  when 'Synthetic Supplier Creation Actor' then 'actor_created'
+  else 'actor_updated'
+end, id from inserted;
 
 with inserted as (
   insert into public.supplier_profiles (
@@ -76,7 +110,8 @@ with inserted as (
     'synthetic-supplier-doc-1', 'شركة المورد الصناعي', 'Synthetic Industrial Supplier', 'mixed', 'شركة المورد الصناعي', 'Synthetic Industrial Supplier',
     'Synthetic local-only Supplier profile.', 'company', 'market_visit', 'high', 'yes',
     2024, 'industrial instrumentation', 'synthetic provenance only',
-    (select id from supplier_test_ids where name = 'actor'), (select id from supplier_test_ids where name = 'actor')
+    (select id from supplier_test_ids where name = 'actor_created'),
+    (select id from supplier_test_ids where name = 'actor_updated')
   ) returning id
 )
 insert into supplier_test_ids (name, id) select 'supplier', id from inserted;
@@ -84,6 +119,33 @@ insert into supplier_test_ids (name, id) select 'supplier', id from inserted;
 select is((select count(*) from public.supplier_profiles), 1::bigint, 'one valid synthetic Supplier root is accepted');
 select ok((select id is not null from public.supplier_profiles where id = (select id from supplier_test_ids where name = 'supplier')), 'accepted Supplier receives a generated UUID');
 select is((select listing_status from public.supplier_profiles where id = (select id from supplier_test_ids where name = 'supplier')), 'approved', 'minimal lifecycle defaults to approved listing status');
+select ok((select substring(id::text from 15 for 1) = '4' and substring(id::text from 20 for 1) ~ '^[89ab]$' from public.supplier_profiles where id = (select id from supplier_test_ids where name = 'supplier')), 'generated Supplier identity is UUIDv4 with the RFC variant');
+select ok((select created_at = updated_at from public.supplier_profiles where id = (select id from supplier_test_ids where name = 'supplier')), 'default Supplier timestamps are coherent within one insert statement');
+select lives_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_ar, name_en, business_type, source_type, confidence_level, has_direct_experience, listing_status, verification_status) values ('Archived Arabic', 'Archived Arabic', 'arabic', 'Arabic canonical name', null, 'company', 'other', 'low', 'no', 'archived', 'verified'), ('Archived Watchlist', 'Archived Watchlist', 'english', null, 'Archived Watchlist', 'company', 'other', 'low', 'no', 'archived', 'watchlist'), ('Current Watchlist', 'Current Watchlist', 'mixed', 'Current Watchlist Arabic', 'Current Watchlist', 'company', 'other', 'low', 'no', 'watchlist', 'watchlist') $$, 'approved, watchlist, and archived lifecycle states preserve the approved matrix');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, listing_status, verification_status) values ('Valid', 'Valid', 'english', 'Name', 'company', 'other', 'low', 'no', 'approved', 'watchlist') $$, null, 'approved listings cannot carry the current watchlist verification signal');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'english', 'Name', 'unsupported', 'other', 'low', 'no') $$, null, 'unsupported business type is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'english', 'Name', 'company', 'unsupported', 'low', 'no') $$, null, 'unsupported source type is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'english', 'Name', 'company', 'other', 'unsupported', 'no') $$, null, 'unsupported confidence level is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'english', 'Name', 'company', 'other', 'low', 'unsupported') $$, null, 'unsupported direct-experience value is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'unsupported', 'Name', 'company', 'other', 'low', 'no') $$, null, 'unsupported name language is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_ar, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'english', 'Arabic only', 'company', 'other', 'low', 'no') $$, null, 'English naming shape requires an English name only');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'mixed', 'English only', 'company', 'other', 'low', 'no') $$, null, 'mixed naming shape cannot omit the Arabic canonical name');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('   ', 'Valid', 'english', 'Name', 'company', 'other', 'low', 'no') $$, null, 'whitespace-only original name is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', '   ', 'english', 'Name', 'company', 'other', 'low', 'no') $$, null, 'whitespace-only display name is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_ar, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'arabic', '   ', 'company', 'other', 'low', 'no') $$, null, 'whitespace-only Arabic name is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'english', '   ', 'company', 'other', 'low', 'no') $$, null, 'whitespace-only English name is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values (repeat('x', 201), 'Valid', 'english', 'Name', 'company', 'other', 'low', 'no') $$, null, 'oversized original name is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'english', repeat('x', 201), 'company', 'other', 'low', 'no') $$, null, 'oversized canonical language name is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, short_description, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'english', 'Name', '   ', 'company', 'other', 'low', 'no') $$, null, 'whitespace-only short description is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, short_description, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', 'Valid', 'english', 'Name', repeat('x', 2001), 'company', 'other', 'low', 'no') $$, null, 'oversized short description is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, related_material_service) values ('Valid', 'Valid', 'english', 'Name', 'company', 'other', 'low', 'no', '   ') $$, null, 'whitespace-only related material or service is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, related_material_service) values ('Valid', 'Valid', 'english', 'Name', 'company', 'other', 'low', 'no', repeat('x', 201)) $$, null, 'oversized related material or service is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, source_note) values ('Valid', 'Valid', 'english', 'Name', 'company', 'other', 'low', 'no', '   ') $$, null, 'whitespace-only source note is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, source_note) values ('Valid', 'Valid', 'english', 'Name', 'company', 'other', 'low', 'no', repeat('x', 1001)) $$, null, 'oversized source note is rejected');
+select lives_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, last_interaction_year) values ('Current Year', 'Current Year', 'english', 'Current Year', 'company', 'other', 'low', 'no', extract(year from current_date)::integer) $$, 'current interaction year is accepted without a fixed future cutoff');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, last_interaction_year) values ('Too Old', 'Too Old', 'english', 'Too Old', 'company', 'other', 'low', 'no', 1899) $$, null, 'interaction year before 1900 is rejected');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, last_interaction_year) values ('Future Year', 'Future Year', 'english', 'Future Year', 'company', 'other', 'low', 'no', extract(year from current_date)::integer + 1) $$, null, 'future interaction year is rejected without freezing an upper calendar year');
+select lives_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Null Legacy One', 'Null Legacy One', 'english', 'Null Legacy One', 'other', 'other', 'low', 'no'), ('Null Legacy Two', 'Null Legacy Two', 'english', 'Null Legacy Two', 'other', 'other', 'low', 'no') $$, 'multiple null legacy Supplier identifiers remain valid');
 select is((select verification_status from public.supplier_profiles where id = (select id from supplier_test_ids where name = 'supplier')), 'community_submitted', 'minimal lifecycle defaults to a non-ownership verification signal');
 select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_ar, business_type, source_type, confidence_level, has_direct_experience) values ('', 'Valid', 'arabic', 'Ø§Ø³Ù…', 'company', 'other', 'low', 'no') $$, null, 'empty original name is rejected');
 select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Valid', repeat('x', 201), 'english', 'Name', 'company', 'other', 'low', 'no') $$, null, 'oversized display name is rejected');
@@ -97,7 +159,9 @@ select throws_ok($$ insert into public.supplier_profiles (legacy_firestore_id, n
 select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, created_at, updated_at) values ('Valid', 'Valid', 'english', 'Name', 'company', 'other', 'low', 'no', statement_timestamp(), statement_timestamp() - interval '1 second') $$, null, 'Supplier timestamps must be coherent');
 select lives_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience) values ('Bootstrap Supplier', 'Bootstrap Supplier', 'english', 'Bootstrap Supplier', 'other', 'other', 'needs_verification', 'not_sure') $$, 'nullable actor references allow a migration/bootstrap state without fabricated actors');
 select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, created_by_user_profile_id) values ('Orphan', 'Orphan', 'english', 'Orphan', 'other', 'other', 'low', 'no', gen_random_uuid()) $$, null, 'creation actor must reference an existing profile');
-select throws_ok($$ delete from public.user_profiles where id = (select id from supplier_test_ids where name = 'actor') $$, null, 'referenced Supplier actor cannot be deleted');
+select throws_ok($$ insert into public.supplier_profiles (name_original, display_name, name_language, name_en, business_type, source_type, confidence_level, has_direct_experience, updated_by_user_profile_id) values ('Orphan', 'Orphan', 'english', 'Orphan', 'other', 'other', 'low', 'no', gen_random_uuid()) $$, null, 'update actor must reference an existing profile');
+select throws_ok($$ delete from public.user_profiles where id = (select id from supplier_test_ids where name = 'actor_created') $$, null, 'creation actor RESTRICT is enforced without another Supplier actor FK masking it');
+select throws_ok($$ delete from public.user_profiles where id = (select id from supplier_test_ids where name = 'actor_updated') $$, null, 'update actor RESTRICT is enforced without another Supplier actor FK masking it');
 
 with inserted as (
   insert into internal.migration_batches (execution_environment, migration_scope, source_system, source_snapshot_reference, transformation_version, schema_version, status, initiated_by)
