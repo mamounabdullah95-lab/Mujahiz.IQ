@@ -5,7 +5,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, pg_catalog;
 
-select plan(61);
+select plan(78);
 
 select has_schema('internal', 'internal schema exists');
 select has_table('public', 'user_profiles', 'user_profiles exists');
@@ -18,6 +18,24 @@ select has_column('internal', 'identity_provider_links', 'user_profile_id', 'pro
 select has_column('internal', 'identity_provider_links', 'provider_code', 'provider links retain a provider code');
 select has_column('internal', 'identity_provider_links', 'provider_subject', 'provider links retain a provider subject');
 select has_column('internal', 'identity_provider_links', 'migration_batch_id', 'provider links retain optional migration provenance');
+select is(
+  (
+    select md5(string_agg(a.attname || ':' || pg_catalog.format_type(a.atttypid, a.atttypmod) || ':' || a.attnotnull::text, ',' order by a.attnum))
+    from pg_catalog.pg_attribute a
+    where a.attrelid = 'public.user_profiles'::regclass and a.attnum > 0 and not a.attisdropped
+  ),
+  '2720de0985e6deb38f2f7cc9009bdf3d',
+  'user_profiles exact columns, types, order, and nullability match the approved contract'
+);
+select is(
+  (
+    select md5(string_agg(a.attname || ':' || pg_catalog.format_type(a.atttypid, a.atttypmod) || ':' || a.attnotnull::text, ',' order by a.attnum))
+    from pg_catalog.pg_attribute a
+    where a.attrelid = 'internal.identity_provider_links'::regclass and a.attnum > 0 and not a.attisdropped
+  ),
+  'cd4094a6828eb6bf209e171d79c1f76c',
+  'identity_provider_links exact columns, types, order, and nullability match the approved contract'
+);
 
 select matches(
   (
@@ -62,6 +80,9 @@ select ok(
 select ok(not has_table_privilege('anon', 'public.user_profiles', 'select'), 'anon cannot select profiles');
 select ok(not has_table_privilege('authenticated', 'public.user_profiles', 'select'), 'authenticated cannot select profiles');
 select ok(not has_table_privilege('service_role', 'public.user_profiles', 'select'), 'service API role cannot select profiles directly');
+select ok(not exists (select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(coalesce(c.relacl, pg_catalog.acldefault('r', c.relowner))) acl where c.oid = 'public.user_profiles'::regclass and acl.grantee in (0, 'anon'::regrole::oid, 'authenticated'::regrole::oid, 'service_role'::regrole::oid)), 'PUBLIC and API roles have no profile-table privilege');
+select ok(not exists (select 1 from pg_catalog.pg_class c cross join lateral pg_catalog.aclexplode(coalesce(c.relacl, pg_catalog.acldefault('r', c.relowner))) acl where c.oid = 'internal.identity_provider_links'::regclass and acl.grantee in (0, 'anon'::regrole::oid, 'authenticated'::regrole::oid, 'service_role'::regrole::oid)), 'PUBLIC and API roles have no provider-link table privilege');
+select ok(not has_schema_privilege('service_role', 'internal', 'USAGE'), 'service API role has no internal schema usage');
 select ok(not has_schema_privilege('anon', 'internal', 'USAGE'), 'anon has no internal schema usage');
 select ok(not has_schema_privilege('authenticated', 'internal', 'USAGE'), 'authenticated has no internal schema usage');
 select is((select relrowsecurity from pg_catalog.pg_class where oid = 'public.user_profiles'::regclass), false, 'RLS remains deferred on the non-granted profile table');
@@ -69,6 +90,22 @@ select is((select count(*) from pg_catalog.pg_policy where polrelid = 'public.us
 select is((select count(*) from pg_catalog.pg_trigger where tgrelid = 'public.user_profiles'::regclass and not tgisinternal), 0::bigint, 'profile table has no application trigger');
 select is((select count(*) from pg_catalog.pg_trigger where tgrelid = 'internal.identity_provider_links'::regclass and not tgisinternal), 0::bigint, 'provider link table has no application trigger');
 select ok(to_regclass('public.platform_role_assignments') is null, 'deferred platform_role_assignments table is absent');
+select is(
+  (
+    select count(*)
+    from pg_catalog.pg_constraint
+    where conrelid in ('public.user_profiles'::regclass, 'internal.identity_provider_links'::regclass)
+      and contype = 'f'
+      and confdeltype = 'r'
+  ),
+  10::bigint,
+  'all profile, actor, and migration-batch foreign keys use ON DELETE RESTRICT'
+);
+select throws_ok(
+  $$ insert into public.user_profiles (full_name, account_context, account_status) values ('Synthetic', 'buyer', 'pending') $$,
+  null,
+  'invalid profile status is rejected'
+);
 
 select throws_ok(
   $$ insert into public.user_profiles (full_name, account_context) values ('Synthetic', 'admin') $$,
@@ -86,9 +123,24 @@ select throws_ok(
   'non-normalized support email is rejected'
 );
 select throws_ok(
+  $$ insert into public.user_profiles (full_name, account_context, normalized_email) values ('Synthetic', 'buyer', ' synthetic@example.test ') $$,
+  null,
+  'support email with surrounding whitespace is not normalized and is rejected'
+);
+select throws_ok(
   $$ insert into public.user_profiles (full_name, account_context) values ('', 'buyer') $$,
   null,
   'empty profile name is rejected'
+);
+select throws_ok(
+  $$ insert into public.user_profiles (full_name, account_context) values (repeat('x', 201), 'buyer') $$,
+  null,
+  'oversized profile name is rejected'
+);
+select throws_ok(
+  $$ insert into public.user_profiles (legacy_firestore_id, full_name, account_context) values (repeat('x', 513), 'Synthetic', 'buyer') $$,
+  null,
+  'oversized legacy Firestore identifier is rejected'
 );
 select throws_ok(
   $$ insert into public.user_profiles (full_name, account_context, created_at, updated_at) values ('Synthetic', 'buyer', statement_timestamp(), statement_timestamp() - interval '1 second') $$,
@@ -143,6 +195,16 @@ select is(
   'valid provider-neutral profile is accepted'
 );
 select ok((select id is not null from public.user_profiles where id = (select id from identity_test_ids where name = 'profile')), 'profile uses an opaque generated UUID rather than the legacy identifier');
+select throws_ok(
+  $$ insert into public.user_profiles (full_name, account_context, suspended_by_user_profile_id) values ('Contradictory suspension actor', 'buyer', (select id from identity_test_ids where name = 'profile')) $$,
+  null,
+  'an active profile cannot carry a suspension actor without a suspension state'
+);
+select throws_ok(
+  $$ insert into public.user_profiles (full_name, account_context, deactivated_by_user_profile_id) values ('Contradictory deactivation actor', 'buyer', (select id from identity_test_ids where name = 'profile')) $$,
+  null,
+  'an active profile cannot carry a deactivation actor without a deactivation state'
+);
 
 with inserted as (
   insert into internal.identity_provider_links (
@@ -175,9 +237,24 @@ select throws_ok(
   'non-null legacy Firestore IDs are unique'
 );
 select throws_ok(
-  $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, provider_state_observed_at) values (gen_random_uuid(), 'Firebase', 'synthetic-subject', statement_timestamp()) $$,
+  $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, provider_state_observed_at) values ((select id from identity_test_ids where name = 'profile'), 'Firebase', 'synthetic-subject', statement_timestamp()) $$,
   null,
   'provider code must be bounded lowercase provider-neutral text'
+);
+select throws_ok(
+  $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, link_status, provider_state_observed_at) values ((select id from identity_test_ids where name = 'profile'), 'oidc', 'invalid-link-status', 'pending', statement_timestamp()) $$,
+  null,
+  'invalid provider-link status is rejected'
+);
+select throws_ok(
+  $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, identity_status, provider_state_observed_at) values ((select id from identity_test_ids where name = 'profile'), 'oidc', 'invalid-identity-status', 'pending', statement_timestamp()) $$,
+  null,
+  'invalid provider identity status is rejected'
+);
+select throws_ok(
+  $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, verification_status, provider_state_observed_at) values ((select id from identity_test_ids where name = 'profile'), 'oidc', 'invalid-verification-status', 'pending', statement_timestamp()) $$,
+  null,
+  'invalid provider verification status is rejected'
 );
 select throws_ok(
   $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, provider_state_observed_at) values ((select id from identity_test_ids where name = 'profile'), 'firebase', repeat('x', 256), statement_timestamp()) $$,
@@ -209,6 +286,11 @@ select throws_ok(
   'unlinked identity requires an unlink timestamp'
 );
 select throws_ok(
+  $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, provider_state_observed_at, unlinked_by_user_profile_id) values ((select id from identity_test_ids where name = 'profile'), 'oidc', 'contradictory-unlink-actor', statement_timestamp(), (select id from identity_test_ids where name = 'profile')) $$,
+  null,
+  'a linked provider row cannot carry an unlink actor without an unlink state'
+);
+select throws_ok(
   $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, identity_status, verification_status, provider_state_observed_at) values ((select id from identity_test_ids where name = 'profile'), 'oidc', 'missing-disabled-time', 'disabled', 'unknown', statement_timestamp()) $$,
   null,
   'disabled identity requires a disabled timestamp'
@@ -221,6 +303,11 @@ select throws_ok(
   $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, identity_status, verification_status, provider_state_observed_at, verified_at) values ((select id from identity_test_ids where name = 'profile'), 'oidc', 'verified-while-unknown', 'unknown', 'verified', statement_timestamp(), statement_timestamp()) $$,
   null,
   'verified state requires an active linked non-disabled identity'
+);
+select throws_ok(
+  $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, linked_at, provider_state_observed_at) values ((select id from identity_test_ids where name = 'profile'), 'oidc', 'observation-before-link', statement_timestamp(), statement_timestamp() - interval '1 second') $$,
+  null,
+  'provider-state observation cannot precede link creation'
 );
 select throws_ok(
   $$ insert into internal.identity_provider_links (user_profile_id, provider_code, provider_subject, provider_state_observed_at) values (gen_random_uuid(), 'oidc', 'orphan-profile', statement_timestamp()) $$,

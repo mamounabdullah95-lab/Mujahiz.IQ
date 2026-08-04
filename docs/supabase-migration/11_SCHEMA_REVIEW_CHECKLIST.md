@@ -23,7 +23,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 ### Second SQL-slice implementation evidence
 
 - [x] Local implementation branch adds exactly public.user_profiles and internal.identity_provider_links in migration 20260804000200; no third identity/access table, RLS, policy, Auth bridge, browser/API grant, hosted operation, or data operation is included.
-- [x] Synthetic focused pgTAP covers accepted/rejected profile and provider-link states, Firebase text-subject traceability, active uniqueness, lifecycle coherence, RESTRICT delete behavior, migration-control compatibility, and absent API access; the focused result is 61/61 and the complete local suite is 121/121.
+- [x] Synthetic focused pgTAP covers accepted/rejected profile and provider-link states, Firebase text-subject traceability, active uniqueness, lifecycle coherence, RESTRICT delete behavior, migration-control compatibility, and absent API access; the focused result is 78/78 and the complete local suite is 138/138.
 - [x] Local warning-level lint and catalog checks verify expected constraints/indexes and zero application triggers, functions, policies, and direct anon/authenticated/service API table privileges.
 - [ ] ID-001, MIG-002, RES-001, and every other listed Open gate remain unresolved; Firebase Auth remains authoritative and a later trusted validation/reconciliation phase is required before integration.
 

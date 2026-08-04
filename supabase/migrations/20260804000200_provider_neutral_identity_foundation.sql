@@ -51,6 +51,7 @@ create table public.user_profiles (
     or (
       octet_length(normalized_email) between 3 and 320
       and normalized_email = lower(normalized_email)
+      and normalized_email = btrim(normalized_email)
     )
   ),
   constraint user_profiles_display_email_ck check (
@@ -90,6 +91,7 @@ create table public.user_profiles (
   constraint user_profiles_suspension_state_ck check (
     (account_status = 'suspended') = (suspended_at is not null)
     and (account_status = 'suspended') = (suspension_reason is not null)
+    and (account_status = 'suspended' or suspended_by_user_profile_id is null)
   ),
   constraint user_profiles_suspension_reason_ck check (
     suspension_reason is null or octet_length(suspension_reason) between 1 and 1000
@@ -97,6 +99,7 @@ create table public.user_profiles (
   constraint user_profiles_deactivation_state_ck check (
     (account_status = 'deactivated') = (deactivated_at is not null)
     and (account_status = 'deactivated') = (deactivation_reason is not null)
+    and (account_status = 'deactivated' or deactivated_by_user_profile_id is null)
   ),
   constraint user_profiles_deactivation_reason_ck check (
     deactivation_reason is null or octet_length(deactivation_reason) between 1 and 1000
@@ -188,6 +191,7 @@ create table internal.identity_provider_links (
   constraint identity_provider_links_unlink_state_ck check (
     (link_status = 'unlinked') = (unlinked_at is not null)
     and (link_status = 'linked' or not is_primary)
+    and (link_status = 'unlinked' or unlinked_by_user_profile_id is null)
   ),
   constraint identity_provider_links_disabled_state_ck check (
     (identity_status = 'disabled') = (disabled_at is not null)

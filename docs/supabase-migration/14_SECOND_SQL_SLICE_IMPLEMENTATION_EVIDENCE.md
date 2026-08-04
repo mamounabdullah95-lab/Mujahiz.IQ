@@ -15,8 +15,8 @@ Migration `20260804000200_provider_neutral_identity_foundation.sql` adds exactly
 ## Local verification
 
 - Clean `supabase db reset` applied the merged migration-control foundation first, then this migration, on the disposable local database.
-- Focused synthetic pgTAP test `identity_provider_foundation.sql` passed 61/61 assertions.
-- Complete local pgTAP suite passed 121/121 assertions.
+- Focused synthetic pgTAP test `identity_provider_foundation.sql` passed 78/78 assertions.
+- Complete local pgTAP suite passed 138/138 assertions.
 - `supabase db lint --level warning` returned no schema errors.
 - Catalog inspection verified both tables, UUID defaults, `ON DELETE RESTRICT` foreign keys, expected indexes, zero application triggers/functions/policies, no RLS, no `anon`/`authenticated` use on `internal`, and no direct `anon`, `authenticated`, or `service_role` SELECT privilege.
 
