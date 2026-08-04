@@ -1,6 +1,6 @@
 # SUP-003 Supplier category and taxonomy contract
 
-Status: **Open - approval requested; no SQL or implementation is authorized**
+Status: **Pending - Product owner approved; Data owner approval pending; SUP-003 remains Open**
 Verified repository start: `origin/main` `82fe945bcd1e4472fdc13b6dddb363e384ac75b6`
 Decision owners: Product owner and data owner
 Primary task profile: Documentation
@@ -151,11 +151,11 @@ Current values mix controlled main-category codes, free-text subcategories, capa
 - **Recommendation:** Supplier assignment implementation remains a later SQL slice. This document defines its contract only.
 - **Recommendation:** Only active, assignable leaves may receive a new assignment. Root and intermediate nodes are navigation-only.
 - **Recommendation:** Assignment roles are `primary` and `secondary`. A Supplier has at most one active primary category and cannot hold duplicate active assignments to the same category.
-- **Recommendation:** A future trusted command should normally cap active assignments at 10 per Supplier. This is a product-validation limit, not a `categories` table constraint; a different limit requires product evidence and explicit approval.
+- **Recommendation:** Ten active assignments per Supplier is initial product/UI guidance only. A future assignment implementation must use a configurable operational limit; 10 is not a database `CHECK`, immutable schema limit, or migration-rejection boundary. Valid records above the UI guidance remain preserved and are routed for review rather than silently deleted or rejected.
 - **Recommendation:** A Supplier with any approved category assignments should have exactly one primary assignment. Unclassified, pending-review, or unmapped Suppliers may have zero assignments without inventing a category.
 - **Recommendation:** Future contributors, imports, and source transformations may propose assignments. A designated taxonomy/data review workflow approves or changes them, and only the later trusted mutation boundary applies canonical assignments.
 - **Recommendation:** The proposer/reviewer terms describe workflow responsibility only. This contract does not select users, roles, Auth, RLS, grants, or application permissions.
-- **Approval required:** Confirm leaf-only assignment, one primary, secondary assignments, and the suggested limit of 10.
+- **Approval required:** Confirm leaf-only assignment, one primary, secondary assignments, configurable operational limits, and preservation/review of valid records above the initial UI guidance.
 
 ## 11. `other`, unmapped values, and deterministic migration mapping
 
@@ -242,59 +242,59 @@ The complete taxonomy structure needs two physical relations while remaining one
 - RLS and API/read projections require a later separately approved task. The absence of RLS is acceptable only while all API-role privileges remain absent.
 - **Approval required:** Confirm the two-relation complete model, the permissible one-table first slice, and later assignment separation.
 
-## 13. Material decisions requiring explicit approval
+## 13. Recorded owner decisions
 
-No row below is approved by publication of this Draft PR.
+Decisions 1-8 and 10-13 are **Approved exactly as recommended**. Decision 9 is **Approved with modification** as recorded below. These decisions do not authorize SQL or implementation.
 
 | # | Material choice | Recommended option | Rationale | Owner decision |
 |---:|---|---|---|---|
-| 1 | Taxonomy purpose | One `supplier_offering` taxonomy; Supplier use first | Bounded meaning without deciding product/RFQ behavior | Approve / change |
-| 2 | Hierarchy | Single parent, maximum depth 3 | Supports navigation and specificity without unlimited graph complexity | Approve / change |
-| 3 | Assignability | Active leaves only; roots/intermediate nodes not assignable | Prevents broad and narrow assignments from having unclear equivalence | Approve / change |
-| 4 | Reparenting | Parent immutable after activation, mapping, or assignment | Preserves historical paths and deterministic replay | Approve / change |
-| 5 | Identity | UUIDv4 PK plus immutable global human-readable snake-case code | Separates stable identity from labels and hierarchy | Approve / change |
-| 6 | Labels | Arabic and English required, sibling-unique by locale, no cross-language fallback | Prevents mixed-language UI and silent translation invention | Approve / change |
-| 7 | Alias model | Separate category-specific physical child rows with global auto-map collision prevention | Makes mapping deterministic and auditable | Approve / change |
-| 8 | Lifecycle | `draft` -> `active` -> `deprecated`/`archived`; archived terminal; no automatic rewrites | Preserves history and controlled replacement | Approve / change |
-| 9 | Supplier assignments | One primary, secondary allowed, suggested active maximum 10 | Supports breadth while bounding noise | Approve / change |
-| 10 | Global `other` | Do not create/map a global category; preserve and review legacy values | Avoids false classification and an unhelpful catch-all | Approve / change |
-| 11 | Mapping | Exact -> normalized -> alias -> manual; fuzzy never auto; one-to-many reviewed only | Deterministic, explainable, and lossless | Approve / change |
-| 12 | First SQL boundary | `categories` alone may be the first empty local slice; aliases and assignments later | Smallest reversible implementation after contract approval | Approve / change |
-| 13 | Initial access | Zero API-role privileges and no RLS until a later access task | Preserves the proven local-only boundary | Approve / change |
+| 1 | Taxonomy purpose | One `supplier_offering` taxonomy; Supplier use first | Bounded meaning without deciding product/RFQ behavior | **Approved** |
+| 2 | Hierarchy | Single parent, maximum depth 3 | Supports navigation and specificity without unlimited graph complexity | **Approved** |
+| 3 | Assignability | Active leaves only; roots/intermediate nodes not assignable | Prevents broad and narrow assignments from having unclear equivalence | **Approved** |
+| 4 | Reparenting | Parent immutable after activation, mapping, or assignment | Preserves historical paths and deterministic replay | **Approved** |
+| 5 | Identity | UUIDv4 PK plus immutable global human-readable snake-case code | Separates stable identity from labels and hierarchy | **Approved** |
+| 6 | Labels | Arabic and English required, sibling-unique by locale, no cross-language fallback | Prevents mixed-language UI and silent translation invention | **Approved** |
+| 7 | Alias model | Separate category-specific physical child rows with global auto-map collision prevention | Makes mapping deterministic and auditable | **Approved** |
+| 8 | Lifecycle | `draft` -> `active` -> `deprecated`/`archived`; archived terminal; no automatic rewrites | Preserves history and controlled replacement | **Approved** |
+| 9 | Supplier assignments | One primary; secondary allowed; 10 is initial product/UI guidance only; configurable operational limit; valid records above guidance preserved for review | Supports breadth while avoiding a permanent data-model or migration boundary | **Approved with modification** |
+| 10 | Global `other` | Do not create/map a global category; preserve and review legacy values | Avoids false classification and an unhelpful catch-all | **Approved** |
+| 11 | Mapping | Exact -> normalized -> alias -> manual; fuzzy never auto; one-to-many reviewed only | Deterministic, explainable, and lossless | **Approved** |
+| 12 | First SQL boundary | `categories` alone may be the first empty local slice; aliases and assignments later | Smallest reversible implementation after contract approval | **Approved** |
+| 13 | Initial access | Zero API-role privileges and no RLS until a later access task | Preserves the proven local-only boundary | **Approved** |
 
-### Assumptions to confirm
+### Confirmed assumptions
 
 - Arabic and English are the only launch taxonomy languages.
 - Three hierarchy levels are sufficient for the first reviewed Supplier-offering vocabulary.
-- A limit of 10 active Supplier assignments is adequate for the initial directory use case.
+- Ten active Supplier assignments is initial product/UI guidance only, not a permanent data-model constraint; future limits are configurable and valid records above guidance are preserved for review.
 - The current 23 controlled values are mapping candidates, not a pre-approved taxonomy seed.
 - Existing migration-control relations plus reviewed versioned mapping artifacts are sufficient for the first taxonomy slice; a dedicated reusable source-vocabulary mapping relation is deferred until implementation evidence requires it.
 
 ## 14. Explicit approval checklist
 
-SUP-003 may change from Open only when Product owner and data owner explicitly confirm all items below in a reviewed commit:
+The following decisions are recorded from the owner outcome. SUP-003 may change from Open only after both required owner approvals are legitimately recorded:
 
-- [ ] The purpose and `supplier_offering` boundary are approved.
-- [ ] Category, capability, product/service, phrase, keyword, synonym, brand, and part-number distinctions are approved.
-- [ ] Single-parent hierarchy, maximum depth, root behavior, leaf assignment, cycle prevention, and parent archive rules are approved.
-- [ ] UUIDv4 identity, canonical code format, global uniqueness, immutability, legacy IDs, and external-code namespacing are approved.
-- [ ] Required Arabic/English labels, bounds, normalization, sibling uniqueness, disputed-translation handling, and no mixed-language fallback are approved.
-- [ ] Alias types, physical child relation, source scope, collision behavior, phrase preservation, and SEARCH-001 boundary are approved.
-- [ ] Lifecycle states/transitions, replacement links, no-delete rule, and historical assignment stability are approved.
-- [ ] Supplier primary/secondary rules, leaf-only rule, zero-assignment exception, and suggested maximum are approved as a later implementation contract.
-- [ ] Global `other`, free-text evidence, outcome states, and review behavior are approved.
-- [ ] Matching order, ambiguity, many-to-one, reviewed one-to-many, source evidence, and reconciliation are approved.
-- [ ] Two-relation complete taxonomy model, permissible `categories`-only first slice, and later assignment slice are approved.
-- [ ] Zero API-role access, no RLS in the local-only first slice, and all exclusions are approved.
-- [ ] The Product owner records approve/changes requested, name/date, and exact exceptions.
-- [ ] The data owner records approve/changes requested, name/date, and exact exceptions.
-- [ ] A follow-up commit updates the schema decision register from Open only after both approvals; until then SUP-003 remains Open.
+- [x] The purpose and `supplier_offering` boundary are approved.
+- [x] Category, capability, product/service, phrase, keyword, synonym, brand, and part-number distinctions are approved.
+- [x] Single-parent hierarchy, maximum depth, root behavior, leaf assignment, cycle prevention, and parent archive rules are approved.
+- [x] UUIDv4 identity, canonical code format, global uniqueness, immutability, legacy IDs, and external-code namespacing are approved.
+- [x] Required Arabic/English labels, bounds, normalization, sibling uniqueness, disputed-translation handling, and no mixed-language fallback are approved.
+- [x] Alias types, physical child relation, source scope, collision behavior, phrase preservation, and SEARCH-001 boundary are approved.
+- [x] Lifecycle states/transitions, replacement links, no-delete rule, and historical assignment stability are approved.
+- [x] Supplier primary/secondary rules, leaf-only rule, and zero-assignment exception are approved as a later implementation contract. Decision 9 is approved with the modification below.
+- [x] Global `other`, free-text evidence, outcome states, and review behavior are approved.
+- [x] Matching order, ambiguity, many-to-one, reviewed one-to-many, source evidence, and reconciliation are approved.
+- [x] Two-relation complete taxonomy model, permissible `categories`-only first slice, and later assignment slice are approved.
+- [x] Zero API-role access, no RLS in the local-only first slice, and all exclusions are approved.
+- [x] The Product owner approval is recorded for 4 August 2026.
+- [ ] The Data owner approval remains Pending because repository/project authority does not identify the same authorized owner for both Product and Data owner roles.
+- [ ] A follow-up commit may update the schema decision register from Open only after the Data owner approval is legitimately recorded; until then SUP-003 remains Open.
 
-Approval result: **Pending**
-Product owner:
-Data owner:
+Approval result: **Pending - Product approved; Data pending; SUP-003 remains Open**
+Product owner: **Approved - 4 August 2026** (personal name not recorded because no authoritative repository/project name was found)
+Data owner: **Pending** (no authoritative evidence identifies the same owner as authorized for both roles)
 Approval commit SHA:
-Approved exceptions or changes:
+Approved exceptions or changes: Decisions 1-8 and 10-13 are approved exactly as recommended. Decision 9 is approved with this modification: at most one primary category; secondary assignments allowed; 10 is initial product/UI guidance only; future operational limits are configurable; 10 is not a database CHECK constraint, immutable schema limit, or migration rejection boundary; valid records above guidance are preserved for review and never silently deleted or rejected.
 
 ## 15. Exact exclusions
 
