@@ -1,6 +1,6 @@
 # Second SQL slice implementation evidence
 
-Status: implementation-branch evidence; not merged, hosted, or deployed
+Status: merged PR #51 evidence; local-only, synthetic-data-only, not hosted or deployed
 Scope: `public.user_profiles` and `internal.identity_provider_links` only
 
 ## Implemented local schema
