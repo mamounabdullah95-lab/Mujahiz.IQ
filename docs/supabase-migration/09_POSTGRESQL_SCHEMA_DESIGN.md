@@ -127,6 +127,9 @@ This is a design target only, not authority to execute a migration:
 - Leave Claims, messaging, files, organizations, organization memberships, and billing uncreated initially. The authoritative Claim design is retained for a later phase; no empty Claim table is required by the first slice.
 
 No counts above authorize a Production read or write; bounded facts must be refreshed under a separately approved migration runbook.
+### Second local SQL-slice implementation status
+
+The implementation branch adds only public.user_profiles and internal.identity_provider_links through migration 20260804000200_provider_neutral_identity_foundation.sql. It applies the approved provider-neutral UUID/profile and provider-subject contracts, bounded lifecycle checks, partial active-link uniqueness, migration-batch provenance, ON DELETE RESTRICT relationships, and zero direct API-role table privileges. No RLS, policy, Auth bridge, Auth user, runtime command, data migration, or deferred identity/access table is included. This is local implementation evidence only; ID-001, MIG-002, and RES-001 remain Open, and Firebase Auth remains authoritative during the hybrid phase.
 
 
 ### Identity and access conclusions

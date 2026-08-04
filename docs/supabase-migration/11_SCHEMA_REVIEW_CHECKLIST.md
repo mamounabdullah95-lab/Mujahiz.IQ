@@ -19,7 +19,13 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] The phase manifest lists all 79 proposed tables exactly once and reconciles Core Phase 1 36, Core Later 10, Future-Compatible 13, Deferred 13, and Remove/Merge 7; `supplier_ownership_claims` remains authoritative but is Core Later, not in the initial slice.
 - [ ] Future-Compatible and Deferred entries explicitly say "do not create yet," and every Remove/Merge entry identifies its replacement.
 - [ ] All 36 decision IDs have one canonical topic/status across design, register, checklist, and cross-references; resolution date, evidence/reference, and resolved state fields are present.
-- [ ] ID-001, ORG-001, ORG-002, SUP-003, SUP-004, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates; DB-001 is resolved only for the local first slice.
+- [ ] ID-001, ORG-001, ORG-002, SUP-003, SUP-004, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates; DB-001 is resolved for the implemented local SQL slices only.
+### Second SQL-slice implementation evidence
+
+- [x] Local implementation branch adds exactly public.user_profiles and internal.identity_provider_links in migration 20260804000200; no third identity/access table, RLS, policy, Auth bridge, browser/API grant, hosted operation, or data operation is included.
+- [x] Synthetic focused pgTAP covers accepted/rejected profile and provider-link states, Firebase text-subject traceability, active uniqueness, lifecycle coherence, RESTRICT delete behavior, migration-control compatibility, and absent API access; the focused result is 78/78 and the complete local suite is 138/138.
+- [x] Local warning-level lint and catalog checks verify expected constraints/indexes and zero application triggers, functions, policies, and direct anon/authenticated/service API table privileges.
+- [ ] ID-001, MIG-002, RES-001, and every other listed Open gate remain unresolved; Firebase Auth remains authoritative and a later trusted validation/reconciliation phase is required before integration.
 
 ## B. Relational model and integrity
 
