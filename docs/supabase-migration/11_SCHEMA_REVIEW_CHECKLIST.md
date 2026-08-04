@@ -19,7 +19,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] The phase manifest lists all 79 proposed tables exactly once and reconciles Core Phase 1 36, Core Later 10, Future-Compatible 13, Deferred 13, and Remove/Merge 7; `supplier_ownership_claims` remains authoritative but is Core Later, not in the initial slice.
 - [ ] Future-Compatible and Deferred entries explicitly say "do not create yet," and every Remove/Merge entry identifies its replacement.
 - [ ] All 36 decision IDs have one canonical topic/status across design, register, checklist, and cross-references; resolution date, evidence/reference, and resolved state fields are present.
-- [ ] ID-001, ORG-001, ORG-002, SUP-003, SUP-004, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates; DB-001 is resolved for the implemented local SQL slices only.
+- [ ] ID-001, ORG-001, ORG-002, SUP-004, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates; SUP-003 is Approved and DB-001 is resolved for the implemented local SQL slices only.
 ### Second SQL-slice implementation evidence
 
 - [x] Local implementation branch adds exactly public.user_profiles and internal.identity_provider_links in migration 20260804000200; no third identity/access table, RLS, policy, Auth bridge, browser/API grant, hosted operation, or data operation is included.
@@ -32,7 +32,13 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Local implementation branch adds exactly `public.supplier_profiles` in migration `20260804000300`; no Supplier child, ownership, organization, eligibility, Auth, RLS, policy, browser/API grant, hosted operation, or data operation is included.
 - [x] Synthetic focused pgTAP covers the Supplier root shape, UUID default, bounded bilingual names and lifecycle/provenance values, nullable/restricting actor references, legacy-ID uniqueness, migration-control compatibility, deferred-table absence, and absent API access; the focused result is 84/84 and the complete local suite is 222/222.
 - [x] Local warning-level lint and catalog checks verify expected constraints/indexes and zero application triggers, functions, policies, and direct anon/authenticated/service API table privileges.
-- [ ] ID-001, ORG-001, ORG-002, SUP-003, SUP-004, MIG-002, RES-001, and every other listed Open gate remain unresolved; Firebase Auth remains authoritative and Supplier ownership/RLS/Auth work remains a later separately approved phase.
+- [ ] At the third-slice merge, ID-001, ORG-001, ORG-002, SUP-003, SUP-004, MIG-002, RES-001, and every other listed Open gate remained unresolved; Firebase Auth remained authoritative and Supplier ownership/RLS/Auth work remained a later separately approved phase.
+### Fourth SQL-slice Draft-branch implementation evidence
+
+- [x] This unmerged branch adds exactly `public.categories` in migration `20260805000100`; no taxonomy vocabulary, alias, Supplier assignment, RLS, policy, browser/API grant, hosted operation, or data operation is included.
+- [x] The focused synthetic pgTAP contract covers table shape, UUIDv4, depth/type/leaf and archive boundaries, bilingual collision indexes, lifecycle/replacement state combinations, nullable/restricting actors, migration-control compatibility, deferred-table absence, and absent API access.
+- [ ] Local Docker-dependent pgTAP, lint, and catalog execution remains blocked on this workstation; do not claim those results until a disposable local Supabase runtime is available.
+- [ ] `SUP-003` is Approved; `ID-001`, `ORG-001`, `ORG-002`, `SUP-004`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002` remain Open. Merged `main` remains 7/29; this unmerged branch would be 8/28.
 
 ## B. Relational model and integrity
 

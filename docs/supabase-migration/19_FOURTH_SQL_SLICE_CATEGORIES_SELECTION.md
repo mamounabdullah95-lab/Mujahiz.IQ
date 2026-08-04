@@ -1,6 +1,6 @@
 # Core Phase 1 fourth SQL slice: categories selection
 
-Status: **Selected for a future implementation PR; not implemented**
+Status: **Implemented on this Draft branch; not merged, hosted, or deployed**
 Decision date: 5 August 2026
 Verified start: `origin/main` `995feeda072f345fdc0f00d101cdc598713c43c9`
 Primary task profile: Documentation
@@ -9,7 +9,7 @@ Primary task profile: Documentation
 
 SUP-003 is Approved under the contract in [18_SUP_003_CATEGORY_TAXONOMY_CONTRACT.md](18_SUP_003_CATEGORY_TAXONOMY_CONTRACT.md). That approval supplies the minimum taxonomy contract for the smallest dependency-safe fourth SQL boundary:
 
-**Future included table: `public.categories` only.**
+**Included table on this Draft branch: `public.categories` only.**
 
 This document supersedes the selection outcome in [17_FOURTH_SQL_SLICE_SELECTION.md](17_FOURTH_SQL_SLICE_SELECTION.md) only after SUP-003 approval. The historical no-go finding remains valid for the period when SUP-003 was Open; it is not rewritten as though `categories` was previously safe.
 
@@ -25,7 +25,7 @@ The other thirteen approval gates remain Open and unchanged: `ID-001`, `ORG-001`
 
 ## 3. Exact future implementation boundary
 
-A separately reviewed future implementation PR may contain only:
+This separately reviewed Draft implementation PR contains only:
 
 - one migration creating `public.categories`;
 - one focused synthetic pgTAP file;
@@ -54,7 +54,7 @@ This selection authorizes no taxonomy rows, current 23 category codes, aliases, 
 - Production or TEST data;
 - migration, import, export, seed, or deployment.
 
-No Core Phase 1 count changes in this documentation-only selection. The verified merged state remains **7 implemented / 29 deferred**. Only after a future implementation PR is merged would the counts become **8 implemented / 28 deferred**.
+The verified merged `main` state remains **7 implemented / 29 deferred**. This unmerged Draft branch would be **8 implemented / 28 deferred**; it must not be described as merged or deployed.
 
 ## 5. Validation and stop point
 
