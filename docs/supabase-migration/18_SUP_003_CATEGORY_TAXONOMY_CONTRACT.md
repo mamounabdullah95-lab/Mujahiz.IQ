@@ -24,7 +24,7 @@ Approval of this document would approve only the taxonomy contract and the plann
 
 - **Fact:** The authoritative schema design proposes one hierarchical `categories` relation with stable codes, paired Arabic/English labels, an optional parent, and Supplier assignments that record whether an assignment is primary.
 - **Fact:** The design merges `category_translations` into `categories` for the bounded Arabic/English launch languages. `category_translations` remains a Remove/Merge concept and must not be created.
-- **Fact:** The schema decision register keeps SUP-003 Open because hierarchy, mapping, and the exception path are not approved.
+- **Fact:** The schema decision register remains Open because the Data owner approval is pending; the contract decisions are recorded but SUP-003 is not resolved.
 - **Fact:** The fourth-slice review concluded that `categories` and `supplier_category_assignments` cannot be implemented safely until SUP-003 is approved. It selected no fourth SQL slice.
 - **Fact:** Core Phase 1 remains 7 implemented and 29 deferred concepts. `categories` and `supplier_category_assignments` are among the deferred concepts.
 - **Fact:** The current Firebase `categories` collection has zero verified Production documents. Repository code can seed category documents shaped as `group`, `value`, `labelEn`, `labelAr`, `active`, and `updatedAt`, but repository capability is not evidence that those documents exist in Production.
@@ -71,7 +71,7 @@ Current values mix controlled main-category codes, free-text subcategories, capa
 - **Recommendation:** The proposed approval scope covers the category catalog contract only. A later, separately authorized assignment phase may classify Suppliers.
 - **Recommendation:** Products/services and RFQ items may reference the same taxonomy only after their own domain review proves the meaning and granularity are valid. No product or RFQ use is approved here.
 - **Recommendation:** Capabilities, brands, part numbers, standards, material terms, phrases, and search keywords remain outside category identity.
-- **Approval required:** Confirm one bounded `supplier_offering` taxonomy rather than immediate multi-domain taxonomy types.
+- **Decision recorded:** Approved as recorded in section 13.
 
 ## 5. Hierarchy contract
 
@@ -85,7 +85,7 @@ Current values mix controlled main-category codes, free-text subcategories, capa
 - **Recommendation:** The parent of an active, deprecated, source-mapped, or assigned category is immutable. A semantic move creates a new category and deprecates the old category with an approved replacement; it does not rewrite historical paths.
 - **Recommendation:** A parent cannot be archived while it has active or deprecated descendants. Descendants must first be replaced/reparented while still draft, deprecated with replacements, or archived in a reviewed bottom-up operation.
 - **Recommendation:** Archiving a parent never cascades, deletes, or silently changes a child or Supplier assignment.
-- **Approval required:** Confirm maximum depth three, assignable leaves only, and immutable parentage after activation.
+- **Decision recorded:** Approved as recorded in section 13.
 
 ## 6. Identity and canonical codes
 
@@ -96,7 +96,7 @@ Current values mix controlled main-category codes, free-text subcategories, capa
 - **Recommendation:** Existing controlled Firebase/import values are candidate legacy codes, not automatically approved canonical codes. Each must pass the mapping stages in section 11.
 - **Recommendation:** A Firebase category document ID, if a future approved snapshot contains one, is retained as a nullable unique legacy identifier; it is never the PostgreSQL primary key.
 - **Recommendation:** External codes retain a bounded source namespace and original value. They never replace the canonical code and are not globally trusted outside their namespace.
-- **Approval required:** Confirm human-readable immutable snake-case codes and UUIDv4 identity.
+- **Decision recorded:** Approved as recorded in section 13.
 
 ## 7. Arabic and English labels
 
@@ -107,7 +107,7 @@ Current values mix controlled main-category codes, free-text subcategories, capa
 - **Recommendation:** Arabic UI renders only approved Arabic category labels; English UI renders only approved English category labels. It must not copy, transliterate, or silently display the other language as fallback.
 - **Recommendation:** A missing or disputed translation stays in the review workflow and blocks category creation/activation. An already active category keeps its last approved label until a replacement translation is approved.
 - **Assumption:** Arabic and English remain the only launch taxonomy languages. More locales or an independently governed translation lifecycle would require a later decision before reconsidering a translation table.
-- **Approval required:** Confirm paired required labels, sibling-level uniqueness, and no cross-language fallback.
+- **Decision recorded:** Approved as recorded in section 13.
 
 ## 8. Aliases and search-term boundary
 
@@ -127,7 +127,7 @@ Current values mix controlled main-category codes, free-text subcategories, capa
 - **Recommendation:** Exact canonical-code matching has precedence over alias matching. An alias may not shadow another category's canonical code in the same source namespace.
 - **Recommendation:** Alias normalization is limited to versioned Unicode normalization, trimming/collapsing whitespace, case handling where applicable, removal of Arabic tatweel/optional diacritics where explicitly reviewed, and explicitly approved Arabic character equivalences. It excludes translation, transliteration, tokenization, stemming, fuzzy scoring, and phrase splitting.
 - **Recommendation:** Alias changes are versioned and source-attributed. An archived alias cannot be used for new automatic mappings but remains available for historical reconciliation.
-- **Approval required:** Confirm separate category-specific aliases, global collision prevention for automatic mapping, and the stated search boundary.
+- **Decision recorded:** Approved as recorded in section 13.
 
 ## 9. Lifecycle and historical stability
 
@@ -144,7 +144,7 @@ Current values mix controlled main-category codes, free-text subcategories, capa
 - **Recommendation:** A replacement must be a different active category in the same taxonomy type. Replacement links cannot form a loop.
 - **Recommendation:** Categories are never hard-deleted after activation, source mapping, or assignment. A never-active, unreferenced local draft may be removed only in a separately authorized development correction; Production deletion is not authorized here.
 - **Recommendation:** Existing Supplier assignments to a deprecated or archived category remain historically resolvable. They are not silently rewritten to the replacement. A later reviewed reassignment records a new decision and preserves the old mapping evidence.
-- **Approval required:** Confirm the four statuses, terminal archive, and no automatic reassignment.
+- **Decision recorded:** Approved as recorded in section 13.
 
 ## 10. Supplier assignment boundary
 
@@ -155,7 +155,7 @@ Current values mix controlled main-category codes, free-text subcategories, capa
 - **Recommendation:** A Supplier with any approved category assignments should have exactly one primary assignment. Unclassified, pending-review, or unmapped Suppliers may have zero assignments without inventing a category.
 - **Recommendation:** Future contributors, imports, and source transformations may propose assignments. A designated taxonomy/data review workflow approves or changes them, and only the later trusted mutation boundary applies canonical assignments.
 - **Recommendation:** The proposer/reviewer terms describe workflow responsibility only. This contract does not select users, roles, Auth, RLS, grants, or application permissions.
-- **Approval required:** Confirm leaf-only assignment, one primary, secondary assignments, configurable operational limits, and preservation/review of valid records above the initial UI guidance.
+- **Decision recorded:** Approved with the section-13 decision-9 modification.
 
 ## 11. `other`, unmapped values, and deterministic migration mapping
 
@@ -194,7 +194,7 @@ Apply stages in order and stop at the first deterministic single result:
 - **Recommendation:** Mapping evidence records source system/artifact, source field, original bounded value, normalized value, locale/script when known, normalizer version, match stage, mapping version, outcome, targets, reason, reviewer/time, and reconciliation result. It must not include a raw workbook, complete Supplier record, secrets, or unnecessary personal data.
 - **Recommendation:** Counts alone do not prove a correct mapping. Reconciliation must cover source-value outcomes, ambiguity/unmapped/rejected counts, target assignment counts, primary-assignment invariants, and deterministic replay.
 - **Recommendation:** No Production export, import, seed, migration, backfill, or read is authorized by this contract.
-- **Approval required:** Confirm no global `other`, the five outcome states, ordered matching stages, and reviewed-only one-to-many mapping.
+- **Decision recorded:** Approved as recorded in section 13.
 
 ## 12. Exact future SQL boundary if SUP-003 is approved
 
@@ -240,7 +240,7 @@ The complete taxonomy structure needs two physical relations while remaining one
 - The first local-only taxonomy slice has zero privileges for `anon`, `authenticated`, or any browser/API role.
 - It adds no RLS, policy, grant, view, RPC, Auth bridge, application integration, hosted linkage, remote SQL, or public read projection.
 - RLS and API/read projections require a later separately approved task. The absence of RLS is acceptable only while all API-role privileges remain absent.
-- **Approval required:** Confirm the two-relation complete model, the permissible one-table first slice, and later assignment separation.
+- **Decision recorded:** Approved as recorded in section 13.
 
 ## 13. Recorded owner decisions
 
