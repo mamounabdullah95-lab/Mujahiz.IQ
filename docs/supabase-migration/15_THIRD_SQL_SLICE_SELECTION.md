@@ -1,6 +1,6 @@
 # Core Phase 1 third SQL slice selection
 
-Status: **Planning boundary implemented on the separate local-only PR branch; this selection does not authorize any further scope**
+Status: **Historical planning boundary implemented and merged by PR #54; this selection does not authorize any further scope**
 Selection date: 4 August 2026
 Planning start: `origin/main` `e191a044471a192819d6e029e7e08d7b4d82b6c1`
 Primary task profile: Documentation
@@ -15,16 +15,16 @@ This selection did **not** itself authorize SQL implementation. The separately a
 
 ## 2. Reconciled current state
 
-Current merged `main` contains two local slices representing six of the 36 Core Phase 1 logical concepts, with 30 deferred. On the separate implementation branch, `supplier_profiles` is the seventh implemented concept and 29 remain deferred.
+Current merged `main` contains three local slices representing seven of the 36 Core Phase 1 logical concepts, with 29 deferred. PR #54 merged the previously selected `supplier_profiles` boundary without expanding it.
 
 | State | Logical concepts | Count |
 |---|---|---:|
 | Implemented by first local slice | `migration_batches`, `migration_record_mappings` (physically decomposed with source-disposition and merge-member relations), `migration_validation_results`, `import_errors` | 4 |
 | Implemented by second local slice | `user_profiles`, `identity_provider_links` | 2 |
-| Implemented only on the separate third-slice branch | `supplier_profiles` | 1 |
-| Still deferred on that implementation branch | Remaining Core Phase 1 concepts | 29 |
+| Implemented by third local slice (PR #54) | `supplier_profiles` | 1 |
+| Still deferred on merged `main` | Remaining Core Phase 1 concepts | 29 |
 
-The fetched branch tip is the merged PR #52 documentation commit. Its baseline records `b631de2f657a6f870f7d764d36cdcf38d42c2fb2` as the pre-merge verified PR #51 state; this selection uses the actual fetched `origin/main` SHA above and does not alter the baseline for planning-only work.
+This selection began from the merged PR #52 documentation state. PR #54 later implemented only the selected local Supplier root; the authoritative Baseline records the current merged state and does not treat this historical planning record as an implementation authorization.
 
 ## 3. Remaining dependency chains
 
@@ -95,7 +95,7 @@ The other gates do not apply to the selected table, but remain Open and block th
 
 ## 7. Implemented boundary and continuing stop conditions
 
-The implementation branch contains one new migration for `public.supplier_profiles`, one focused synthetic pgTAP file, and the minimum direct evidence/status updates. It proves the exact table contract, UUID default, bounded fields and status checks, nullable/restricting actor references, uniqueness for a non-null legacy Supplier ID, zero API-role privileges, no RLS/policy/function/trigger/view/RPC, and compatibility with the existing migration mapping contract. The local stack must remain stopped after verification.
+The merged PR #54 implementation contains one new migration for `public.supplier_profiles`, one focused synthetic pgTAP file, and the minimum direct evidence/status updates. It proves the exact table contract, UUID default, bounded fields and status checks, nullable/restricting actor references, uniqueness for a non-null legacy Supplier ID, zero API-role privileges, no RLS/policy/function/trigger/view/RPC, and compatibility with the existing migration mapping contract. The local stack remained stopped after verification.
 
 Stop immediately, with no scope expansion, if any of these occurs:
 
@@ -112,4 +112,4 @@ Stop immediately, with no scope expansion, if any of these occurs:
 
 ## 9. Stop point
 
-This document selected only the one-table local planning boundary now realized on the separate PR branch. That branch adds no RLS, policy, grant, Auth bridge, provider integration, application code, hosted Supabase linkage, Firebase access/change, data operation, or deployment. Await explicit approval before any later Supplier SQL, ownership, access, integration, migration, or deployment work.
+This document selected only the one-table local planning boundary now merged by PR #54. That implementation adds no RLS, policy, grant, Auth bridge, provider integration, application code, hosted Supabase linkage, Firebase access/change, data operation, or deployment. Await explicit approval before any later Supplier SQL, ownership, access, integration, migration, or deployment work.
