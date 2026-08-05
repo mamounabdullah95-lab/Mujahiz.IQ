@@ -1,10 +1,10 @@
 # Fourth SQL Slice — Categories Foundation Implementation Evidence
 
-Status: Draft-branch implementation evidence; not merged, hosted, remotely applied, deployed, or Production-active
+Status: PR #59 merged implementation evidence; local-only, not hosted, remotely applied, deployed, or Production-active
 
 ## Exact scope
 
-This branch adds exactly one application table, `public.categories`, through `20260805000100_categories_foundation.sql`. It remains empty except for disposable synthetic pgTAP rows.
+PR #59 adds exactly one application table, `public.categories`, through `20260805000100_categories_foundation.sql`. It remains empty except for disposable synthetic pgTAP rows.
 
 The table provides database-generated UUIDv4 identity; a unique lowercase ASCII snake-case canonical code; a nullable legacy Firestore alternate key; required Arabic and English labels plus versioned normalized comparison values; the single `supplier_offering` taxonomy type; bounded hierarchy depth; lifecycle, assignability, ordering, replacement, timestamps, and nullable trusted actor references.
 
@@ -18,9 +18,9 @@ The selected one-table/no-trigger boundary cannot enforce canonical-code update 
 
 ## Core Phase 1 and approval-gate state
 
-Merged `main` remains **7 implemented / 29 deferred / 36 total**. If this Draft branch were merged, it would be **8 implemented / 28 deferred / 36 total**.
+Merged `main` is **8 implemented / 28 deferred / 36 total**.
 
-`SUP-003` remains Approved. The remaining Open gates are unchanged: `ID-001`, `ORG-001`, `ORG-002`, `SUP-004`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+`SUP-003` is Approved. The remaining 13 Open gates are: `ID-001`, `ORG-001`, `ORG-002`, `SUP-004`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
 
 ## Validation record
 
