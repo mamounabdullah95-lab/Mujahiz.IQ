@@ -5,7 +5,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, pg_catalog;
 
-select plan(107);
+select plan(118);
 
 select has_table('public', 'categories', 'categories exists');
 select has_column('public', 'categories', 'id', 'categories have a UUID identity');
@@ -37,6 +37,52 @@ select is(
   ),
   'id:uuid:true,category_type:text:true,code:text:true,legacy_firestore_id:text:false,parent_category_id:uuid:false,hierarchy_depth:smallint:true,parent_depth:smallint:false,parent_must_be_non_assignable:boolean:false,label_ar:text:true,label_en:text:true,label_ar_normalized:text:true,label_en_normalized:text:true,label_normalizer_version:text:true,description_ar:text:false,description_en:text:false,status:text:true,is_assignable:boolean:true,is_archived:boolean:false,parent_must_be_non_archived:boolean:false,sort_order:integer:true,replacement_category_id:uuid:false,replacement_target_status:text:false,created_at:timestamp with time zone:true,created_by_user_profile_id:uuid:false,updated_at:timestamp with time zone:true,updated_by_user_profile_id:uuid:false',
   'categories exact columns, types, order, and nullability match the approved local contract'
+);
+select is(
+  (select count(*) from pg_catalog.pg_constraint where conrelid = 'public.categories'::regclass),
+  27::bigint,
+  'categories have exactly the approved constraint count'
+);
+select is(
+  (
+    select string_agg(conname || ':' || contype::text, '|' order by conname)
+    from pg_catalog.pg_constraint
+    where conrelid = 'public.categories'::regclass
+  ),
+  'categories_assignability_ck:c|categories_category_type_ck:c|categories_code_ck:c|categories_created_by_fk:f|categories_description_ar_ck:c|categories_description_en_ck:c|categories_hierarchy_shape_ck:c|categories_id_archived_key:u|categories_id_type_depth_assignability_key:u|categories_id_type_status_key:u|categories_label_ar_ck:c|categories_label_ar_normalized_ck:c|categories_label_en_ck:c|categories_label_en_normalized_ck:c|categories_label_normalizer_version_ck:c|categories_legacy_firestore_id_ck:c|categories_not_self_parent_ck:c|categories_not_self_replacement_ck:c|categories_parent_hierarchy_fk:f|categories_parent_non_archived_fk:f|categories_pkey:p|categories_replacement_fk:f|categories_replacement_source_status_ck:c|categories_sort_order_ck:c|categories_status_ck:c|categories_timestamp_order_ck:c|categories_updated_by_fk:f',
+  'category constraint names and types match the approved contract'
+);
+select is(
+  (
+    select string_agg(conname || ':' || pg_catalog.pg_get_constraintdef(oid), '|' order by conname)
+    from pg_catalog.pg_constraint
+    where conrelid = 'public.categories'::regclass and contype = 'f'
+  ),
+  'categories_created_by_fk:FOREIGN KEY (created_by_user_profile_id) REFERENCES user_profiles(id) ON DELETE RESTRICT|categories_parent_hierarchy_fk:FOREIGN KEY (parent_category_id, category_type, parent_depth, parent_must_be_non_assignable) REFERENCES categories(id, category_type, hierarchy_depth, is_assignable) ON DELETE RESTRICT|categories_parent_non_archived_fk:FOREIGN KEY (parent_category_id, parent_must_be_non_archived) REFERENCES categories(id, is_archived) ON DELETE RESTRICT|categories_replacement_fk:FOREIGN KEY (replacement_category_id, category_type, replacement_target_status) REFERENCES categories(id, category_type, status) ON DELETE RESTRICT|categories_updated_by_fk:FOREIGN KEY (updated_by_user_profile_id) REFERENCES user_profiles(id) ON DELETE RESTRICT',
+  'category foreign-key names, columns, targets, and delete actions match the approved contract'
+);
+select is(
+  (select count(*) from pg_catalog.pg_index where indrelid = 'public.categories'::regclass),
+  13::bigint,
+  'categories have exactly the primary-key, constraint-backed, and approved explicit indexes'
+);
+select is(
+  (
+    select string_agg(
+      c.relname || ':' || i.indisunique::text || ':' || (i.indpred is not null)::text || ':' ||
+      (
+        select string_agg(a.attname::text, ',' order by k.ordinality)
+        from unnest(i.indkey::smallint[]) with ordinality k(attnum, ordinality)
+        join pg_catalog.pg_attribute a on a.attrelid = i.indrelid and a.attnum = k.attnum
+      ),
+      '|' order by c.relname
+    )
+    from pg_catalog.pg_index i
+    join pg_catalog.pg_class c on c.oid = i.indexrelid
+    where i.indrelid = 'public.categories'::regclass
+  ),
+  'categories_active_deprecated_sibling_label_ar_uidx:true:true:category_type,parent_category_id,label_ar_normalized|categories_active_deprecated_sibling_label_en_uidx:true:true:category_type,parent_category_id,label_en_normalized|categories_code_uidx:true:false:code|categories_created_by_idx:false:true:created_by_user_profile_id,created_at,id|categories_id_archived_key:true:false:id,is_archived|categories_id_type_depth_assignability_key:true:false:id,category_type,hierarchy_depth,is_assignable|categories_id_type_status_key:true:false:id,category_type,status|categories_legacy_firestore_id_uidx:true:true:legacy_firestore_id|categories_parent_status_sort_idx:false:false:parent_category_id,status,sort_order,id|categories_pkey:true:false:id|categories_replacement_status_idx:false:true:replacement_category_id,status,id|categories_type_status_code_idx:false:false:category_type,status,code|categories_updated_by_idx:false:true:updated_by_user_profile_id,updated_at,id',
+  'category index names, uniqueness, partiality, and key order match the approved contract'
 );
 select ok(
   (
@@ -137,7 +183,7 @@ with inserted as (
   returning id
 )
 insert into category_test_ids (name, id) select 'assignable_group', id from inserted;
-select throws_ok($$ insert into public.categories (code, parent_category_id, hierarchy_depth, label_ar, label_en, label_ar_normalized, label_en_normalized, status) values ('synthetic_child_of_assignable_group', (select id from category_test_ids where name = 'assignable_group'), 3, 'ابن ورقة ثانية', 'Child of level two leaf', 'ابن ورقة ثانية', 'child of level two leaf', 'active') $$, null, 'a level-two a child below a level-three leaf is rejected by the maximum-depth constraint');
+select throws_ok($$ insert into public.categories (code, parent_category_id, hierarchy_depth, label_ar, label_en, label_ar_normalized, label_en_normalized, status) values ('synthetic_child_of_assignable_group', (select id from category_test_ids where name = 'assignable_group'), 3, 'ابن ورقة ثانية', 'Child of level two leaf', 'ابن ورقة ثانية', 'child of level two leaf', 'active') $$, null, 'a child below an assignable level-two leaf is rejected by the non-assignable-parent reference');
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status, is_assignable) values ('synthetic_assignable_root', 'جذر قابل', 'Assignable root', 'جذر قابل', 'assignable root', 'active', true) $$, null, 'root nodes are never assignable');
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status, is_assignable) values ('synthetic_draft_assignable', 'مسودة قابلة', 'Assignable draft', 'مسودة قابلة', 'assignable draft', 'draft', true) $$, null, 'only active leaves may be assignable');
 
@@ -155,6 +201,10 @@ select throws_ok($$ insert into public.categories (code, label_en, label_ar_norm
 select throws_ok($$ insert into public.categories (code, label_ar, label_ar_normalized, label_en_normalized) values ('synthetic_missing_en', 'مفقود إنجليزي', 'مفقود إنجليزي', 'missing english') $$, null, 'English label is required');
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized) values ('synthetic_trim_ar', ' عربى ', 'Trim Arabic', 'عربى', 'trim arabic') $$, null, 'Arabic labels reject leading or trailing whitespace');
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized) values ('synthetic_trim_en', 'إنجليزي', ' Trim English ', 'إنجليزي', 'trim english') $$, null, 'English labels reject leading or trailing whitespace');
+select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized) values ('synthetic_unicode_trim_ar', U&'\00A0\0639\0631\0628\064A', 'Unicode trim Arabic', U&'\0639\0631\0628\064A', 'unicode trim arabic') $$, null, 'Arabic labels reject leading Unicode whitespace');
+select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized) values ('synthetic_unicode_trim_en', U&'\0645\0633\0627\0641\0629', U&'English\00A0', U&'\0645\0633\0627\0641\0629', 'english') $$, null, 'English labels reject trailing Unicode whitespace');
+select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized) values ('synthetic_unicode_normalized_ar', U&'\062A\0637\0628\064A\0639', 'Arabic normalized whitespace', U&'\00A0\062A\0637\0628\064A\0639', 'arabic normalized whitespace') $$, null, 'Arabic normalized values reject leading Unicode whitespace');
+select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized) values ('synthetic_unicode_normalized_en', U&'\062A\0637\0628\064A\0639', 'English normalized whitespace', U&'\062A\0637\0628\064A\0639', U&'english normalized whitespace\00A0') $$, null, 'English normalized values reject trailing Unicode whitespace');
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized) values ('synthetic_ws_ar', 'عربي  مكرر', 'Repeated Arabic whitespace', 'عربي مكرر', 'repeated arabic whitespace') $$, null, 'Arabic labels reject repeated internal whitespace');
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized) values ('synthetic_markup_en', 'علامة ترميز', '<b>Markup</b>', 'علامة ترميز', 'markup') $$, null, 'English labels reject markup characters');
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized) values ('synthetic_control_en', 'تحكم', E'Control\nLabel', 'تحكم', 'control label') $$, null, 'English labels reject control characters and line breaks');
@@ -165,6 +215,8 @@ select throws_ok($$ insert into public.categories (code, label_ar, label_en, lab
 
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status) values ('synthetic_duplicate_root_ar', 'تصنيف بديل', 'Different root', 'تصنيف تجريبي رئيسي', 'different root', 'active') $$, null, 'active root siblings cannot share normalized Arabic labels');
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status) values ('synthetic_duplicate_root_en', 'جذر مختلف', 'Different root', 'جذر مختلف', 'synthetic root', 'active') $$, null, 'active root siblings cannot share normalized English labels');
+select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status) values ('synthetic_deprecated_duplicate', 'جذر متوقف مماثل', 'Deprecated duplicate', 'تصنيف تجريبي رئيسي', 'synthetic root', 'deprecated') $$, null, 'deprecated root siblings cannot share normalized labels with active roots');
+select lives_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status) values ('synthetic_draft_duplicate', 'مسودة مماثلة', 'Draft duplicate', 'تصنيف تجريبي رئيسي', 'synthetic root', 'draft') $$, 'draft siblings may retain provisional normalized labels until activation review');
 select lives_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status) values ('synthetic_archived_duplicate', 'تصنيف مؤرشف مماثل', 'Archived duplicate', 'تصنيف تجريبي رئيسي', 'synthetic root', 'archived') $$, 'archived siblings may retain historical normalized labels');
 
 with roots as (
@@ -222,8 +274,8 @@ from source cross join lateral (select id from public.categories where code = 's
 select is((select target_logical_type from internal.migration_record_mappings where target_logical_type = 'categories' limit 1), 'categories', 'existing migration-control contract accepts synthetic category provenance');
 
 select ok(to_regclass('public.categories_code_uidx') is not null, 'canonical code index exists');
-select ok(to_regclass('public.categories_non_archived_sibling_label_ar_uidx') is not null, 'Arabic sibling collision index exists');
-select ok(to_regclass('public.categories_non_archived_sibling_label_en_uidx') is not null, 'English sibling collision index exists');
+select ok(to_regclass('public.categories_active_deprecated_sibling_label_ar_uidx') is not null, 'Arabic active/deprecated sibling collision index exists');
+select ok(to_regclass('public.categories_active_deprecated_sibling_label_en_uidx') is not null, 'English active/deprecated sibling collision index exists');
 select ok(to_regclass('public.categories_legacy_firestore_id_uidx') is not null, 'legacy alternate-key index exists');
 select ok(to_regclass('public.categories_parent_status_sort_idx') is not null, 'hierarchy traversal index exists');
 select ok(to_regclass('public.categories_type_status_code_idx') is not null, 'type/status/code lookup index exists');

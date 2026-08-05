@@ -37,7 +37,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 
 - [x] This unmerged branch adds exactly `public.categories` in migration `20260805000100`; no taxonomy vocabulary, alias, Supplier assignment, RLS, policy, browser/API grant, hosted operation, or data operation is included.
 - [x] The focused synthetic pgTAP contract covers table shape, UUIDv4, depth/type/leaf and archive boundaries, bilingual collision indexes, lifecycle/replacement state combinations, nullable/restricting actors, migration-control compatibility, deferred-table absence, and absent API access.
-- [x] Clean local reset applied all four migrations; focused synthetic pgTAP passed 107/107, complete local pgTAP passed 329/329, warning-level lint found no schema errors, and catalog checks confirmed 26 columns, 27 constraints, 13 indexes, five RESTRICT FKs, zero API/RLS/policy/trigger/routine/view access objects, one table, and zero taxonomy rows.
+- [x] Clean local reset applied all four migrations; focused synthetic pgTAP passed 118/118, complete local pgTAP passed 340/340, warning-level lint found no schema errors, and catalog checks confirmed 26 columns, 27 named constraints, 13 exact indexes, five exact RESTRICT FKs, zero API/RLS/policy/trigger/routine/view access objects, one table, and zero taxonomy rows.
 - [ ] `SUP-003` is Approved; `ID-001`, `ORG-001`, `ORG-002`, `SUP-004`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002` remain Open. Merged `main` remains 7/29; this unmerged branch would be 8/28.
 
 ## B. Relational model and integrity

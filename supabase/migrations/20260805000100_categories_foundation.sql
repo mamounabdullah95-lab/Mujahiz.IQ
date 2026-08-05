@@ -60,6 +60,8 @@ create table public.categories (
   constraint categories_label_ar_ck check (
     char_length(label_ar) between 2 and 120
     and label_ar = btrim(label_ar)
+    and label_ar !~ '^[[:space:]]'
+    and label_ar !~ '[[:space:]]$'
     and label_ar !~ '[[:cntrl:]]'
     and label_ar !~ '[<>]'
     and label_ar !~ '[[:space:]]{2,}'
@@ -67,6 +69,8 @@ create table public.categories (
   constraint categories_label_en_ck check (
     char_length(label_en) between 2 and 120
     and label_en = btrim(label_en)
+    and label_en !~ '^[[:space:]]'
+    and label_en !~ '[[:space:]]$'
     and label_en !~ '[[:cntrl:]]'
     and label_en !~ '[<>]'
     and label_en !~ '[[:space:]]{2,}'
@@ -74,6 +78,8 @@ create table public.categories (
   constraint categories_label_ar_normalized_ck check (
     char_length(label_ar_normalized) between 2 and 120
     and label_ar_normalized = btrim(label_ar_normalized)
+    and label_ar_normalized !~ '^[[:space:]]'
+    and label_ar_normalized !~ '[[:space:]]$'
     and label_ar_normalized !~ '[[:cntrl:]]'
     and label_ar_normalized !~ '[<>]'
     and label_ar_normalized !~ '[[:space:]]{2,}'
@@ -81,6 +87,8 @@ create table public.categories (
   constraint categories_label_en_normalized_ck check (
     char_length(label_en_normalized) between 2 and 120
     and label_en_normalized = btrim(label_en_normalized)
+    and label_en_normalized !~ '^[[:space:]]'
+    and label_en_normalized !~ '[[:space:]]$'
     and label_en_normalized = lower(label_en_normalized)
     and label_en_normalized !~ '[[:cntrl:]]'
     and label_en_normalized !~ '[<>]'
@@ -161,7 +169,7 @@ comment on column public.categories.hierarchy_depth is
 comment on column public.categories.label_ar_normalized is
   'Versioned trusted comparison value for Arabic sibling-collision checks. The future trusted mutation path must derive it from the approved normalizer; this slice stores and constrains it but adds no normalization function.';
 comment on column public.categories.label_en_normalized is
-  'Versioned trusted comparison value for English sibling-collision checks. It must be lowercase and is unique only among non-archived siblings in the same reviewed branch.';
+  'Versioned trusted comparison value for English sibling-collision checks. It must be lowercase and is unique only among active or deprecated siblings in the same reviewed branch.';
 comment on column public.categories.status is
   'Taxonomy lifecycle: draft, active, deprecated, archived. The table enforces valid state combinations but transition history requires the later trusted mutation path.';
 comment on column public.categories.is_assignable is
@@ -175,11 +183,11 @@ comment on column public.categories.updated_by_user_profile_id is
 
 create unique index categories_code_uidx on public.categories (code);
 
-create unique index categories_non_archived_sibling_label_ar_uidx
+create unique index categories_active_deprecated_sibling_label_ar_uidx
   on public.categories (category_type, parent_category_id, label_ar_normalized) nulls not distinct
   where status in ('active', 'deprecated');
 
-create unique index categories_non_archived_sibling_label_en_uidx
+create unique index categories_active_deprecated_sibling_label_en_uidx
   on public.categories (category_type, parent_category_id, label_en_normalized) nulls not distinct
   where status in ('active', 'deprecated');
 

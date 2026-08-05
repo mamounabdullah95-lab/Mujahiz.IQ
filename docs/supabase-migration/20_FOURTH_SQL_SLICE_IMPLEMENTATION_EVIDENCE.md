@@ -12,7 +12,7 @@ It creates no category vocabulary, current application code, `other` category, a
 
 ## Declarative enforcement and boundary
 
-Composite self-references enforce parent type/depth coherence, a maximum of three hierarchy levels, root shape, acyclicity through strictly decreasing parent depth, non-assignable parents, active replacement targets, and restrictive delete behavior. A separate archived-parent guard blocks archiving a parent until each direct child is archived; recursive depth means this produces the approved bottom-up boundary. Partial `NULLS NOT DISTINCT` indexes enforce non-archived Arabic/English normalized sibling-label uniqueness, including roots.
+Composite self-references enforce parent type/depth coherence, a maximum of three hierarchy levels, root shape, acyclicity through strictly decreasing parent depth, non-assignable parents, active replacement targets, and restrictive delete behavior. A separate archived-parent guard blocks archiving a parent until each direct child is archived; recursive depth means this produces the approved bottom-up boundary. Partial `NULLS NOT DISTINCT` indexes enforce active/deprecated Arabic/English normalized sibling-label uniqueness, including roots, while provisional draft and historical archived values remain outside that uniqueness predicate.
 
 The selected one-table/no-trigger boundary cannot enforce canonical-code update immutability, active/deprecated parent immutability, lifecycle transition history, or derivation of normalized labels from their display values. Those rules are documented on the columns and are deferred to the separately authorized trusted mutation path. This branch does not claim that those update-time rules are database-enforced.
 
@@ -24,12 +24,14 @@ Merged `main` remains **7 implemented / 29 deferred / 36 total**. If this Draft 
 
 ## Validation record
 
-A clean local Supabase reset applied all four migrations. Focused synthetic pgTAP passed **107/107** and the complete local pgTAP suite passed **329/329**. Warning-level lint returned no schema errors. Catalog checks confirmed 26 columns, 27 constraints, 13 indexes, five `ON DELETE RESTRICT` foreign keys, zero RLS/policies/application triggers/public routines/public views/API-role table privileges, one taxonomy application table, and zero taxonomy rows. The focused test file contains only synthetic values and rolls back its rows.
+A clean local Supabase reset applied all four migrations. Focused synthetic pgTAP passed **118/118** and the complete local pgTAP suite passed **340/340**. Warning-level lint returned no schema errors. Catalog checks confirmed 26 columns, 27 named constraints, 13 exact indexes, five exact `ON DELETE RESTRICT` foreign keys, zero RLS/policies/application triggers/public routines/public views/API-role table privileges, one taxonomy application table, and zero taxonomy rows. The focused test file contains only synthetic values and rolls back its rows. Unicode-whitespace cases cover both display labels and stored normalized values.
 
 ## Critical self-review corrections
 
 - Corrected the migration default so a valid minimal root receives `hierarchy_depth = 1` rather than failing a required-column check.
 - Corrected focused test fixtures so the replacement-negative case targets a draft node, archive transitions clear `is_assignable`, and provenance target IDs are unambiguous.
+- Rejected leading/trailing Unicode whitespace in both display labels and stored normalized values; `btrim` alone did not reject a single non-breaking-space boundary.
+- Added exact constraint-name/type, foreign-key-definition, and index-shape catalog assertions, and aligned sibling-index names with their active/deprecated predicate.
 - Reused the existing catalog-based PUBLIC/API-role ACL assertion pattern instead of a portability-risky direct `PUBLIC` privilege helper call.
 - Confirmed that no trigger or function is authorized for code/parent immutability, lifecycle transition history, or normalized-value derivation; those material update-time rules remain an explicit later trusted-mutation-path blocker.
 No Firebase, hosted Supabase, Production, TEST, taxonomy, Supplier, migration, seed, import, export, backfill, or deletion operation is included.
