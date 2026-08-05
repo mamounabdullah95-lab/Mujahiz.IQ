@@ -131,7 +131,9 @@ No counts above authorize a Production read or write; bounded facts must be refr
 
 The implementation branch adds only public.user_profiles and internal.identity_provider_links through migration 20260804000200_provider_neutral_identity_foundation.sql. It applies the approved provider-neutral UUID/profile and provider-subject contracts, bounded lifecycle checks, partial active-link uniqueness, migration-batch provenance, ON DELETE RESTRICT relationships, and zero direct API-role table privileges. No RLS, policy, Auth bridge, Auth user, runtime command, data migration, or deferred identity/access table is included. This is local implementation evidence only; ID-001, MIG-002, and RES-001 remain Open, and Firebase Auth remains authoritative during the hybrid phase.
 
-The third local SQL slice adds only `public.supplier_profiles` through migration `20260804000300_supplier_profile_foundation.sql`. It applies the approved organization- and Auth-independent Supplier root contract: UUIDv4 identity, bounded legacy alternate ID, distinct original/display/Arabic/English names, bounded business/lifecycle/provenance fields, nullable `ON DELETE RESTRICT` trusted actor references, and zero direct API-role table privileges. It creates no Supplier ownership, location, contact, category, capability, payment, submission, import, duplicate, eligibility, organization, Auth, RLS, policy, view, RPC, trigger, function, browser/API, data-migration, hosted, or Production behavior. This remains local implementation evidence only; all fourteen approval gates remain Open.
+The third local SQL slice adds only `public.supplier_profiles` through migration `20260804000300_supplier_profile_foundation.sql`. It applies the approved organization- and Auth-independent Supplier root contract: UUIDv4 identity, bounded legacy alternate ID, distinct original/display/Arabic/English names, bounded business/lifecycle/provenance fields, nullable `ON DELETE RESTRICT` trusted actor references, and zero direct API-role table privileges. It creates no Supplier ownership, location, contact, category, capability, payment, submission, import, duplicate, eligibility, organization, Auth, RLS, policy, view, RPC, trigger, function, browser/API, data-migration, hosted, or Production behavior. This remains local implementation evidence only; it predates SUP-003 approval.
+
+The fourth SQL slice on this unmerged Draft branch adds only public.categories through migration 20260805000100_categories_foundation.sql. It establishes the empty local Supplier-offering taxonomy contract with declarative bounded-depth/type/leaf/archive and replacement-target checks, bilingual normalized-sibling uniqueness, and zero API-role access. Canonical-code update immutability, active-parent immutability, lifecycle transition history, and normalized-value derivation remain deferred to a later authorized trusted mutation path because this slice adds no trigger or function. Merged main remains 7 implemented / 29 deferred; this branch would be 8 implemented / 28 deferred if merged.
 
 
 ### Identity and access conclusions
@@ -478,7 +480,7 @@ Counts are the verified 3 August 2026 baseline. This is a design mapping, not au
 | `materialTerms` (1) | term plus alias rows | preserve ID; resolve category; recompute normalized values/version | Production-like dictionary; merge/normalization ADR. |
 | `termSuggestions` (11) | `term_suggestions` with the approved bounded/minimized evidence sample merged into the suggestion row; no `term_suggestion_examples` target | preserve ID; recompute count from source evidence then reconcile the legacy count; map sample fields into the parent logical child slot | Query excerpts may contain PII; retention/minimization required and excess examples receive an explicit no-target/quarantine disposition. |
 | `settings` (1) | validated `platform_settings` rows or typed reference rows | preserve key/ID and schema version | Split visibility; never migrate secrets. |
-| `categories` (0) | bilingual `categories` rows; no `category_translations` table | preserve ID/code if created; map reviewed constants separately | SUP-003 taxonomy hierarchy/mapping remains Open. |
+| `categories` (0) | bilingual `categories` rows; no `category_translations` table | preserve ID/code if created; map reviewed constants separately | SUP-003 is Approved; taxonomy mapping remains a later reviewed phase. |
 | `publicConfig` (0) | registration sectors or public settings | preserve key/version | Repository defaults are not silently claimed as migrated data. |
 | `contentPages` (0) | pages/translations | preserve ID/slug | No rows; publication/version model open. |
 | `supplierProducts` (0) | products and typed file link | preserve ID; validate owner membership/Supplier | Catalog Lite only; no invented media. |
@@ -636,7 +638,7 @@ This index is semantically synchronized to the canonical register in `10_SCHEMA_
 | ORG-002 | Organization membership roles and bootstrap | Open | Organization RLS design |
 | SUP-001 | Supplier ownership versus membership | Recommended | Supplier SQL/RLS design |
 | SUP-002 | Supplier multi-user access | Recommended | Membership feature phase |
-| SUP-003 | Category hierarchy | Open | Supplier transformation |
+| SUP-003 | Category hierarchy | Resolved | Supplier transformation |
 | SUP-004 | Address and service-coverage normalization | Open | Supplier transformation |
 | SUP-005 | Contact model and audience projection | Recommended | Supplier SQL/RLS design |
 | SUP-006 | Product catalog depth | Deferred | Product feature phase |
