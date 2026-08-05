@@ -2,7 +2,8 @@
 
 Status: **Implemented and merged in PR #59; local-only, not hosted or deployed**
 Decision date: 5 August 2026
-Verified start: `origin/main` `f37d46bd875987a6c2d177b21df31a8ecb8e0b71` after PR #59 merge
+Verified selection start: `995feeda072f345fdc0f00d101cdc598713c43c9`
+PR #59 merge / current implementation state: `f37d46bd875987a6c2d177b21df31a8ecb8e0b71`
 Primary task profile: Documentation
 
 ## 1. Superseding decision

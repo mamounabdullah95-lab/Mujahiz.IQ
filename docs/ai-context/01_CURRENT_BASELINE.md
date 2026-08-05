@@ -148,8 +148,9 @@ Do not combine results from different commits or PRs into a new automated-test t
 - **Verified current fact:** `supabase/config.toml` exists for local project ID `mujahiz-iq-local`; local start, status, Studio access, and normal stop were validated, and the local stack is currently stopped.
 - **Verified current fact:** No hosted Supabase implementation or linkage exists. No hosted project was authenticated, accessed, queried, changed, or independently verified through this repository work, and the merged SQL migrations have not been applied remotely.
 - **Verified current fact:** GitHub `main` contains the first local migration-control SQL slice: migration `supabase/migrations/20260804000136_migration_control_foundation.sql` creates six governance tables in the non-exposed `internal` schema, and `supabase/tests/migration_control_foundation.sql` supplies repository-tracked synthetic pgTAP coverage.
-- **Verified current fact:** No business/application PostgreSQL tables, RLS, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
-- **Verified current fact:** No browser integration, API policy, application grant, hosted Supabase project link, or remote migration application exists.
+- **Verified current fact:** Local PostgreSQL now contains the merged application/domain foundation tables `public.user_profiles`, `public.supplier_profiles`, and `public.categories`; `internal.identity_provider_links` and the migration-control tables also exist locally.
+- These objects remain local-only and are not application-integrated, hosted, remotely applied, or Production-active.
+- **Verified current fact:** No RLS, browser/API access, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
 - **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, or PR #59.
 
 The merged local infrastructure and migration-governance SQL, a future business/application schema, any hosted Supabase project, and Firebase Production are separate states. Supabase is not currently a Production authority.
@@ -158,7 +159,8 @@ The merged local infrastructure and migration-governance SQL, a future business/
 
 - **Verified current fact:** The authoritative logical PostgreSQL schema design and its first local migration-control/traceability slice are merged; the second local identity slice, third local Supplier-profile slice, and fourth local categories slice are now implemented and merged, while the remaining business/application schema remains unimplemented.
 - **Verified current fact:** The design classifies 79 logical concepts: 36 Core Phase 1, 10 Core Later, 13 Future-Compatible, 13 Deferred, and 7 Remove/Merge.
-- **Verified current fact:** Of the 36 Core Phase 1 concepts, 8 are implemented locally and 28 remain deferred. The first 5 logical concepts use 7 physical tables because `migration_record_mappings` is decomposed across 3 relations.
+- **Verified current fact:** Of the 36 Core Phase 1 concepts, 8 are implemented locally and 28 remain deferred out of 36 total concepts.
+- **Verified current fact:** The local schema contains exactly 10 physical tables: six migration-control tables, `public.user_profiles`, `internal.identity_provider_links`, `public.supplier_profiles`, and `public.categories`. The first four migration-control logical concepts use six physical tables because `migration_record_mappings` is decomposed across three relations.
 - **Verified current fact:** The approved second slice is exactly `public.user_profiles` and `internal.identity_provider_links`. `platform_role_assignments`, all access/trial ledger tables, and the other remaining Core Phase 1 concepts are deferred.
 - **Verified current fact:** Core Phase 1 remains a maximum candidate set, not approval to create all 36 concepts in one PR. PR #51 implemented the approved two-table identity boundary, PR #54 implemented only the separately bounded `supplier_profiles` local root, and PR #59 implemented only the separately bounded `categories` local root.
 - **Verified current fact:** The design maps all 35 verified Firestore collections, registers 36 synchronized decisions, and provides a 119-item schema review checklist. DB-001 is resolved for the local first slice to database-generated UUIDv4 through `pg_catalog.gen_random_uuid()`; hosted compatibility remains a later validation gate.
@@ -181,7 +183,6 @@ The 13 remaining Open approval gates are:
 - `ID-001`
 - `ORG-001`
 - `ORG-002`
-
 - `SUP-004`
 - `RFQ-003`
 - `MSG-002`
