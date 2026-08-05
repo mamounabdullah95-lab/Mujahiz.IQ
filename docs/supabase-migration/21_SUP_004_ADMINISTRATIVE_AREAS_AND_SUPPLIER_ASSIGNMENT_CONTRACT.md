@@ -1,110 +1,92 @@
 # SUP-004 administrative areas and Supplier assignment contract
 
-Status: **Decision-ready recommendation; SUP-004 remains Open pending explicit Product/Data owner approval**
+Status: **Approved — SUP-004 resolved through the explicit Product/Data owner decision recorded on 5 August 2026**
 Verified repository start: `origin/main` `f37d46bd875987a6c2d177b21df31a8ecb8e0b71`
 Decision owners: Product owner and data owner under the founder-led dual-role governance recorded by PR #57
 Primary task profile: Documentation
 
-## 1. Exact decision question and posture
+## 1. Decision result
 
-> Should Mujahiz IQ approve a hierarchy-ready Iraqi administrative-area reference contract, initially used at governorate granularity, and a typed Supplier assignment contract that keeps physical locations separate from service coverage, maps only explicit administrative evidence, represents `all_iraq` and `imports_outside_iraq` as bounded non-administrative exceptions, and preserves every ambiguous Firebase value for review rather than inferring a branch, locality, or coverage target?
+The owner explicitly approved **Option B** with the following modifications and boundaries:
 
-**Recommendation:** approve that contract as Option B in section 6, subject to the ten explicit owner decisions in section 8.
+- use a hierarchy-ready Iraqi administrative-area model;
+- start with governorates only and require all 19 governorates, including Halabja, when reference population is separately authorized;
+- defer district and subdistrict support to a later approved slice;
+- keep Supplier physical locations distinct from Supplier service coverage through typed assignments;
+- preserve ambiguous Firebase values for review without guessing or silent remapping;
+- classify `imports_outside_iraq` as a Supplier capability, not an administrative area or service-coverage code;
+- use stable internal identities and keep official/reference codes separately when available;
+- select an empty `administrative_areas` foundation as the fifth SQL boundary; and
+- exclude Supplier assignment tables, reference population, seed, Firebase transformation, hosted Supabase, and Production work.
 
-**Approval state:** SUP-004 remains **Open**. This document records a recommendation and the exact owner decision required; it does not record approval. A pull-request approval, merge, or lack of objection must not silently change the gate. A later explicit owner outcome must update this document and `10_SCHEMA_DECISION_REGISTER.md` before any SUP-004-dependent SQL is authorized.
+**Gate result:** SUP-004 is **Resolved**. The contract decisions needed to select the empty governorate-only administrative-area foundation are complete. Exact reference-source acquisition, vocabulary population, and lower-level hierarchy implementation are later execution decisions and do not block empty structural DDL.
 
-The other twelve approval gates also remain Open and unchanged: `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+The twelve remaining Open gates are unchanged: `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
 
-This task is planning and documentation only. It authorizes no SQL, reference rows, mappings, seed, migration, backfill, data read/write, application change, hosted work, or deployment.
+This approval does not authorize SQL implementation. It authorizes only the planning selection recorded in `22_FIFTH_SQL_SLICE_ADMINISTRATIVE_AREAS_SELECTION.md`.
 
-## 2. Verified findings
+## 2. Evidence and findings retained
 
 ### 2.1 Repository and migration state
 
 - **Fact:** The verified start is merged PR #59 at `f37d46bd875987a6c2d177b21df31a8ecb8e0b71`.
 - **Fact:** The local SQL foundation contains 10 physical tables representing 8 implemented Core Phase 1 concepts; 28 of 36 remain deferred.
-- **Fact:** PR #54 implemented `public.supplier_profiles`, and PR #59 implemented `public.categories`. Both are local-only, synthetic-data-only foundations with no browser/API authority, hosted Supabase operation, Firebase change, or Production data movement.
-- **Fact:** `administrative_areas` is the smallest remaining structurally independent Core Phase 1 reference concept, but SUP-004 blocks its authoritative contract. `supplier_locations` also remains deferred and depends on both `supplier_profiles` and this contract.
+- **Fact:** PR #54 implemented `public.supplier_profiles`, and PR #59 implemented `public.categories`. Both remain local-only, synthetic-data-only foundations.
 - **Fact:** Firebase remains the live Production backend. Supabase remains local-only.
 
-### 2.2 Current Firebase-compatible Supplier shape
+### 2.2 Firebase compatibility finding
 
-- **Fact:** `SupplierDraft` stores top-level `governorate`, optional `governorates[]`, structured `branches[]`, `city`, `marketArea`, optional `address`, optional `googleMapsLink`, and `coverageAreas[]`.
-- **Fact:** A branch stores `governorate`, `city`, optional `marketArea`, optional `address`, and optional `phone`.
-- **Fact:** The Add Supplier UI describes the governorate selection as the head-office governorate but permits multiple selections. Its draft builder also unions branch governorates into `governorates[]` and stores the first array value in scalar `governorate`.
-- **Fact:** Directory/search paths treat `governorate`/`governorates[]` as location evidence. Recommendation matching also treats `all_iraq` as a coverage override. The implementation does not establish that every `governorates[]` value is service coverage.
-- **Fact:** The Excel contract requires configured governorate codes, uses the first as scalar `governorate`, and stores the full set in `governorates[]`. Unknown configured codes are rejected.
-- **Fact:** Current coverage codes are `local_only`, `governorate_level`, `all_iraq`, and `imports_outside_iraq`. The first two name no target area.
-- **Finding:** Current data can prove a headquarters/branch, an area association, or a coarse coverage assertion depending on the source field. It cannot prove that an unqualified governorate array is service coverage or that `local_only`/`governorate_level` targets the first stored governorate.
+- `SupplierDraft` stores scalar `governorate`, optional `governorates[]`, structured `branches[]`, lower-address text, and `coverageAreas[]`.
+- The current UI describes governorate selection as head-office evidence but permits multiple values; draft construction also unions branch governorates into `governorates[]` and stores the first array value as scalar `governorate`.
+- Current coverage codes are `local_only`, `governorate_level`, `all_iraq`, and `imports_outside_iraq`. The first two name no target, while the last describes sourcing capability rather than an Iraqi service area.
+- Therefore, physical area, service coverage, and import capability must remain distinct. Array order or nearby fields never supply missing semantics.
 
-### 2.3 Administrative-reference volatility
+### 2.3 Administrative-reference finding
 
-- **Fact:** Repository constants contain 18 governorate codes and omit Halabja.
-- **Fact:** Iraq's Ministry of Justice records Law No. 7 of 2025 and the official-gazette decree establishing Halabja as Iraq's nineteenth governorate. The repository list cannot be copied as a current authoritative seed. Source: [Iraqi Ministry of Justice, Gazette issue 4825](https://moj.gov.iq/view.9248/).
-- **Fact:** Lower administrative units and codes continue to change. The Ministry of Planning recorded new or reclassified districts in 2025 and 2026, including [Qara Tapa](https://mop.gov.iq/archives/31879), [Jalawla](https://mop.gov.iq/archives/36762), and [Al-Khairat](https://mop.gov.iq/archives/37453).
-- **Finding:** Canonical identity must be independent of a display label, hierarchy path, or one external-code version. Any future population requires a dated, reviewed official administrative-unit snapshot; application constants are mapping candidates only.
+- Repository constants contain 18 governorates and omit Halabja.
+- Iraq's Ministry of Justice records Halabja as Iraq's nineteenth governorate. Source: [Iraqi Ministry of Justice, Gazette issue 4825](https://moj.gov.iq/view.9248/).
+- Lower administrative units and reference codes continue to change. Examples include [Qara Tapa](https://mop.gov.iq/archives/31879), [Jalawla](https://mop.gov.iq/archives/36762), and [Al-Khairat](https://mop.gov.iq/archives/37453).
+- Consequently, repository constants are mapping candidates, not an authoritative seed, and stable Mujahiz identity remains separate from versioned external identifiers.
 
-## 3. Exact unresolved questions in SUP-004
+## 3. Approved administrative-area contract
 
-| # | Unresolved question | Evidence gap |
-|---:|---|---|
-| 1 | Governorates only, or full governorate/district/subdistrict hierarchy? | Current Supplier data reliably controls governorates but stores lower locality as free text. |
-| 2 | Which authority/version supplies areas, bilingual labels, hierarchy, and external codes? | Configurable application constants omit the current nineteenth governorate; official lower units change. |
-| 3 | Internal stable codes or copied external statistical codes? | External codes aid interoperability but may be introduced or re-coded. |
-| 4 | What does each current location field mean? | `governorates[]` combines UI selection and branch-derived values; scalar `governorate` is the first value. |
-| 5 | How are physical locations distinguished from service coverage? | Firestore stores both on one Supplier document and search uses both kinds of evidence. |
-| 6 | What do `local_only` and `governorate_level` target? | Neither code names its locality or governorate. |
-| 7 | Is `imports_outside_iraq` coverage or sourcing capability? | Current UI calls it coverage, but its wording describes import capability. |
-| 8 | Which outcomes, exception evidence, ordering, and replay keys are mandatory? | The design requires originals/exceptions but does not approve exact field-level rules. |
-| 9 | How are official changes represented without rewriting history? | Current data has no area lineage or versioned mapping. |
-| 10 | Which future Firebase writes are accepted during coexistence? | Firebase remains live; no relational cutover or dual-write behavior is approved. |
+### 3.1 Identity and first-phase hierarchy
 
-## 4. Minimum administrative-area contract
+- Use one `administrative_areas` adjacency model for Iraqi civil administrative units.
+- Use a database-generated UUIDv4 primary identity under DB-001 plus an immutable, globally unique Mujahiz canonical code.
+- Keep official/reference source namespace, external code, and source version/date separate from canonical identity when available.
+- The fifth SQL slice is governorate-only: accepted rows have `area_type=governorate`, depth 1, and no parent.
+- Retain hierarchy-ready parent/depth semantics, but do not accept or populate district or subdistrict rows until a later approved slice expands the contract and enforcement.
+- City, market/industrial area, street address, municipality, neighborhood, village, coordinates, boundaries, postal data, and geometry remain non-canonical/deferred.
 
-### 4.1 Identity and hierarchy
+### 3.2 Governorate population boundary
 
-- Use one `administrative_areas` adjacency hierarchy for Iraqi civil administrative units.
-- Use a database-generated UUIDv4 identity under DB-001 plus an immutable, globally unique Mujahiz code. The code is not a label, hierarchy path, or external statistical code.
-- Define `governorate`, `district`, and `subdistrict` with maximum depth three. A governorate has no parent; a district has one governorate parent; a subdistrict has one district parent. Prohibit self-parenting and cycles.
-- Use governorate granularity for the initial operational/population boundary. Hierarchy fields preserve later compatibility, but this task authorizes no district or subdistrict rows.
-- Keep city, market/industrial area, street address, municipality, neighborhood, village, coordinates, boundaries, and geometry outside canonical area identity until separately approved.
+- A later separately authorized population must contain all 19 Iraqi governorates, including Halabja.
+- Do not copy the current 18 application constants as authoritative rows.
+- Before population, record a dated reviewed official source, reconcile bilingual labels and external codes, and produce an exception/collision report.
+- No reference row, seed, mapping manifest, Firebase read, or data operation is authorized by this contract or the fifth-slice planning PR.
 
-### 4.2 Names, external identifiers, and lifecycle
+### 3.3 Names and lifecycle
 
-- Require reviewed Arabic and English names for an active area; one language never fills the other silently.
-- Preserve bounded source namespace, external code, source version/date, and source reference when official evidence exists. External identifiers are interoperability evidence, not canonical identity.
-- Use `draft`, `active`, `deprecated`, and `archived`. Active rows receive new assignments; deprecated rows remain resolvable and may identify an active replacement; archived rows receive no new assignment.
-- Canonical code is immutable. Parent and area type become immutable after activation or assignment. Material reclassification uses reviewed replacement/version lineage instead of rewriting history.
-- Never hard-delete an area after activation, mapping, or assignment. Parent archive never cascades.
+- Active canonical areas require reviewed Arabic and English names; one language never silently fills the other.
+- Canonical codes are immutable. Use `draft`, `active`, `deprecated`, and `archived` lifecycle semantics when later implementation is authorized.
+- Active rows may receive future assignments; deprecated rows remain resolvable and may identify a replacement; archived rows receive no new assignment.
+- Never hard-delete an area after activation, mapping, or assignment. Official changes use reviewed replacement/version lineage rather than historical rewrite.
 
-### 4.3 First reference-data boundary
+## 4. Approved Supplier assignment contract
 
-- Do not copy the repository's 18 constants as authoritative PostgreSQL rows.
-- Before population, obtain one dated official snapshot, reconcile all governorates including Halabja, define bilingual labels and stable Mujahiz codes, and produce an exception/collision report.
-- After explicit SUP-004 approval, a future empty `administrative_areas` SQL slice may be selected separately. Population remains a separate data-governance task.
+The future logical `supplier_locations` relation must distinguish:
 
-## 5. Minimum Supplier location and coverage contract
+1. `physical_location` — headquarters, structured branch, or explicitly uncertain physical presence; and
+2. `service_coverage` — service in one explicitly mapped administrative area or the bounded national scope `all_iraq`.
 
-### 5.1 One typed relation, two meanings
+A physical row never implies coverage. A coverage row never proves an office, branch, address, contact location, or import capability.
 
-Retain logical `supplier_locations`, with `record_class` distinguishing:
+Initial physical kinds are `headquarters`, `branch`, and `unspecified_presence`. A mapped coverage row uses exactly one of `administrative_area_id` or `coverage_code=all_iraq`. Non-mapped rows retain source evidence without a fabricated target.
 
-1. `physical_location` — headquarters, structured branch, or uncertain physical presence; and
-2. `service_coverage` — explicit service in one area or one approved bounded non-area scope.
+`imports_outside_iraq` belongs to the future Supplier capability mapping. It must not create an administrative-area row or a `supplier_locations` coverage row. Until the capability transformation is separately authorized, preserve the original Firebase value and source coordinates as reviewed migration evidence.
 
-A physical row never implies coverage. A coverage row never proves an office, branch, address, or contact location.
-
-Initial physical kinds are `headquarters`, `branch`, and `unspecified_presence`. Coverage uses either one mapped `administrative_area_id` or one bounded code: `all_iraq` or `imports_outside_iraq`. A mapped coverage row has exactly one of area or code. A non-mapped row may have neither target but must retain source evidence.
-
-`imports_outside_iraq` preserves its current import/sourcing meaning. It does not assert an Iraqi area or international delivery. A future capability design may supersede its placement without discarding history.
-
-### 5.2 Required transformed-row evidence
-
-Retain Supplier, record class/kind, deterministic position/child key, source artifact/field and bounded original value, mapping status/version/stage/reason/coordinates, mapped target if any, reviewer/time, physical details, active dates, and existing migration disposition/target/reconciliation evidence.
-
-Mapping/verification/source fields are trusted-only. Row order and identity remain stable after publication or historical use. Archive/close rows instead of rewriting historical evidence.
-
-### 5.3 Mapping outcomes
+### 4.1 Mapping outcomes
 
 | Outcome | Meaning | Target allowed |
 |---|---|---|
@@ -114,89 +96,66 @@ Mapping/verification/source fields are trusted-only. Row order and identity rema
 | `unmapped` | Understood but no approved target exists in this version | No |
 | `rejected` | Invalid, unsafe, contradictory, or not an area/coverage assertion | No |
 
-No outcome discards source value, coordinates, version, reason, or reconciliation. Fuzzy matching may rank review candidates only; it never auto-maps.
+No outcome discards source value, coordinates, version, reason, ordering, or reconciliation. Fuzzy matching may rank review candidates only; it never auto-maps.
 
-### 5.4 Deterministic Firebase transformation
+### 4.2 Deterministic Firebase transformation
 
-| Source evidence | Recommended transformation | Prohibited inference |
+| Source evidence | Approved future disposition | Prohibited inference |
 |---|---|---|
 | Top-level governorate/address fields | One ordered physical/headquarters row; map only through an approved value rule | No service coverage |
-| Each `branches[]` item | One ordered physical/branch row with its details and independently mapped governorate | No coverage; no text-based branch merge |
-| Additional recognized `governorates[]` values not already represented | Ordered physical/`unspecified_presence` rows with source evidence | No invented address, branch, priority, or coverage |
-| Duplicate scalar/array/branch evidence | Use explicit source precedence and lineage; deduplicate targets only under a reviewed rule | No collapse by label or array order alone |
-| `all_iraq` | Mapped service row with that code and no area FK | Do not create 19 governorate rows |
-| `imports_outside_iraq` | Mapped exceptional service row with that code and no area FK | No country row or international-delivery claim |
-| `governorate_level` | `pending_review` unless the same source explicitly names the covered governorate under an approved rule | Never choose first governorate by convenience |
-| `local_only` | `pending_review` unless a future lower-area contract and explicit target exist | Never auto-map city/market/address text |
+| Each `branches[]` item | One ordered physical/branch row with independently mapped governorate | No coverage; no text-based branch merge |
+| Additional recognized `governorates[]` values | Ordered physical/`unspecified_presence` evidence unless a stronger source rule applies | No invented address, branch, priority, or coverage |
+| Duplicate scalar/array/branch evidence | Use explicit precedence and lineage; deduplicate only under a reviewed rule | No collapse by label or array order alone |
+| `all_iraq` | One mapped service-coverage row with no area FK | Do not create 19 governorate assignments |
+| `imports_outside_iraq` | Preserve for future Supplier capability mapping | No area or service-coverage row |
+| `governorate_level` | `pending_review` unless an approved source rule names the covered governorate | Never choose the first governorate by convenience |
+| `local_only` | `pending_review` until an approved lower-area contract and explicit target exist | Never auto-map city/market/address text |
 | Unknown/historical/translated/admin-added value | Exact source rule, bounded normalized/alias rule, then manual review | No fuzzy auto-map, drop, or invention |
 
-One source record may produce zero, one, or many rows. Each target uses a deterministic child key from source field, ordinal, class, and target kind/code so replay cannot fork or reorder history.
+One source record may produce zero, one, or many normalized rows. Deterministic child keys use source field, ordinal, record class, and target kind/code so replay cannot fork or reorder history.
 
-## 6. Smallest viable options
+## 5. Recorded owner decisions
 
-| Option | Description | Benefits | Risks / disposition |
-|---|---|---|---|
-| A. Flat governorates only | Flat area list; assignments use governorate IDs or exceptions | Smallest immediate vocabulary | No lower-level path; likely future identity/FK redesign. Viable, not preferred. |
-| **B. Hierarchy-ready, governorate-first, typed Supplier rows** | Three-level adjacency; first population governorates only; one relation distinguishes physical and coverage | Aligns with approved design, preserves Firebase without invented precision, enables an empty independent slice, avoids later FK redesign | Requires disciplined mappings and owner approval. **Recommend.** |
-| C. Full hierarchy now | Populate/map all three levels | Rich filtering | Current source lacks deterministic lower IDs; official units change; high rework. Reject now. |
-| D. Free text / JSON only | Retain Firestore-shaped blobs | Lowest initial work | No stable FKs, hierarchy, deterministic mappings, or reliable filters. Reject. |
+| # | Material choice | Owner decision |
+|---:|---|---|
+| 1 | Scope | **Approved:** Iraqi civil areas for Supplier references; postal, electoral, municipal, spatial, and international-area models excluded |
+| 2 | Hierarchy | **Approved with boundary:** hierarchy-ready model; governorates only now; district/subdistrict support deferred |
+| 3 | Governorate set | **Approved:** later population must include all 19 governorates, including Halabja |
+| 4 | Identity | **Approved:** UUIDv4 plus stable immutable Mujahiz code; official/reference codes stored separately when available |
+| 5 | Reference authority | **Approved with deferral:** dated official-source validation is mandatory before population; exact acquisition/version is a later population task |
+| 6 | Supplier model | **Approved:** one typed future relation with distinct physical-location and service-coverage classes |
+| 7 | Physical/legacy mapping | **Approved:** preserve explicit evidence and ambiguity; never infer coverage, branch, locality, or target |
+| 8 | Coverage/capability boundary | **Approved with modification:** `all_iraq` is a non-area coverage scope; `imports_outside_iraq` is a Supplier capability |
+| 9 | History | **Approved:** preserve originals, coordinates, outcomes/version, reviewer/reason, order, lineage, and deterministic mappings |
+| 10 | Fifth SQL boundary | **Approved:** empty `administrative_areas` foundation only; no Supplier assignment table or data population |
 
-Separate physical and coverage tables were considered. They simplify row shapes but duplicate mapping/lifecycle/provenance rules, add a physical relation, and diverge from approved `supplier_locations`. One typed relation is the smaller coherent option when class invariants are explicit.
+Approval result: **Approved — SUP-004 resolved on 5 August 2026**.
 
-## 7. Recommendation and dependency safety
+## 6. Fifth SQL slice and dependency safety
 
-Approve Option B. It is dependency-safe because `administrative_areas` is independent of Supplier/Auth/organization/RLS/hosted/Production data; governorate-first use fits explicit controlled evidence; later hierarchy rows do not change existing FKs; physical and coverage meanings cannot imply each other; exception codes prevent fake areas; ambiguous Firebase values remain reviewable; and no population, transformation, or client access accompanies the structural decision.
+The proposed fifth SQL slice is exactly `public.administrative_areas`, empty except for disposable synthetic tests in a later implementation PR.
 
-After later explicit approval, the smallest next implementation candidate is a separately authorized empty local-only `public.administrative_areas` slice with synthetic tests and zero API-role access. `supplier_locations`, official rows, mappings, transformation, and application access remain later tasks.
+It is dependency-safe because it is structurally independent of Supplier rows, Auth, organizations, RLS, hosted Supabase, and Production data; it accepts only governorate shape in the first slice; stable identity is separate from future external identifiers; and all population, lower hierarchy, Supplier assignments, mappings, and client access remain separately gated.
 
-## 8. Exact owner decisions required
+## 7. Deferred decisions and risks
 
-The Product/Data owner must explicitly approve Option B and each choice below, or return numbered changes. Every row is **Pending**.
+Deferred: exact canonical governorate codes/labels/external identifiers and dated source artifact; reference population; district/subdistrict enforcement and rows; locality/postal/spatial models; Supplier assignment implementation; capability implementation; RLS/projections; Firebase coexistence/cutover; migration and reconciliation; hosted environments.
 
-| # | Material choice | Recommended decision | Owner decision |
-|---:|---|---|---|
-| 1 | Scope | Iraqi civil areas for Supplier references; exclude postal, electoral, municipal, geometry, and international models | **Pending** |
-| 2 | Hierarchy | Governorate/district/subdistrict, depth three; governorate-first population | **Pending** |
-| 3 | Identity | UUIDv4 plus immutable Mujahiz code; official identifiers/version separate | **Pending** |
-| 4 | Authority | Dated Ministry of Planning / Statistics and GIS Authority snapshot before population; no seed from constants | **Pending** |
-| 5 | Supplier model | One typed relation with distinct physical and service classes | **Pending** |
-| 6 | Physical mapping | Section 5.4 headquarters/branch/unspecified rules; no coverage inference | **Pending** |
-| 7 | Coverage | Area FK only for explicit target; only `all_iraq` and `imports_outside_iraq` as initial non-area codes | **Pending** |
-| 8 | Ambiguous scopes | `local_only`/`governorate_level` remain review outcomes without explicit target; never infer first governorate | **Pending** |
-| 9 | History | Preserve originals, coordinates, outcomes/version, reviewer/reason, order, lineage, deterministic mappings | **Pending** |
-| 10 | First SQL boundary | After gate approval, propose empty `administrative_areas` separately; population/Supplier rows remain later | **Pending** |
+Remaining risks are stale 18-value application constants, later official recoding, ambiguous legacy meanings, overstatement of coverage, and accidental implementation of deferred hierarchy or assignments. The approved boundaries require official-source review before population, typed meanings, explicit mapping outcomes, and an empty fifth slice.
 
-Required later approval statement:
+## 8. Validation and stop point
 
-> Product/Data owner approves SUP-004 Option B and decisions 1-10 exactly as recorded in `21_SUP_004_ADMINISTRATIVE_AREAS_AND_SUPPLIER_ASSIGNMENT_CONTRACT.md`, with any numbered exceptions stated explicitly.
-
-Until that statement is recorded and synchronized, SUP-004 remains Open.
-
-## 9. Assumptions, deferred work, and risks
-
-Assumptions requiring confirmation: governorate granularity is enough initially; the official administrative-unit guide is the preferred external authority; `governorates[]` is physical evidence rather than coverage absent a source-specific rule; and `imports_outside_iraq` remains for compatibility pending a capability redesign.
-
-Deferred: exact vocabulary/codes/labels/aliases/seed; lower-level population; municipality/locality/postal/spatial models; address parsing and fuzzy matching; contact/visibility/RLS; coverage verification and UI behavior; Firebase coexistence/cutover; migration, reconciliation, and hosted environment work.
-
-Principal risks are stale 18-value seeds, physical-to-coverage inference, wrong targets for coarse codes, overstatement of international service, false lower-area parsing, official recoding, weak class invariants, and collapsed ordered evidence. The contract mitigates them through official snapshot review, typed rows, explicit targets, versioned external identifiers, review outcomes, and deterministic child mappings.
-
-## 10. Validation and stop point
-
-Focused checks must confirm SUP-004 remains Open; the other twelve gates are unchanged; the verified PR #59 starting state is 10 physical tables and 8 implemented / 28 deferred / 36 total concepts; the recommendation matches the authoritative design/register and merged Supplier/category foundations; external links are official; Markdown paths, sensitive-value scan, `git diff --check`, and documentation-only diff checks pass.
+Focused checks must confirm SUP-004 is Resolved in the contract/register/design/checklist; exactly twelve gates remain Open; the fifth slice selects only empty `administrative_areas`; every reference path resolves; sensitive-value and `git diff --check` scans pass; and the diff remains documentation-only.
 
 No Firebase, pgTAP, local Supabase, build, Emulator, or full repository suite runs for this documentation-only task.
 
-Exact stop point: Draft PR containing this recommendation and the still-Open register entry. Stop before owner approval, gate closure, SQL selection/implementation, reference population, data movement, merge, or deployment.
+Exact stop point: Ready PR #61 containing the approved contract and fifth-slice planning boundary. Stop before SQL implementation, Supplier assignment work, data population, merge, or deployment.
 
-## 11. References
+## 9. References
 
 - [`09_POSTGRESQL_SCHEMA_DESIGN.md`](09_POSTGRESQL_SCHEMA_DESIGN.md)
 - [`10_SCHEMA_DECISION_REGISTER.md`](10_SCHEMA_DECISION_REGISTER.md)
-- [`15_THIRD_SQL_SLICE_SELECTION.md`](15_THIRD_SQL_SLICE_SELECTION.md)
-- [`16_THIRD_SQL_SLICE_IMPLEMENTATION_EVIDENCE.md`](16_THIRD_SQL_SLICE_IMPLEMENTATION_EVIDENCE.md)
-- [`18_SUP_003_CATEGORY_TAXONOMY_CONTRACT.md`](18_SUP_003_CATEGORY_TAXONOMY_CONTRACT.md)
-- [`19_FOURTH_SQL_SLICE_CATEGORIES_SELECTION.md`](19_FOURTH_SQL_SLICE_CATEGORIES_SELECTION.md)
-- [`20_FOURTH_SQL_SLICE_IMPLEMENTATION_EVIDENCE.md`](20_FOURTH_SQL_SLICE_IMPLEMENTATION_EVIDENCE.md)
+- [`11_SCHEMA_REVIEW_CHECKLIST.md`](11_SCHEMA_REVIEW_CHECKLIST.md)
+- [`22_FIFTH_SQL_SLICE_ADMINISTRATIVE_AREAS_SELECTION.md`](22_FIFTH_SQL_SLICE_ADMINISTRATIVE_AREAS_SELECTION.md)
 - [`02_FIRESTORE_TO_POSTGRES_MAPPING_DRAFT.md`](02_FIRESTORE_TO_POSTGRES_MAPPING_DRAFT.md)
 - [`00_CURRENT_STATE_AND_INVENTORY.md`](00_CURRENT_STATE_AND_INVENTORY.md)
-- [`../ai-context/01_CURRENT_BASELINE.md`](../ai-context/01_CURRENT_BASELINE.md)
