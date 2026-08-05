@@ -7,7 +7,7 @@ create table public.categories (
   code text not null,
   legacy_firestore_id text,
   parent_category_id uuid,
-  hierarchy_depth smallint not null,
+  hierarchy_depth smallint not null default 1,
   parent_depth smallint generated always as (
     case when parent_category_id is null then null else hierarchy_depth - 1 end
   ) stored,

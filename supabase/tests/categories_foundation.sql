@@ -186,14 +186,14 @@ with inserted as (
 insert into category_test_ids (name, id) select 'replacement_target', id from inserted;
 select lives_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status, replacement_category_id) values ('synthetic_deprecated', 'متوقف تجريبي', 'Synthetic deprecated', 'متوقف تجريبي', 'synthetic deprecated', 'deprecated', (select id from category_test_ids where name = 'replacement_target')) $$, 'deprecated category can reference a different active same-type replacement');
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status, replacement_category_id) values ('synthetic_active_replacement', 'بديل نشط', 'Active replacement source', 'بديل نشط', 'active replacement source', 'active', (select id from category_test_ids where name = 'replacement_target')) $$, null, 'replacement links require a deprecated source');
-select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status, replacement_category_id) values ('synthetic_bad_replacement', 'بديل مسودة', 'Draft replacement', 'بديل مسودة', 'draft replacement', 'deprecated', (select id from category_test_ids where name = 'leaf')) $$, null, 'replacement target must be active');
+select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status, replacement_category_id) values ('synthetic_bad_replacement', 'بديل مسودة', 'Draft replacement', 'بديل مسودة', 'draft replacement', 'deprecated', (select id from public.categories where code = 'synthetic_draft')) $$, null, 'replacement target must be active');
 select throws_ok($$ insert into public.categories (id, code, label_ar, label_en, label_ar_normalized, label_en_normalized, status, replacement_category_id) values ('22222222-2222-4222-8222-222222222222', 'synthetic_self_replacement', 'ذات بديل', 'Self replacement', 'ذات بديل', 'self replacement', 'deprecated', '22222222-2222-4222-8222-222222222222') $$, null, 'self replacement is rejected');
 select throws_ok($$ update public.categories set status = 'archived' where id = (select id from category_test_ids where name = 'replacement_target') $$, null, 'an active replacement target cannot be archived while referenced');
 select throws_ok($$ insert into public.categories (code, label_ar, label_en, label_ar_normalized, label_en_normalized, status) values ('synthetic_bad_status', 'حالة تجريبية', 'Invalid status', 'حالة تجريبية', 'invalid status', 'unsupported') $$, null, 'unsupported lifecycle status is rejected');
 
-select lives_ok($$ update public.categories set status = 'archived' where id = (select id from category_test_ids where name = 'leaf') $$, 'archiving a leaf is allowed');
+select lives_ok($$ update public.categories set status = 'archived', is_assignable = false where id = (select id from category_test_ids where name = 'leaf') $$, 'archiving a leaf is allowed');
 select lives_ok($$ update public.categories set status = 'archived' where id = (select id from category_test_ids where name = 'group') $$, 'archiving a parent after its direct child is archived is allowed');
-select lives_ok($$ update public.categories set status = 'archived' where id = (select id from category_test_ids where name = 'assignable_group') $$, 'archiving another resolved level-two branch is allowed');
+select lives_ok($$ update public.categories set status = 'archived', is_assignable = false where id = (select id from category_test_ids where name = 'assignable_group') $$, 'archiving another resolved level-two branch is allowed');
 select lives_ok($$ update public.categories set status = 'archived' where id = (select id from category_test_ids where name = 'root') $$, 'archiving a root after the non-archived branch is resolved is allowed');
 
 select lives_ok($$ insert into public.categories (code, legacy_firestore_id, label_ar, label_en, label_ar_normalized, label_en_normalized) values ('synthetic_null_legacy_one', null, 'بدون معرف واحد', 'Null legacy one', 'بدون معرف واحد', 'null legacy one'), ('synthetic_null_legacy_two', null, 'بدون معرف اثنان', 'Null legacy two', 'بدون معرف اثنان', 'null legacy two') $$, 'multiple null legacy identifiers remain valid');
@@ -217,7 +217,7 @@ with inserted as (
   returning id, migration_batch_id
 )
 insert into internal.migration_record_mappings (migration_batch_id, record_kind, source_disposition_id, source_disposition_outcome, target_logical_type, target_id, mapping_role, child_key, transformation_version, rollback_dependency_order)
-select migration_batch_id, 'ordinary_mapping', id, 'migrated', 'categories', id, 'root', 'taxonomy', 'category-transform-v1', 0
+select source.migration_batch_id, 'ordinary_mapping', source.id, 'migrated', 'categories', category.id, 'root', 'taxonomy', 'category-transform-v1', 0
 from source cross join lateral (select id from public.categories where code = 'synthetic_legacy_source') category;
 select is((select target_logical_type from internal.migration_record_mappings where target_logical_type = 'categories' limit 1), 'categories', 'existing migration-control contract accepts synthetic category provenance');
 

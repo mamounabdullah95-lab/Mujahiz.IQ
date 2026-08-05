@@ -24,11 +24,12 @@ Merged `main` remains **7 implemented / 29 deferred / 36 total**. If this Draft 
 
 ## Validation record
 
-Focused local pgTAP contains 107 planned synthetic assertions; complete local pgTAP, lint, and catalog validation are pending because this workstation has no reachable Docker Desktop daemon for the disposable local Supabase runtime. The failed CLI probe did not access a hosted project or any Production system. The focused test file contains only synthetic values and runs in a transaction that rolls back its rows.
+A clean local Supabase reset applied all four migrations. Focused synthetic pgTAP passed **107/107** and the complete local pgTAP suite passed **329/329**. Warning-level lint returned no schema errors. Catalog checks confirmed 26 columns, 27 constraints, 13 indexes, five `ON DELETE RESTRICT` foreign keys, zero RLS/policies/application triggers/public routines/public views/API-role table privileges, one taxonomy application table, and zero taxonomy rows. The focused test file contains only synthetic values and rolls back its rows.
 
 ## Critical self-review corrections
 
-- Corrected the focused migration-control test to qualify the synthetic category target ID rather than rely on an ambiguous column reference.
+- Corrected the migration default so a valid minimal root receives `hierarchy_depth = 1` rather than failing a required-column check.
+- Corrected focused test fixtures so the replacement-negative case targets a draft node, archive transitions clear `is_assignable`, and provenance target IDs are unambiguous.
 - Reused the existing catalog-based PUBLIC/API-role ACL assertion pattern instead of a portability-risky direct `PUBLIC` privilege helper call.
 - Confirmed that no trigger or function is authorized for code/parent immutability, lifecycle transition history, or normalized-value derivation; those material update-time rules remain an explicit later trusted-mutation-path blocker.
 No Firebase, hosted Supabase, Production, TEST, taxonomy, Supplier, migration, seed, import, export, backfill, or deletion operation is included.
