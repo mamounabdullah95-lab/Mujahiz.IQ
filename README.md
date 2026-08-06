@@ -96,6 +96,12 @@ tracked supabase/tests/*.sql file. It prints only a concise pass summary and
 always removes its generated container. No hosted Supabase, Firebase, or
 Production service is contacted.
 
+Each test runs in a clean disposable database replayed through its matching
+migration stage. The runner explicitly documents the existing naming alias
+`identity_provider_foundation.sql` -> `provider_neutral_identity_foundation.sql`;
+that alias is required by the current repository filenames and is not a hidden
+test bypass.
+
 To confirm that assertion failures are detected without editing a committed SQL
 file, run the script with -VerifyFailureDetection; it intentionally exits 1
 after a synthetic failed pgTAP assertion and still cleans up the container:
