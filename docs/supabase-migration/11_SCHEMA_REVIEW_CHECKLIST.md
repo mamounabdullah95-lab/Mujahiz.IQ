@@ -48,19 +48,33 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Contacts remain a later dependency on locations through nullable `supplier_contacts.location_id`; branch phone evidence is neither copied into the location row nor discarded, and no contact table or FK from locations is selected.
 - [x] Mapping manifests, precedence/deduplication rules, collision/exception reports, reconciliation, and rollback artifacts are mandatory before future data transformation but do not block an empty local table.
 - [x] Base rows remain non-public and revoked from API roles; RLS, policies, projections, Auth, organizations, RFQ logic, search ranking, audit/event routines, hosted Supabase, Firebase access, data movement, and Production behavior remain excluded.
-- [x] At the sixth-slice selection point the count was 11 physical tables, 9 implemented and 27 deferred Core Phase 1 concepts. PR #68 later merged the selected one-table implementation, so the verified current state is 12 physical tables, 10 implemented concepts, and 26 deferred concepts; 12 gates remain Open.
+- [x] At the sixth-slice selection point the count was 11 physical / 9 implemented / 27 deferred. PR #68 moved that historical state to 12 / 10 / 26; merged PR #73 later moved the verified current state to 13 / 11 / 25. The 12 gates remain Open.
 
 ### Supplier-category assignment contract review (not part of the 119 design-review items)
 
-- [x] Verified `origin/main` `a28229a6171c5ab7f13dd2c06fbbef769726b82b` contains merged PR #71, merged PR #70, and the post-PR-68 12 physical / 10 implemented / 26 deferred local SQL state.
+- [x] Historical contract review started from `origin/main` `a28229a6171c5ab7f13dd2c06fbbef769726b82b` with 12 physical / 10 implemented / 26 deferred; merged PR #73 at current `origin/main` `cb51da7267f3fa61af9d35ade66890f096f2c51a` now implements the selected assignment boundary at 13 / 11 / 25.
 - [x] The approved assignment meaning is one reviewed temporal Supplier/category classification with `primary`/`secondary` role, unique active Supplier/category identity, at most one active primary, and exactly one primary after a trusted mutation leaves a non-empty active set.
 - [x] Legacy array order never selects primary; broad-only, ambiguous, global `other`, unmapped, and rejected evidence creates no canonical assignment row.
 - [x] `category_aliases` is not a prerequisite for empty assignment DDL, but any alias-based transformation requires the alias relation to be separately authorized, implemented, populated, and collision-reviewed first.
 - [x] Provenance, lifecycle, reviewer/owner responsibility, declarative-versus-trusted enforcement, category deprecation behavior, transformation evidence, and future field-minimized projection constraints are explicit.
-- [x] The selected later boundary is one empty, revoked, local-only assignment table plus its own structural enforcement and disposable synthetic pgTAP; no alias table, rows, mapping execution, RLS, Auth, application access, hosted work, Firebase, or Production behavior is included.
+- [x] Merged PR #73 implements the selected one empty, revoked, local-only assignment table plus structural enforcement and disposable synthetic pgTAP; no alias table, rows, mapping execution, RLS, Auth, application access, hosted work, Firebase, or Production behavior is included.
 - [x] On 6 August 2026, the founder-led Product/Data Owner explicitly approved Option B and the complete `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` as written.
-- [x] The same owner decision selects the exact proposed seventh-slice SQL/test planning boundary. Implementation remains outside this documentation PR, so the current state stays 12 / 10 / 26.
+- [x] The same owner decision selected the exact seventh-slice SQL/test boundary; merged PR #73 implemented it without scope expansion. Current state is 13 physical / 11 implemented / 25 deferred.
 - [x] SUP-003 was already Resolved and remains closed. All 12 Open gates remain unresolved and unchanged; this contract approval neither closes nor weakens any of them.
+
+### Supplier capabilities and payment-options contract review (not part of the 119 design-review items)
+
+- [x] Verified current `origin/main` `cb51da7267f3fa61af9d35ade66890f096f2c51a`, merged PR #73 lineage, 13 physical tables, 11 implemented / 25 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
+- [x] Capability and payment assertions remain separate from categories, locations/coverage, RFQ/quotation terms, platform billing, eligibility, and contractual acceptance.
+- [x] `imports_outside_iraq` has one positive capability meaning and creates no geographic row; `import_only` remains pending rather than being silently equated.
+- [x] Controlled and custom capabilities have mutually exclusive shapes, reviewed moderation, versioned normalization, category-scope rules, semantic duplicate prevention, and historical lifecycle.
+- [x] Payment methods, currencies, credit terms, and advance payment use distinct type-specific semantics; cash/bank transfer/cheque/LC, ISO currencies, explicit no-credit, days/start, and advance percentages do not imply one another.
+- [x] Supplier payment options are recommended as indicative profile assertions; quotations/contracts independently snapshot accepted terms. RFQ-003 and BILL-001 remain Open and separate.
+- [x] Mixed current Firebase values, `official_invoice`, credit contradictions, free text, unknowns, and unmapped values have explicit lossless routing or review outcomes.
+- [x] Provenance, lifecycle, reviewer/owner responsibility, type-specific uniqueness, future field-minimized projection boundaries, and the complete pre-migration evidence package are explicit.
+- [x] Table-boundary options are compared and a capability-only eighth slice is recommended after owner approval; both tables together are rejected as the smallest slice.
+- [ ] The Product/Data Owner has approved or modified every item in document 28 section 15. Until then, neither SQL table is authorized.
+- [ ] A separate implementation selection has fixed the exact capability DDL/pgTAP boundary. This documentation task includes no SQL, data, RLS, Auth, hosted, Firebase, Production, merge, or deployment work.
 
 ## B. Relational model and integrity
 
