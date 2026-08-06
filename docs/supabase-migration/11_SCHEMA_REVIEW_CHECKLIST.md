@@ -53,14 +53,14 @@ Check an item only when the cited design is explicit and evidence supports it. R
 ### Supplier-category assignment contract review (not part of the 119 design-review items)
 
 - [x] Verified `origin/main` `a28229a6171c5ab7f13dd2c06fbbef769726b82b` contains merged PR #71, merged PR #70, and the post-PR-68 12 physical / 10 implemented / 26 deferred local SQL state.
-- [x] The recommended assignment meaning is one reviewed temporal Supplier/category classification with `primary`/`secondary` role, unique active Supplier/category identity, at most one active primary, and exactly one primary after a trusted mutation leaves a non-empty active set.
+- [x] The approved assignment meaning is one reviewed temporal Supplier/category classification with `primary`/`secondary` role, unique active Supplier/category identity, at most one active primary, and exactly one primary after a trusted mutation leaves a non-empty active set.
 - [x] Legacy array order never selects primary; broad-only, ambiguous, global `other`, unmapped, and rejected evidence creates no canonical assignment row.
 - [x] `category_aliases` is not a prerequisite for empty assignment DDL, but any alias-based transformation requires the alias relation to be separately authorized, implemented, populated, and collision-reviewed first.
 - [x] Provenance, lifecycle, reviewer/owner responsibility, declarative-versus-trusted enforcement, category deprecation behavior, transformation evidence, and future field-minimized projection constraints are explicit.
-- [x] The recommended later boundary is one empty, revoked, local-only assignment table plus its own structural enforcement and disposable synthetic pgTAP; no alias table, rows, mapping execution, RLS, Auth, application access, hosted work, Firebase, or Production behavior is included.
-- [ ] The founder-led Product/Data Owner has explicitly approved or amended `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md`; Draft PR existence is not approval.
-- [ ] A later separate seventh-slice selection has approved the exact SQL/test boundary. Until both items are complete, the slice remains blocked and the current state stays 12 / 10 / 26.
-- [ ] All 12 Open gates remain unresolved and unchanged; this contract review neither closes nor weakens any gate.
+- [x] The selected later boundary is one empty, revoked, local-only assignment table plus its own structural enforcement and disposable synthetic pgTAP; no alias table, rows, mapping execution, RLS, Auth, application access, hosted work, Firebase, or Production behavior is included.
+- [x] On 6 August 2026, the founder-led Product/Data Owner explicitly approved Option B and the complete `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` as written.
+- [x] The same owner decision selects the exact proposed seventh-slice SQL/test planning boundary. Implementation remains outside this documentation PR, so the current state stays 12 / 10 / 26.
+- [x] SUP-003 was already Resolved and remains closed. All 12 Open gates remain unresolved and unchanged; this contract approval neither closes nor weakens any of them.
 
 ## B. Relational model and integrity
 

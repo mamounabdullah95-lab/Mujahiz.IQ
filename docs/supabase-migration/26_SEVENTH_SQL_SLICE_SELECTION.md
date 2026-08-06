@@ -1,6 +1,6 @@
 # Core Phase 1 seventh SQL slice selection
 
-Status: **Verified hard stop; no seventh SQL migration is selected**
+Status: **Historical hard stop; successor contract approved and proposed seventh SQL slice selected**
 Selection date: 6 August 2026
 Verified start: `origin/main` `95b31b11d6c5509dd7aedfc6b53a296ead2dd2ae`
 Merged sixth-slice evidence: PR #68 merge `95b31b11d6c5509dd7aedfc6b53a296ead2dd2ae`; reviewed head `b72c9d2`
@@ -68,11 +68,11 @@ A later focused review must approve all of the following before another assignme
 5. The versioned mapping-manifest, ambiguity/collision, deterministic child-key, zero/one/many, reconciliation, and rollback artifact boundary required before any later data transformation.
 6. An explicit owner approval record and a separately reviewed exact SQL/test selection after the contract is approved.
 
-### Successor contract-review status
+### Successor approval and selection status
 
-[`27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md`](27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md) now supplies a review-ready recommendation for all six items above. It recommends that aliases not block empty canonical assignment DDL, while requiring an implemented reviewed alias boundary before any alias-based transformation. It also defines assignment meaning, primary/secondary roles, provenance, lifecycle, reviewer/owner responsibility, duplicate and trusted-command enforcement, transformation evidence, and future projection constraints.
+The Product/Data Owner approved Option B and the complete [`27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md`](27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md) on 6 August 2026. That decision satisfies all six successor-contract items above and selects one future empty, revoked, local-only `public.supplier_category_assignments` table plus focused disposable synthetic pgTAP as the proposed seventh SQL slice. Aliases do not block empty canonical assignment DDL, while an implemented, populated, reviewed alias boundary remains required before any alias-based transformation.
 
-That successor document is not yet an owner approval or a seventh-slice selection. The hard stop remains in force until the Product/Data Owner explicitly approves or amends the contract and a later separate task selects the exact SQL/test boundary. The 12 Open gates remain unchanged.
+The contract/selection blockers recorded by this historical hard stop are cleared for that empty structural boundary only. SUP-003 was already Resolved and remains closed; the 12 Open gates remain unchanged. No SQL or pgTAP implementation is authorized in this documentation PR, and transformation remains blocked until the full mapping, alias-if-used, primary-selection, exception, reconciliation, rollback, environment, and data-migration evidence package is separately approved.
 
 ## 6. Validation and stop point
 

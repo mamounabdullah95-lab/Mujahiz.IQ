@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-06-post-pr71-seventh-slice-hard-stop`
+Baseline ID: `baseline-2026-08-06-supplier-category-assignment-slice-selected`
 Updated: 2026-08-06
 Canonical Production URL: `https://mujahiz.com`
 
@@ -217,9 +217,9 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**No seventh SQL implementation slice is selected**
+**The empty `public.supplier_category_assignments` foundation is selected as the proposed seventh SQL slice; implementation is not authorized**
 
-The nearest candidate, `supplier_category_assignments`, is under a verified hard stop. Before any exact SQL selection, a focused contract must decide the alias/mapping dependency, row lifecycle and historical preservation, active-leaf and primary-assignment enforcement, proposer/reviewer/actor ownership, versioned mapping/reconciliation artifacts, and the exact DDL/pgTAP boundary. Preserve the local-only, synthetic-data-only boundary above; do not add assignment SQL, taxonomy rows, aliases, mapping execution, RLS, policies, browser/API privileges, an Auth bridge, application integration, Firebase or Production data access, hosted Supabase linking, remote SQL, or deployment.
+The Product/Data Owner approved Option B in [`27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md`](../supabase-migration/27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md), satisfying the assignment successor-contract decisions under already Resolved SUP-003. That contract selects one future empty, revoked, local-only assignment table plus its focused disposable synthetic pgTAP boundary. A separate implementation task and approval are still required. Preserve the current 12 physical / 10 implemented / 26 deferred state and the local-only, synthetic-data-only boundary; do not add assignment SQL, taxonomy rows, aliases, mapping execution, RLS, policies, browser/API privileges, an Auth bridge, application integration, Firebase or Production data access, hosted Supabase linking, remote SQL, or deployment through this documentation PR.
 
 ### Product priorities
 

@@ -1,13 +1,13 @@
 # Supplier category assignment product and data contract
 
-Status: **Review-ready recommendation; Product/Data Owner approval and a separate SQL-slice selection remain required**
+Status: **Approved Option B; proposed seventh SQL slice selected for later separately authorized implementation**
 Contract date: 6 August 2026
 Verified start: `origin/main` `a28229a6171c5ab7f13dd2c06fbbef769726b82b`
 Primary task profile: Documentation
 
 ## 1. Decision boundary
 
-This document supplies the product/data contract requested by the seventh SQL-slice hard stop for the future `public.supplier_category_assignments` relation. It refines the already approved SUP-003 taxonomy direction without reopening it and recommends the smallest dependency-safe boundary:
+This document supplies the approved product/data contract requested by the seventh SQL-slice hard stop for the future `public.supplier_category_assignments` relation. It refines the already Resolved SUP-003 taxonomy direction without reopening it and records the Product/Data Owner's selection of the smallest dependency-safe boundary:
 
 - one assignment is one reviewed classification of one Supplier profile to one canonical Supplier-offering category;
 - assignment roles are `primary` and `secondary`, with at most one current primary per Supplier;
@@ -17,7 +17,7 @@ This document supplies the product/data contract requested by the seventh SQL-sl
 - historical assignments are closed, never silently rewritten or normally hard-deleted; and
 - base rows remain non-public, with no RLS, browser/API privileges, Auth behavior, mapping execution, data movement, or Production behavior in the contemplated empty local slice.
 
-This is a recommendation for owner review. It does not approve or select SQL, close an Open gate, authorize a taxonomy or alias row, authorize a transformation artifact, or authorize data access.
+This approval selects the future one-table SQL/test planning boundary described in section 13. It does not authorize implementation, close an Open gate, authorize a taxonomy or alias row, authorize a transformation artifact, or authorize data access.
 
 ## 2. Verified starting state
 
@@ -31,14 +31,14 @@ This is a recommendation for owner review. It does not approve or select SQL, cl
 
 ## 3. Smallest viable options
 
-| Option | Boundary | Dependency and risk finding | Recommendation |
+| Option | Boundary | Dependency and risk finding | Disposition |
 |---|---|---|---|
 | A | Wait for `category_aliases`, canonical vocabulary, and mapping artifacts before even defining empty assignment DDL | Safest for transformation, but incorrectly couples a canonical FK join table to one optional source-resolution mechanism; delays a reversible empty structural boundary | Not preferred |
-| B | Define one empty `supplier_category_assignments` foundation; keep aliases, vocabulary rows, mapping artifacts, trusted commands, RLS, and data separate | Parent identities already exist; aliases resolve source values but are not part of canonical assignment identity; table remains empty, revoked, local-only, and independently removable | **Recommend** |
+| B | Define one empty `supplier_category_assignments` foundation; keep aliases, vocabulary rows, mapping artifacts, trusted commands, RLS, and data separate | Parent identities already exist; aliases resolve source values but are not part of canonical assignment identity; table remains empty, revoked, local-only, and independently removable | **Approved and selected** |
 | C | Define assignments and `category_aliases` together | Provides the complete lookup shape, but adds a separately governed physical child, normalization/collision lifecycle, and additional test surface before any approved alias data exists | Reject for the smallest slice |
 | D | Define assignments and populate or transform Supplier categories | Requires approved vocabulary, mapping manifest, exception/collision evidence, reviewer authority, reconciliation, and data authorization; not reversible as empty DDL | Reject |
 
-Option B is dependency-safe only after the owner approves this contract and a later documentation task separately selects the exact SQL/test boundary. It authorizes no implementation through this document.
+The Product/Data Owner approved Option B on 6 August 2026. This document also selects its exact one-table SQL/test planning boundary; it authorizes no implementation.
 
 ## 4. Canonical assignment semantics
 
@@ -171,9 +171,8 @@ Changing the primary decision changes the semantic child key and requires a revi
 
 ### Product/Data Owner
 
-Under the current founder-led dual-role governance recorded by SUP-003, the Product Owner and Data Owner are the same decision authority until later delegation. That authority must:
+Under the current founder-led dual-role governance recorded by SUP-003, the Product Owner and Data Owner are the same decision authority until later delegation. That authority approved this complete contract and Option B on 6 August 2026 and must:
 
-- approve or amend this complete contract and Option B;
 - approve canonical vocabulary and mapping-manifest versions before transformation;
 - approve reviewer delegation, primary-selection rules, split/merge rules, and material exception classes;
 - accept reconciliation and rollback evidence before any data migration authorization; and
@@ -251,9 +250,9 @@ Counts alone are insufficient. Any unexplained value, target, duplicate, primary
 - SEARCH-001 continues to own hierarchy expansion, synonyms, fuzzy behavior, ranking, FTS/trigram/external search, query plans, and performance indexes. Assignment DDL authorizes none of them.
 - RFQ recipient eligibility and publication snapshots remain independent future contracts. An assignment row never directly authorizes an RFQ.
 
-## 13. Recommended future structural boundary
+## 13. Selected future structural boundary
 
-After owner approval and a separate seventh-slice selection, the smallest later implementation may contain only:
+If separately authorized in a later implementation task, the selected seventh SQL slice may contain only:
 
 - one migration creating an empty `public.supplier_category_assignments` table with the decision-level field groups in this contract;
 - its UUIDv4 PK, restrictive FKs, checks, active uniqueness/indexes, comments, and API-role privilege revocations; and
@@ -266,20 +265,23 @@ It must not contain:
 - changes to `supplier_profiles`, `categories`, migration-control tables, Auth, organizations, locations, contacts, RFQs, or search;
 - triggers, trusted mutation routines, RLS, policies, views, RPCs, grants, browser/API access, or application integration;
 - mapping-manifest execution, Firebase access, import, export, migration, seed, backfill, reconciliation run, or Production/TEST data access or change; or
-- hosted Supabase linking, remote SQL, Ready status, merge, or deployment in this contract task.
+- hosted Supabase linking, remote SQL, merge, or deployment in this contract task.
 
 If that exact one-table implementation is later authorized and merged, it would project 13 physical tables, 11 implemented Core Phase 1 concepts, and 25 deferred concepts. Until then, the verified current state remains 12 / 10 / 26.
 
-## 14. Owner decision required
+## 14. Recorded owner decision
 
-The founder-led Product/Data Owner must explicitly choose one of these outcomes in this or a successor review:
+On 6 August 2026, the founder-led Product/Data Owner explicitly approved Option B and the complete contract as written, including:
 
-- **Approve the recommended contract and Option B exactly as written**; or
-- request named changes to semantics, role/primary behavior, alias dependency, provenance, lifecycle, reviewer responsibility, duplicate/enforcement boundary, transformation evidence, or projections.
+- a future empty, local-only `public.supplier_category_assignments` foundation;
+- no alias-infrastructure prerequisite for empty DDL and a hard block on alias-based transformation until separately approved infrastructure and mappings exist;
+- exactly one reviewed primary category for every non-empty active assignment set, with no inference from legacy array order;
+- preservation for review, rather than guessing, for ambiguous or unmapped legacy values; and
+- the provenance, lifecycle, reviewer/owner, duplicate/enforcement, transformation-evidence, relationship, and future projection constraints in this contract.
 
-No owner approval is inferred from the Draft PR or from SUP-003. Until that decision is recorded, this document is recommendation evidence only and the seventh SQL slice remains blocked. Approval would resolve this contract review only; it would not close any of the 12 Open gates and would not itself authorize SQL.
+All required assignment successor-contract decisions under SUP-003 are now satisfied. SUP-003 was already Resolved and remains closed; this approval does not silently close or weaken any of the 12 Open gates. The approved Option B boundary is selected as the proposed seventh SQL slice, but SQL and pgTAP implementation remain outside this PR and require a separate authorized task.
 
-After contract approval, a separate seventh-slice selection must still approve the exact empty SQL/test boundary. Transformation remains blocked until every artifact in section 11 and a separately authorized data-migration plan exist.
+Transformation remains blocked until every artifact in section 11 and a separately authorized environment/data-migration plan exist. Approval of this contract and slice selection does not authorize data migration, seed, backfill, Firebase mapping execution, RLS, Auth, hosted Supabase, Production, or TEST work.
 
 ## 15. Risks
 
@@ -293,11 +295,11 @@ After contract approval, a separate seventh-slice selection must still approve t
 
 ## 16. Validation and exact stop point
 
-Required checks for this task are documentation-only: verify the start SHA and PR #70/PR #71 merges, 12 physical tables, 10 implemented / 26 deferred Core Phase 1 concepts, the 12 unchanged Open gates, absence of assignment/alias tables, relative links, terminology, Markdown structure, sensitive-content scan, documentation-only diff, and `git diff --check`.
+Required checks for this approval update are documentation-only: verify the start SHA and PR #70/PR #71 merges, 12 physical tables, 10 implemented / 26 deferred Core Phase 1 concepts, the 12 unchanged Open gates, absence of assignment/alias tables, relative links, terminology, Markdown structure, sensitive-content scan, documentation-only diff, and `git diff --check`.
 
 Do not start local Supabase, replay migrations, run pgTAP, run Firebase suites, run the application build, or run full repository tests because no SQL or executable file is changed.
 
-Exact stop point: Draft PR containing this recommendation and synchronized documentation. Stop before owner approval is inferred, seventh-slice SQL selection or implementation, pgTAP work, Ready status, merge, hosted work, data work, or deployment.
+Exact stop point: PR #72 marked Ready with the approved contract, selected proposed seventh-slice planning boundary, and synchronized documentation. Stop before SQL or pgTAP implementation, merge, hosted work, data work, or deployment.
 
 ## 17. References
 
