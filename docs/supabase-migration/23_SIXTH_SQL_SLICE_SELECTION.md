@@ -1,9 +1,11 @@
 # Core Phase 1 sixth SQL slice selection
 
-Status: **Verified no-go; no sixth SQL migration is selected**
+Status: **Historical pre-contract no-go; superseded for planning by `25_SIXTH_SQL_SLICE_SUPPLIER_LOCATIONS_SELECTION.md`**
 Selection date: 6 August 2026
 Verified start: `origin/main` `dafa6c3e2777f70a4d0d49ee0a12bf337b7b1200`
 Primary task profile: Documentation
+
+Preservation note: this no-go remains the correct decision at its verified pre-contract starting point. Merged PR #66 later supplied the missing Supplier-location boundary, dependency, mapping-artifact, and exposure review. The successor document makes the new planning decision without rewriting this historical finding or authorizing SQL.
 
 ## 1. Recommendation
 
