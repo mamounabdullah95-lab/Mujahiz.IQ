@@ -89,7 +89,7 @@ Run the migration and pgTAP suite from the repository root with:
 npm run test:supabase:sql
 ~~~
 
-The command requires Node.js/npm plus Docker Desktop (or a compatible Docker runtime). It starts
+On Windows, run this from PowerShell (5.1+ or 7) at the repository root. The command requires Node.js/npm plus Docker Desktop (or a compatible Docker runtime). The first run downloads the pinned `supabase/postgres:17.6.1.064` image and therefore needs Docker registry access; later runs use the local image cache. It starts
 a pinned, disposable PostgreSQL container with no published host ports, applies
 every tracked supabase/migrations/*.sql file in filename order, then runs every
 tracked supabase/tests/*.sql file. It prints only a concise pass summary and
