@@ -1,15 +1,16 @@
 # Core Phase 1 fourth SQL slice: categories selection
 
-Status: **Implemented on this Draft branch; not merged, hosted, or deployed**
+Status: **Historical PR #59 evidence; implemented and merged locally, not hosted or deployed**
 Decision date: 5 August 2026
 Verified start: `origin/main` `995feeda072f345fdc0f00d101cdc598713c43c9`
+PR #59 merge commit: `f37d46bd875987a6c2d177b21df31a8ecb8e0b71`
 Primary task profile: Documentation
 
 ## 1. Superseding decision
 
 SUP-003 is Approved under the contract in [18_SUP_003_CATEGORY_TAXONOMY_CONTRACT.md](18_SUP_003_CATEGORY_TAXONOMY_CONTRACT.md). That approval supplies the minimum taxonomy contract for the smallest dependency-safe fourth SQL boundary:
 
-**Included table on this Draft branch: `public.categories` only.**
+**Included table in PR #59: `public.categories` only.**
 
 This document supersedes the selection outcome in [17_FOURTH_SQL_SLICE_SELECTION.md](17_FOURTH_SQL_SLICE_SELECTION.md) only after SUP-003 approval. The historical no-go finding remains valid for the period when SUP-003 was Open; it is not rewritten as though `categories` was previously safe.
 
@@ -21,11 +22,11 @@ This document supersedes the selection outcome in [17_FOURTH_SQL_SLICE_SELECTION
 - `supplier_category_assignments` remains a later Core Phase 1 slice after category/alias mapping workflow, assignment rules, and transformation evidence are separately authorized. It is excluded from this slice.
 - No other Open gate is required for an empty categories-only local slice. `SUP-004`, identity, organization, RFQ, messaging, search, files, billing, audit, resilience, and migration-environment decisions remain outside this boundary.
 
-The other thirteen approval gates remain Open and unchanged: `ID-001`, `ORG-001`, `ORG-002`, `SUP-004`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+At the PR #59 historical decision point, SUP-003 was Approved and the other approval gates remained Open. The current baseline is authoritative for the current gate count and list.
 
 ## 3. Exact implementation boundary
 
-This separately reviewed Draft implementation PR contains only:
+The separately reviewed PR #59 implementation contained only:
 
 - one migration creating `public.categories`;
 - one focused synthetic pgTAP file;
@@ -37,7 +38,7 @@ This separately reviewed Draft implementation PR contains only:
 - zero API-role privileges and no RLS or application access; and
 - an empty table except for disposable synthetic tests.
 
-This Draft PR remains local-only and synthetic-data-only. It must not link to or access hosted Supabase, Firebase, Production, or TEST data.
+The merged PR #59 implementation remained local-only and synthetic-data-only. It did not link to or access hosted Supabase, Firebase, Production, or TEST data.
 
 ## 4. Exact exclusions
 
@@ -54,8 +55,8 @@ This selection authorizes no taxonomy rows, current 23 category codes, aliases, 
 - Production or TEST data;
 - data migration, import, export, seed, or deployment.
 
-The verified merged `main` state remains **7 implemented / 29 deferred**. This unmerged Draft branch would be **8 implemented / 28 deferred**; it must not be described as merged or deployed.
+The current verified `main` state is authoritative for present implementation counts, physical-table count, and approval-gate state. Historical PR #59 implementation boundary: `public.categories` only; it must not overwrite the current baseline.
 
 ## 5. Validation and stop point
 
-This implementation was checked against the SUP-003 contract, schema decision register, PostgreSQL schema design, and review checklist. The corrected Draft branch passed a clean local reset, focused pgTAP 118/118, complete pgTAP 340/340, warning-level lint, exact catalog assertions, scoped scans, and `git diff --check`. The exact stop point remains the Draft PR after its GitHub Actions gate passes. Do not mark it Ready, merge it, create taxonomy rows, or begin another task without explicit approval.
+Historical PR #59 evidence: the corrected implementation passed a clean local reset, focused pgTAP 118/118, complete pgTAP 340/340, warning-level lint, exact catalog assertions, scoped scans, and `git diff --check`. These results belong to PR #59 merged head, not to the current branch. Do not create taxonomy rows, aliases, assignments, or begin another SQL slice without explicit approval.
