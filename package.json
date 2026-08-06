@@ -21,7 +21,8 @@
     "supabase:version": "supabase --version",
     "supabase:start": "supabase start",
     "supabase:status": "supabase status",
-    "supabase:stop": "supabase stop"
+    "supabase:stop": "supabase stop",
+    "test:supabase:sql": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/validate-local-supabase-sql.ps1"
   },
   "dependencies": {
     "clsx": "^2.1.1",
