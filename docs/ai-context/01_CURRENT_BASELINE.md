@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-06-post-pr70-sixth-sql-slice-validation`
+Baseline ID: `baseline-2026-08-06-supplier-category-assignment-slice-selected`
 Updated: 2026-08-06
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `c19362b114c5ff79430e1c73b59552f41de2a02c`.
+- **Verified current fact:** Current GitHub `main`: `a28229a6171c5ab7f13dd2c06fbbef769726b82b`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -46,6 +46,7 @@ Evidence labels used below:
 - **Verified current fact:** PR #68 was merged as commit `95b31b11d6c5509dd7aedfc6b53a296ead2dd2ae`; its reviewed head `b72c9d286c8eaef5323ecbe98963512ea3b67369` added exactly `public.supplier_locations` plus focused synthetic pgTAP as the sixth local SQL slice.
 - **Verified current fact:** PR #69 was merged as commit `204834f` and recorded the seventh-slice hard stop. It selected no SQL because `supplier_category_assignments` still lacks its separately approved contract, mapping artifacts, lifecycle/enforcement boundary, and exact DDL/test selection.
 - **Verified current fact:** PR #70 was merged as current `main` commit `c19362b114c5ff79430e1c73b59552f41de2a02c` and added a deterministic disposable-container runner for all tracked local migrations and pgTAP files. It made no SQL-schema, Firebase, hosted Supabase, Production-data, or deployment change.
+- **Verified current fact:** PR #71 was merged as current `main` commit `a28229a6171c5ab7f13dd2c06fbbef769726b82b` and synchronized the authoritative migration baseline after PR #70. It made no SQL-schema, Firebase, hosted Supabase, Production-data, or deployment change.
 - **Verified current fact:** The fourth, fifth, and sixth SQL slices remain local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase operation, Firebase access, Production/TEST data operation, data migration, seed, backfill, deployment, or remote SQL occurred.
 - The third SQL slice remains local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase, deployment, Production data, migration, seed, or backfill occurred.
 - The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.
@@ -216,9 +217,9 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**No seventh SQL implementation slice is selected**
+**The empty `public.supplier_category_assignments` foundation is selected as the proposed seventh SQL slice; implementation is not authorized**
 
-The nearest candidate, `supplier_category_assignments`, is under a verified hard stop. Before any exact SQL selection, a focused contract must decide the alias/mapping dependency, row lifecycle and historical preservation, active-leaf and primary-assignment enforcement, proposer/reviewer/actor ownership, versioned mapping/reconciliation artifacts, and the exact DDL/pgTAP boundary. Preserve the local-only, synthetic-data-only boundary above; do not add assignment SQL, taxonomy rows, aliases, mapping execution, RLS, policies, browser/API privileges, an Auth bridge, application integration, Firebase or Production data access, hosted Supabase linking, remote SQL, or deployment.
+The Product/Data Owner approved Option B in [`27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md`](../supabase-migration/27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md), satisfying the assignment successor-contract decisions under already Resolved SUP-003. That contract selects one future empty, revoked, local-only assignment table plus its focused disposable synthetic pgTAP boundary. A separate implementation task and approval are still required. Preserve the current 12 physical / 10 implemented / 26 deferred state and the local-only, synthetic-data-only boundary; do not add assignment SQL, taxonomy rows, aliases, mapping execution, RLS, policies, browser/API privileges, an Auth bridge, application integration, Firebase or Production data access, hosted Supabase linking, remote SQL, or deployment through this documentation PR.
 
 ### Product priorities
 
