@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `dafa6c3e2777f70a4d0d49ee0a12bf337b7b1200`.
+- **Verified current fact:** Current GitHub `main`: `49c031c4c63734e2e001a0ec798a7a4e785f37e0`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -35,9 +35,10 @@ Evidence labels used below:
 - **Verified current fact:** PR #51 implemented and merged the second local SQL slice: `public.user_profiles` and `internal.identity_provider_links`.
 - **Verified current fact:** PR #54 was merged as commit `4841cce6d784ec68a91c545d95efdbec717a415b`.
 - **Verified current fact:** PR #54 implemented `public.supplier_profiles` locally as the third SQL slice. Core Phase 1 now has 7 implemented, 29 deferred, and 36 total concepts.
-- **Verified current fact:** PR #59 implemented `public.categories` locally as the fourth SQL slice.
+- **Verified current fact:** PR #59 was merged as commit `f37d46bd875987a6c2d177b21df31a8ecb8e0b71` and implemented `public.categories` locally as the fourth SQL slice.
 - **Verified current fact:** PR #61 resolved SUP-004 and selected `public.administrative_areas` as the fifth SQL slice; it made no SQL or data change.
 - **Verified current fact:** PR #62 is merged by current `main`; its implementation head `4d390f747b94c9b00f709fea747c29c0b840cbdb` is contained in `main` and adds `public.administrative_areas` locally as the fifth SQL slice.
+- **Verified current fact:** PR #63 is merged by current `main` as commit `49c031c4c63734e2e001a0ec798a7a4e785f37e0`; it synchronized the fifth SQL-slice state and made no runtime, deployment, hosted Supabase, Firebase, Auth, data, or Production change.
 - **Verified current fact:** The fourth and fifth SQL slices remain local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase operation, Firebase access, Production/TEST data operation, data migration, seed, backfill, deployment, or remote SQL occurred.
 - The third SQL slice remains local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase, deployment, Production data, migration, seed, or backfill occurred.
 - The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.

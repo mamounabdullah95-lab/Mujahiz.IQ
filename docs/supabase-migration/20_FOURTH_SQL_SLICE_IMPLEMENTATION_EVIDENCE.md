@@ -1,10 +1,10 @@
 # Fourth SQL Slice — Categories Foundation Implementation Evidence
 
-Status: Draft-branch implementation evidence; not merged, hosted, remotely applied, deployed, or Production-active
+Status: Historical PR #59 merged implementation evidence; local-only, not hosted, remotely applied, deployed, or Production-active
 
 ## Exact scope
 
-This branch adds exactly one application table, `public.categories`, through `20260805000100_categories_foundation.sql`. It remains empty except for disposable synthetic pgTAP rows.
+PR #59 added exactly one application table, `public.categories`, through `20260805000100_categories_foundation.sql`. It remains empty except for disposable synthetic pgTAP rows.
 
 The table provides database-generated UUIDv4 identity; a unique lowercase ASCII snake-case canonical code; a nullable legacy Firestore alternate key; required Arabic and English labels plus versioned normalized comparison values; the single `supplier_offering` taxonomy type; bounded hierarchy depth; lifecycle, assignability, ordering, replacement, timestamps, and nullable trusted actor references.
 
@@ -14,13 +14,13 @@ It creates no category vocabulary, current application code, `other` category, a
 
 Composite self-references enforce parent type/depth coherence, a maximum of three hierarchy levels, root shape, acyclicity through strictly decreasing parent depth, non-assignable parents, active replacement targets, and restrictive delete behavior. A separate archived-parent guard blocks archiving a parent until each direct child is archived; recursive depth means this produces the approved bottom-up boundary. Partial `NULLS NOT DISTINCT` indexes enforce active/deprecated Arabic/English normalized sibling-label uniqueness, including roots, while provisional draft and historical archived values remain outside that uniqueness predicate.
 
-The selected one-table/no-trigger boundary cannot enforce canonical-code update immutability, active/deprecated parent immutability, lifecycle transition history, or derivation of normalized labels from their display values. Those rules are documented on the columns and are deferred to the separately authorized trusted mutation path. This branch does not claim that those update-time rules are database-enforced.
+The selected one-table/no-trigger boundary cannot enforce canonical-code update immutability, active/deprecated parent immutability, lifecycle transition history, or derivation of normalized labels from their display values. Those rules are documented on the columns and are deferred to the separately authorized trusted mutation path. PR #59 did not claim that those update-time rules were database-enforced.
 
 ## Core Phase 1 and approval-gate state
 
-Merged `main` remains **7 implemented / 29 deferred / 36 total**. If this Draft branch were merged, it would be **8 implemented / 28 deferred / 36 total**.
+The current verified `main` state is authoritative for present implementation counts, physical-table count, and approval-gate state. Historical PR #59 evidence records only its one-table `public.categories` boundary.
 
-`SUP-003` remains Approved. The remaining Open gates are unchanged: `ID-001`, `ORG-001`, `ORG-002`, `SUP-004`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+SUP-003 was Approved for PR #59. The current baseline is authoritative for the present Open-gate count and list.
 
 ## Validation record
 
