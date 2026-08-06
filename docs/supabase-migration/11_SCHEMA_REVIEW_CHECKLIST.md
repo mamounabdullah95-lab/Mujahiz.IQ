@@ -40,6 +40,16 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Clean local reset applied all four migrations; focused synthetic pgTAP passed 118/118, complete local pgTAP passed 340/340, warning-level lint found no schema errors, and catalog checks confirmed 26 columns, 27 named constraints, 13 exact indexes, five exact RESTRICT FKs, zero API/RLS/policy/trigger/routine/view access objects, one table, and zero taxonomy rows.
 - [ ] `SUP-003` and `SUP-004` are Approved; `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002` remain Open. Merged PR #62 adds `public.administrative_areas`; `main` is 9 implemented / 27 deferred across 11 physical tables.
 
+### Sixth SQL-slice planning decision (not part of the 119 design-review items)
+
+- [x] Verified `origin/main` `11f78fa23a7254a7a3f48e21830ba13fee9bbcfb` contains merged PR #66 and its reviewed Supplier-location contract head `b69988fcbd0e899eeb57c75b4372811c81f2f4d2`.
+- [x] Option A is selected: a later implementation may create exactly one empty `public.supplier_locations` table plus its own declarative enforcement, structural indexes, comments, privilege revocations, and disposable synthetic pgTAP coverage.
+- [x] The selected row contract provides UUIDv4 identity, restrictive Supplier/area/actor relationships, physical-versus-coverage classification, bounded address/map evidence, mapping/source/review provenance, lifecycle, active uniqueness, and archive/no-normal-hard-delete semantics.
+- [x] Contacts remain a later dependency on locations through nullable `supplier_contacts.location_id`; branch phone evidence is neither copied into the location row nor discarded, and no contact table or FK from locations is selected.
+- [x] Mapping manifests, precedence/deduplication rules, collision/exception reports, reconciliation, and rollback artifacts are mandatory before future data transformation but do not block an empty local table.
+- [x] Base rows remain non-public and revoked from API roles; RLS, policies, projections, Auth, organizations, RFQ logic, search ranking, audit/event routines, hosted Supabase, Firebase access, data movement, and Production behavior remain excluded.
+- [x] The verified current count remains 11 physical tables, 9 implemented and 27 deferred Core Phase 1 concepts; 12 gates remain Open. Only a later merged one-table implementation would project 12 physical tables, 10 implemented concepts, and 26 deferred concepts.
+
 ## B. Relational model and integrity
 
 - [ ] Every proposed table concept has a clear logical purpose/catalog entry and exactly one phase disposition; Remove/Merge entries are not mistaken for tables to create.

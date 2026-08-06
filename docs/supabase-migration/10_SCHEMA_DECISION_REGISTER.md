@@ -18,6 +18,12 @@ Companion design: `09_POSTGRESQL_SCHEMA_DESIGN.md`
 
 Migration 20260804000200_provider_neutral_identity_foundation.sql implements only public.user_profiles and internal.identity_provider_links on the local implementation branch. It applies the DB-001 UUIDv4 convention to both keys and the ID-002 provider-subject separation/active uniqueness boundary, with synthetic pgTAP and catalog evidence recorded in 14_SECOND_SQL_SLICE_IMPLEMENTATION_EVIDENCE.md. ID-001 remains **Open**: the local tables do not select an Auth authority, validate provider tokens, integrate Firebase or Supabase Auth, expose browser access, or create verified-only benefits. No other Open decision is resolved by this implementation.
 
+### Sixth SQL-slice selection evidence
+
+Merged PR #66 supplies the bounded Supplier-location product/data contract in `24_SUPPLIER_LOCATION_PRODUCT_AND_DATA_CONTRACT.md`. The successor decision in `25_SIXTH_SQL_SLICE_SUPPLIER_LOCATIONS_SELECTION.md` selects only one empty, revoked, local-only `public.supplier_locations` table for a later separately authorized implementation. Contact linkage remains owned by the future `supplier_contacts.location_id`; organizations remain indirect through Supplier profiles; mapping artifacts are required before data transformation rather than empty DDL; and Auth, RLS, search, RFQ logic, audit events, hosted work, Firebase, and Production remain excluded.
+
+This selection does not add or resolve a decision ID. The 12 Open gates remain `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+
 ## 2. Decisions
 
 | ID | Topic | Status | Decision / recommendation | Rationale and evidence | Alternatives considered | Schema and delivery impact | Required approver | Must resolve before phase | Resolution date | Evidence / reference | Resolved state |
