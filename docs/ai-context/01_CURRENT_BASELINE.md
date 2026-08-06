@@ -1,7 +1,7 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-04-post-pr54-third-sql-slice-implementation`
-Updated: 2026-08-04
+Baseline ID: `baseline-2026-08-06-post-pr62-fifth-sql-slice-implementation`
+Updated: 2026-08-06
 Canonical Production URL: `https://mujahiz.com`
 
 This is the single authoritative, frequently changing project baseline. Keep GitHub `main`, merged-but-undeployed work, Firebase Hosting, active Firestore Rules and indexes, deployed Functions and Storage, bounded Production data, and hosted Supabase state distinct.
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `d034cfd8bf3efdc74155f4f3aff4a6f95386a9cb`.
+- **Verified current fact:** Current GitHub `main`: `dafa6c3e2777f70a4d0d49ee0a12bf337b7b1200`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -35,6 +35,10 @@ Evidence labels used below:
 - **Verified current fact:** PR #51 implemented and merged the second local SQL slice: `public.user_profiles` and `internal.identity_provider_links`.
 - **Verified current fact:** PR #54 was merged as commit `4841cce6d784ec68a91c545d95efdbec717a415b`.
 - **Verified current fact:** PR #54 implemented `public.supplier_profiles` locally as the third SQL slice. Core Phase 1 now has 7 implemented, 29 deferred, and 36 total concepts.
+- **Verified current fact:** PR #59 implemented `public.categories` locally as the fourth SQL slice.
+- **Verified current fact:** PR #61 resolved SUP-004 and selected `public.administrative_areas` as the fifth SQL slice; it made no SQL or data change.
+- **Verified current fact:** PR #62 is merged by current `main`; its implementation head `4d390f747b94c9b00f709fea747c29c0b840cbdb` is contained in `main` and adds `public.administrative_areas` locally as the fifth SQL slice.
+- **Verified current fact:** The fourth and fifth SQL slices remain local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase operation, Firebase access, Production/TEST data operation, data migration, seed, backfill, deployment, or remote SQL occurred.
 - The third SQL slice remains local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase, deployment, Production data, migration, seed, or backfill occurred.
 - The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.
 - Local branches and future PRs must start from this current `main` unless a newer commit appears.
@@ -144,22 +148,22 @@ Do not combine results from different commits or PRs into a new automated-test t
 - **Verified current fact:** `supabase/config.toml` exists for local project ID `mujahiz-iq-local`; local start, status, Studio access, and normal stop were validated, and the local stack is currently stopped.
 - **Verified current fact:** No hosted Supabase implementation or linkage exists. No hosted project was authenticated, accessed, queried, changed, or independently verified through this repository work, and the merged SQL migrations have not been applied remotely.
 - **Verified current fact:** GitHub `main` contains the first local migration-control SQL slice: migration `supabase/migrations/20260804000136_migration_control_foundation.sql` creates six governance tables in the non-exposed `internal` schema, and `supabase/tests/migration_control_foundation.sql` supplies repository-tracked synthetic pgTAP coverage.
-- **Verified current fact:** No business/application PostgreSQL tables, RLS, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
+- **Verified current fact:** GitHub `main` contains five local business/application tables: `public.user_profiles`, `public.supplier_profiles`, `public.categories`, `public.administrative_areas`, and non-exposed `internal.identity_provider_links`. No RLS, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
 - **Verified current fact:** No browser integration, API policy, application grant, hosted Supabase project link, or remote migration application exists.
-- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, or PR #54.
+- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, or PR #62.
 
 The merged local infrastructure and migration-governance SQL, a future business/application schema, any hosted Supabase project, and Firebase Production are separate states. Supabase is not currently a Production authority.
 
 ### PostgreSQL schema-design state
 
-- **Verified current fact:** The authoritative logical PostgreSQL schema design and its first local migration-control/traceability slice are merged; the second local identity slice and third local Supplier-profile slice are now implemented and merged, while the remaining business/application schema remains unimplemented.
+- **Verified current fact:** The authoritative logical PostgreSQL schema design and its first local migration-control/traceability slice are merged; the second local identity, third local Supplier-profile, fourth local category, and fifth local administrative-area slices are implemented and merged, while the remaining business/application schema remains unimplemented.
 - **Verified current fact:** The design classifies 79 logical concepts: 36 Core Phase 1, 10 Core Later, 13 Future-Compatible, 13 Deferred, and 7 Remove/Merge.
-- **Verified current fact:** Of the 36 Core Phase 1 concepts, 7 are implemented locally and 29 remain deferred. The first 4 logical concepts use 6 physical tables because `migration_record_mappings` is decomposed across 3 relations.
+- **Verified current fact:** Of the 36 Core Phase 1 concepts, 9 are implemented locally and 27 remain deferred. The first 4 logical concepts use 6 physical tables because `migration_record_mappings` is decomposed across 3 relations; the local SQL foundation has 11 physical tables.
 - **Verified current fact:** The approved second slice is exactly `public.user_profiles` and `internal.identity_provider_links`. `platform_role_assignments`, all access/trial ledger tables, and the other remaining Core Phase 1 concepts are deferred.
-- **Verified current fact:** Core Phase 1 remains a maximum candidate set, not approval to create all 36 concepts in one PR. PR #51 implemented the approved two-table identity boundary, and PR #54 implemented only the separately bounded `supplier_profiles` local root.
+- **Verified current fact:** Core Phase 1 remains a maximum candidate set, not approval to create all 36 concepts in one PR. PR #51 implemented the approved two-table identity boundary, PR #54 implemented only the separately bounded `supplier_profiles` local root, PR #59 implemented only `categories`, and PR #62 implemented only `administrative_areas`.
 - **Verified current fact:** The design maps all 35 verified Firestore collections, registers 36 synchronized decisions, and provides a 119-item schema review checklist. DB-001 is resolved for the local first slice to database-generated UUIDv4 through `pg_catalog.gen_random_uuid()`; hosted compatibility remains a later validation gate.
 - **Verified current fact:** MIG-001 is partially implemented only at the declarative schema-contract level. Migration Engine locking, replay lookup, transformation, reconciliation, graph supersession, and rollback execution remain unimplemented.
-- **Verified current fact:** ID-001, MIG-002, RES-001, and all 11 other approval gates remain Open; no Auth authority has been chosen, and 14 approval gates remain Open in total.
+- **Verified current fact:** ID-001, MIG-002, RES-001, and all nine other approval gates remain Open; no Auth authority has been chosen, and 12 approval gates remain Open in total.
 
 #### Merged second-slice boundary
 
@@ -172,13 +176,11 @@ The merged second slice remains local-only and synthetic-data-only, without RLS,
 
 #### Open approval gates
 
-The 14 remaining Open approval gates are:
+The 12 remaining Open approval gates are:
 
 - `ID-001`
 - `ORG-001`
 - `ORG-002`
-- `SUP-003`
-- `SUP-004`
 - `RFQ-003`
 - `MSG-002`
 - `MSG-003`
@@ -204,9 +206,9 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**Next migration work remains separately gated**
+**No sixth SQL implementation slice is selected**
 
-Do not start the next SQL/RLS/Auth task until its scope is separately approved. Preserve the local-only, synthetic-data-only boundary above; do not add `platform_role_assignments`, RLS, policies, browser/API privileges, an Auth bridge, application integration, Firebase or Production data access, hosted Supabase linking, remote SQL, or deployment.
+The nearest candidate, `supplier_locations`, needs its own approved DDL boundary, trusted mapping artifacts, contact dependency, and access/projection review. Preserve the local-only, synthetic-data-only boundary above; do not add `platform_role_assignments`, RLS, policies, browser/API privileges, an Auth bridge, application integration, Firebase or Production data access, hosted Supabase linking, remote SQL, or deployment.
 
 ### Product priorities
 
