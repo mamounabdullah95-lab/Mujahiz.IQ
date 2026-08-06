@@ -68,6 +68,12 @@ A later focused review must approve all of the following before another assignme
 5. The versioned mapping-manifest, ambiguity/collision, deterministic child-key, zero/one/many, reconciliation, and rollback artifact boundary required before any later data transformation.
 6. An explicit owner approval record and a separately reviewed exact SQL/test selection after the contract is approved.
 
+### Successor contract-review status
+
+[`27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md`](27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md) now supplies a review-ready recommendation for all six items above. It recommends that aliases not block empty canonical assignment DDL, while requiring an implemented reviewed alias boundary before any alias-based transformation. It also defines assignment meaning, primary/secondary roles, provenance, lifecycle, reviewer/owner responsibility, duplicate and trusted-command enforcement, transformation evidence, and future projection constraints.
+
+That successor document is not yet an owner approval or a seventh-slice selection. The hard stop remains in force until the Product/Data Owner explicitly approves or amends the contract and a later separate task selects the exact SQL/test boundary. The 12 Open gates remain unchanged.
+
 ## 6. Validation and stop point
 
 This is a documentation-only hard stop. Validate the verified SHA and PR #68 ancestry, 12 physical tables, 10 implemented / 26 deferred Core Phase 1 concepts, absence of alias/assignment tables, the unchanged 12 Open gates, relative references, documentation-only diff, sensitive-content scan, and `git diff --check`.
@@ -85,4 +91,5 @@ Exact stop point: Draft PR containing this no-go decision. Stop before SQL or pg
 - [`10_SCHEMA_DECISION_REGISTER.md`](10_SCHEMA_DECISION_REGISTER.md)
 - [`11_SCHEMA_REVIEW_CHECKLIST.md`](11_SCHEMA_REVIEW_CHECKLIST.md)
 - [`02_FIRESTORE_TO_POSTGRES_MAPPING_DRAFT.md`](02_FIRESTORE_TO_POSTGRES_MAPPING_DRAFT.md)
+- [`27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md`](27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md)
 - [`../ai-context/01_CURRENT_BASELINE.md`](../ai-context/01_CURRENT_BASELINE.md)

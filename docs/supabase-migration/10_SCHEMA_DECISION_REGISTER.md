@@ -24,6 +24,12 @@ Merged PR #66 supplies the bounded Supplier-location product/data contract in `2
 
 This selection does not add or resolve a decision ID. The 12 Open gates remain `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
 
+### Supplier-category assignment contract review evidence
+
+`27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` recommends the decision-ready contract required by the seventh-slice hard stop: one reviewed temporal Supplier/category classification, primary/secondary roles, no inferred primary from legacy array order, category aliases separated from empty structural DDL, bounded provenance, terminal historical lifecycle, active duplicate/primary prevention, trusted activation checks, lossless exception handling, transformation evidence, and field-minimized future projections.
+
+The recommendation is not a new decision ID and does not change SUP-003 or any Open gate. Explicit Product/Data Owner approval of the complete contract remains required, followed by a separate exact SQL/test selection. Until then, `public.supplier_category_assignments` remains blocked and unimplemented.
+
 ## 2. Decisions
 
 | ID | Topic | Status | Decision / recommendation | Rationale and evidence | Alternatives considered | Schema and delivery impact | Required approver | Must resolve before phase | Resolution date | Evidence / reference | Resolved state |

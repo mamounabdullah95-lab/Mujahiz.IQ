@@ -48,7 +48,19 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Contacts remain a later dependency on locations through nullable `supplier_contacts.location_id`; branch phone evidence is neither copied into the location row nor discarded, and no contact table or FK from locations is selected.
 - [x] Mapping manifests, precedence/deduplication rules, collision/exception reports, reconciliation, and rollback artifacts are mandatory before future data transformation but do not block an empty local table.
 - [x] Base rows remain non-public and revoked from API roles; RLS, policies, projections, Auth, organizations, RFQ logic, search ranking, audit/event routines, hosted Supabase, Firebase access, data movement, and Production behavior remain excluded.
-- [x] The verified current count remains 11 physical tables, 9 implemented and 27 deferred Core Phase 1 concepts; 12 gates remain Open. Only a later merged one-table implementation would project 12 physical tables, 10 implemented concepts, and 26 deferred concepts.
+- [x] At the sixth-slice selection point the count was 11 physical tables, 9 implemented and 27 deferred Core Phase 1 concepts. PR #68 later merged the selected one-table implementation, so the verified current state is 12 physical tables, 10 implemented concepts, and 26 deferred concepts; 12 gates remain Open.
+
+### Supplier-category assignment contract review (not part of the 119 design-review items)
+
+- [x] Verified `origin/main` `a28229a6171c5ab7f13dd2c06fbbef769726b82b` contains merged PR #71, merged PR #70, and the post-PR-68 12 physical / 10 implemented / 26 deferred local SQL state.
+- [x] The recommended assignment meaning is one reviewed temporal Supplier/category classification with `primary`/`secondary` role, unique active Supplier/category identity, at most one active primary, and exactly one primary after a trusted mutation leaves a non-empty active set.
+- [x] Legacy array order never selects primary; broad-only, ambiguous, global `other`, unmapped, and rejected evidence creates no canonical assignment row.
+- [x] `category_aliases` is not a prerequisite for empty assignment DDL, but any alias-based transformation requires the alias relation to be separately authorized, implemented, populated, and collision-reviewed first.
+- [x] Provenance, lifecycle, reviewer/owner responsibility, declarative-versus-trusted enforcement, category deprecation behavior, transformation evidence, and future field-minimized projection constraints are explicit.
+- [x] The recommended later boundary is one empty, revoked, local-only assignment table plus its own structural enforcement and disposable synthetic pgTAP; no alias table, rows, mapping execution, RLS, Auth, application access, hosted work, Firebase, or Production behavior is included.
+- [ ] The founder-led Product/Data Owner has explicitly approved or amended `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md`; Draft PR existence is not approval.
+- [ ] A later separate seventh-slice selection has approved the exact SQL/test boundary. Until both items are complete, the slice remains blocked and the current state stays 12 / 10 / 26.
+- [ ] All 12 Open gates remain unresolved and unchanged; this contract review neither closes nor weakens any gate.
 
 ## B. Relational model and integrity
 
