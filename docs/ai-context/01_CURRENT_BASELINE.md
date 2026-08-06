@@ -1,7 +1,7 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-06-supplier-category-assignment-implemented`
-Updated: 2026-08-06
+Baseline ID: `baseline-2026-08-07-supplier-capabilities-slice-selected`
+Updated: 2026-08-07
 Canonical Production URL: `https://mujahiz.com`
 
 This is the single authoritative, frequently changing project baseline. Keep GitHub `main`, merged-but-undeployed work, Firebase Hosting, active Firestore Rules and indexes, deployed Functions and Storage, bounded Production data, and hosted Supabase state distinct.
@@ -220,9 +220,9 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**Complete Product/Data Owner review of the Supplier-capability and payment-option contract before selecting an eighth SQL slice**
+**The empty `public.supplier_capabilities` foundation is selected as the proposed eighth SQL slice; implementation is not authorized**
 
-Merged PR #73 implemented the previously approved empty `public.supplier_category_assignments` boundary. [`28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md`](../supabase-migration/28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md) now recommends a capability-only next slice after explicit Product/Data Owner approval, while keeping `public.supplier_payment_options` separate until the indicative-commercial and legacy-credit interpretations are approved. Preserve the current 13 physical / 11 implemented / 25 deferred state and the local-only, synthetic-data-only boundary; this documentation recommendation authorizes no SQL, data, RLS, Auth, hosted, Firebase, Production, merge, or deployment work.
+The Product/Data Owner approved the capability contract and capability-only sequencing in [`28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md`](../supabase-migration/28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md). The selected future boundary is one empty, revoked, local-only `public.supplier_capabilities` table; `public.supplier_payment_options` remains deferred. Preserve the current 13 physical / 11 implemented / 25 deferred state. This approval and selection authorize no SQL, pgTAP, mapping execution, data, RLS, Auth, Firebase, hosted Supabase, Production/TEST, merge, or deployment work, and all 12 unrelated Open gates remain unchanged.
 
 ### Product priorities
 

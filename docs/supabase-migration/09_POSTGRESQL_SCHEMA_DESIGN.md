@@ -145,9 +145,9 @@ The documentation decision in `25_SIXTH_SQL_SLICE_SUPPLIER_LOCATIONS_SELECTION.m
 
 `26_SEVENTH_SQL_SLICE_SELECTION.md` records the historical hard stop at `public.supplier_category_assignments`, and `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` records the approved Option B contract. Merged PR #73 implemented exactly the selected empty, revoked, local-only `public.supplier_category_assignments` table plus focused synthetic pgTAP as the seventh slice. It added no alias infrastructure, rows, mapping execution, RLS, data operation, hosted behavior, Firebase access, or Production behavior. The current local state is 13 physical tables, 11 implemented Core Phase 1 concepts, and 25 deferred concepts.
 
-### Supplier capability and payment-option contract status
+### Supplier capability approval and payment-option deferral
 
-`28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md` recommends separate capability and indicative-commercial relations, explicit routing for mixed Firebase values, controlled/custom capability shapes, type-specific payment shapes, reviewed lifecycle/provenance, semantic duplicate prevention, field-minimized future projections, and required pre-migration evidence. The Product/Data Owner has not yet approved that contract. It recommends a capability-only eighth slice after approval and keeps payment options separate; no SQL or implementation authority exists.
+On 7 August 2026, the Product/Data Owner approved the capability contract in `28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md`: indicative capability semantics, `imports_outside_iraq` routing, unresolved/excluded `import_only`, controlled/custom shapes, optional category scope, provenance/review/lifecycle/normalization, semantic duplicate prevention, restricted evidence, and future public labels-only projection. The same decision selects one future empty, revoked, local-only `public.supplier_capabilities` table as the eighth SQL slice. `public.supplier_payment_options` and its detailed commercial semantics remain deferred. No SQL, pgTAP, row, gate change, RLS, data operation, hosted behavior, Firebase access, or Production/TEST behavior is authorized.
 
 
 ### Identity and access conclusions

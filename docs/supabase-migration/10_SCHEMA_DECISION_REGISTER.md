@@ -30,11 +30,11 @@ The Product/Data Owner approved Option B in `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRO
 
 All required assignment successor-contract decisions under SUP-003 are satisfied. SUP-003 was already Resolved and remains closed; the approval is not a new decision ID and changes none of the 12 Open gates. Merged PR #73 implements exactly the approved empty, revoked, local-only `public.supplier_category_assignments` table plus focused synthetic pgTAP as the seventh local SQL slice. Transformation remains blocked on separately approved mapping, alias-if-used, primary-selection, exception, reconciliation, rollback, environment, and data-migration evidence.
 
-### Supplier capability and payment-option contract recommendation
+### Supplier capability approval and payment-option deferral
 
-`28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md` recommends separate reviewed capability and indicative-commercial relations; controlled/custom capability shapes; explicit treatment of `imports_outside_iraq`; method/currency/credit/advance payment shapes; bounded provenance/lifecycle/review; semantic duplicate prevention; lossless ambiguous-value handling; future field-minimized projections; and pre-migration evidence.
+On 7 August 2026, the Product/Data Owner approved the capability portion of `28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md`: `imports_outside_iraq` is an indicative sourcing capability; `import_only` remains unresolved and excluded; controlled/custom capability shapes require provenance, review, lifecycle, normalization, and semantic duplicate prevention; category scope is optional; capabilities are indicative; a future public projection is labels-only; restricted evidence stays private; and `official_invoice` is a documentary capability.
 
-The Product/Data Owner has not approved this contract. It recommends one future empty, revoked, local-only `public.supplier_capabilities` table as the smallest eighth slice after approval and defers `public.supplier_payment_options` to its own later slice. This recommendation creates no decision ID and resolves none of the 12 Open gates. RFQ-003 remains the legacy quotation price/currency gate; BILL-001 remains the platform billing-subject gate; SEC-001 still owns later client-accessible RLS delivery.
+The same owner decision selects one future empty, revoked, local-only `public.supplier_capabilities` table as the eighth SQL slice and defers `public.supplier_payment_options`. It creates no decision ID, authorizes no SQL/data work, and resolves none of the 12 Open gates. RFQ-003 remains the legacy quotation price/currency gate; BILL-001 remains the platform billing-subject gate; SEC-001 still owns later client-accessible RLS delivery.
 
 ## 2. Decisions
 

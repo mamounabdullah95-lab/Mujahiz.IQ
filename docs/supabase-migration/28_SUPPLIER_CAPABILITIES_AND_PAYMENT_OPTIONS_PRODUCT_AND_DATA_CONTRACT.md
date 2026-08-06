@@ -1,15 +1,15 @@
 # Supplier capabilities and payment options product/data contract
 
-Status: **Recommended contract; Product/Data Owner decision required; capability-only eighth SQL slice proposed**
-Contract date: 6 August 2026
+Status: **Capability contract approved; capability-only eighth SQL slice selected; payment options deferred**
+Contract date: 6 August 2026; Product/Data Owner approval recorded 7 August 2026
 Verified start: `origin/main` `cb51da7267f3fa61af9d35ade66890f096f2c51a` after merged PR #73
 Primary task profile: Documentation
 
 ## 1. Decision boundary
 
-This document defines the recommended successor contracts for future `public.supplier_capabilities` and `public.supplier_payment_options`. It does not approve the recommendations, authorize SQL, or resolve an Open decision gate.
+This document records the approved product/data contract for future `public.supplier_capabilities` and retains the payment-option analysis for later review. The Product/Data Owner approval recorded in section 15 selects the capability-only eighth SQL slice, defers `public.supplier_payment_options`, authorizes no SQL or data work, and resolves no unrelated Open decision gate.
 
-The recommended boundary is:
+The approved capability boundary and deferred payment-analysis boundary are:
 
 - a capability is a reviewed, time-bounded assertion about what a Supplier can generally do or support; it is not a category, location, payment method, contractual promise, RFQ eligibility fact, or proof of performance;
 - a payment option is a reviewed, time-bounded, indicative commercial-profile statement; it is not a quotation term, contract acceptance, account instruction, credit approval, or promise to transact;
@@ -18,7 +18,7 @@ The recommended boundary is:
 - ambiguous, contradictory, unknown, or unmapped legacy evidence creates no active canonical row; and
 - both base relations remain non-public and unavailable to API roles until a separately approved RLS/projection task.
 
-The Product/Data Owner must decide the items in section 15. Until that decision, neither table is authorized for implementation. If the contract is approved as recommended, the smallest dependency-safe next SQL slice is one empty `public.supplier_capabilities` table only. `public.supplier_payment_options` remains a separate later slice.
+The capability contract is approved and one empty `public.supplier_capabilities` table is selected as the smallest dependency-safe eighth SQL slice. This approval is planning authority only: a separate task must authorize and select exact SQL/pgTAP. `public.supplier_payment_options` remains deferred and unapproved.
 
 ## 2. Verified starting state and current Firebase evidence
 
@@ -48,13 +48,13 @@ The UI capability constants and workbook import options are not identical. In pa
 
 | Option | Boundary | Dependency/risk finding | Disposition |
 |---|---|---|---|
-| A | One capability table only | Supplier root exists; nullable category scope can use the existing category root; resolves the structural destination already required for `imports_outside_iraq`; commercial credit interpretation remains out | **Recommend as the next slice after owner approval** |
-| B | One payment-options table only | Supplier root exists and no billing table is required, but current credit-start labels and method/currency/invoice overlaps require owner decisions before exact DDL | Viable later, not the smallest next slice |
+| A | One capability table only | Supplier root exists; nullable category scope can use the existing category root; resolves the structural destination already required for `imports_outside_iraq`; commercial credit interpretation remains out | **Approved and selected as the eighth slice** |
+| B | One payment-options table only | Supplier root exists and no billing table is required, but current credit-start labels and method/currency/invoice overlaps require owner decisions before exact DDL | **Deferred; not selected** |
 | C | Both tables in one slice | Structurally possible after approval, but doubles lifecycle, shape, uniqueness, and pgTAP surface and mixes a capability mapping need with commercial semantics | Reject as the next slice |
 | D | One generic Supplier attributes/options table | Weakens type-specific constraints, visibility, normalization, and migration reconciliation; encourages payment/location/category leakage | Reject |
 | E | Store the current arrays/free text on `supplier_profiles` or as JSONB | Preserves ambiguity, prevents reliable duplicate/lifecycle rules, and broadens the root profile | Reject |
 
-Both tables may eventually be independently safe as empty, revoked, local-only slices. They are not coupled by FK or transaction and should not be implemented together merely because both originate in one Firebase Supplier document.
+The capability table is selected as an empty, revoked, local-only eighth slice. Payment options remain deferred and require a later separately approved contract/selection. The relations are not coupled by FK or transaction and must not be implemented together merely because both originate in one Firebase Supplier document.
 
 ## 4. Canonical capability semantics
 
@@ -70,7 +70,7 @@ A capability is not:
 - Supplier ownership, verification, listing approval, search rank, or RFQ eligibility; or
 - a contractual representation or warranty.
 
-The recommended controlled capability kinds are:
+The following controlled capability taxonomy remains a candidate vocabulary for later exact DDL/mapping review:
 
 | Kind | Meaning | Current candidates after review |
 |---|---|---|
@@ -80,7 +80,7 @@ The recommended controlled capability kinds are:
 | `experience` | Reviewed claim of relevant prior work/market experience | `project_experience`, `works_with_ngos`, `works_with_construction`, `works_with_oil_gas`, `works_with_power_plants` |
 | `custom` | Reviewed bounded capability not yet in the controlled vocabulary | No automatic current mapping |
 
-These codes are recommended starter identities, not approved vocabulary rows. Labels are presentation content and do not become identity. A future vocabulary-table decision is not required for an empty first capability relation, but adding or changing controlled codes requires Product/Data Owner governance and synchronized application/import mappings.
+This owner decision approves the structural controlled/custom boundary, `imports_outside_iraq`, and `official_invoice` routing; it does not approve or populate the remaining candidate codes as a canonical vocabulary. Labels are presentation content and do not become identity. A future vocabulary-table decision is not required for an empty first capability relation, but the exact DDL code set and every later mapping require separately reviewed governance and synchronized application/import evidence.
 
 ## 5. `imports_outside_iraq`
 
@@ -152,11 +152,11 @@ Recommended logical child keys are:
 
 Multiple source fields resolving to the same semantic capability produce one active target and retain contributing evidence through the existing reviewed merge/reconciliation contract. Case, Unicode compatibility forms, punctuation, Arabic/English spelling, or source-array duplication must not produce duplicate rows. Fuzzy similarity creates only a review candidate.
 
-## 9. Canonical payment-option semantics
+## 9. Deferred payment-option analysis
 
-A payment-option row is an indicative Supplier commercial-profile assertion that a method, currency, credit arrangement, or advance-payment arrangement is generally available for consideration. Availability remains subject to Supplier review, Buyer approval, transaction value, compliance, bank availability, RFQ, quotation, and executed contract.
+The following payment-option model remains analysis for a later owner decision; it is not approved or selected by this contract update. If later approved, a payment-option row would be an indicative Supplier commercial-profile assertion that a method, currency, credit arrangement, or advance-payment arrangement is generally available for consideration. Availability would remain subject to Supplier review, Buyer approval, transaction value, compliance, bank availability, RFQ, quotation, and executed contract.
 
-The row is not contract acceptance. An RFQ or quotation must snapshot its own payment terms independently. RFQ-003 remains Open for legacy quotation price/currency transformation and is not resolved by this Supplier-profile contract. BILL-001 also remains Open; a Supplier payment option is unrelated to platform subscription billing.
+No payment-option semantics are approved here except that `official_invoice` is excluded from that future table and belongs to documentary capabilities. A future payment row would not be contract acceptance; an RFQ or quotation would snapshot its own payment terms independently. RFQ-003 remains Open for legacy quotation price/currency transformation and BILL-001 remains Open for platform subscription billing.
 
 The recommended option types are:
 
@@ -242,8 +242,8 @@ Mapping outcomes are `unknown`, `pending_review`, `mapped`, `unmapped`, and `rej
 - Both base tables are non-public. Any empty local implementation revokes all table privileges from `public`, `anon`, `authenticated`, and `service_role`.
 - No browser role may directly insert, activate, update, archive, or delete a row. Future proposals and reviews use separately approved trusted commands.
 - RLS is not column security. Audience reads require field-minimized security-invoker views or RPC projections after an Extra High Security review.
-- A future approved directory/Buyer capability projection may expose permitted Supplier identity, controlled code/localized label, approved custom display value, category scope, and order. It excludes normalized/original evidence, source namespace/reference, versions, confidence, reviewer/actor identity, review times, notes, and closure reasons.
-- A future approved Buyer commercial projection may expose active method codes, currency codes, credit days/start labels, advance percentage, carefully reviewed display note, and explicit “indicative; confirm in quotation” wording.
+- A future separately implemented public capability projection may expose only approved active capability labels. It excludes codes unless separately justified, custom/source originals, normalized values, category-scope evidence, position/order metadata, notes, source namespace/reference, mapping/normalizer versions, confidence, reviewer/actor identity, review times, closure reasons, and every ambiguous or unmapped legacy value.
+- No payment-option projection is approved or selected. Its audience, fields, and wording remain deferred with the table contract.
 - No public projection exposes bank/account/instrument data, internal review evidence, contradictory values, unknown/unmapped values, drafts, or history.
 - Anonymous exposure, custom-capability exposure, Supplier-owner proposal access, and Buyer-only versus authenticated-directory access remain explicit Product/Security decisions. Current application visibility is not broadened by this contract.
 - Search/ranking, RFQ matching, eligibility, quotation generation, and commercial comparison remain separate later contracts. A capability/payment row never authorizes an RFQ or binds a quotation.
@@ -269,41 +269,43 @@ Before capability or payment transformation, a separate reviewed package must co
 
 Counts alone are insufficient. Any unexplained value, contradiction, collision, target, duplicate, reverse trace, or replay difference blocks movement.
 
-## 15. Owner decisions required
+## 15. Recorded Product/Data Owner decision
 
-The Product/Data Owner must explicitly approve, modify, or reject:
+On 7 August 2026, the Product/Data Owner explicitly approved:
 
-1. the domain separation and capability-only next-slice recommendation in section 3;
-2. the starter capability kinds/codes in section 4;
-3. the positive meaning of `imports_outside_iraq` and the recommendation to keep `import_only` pending rather than equating it automatically;
-4. nullable category scope and the controlled-versus-custom capability boundary;
-5. whether reviewed custom capabilities may ever enter an anonymous projection or remain authenticated/Buyer-only;
-6. payment options as indicative profile assertions rather than contractually accepted terms;
-7. the method/currency/credit/advance option types and `official_invoice` routing;
-8. the exact legal/business definitions and legacy mappings for the three credit start events;
-9. explicit `credit_not_offered` versus unknown-by-absence behavior and contradiction handling;
-10. cheque, letter-of-credit, and advance-payment future-compatible codes despite no current controlled Firebase values;
-11. commercial-note visibility and moderation; and
-12. reviewer delegation and the projection audiences that later security work may design.
+- `public.supplier_capabilities` only as the next empty local-only SQL slice;
+- continued deferral of `public.supplier_payment_options`;
+- `imports_outside_iraq` as an indicative sourcing capability;
+- `import_only` as unresolved, excluded from the canonical capability contract, and ineligible for automatic mapping;
+- controlled capabilities and reviewed custom capabilities only with bounded provenance, review, lifecycle, versioned normalization, and semantic duplicate prevention;
+- optional, never mandatory, category scope;
+- capability assertions as indicative profile claims rather than contractual guarantees;
+- a future public projection boundary limited to approved active labels only;
+- restriction of notes, provenance, evidence, reviewer identity, normalization/mapping metadata, and ambiguous/unmapped legacy values;
+- `official_invoice` as a documentary capability, never a payment option; and
+- no SQL, pgTAP, migration, mapping execution, seed, RLS, Auth, Firebase, hosted Supabase, Production, or TEST work in this PR.
 
-Approval of these items would approve only the product/data contract and proposed structural sequencing. SQL, pgTAP, mapping execution, data access, RLS, hosted work, and Production work still require separate authorization.
+This approval confirms the capability contract and selects the capability-only eighth-slice planning boundary. It does not approve the candidate vocabulary beyond the explicitly routed `imports_outside_iraq` and `official_invoice` meanings, approve any source mapping or data row, approve the payment-option model, or authorize implementation.
 
-## 16. Proposed smallest next SQL slice
+Remaining later decisions include the exact capability DDL/code set and focused pgTAP contract, reviewer/actor authorization, mapping/vocabulary versions, custom-label moderation/localization, data-migration evidence, and all payment-option semantics. The 12 unrelated Open gates remain unchanged: `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
 
-After explicit contract approval, a separate task may select exactly one empty `public.supplier_capabilities` table plus:
+## 16. Selected eighth SQL slice
 
-- UUIDv4 identity, restrictive Supplier/category/reviewer/actor FKs;
+The selected eighth SQL slice is exactly one future empty `public.supplier_capabilities` table. A later separately authorized implementation-selection task may define:
+
+- UUIDv4 identity and restrictive Supplier/category/reviewer/actor relationships;
 - mutually exclusive controlled/custom shapes;
-- bounded provenance, lifecycle, validity, and position checks;
+- optional category scope;
+- bounded provenance, lifecycle, validity, normalization, and position checks;
 - active semantic uniqueness and structural lookup indexes;
 - comments and complete API-role privilege revocation; and
 - focused disposable synthetic pgTAP plus minimum implementation evidence.
 
-It must exclude `public.supplier_payment_options`, vocabulary/reference rows, Supplier/category/location/assignment changes, mapping execution, data rows, triggers, trusted routines, RLS, policies, views, RPCs, grants, application/search/RFQ integration, Firebase, hosted Supabase, and Production/TEST access.
+This selection does not authorize SQL or pgTAP. Any later implementation must exclude `public.supplier_payment_options`, vocabulary/reference rows, Supplier/category/location/assignment changes, mapping execution, data rows, triggers, trusted routines, RLS, policies, views, RPCs, grants, application/search/RFQ integration, Firebase, hosted Supabase, and Production/TEST access unless separately approved.
 
-`public.supplier_payment_options` is a later independent one-table candidate only after the owner decisions in section 15—especially indicative semantics and credit-start mapping—are approved and exact DDL/test selection receives a separate review.
+`public.supplier_payment_options` remains deferred. Its method/currency/credit/advance model, legacy mappings, audiences, exact DDL, and tests require a later Product/Data Owner contract and independent slice selection.
 
-If a capability-only table were later authorized and merged, the projected state would be 14 physical tables, 12 implemented Core Phase 1 concepts, and 24 deferred concepts. This documentation task leaves the verified state at 13 / 11 / 25.
+If the selected capability-only table were later authorized and merged, the projected state would be 14 physical tables, 12 implemented Core Phase 1 concepts, and 24 deferred concepts. This documentation task leaves the verified state at 13 / 11 / 25.
 
 ## 17. Risks
 
@@ -321,7 +323,7 @@ Required validation is documentation-only: latest `origin/main`/PR #73 lineage, 
 
 Do not start Supabase, replay migrations, run pgTAP, access Firebase, run the application build, or run full repository suites.
 
-Exact stop point: Draft PR with this recommended contract and owner-decision checklist. Stop before owner approval is recorded, SQL/pgTAP selection or implementation, mapping execution, data movement, RLS, hosted work, Ready-for-review transition, merge, or deployment.
+Exact stop point: PR #74 marked Ready for review with the approved capability contract, selected capability-only eighth-slice planning boundary, and deferred payment options. Stop before SQL/pgTAP implementation selection or implementation, mapping execution, data movement, RLS, hosted work, merge, or deployment.
 
 ## 19. References
 

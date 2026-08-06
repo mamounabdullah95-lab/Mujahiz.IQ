@@ -72,9 +72,10 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Supplier payment options are recommended as indicative profile assertions; quotations/contracts independently snapshot accepted terms. RFQ-003 and BILL-001 remain Open and separate.
 - [x] Mixed current Firebase values, `official_invoice`, credit contradictions, free text, unknowns, and unmapped values have explicit lossless routing or review outcomes.
 - [x] Provenance, lifecycle, reviewer/owner responsibility, type-specific uniqueness, future field-minimized projection boundaries, and the complete pre-migration evidence package are explicit.
-- [x] Table-boundary options are compared and a capability-only eighth slice is recommended after owner approval; both tables together are rejected as the smallest slice.
-- [ ] The Product/Data Owner has approved or modified every item in document 28 section 15. Until then, neither SQL table is authorized.
-- [ ] A separate implementation selection has fixed the exact capability DDL/pgTAP boundary. This documentation task includes no SQL, data, RLS, Auth, hosted, Firebase, Production, merge, or deployment work.
+- [x] On 7 August 2026, the Product/Data Owner approved the capability contract and selected exactly one future empty local-only `public.supplier_capabilities` table as the eighth SQL slice; both tables together remain rejected as the smallest slice.
+- [x] The owner decision approves `imports_outside_iraq`, excludes unresolved `import_only`, permits controlled/reviewed-custom capabilities with optional category scope, makes capabilities indicative, limits a future public projection to approved active labels, restricts evidence/reviewer data, and routes `official_invoice` to documentary capability.
+- [x] `public.supplier_payment_options` remains deferred; its detailed semantics, mappings, audience, DDL, and tests are not approved by this decision.
+- [ ] A separate implementation-selection task has fixed and authorized the exact capability DDL/pgTAP boundary. This documentation task includes no SQL, data, RLS, Auth, hosted, Firebase, Production/TEST, merge, or deployment work.
 
 ## B. Relational model and integrity
 
