@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-06-post-pr62-fifth-sql-slice-implementation`
+Baseline ID: `baseline-2026-08-06-post-pr64-fifth-sql-slice-implementation`
 Updated: 2026-08-06
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `49c031c4c63734e2e001a0ec798a7a4e785f37e0`.
+- **Verified current fact:** Current GitHub `main`: `d5ca92d19e5c0cb533c2614a4ca0a3d70c1b184e`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -38,7 +38,8 @@ Evidence labels used below:
 - **Verified current fact:** PR #59 was merged as commit `f37d46bd875987a6c2d177b21df31a8ecb8e0b71` and implemented `public.categories` locally as the fourth SQL slice.
 - **Verified current fact:** PR #61 resolved SUP-004 and selected `public.administrative_areas` as the fifth SQL slice; it made no SQL or data change.
 - **Verified current fact:** PR #62 is merged by current `main`; its implementation head `4d390f747b94c9b00f709fea747c29c0b840cbdb` is contained in `main` and adds `public.administrative_areas` locally as the fifth SQL slice.
-- **Verified current fact:** PR #63 is merged by current `main` as commit `49c031c4c63734e2e001a0ec798a7a4e785f37e0`; it synchronized the fifth SQL-slice state and made no runtime, deployment, hosted Supabase, Firebase, Auth, data, or Production change.
+- **Latest known historical fact:** PR #63 was merged as commit `49c031c4c63734e2e001a0ec798a7a4e785f37e0`; it synchronized the fifth SQL-slice state and made no runtime, deployment, hosted Supabase, Firebase, Auth, data, or Production change.
+- **Verified current fact:** PR #64 is merged by current `main` as commit `d5ca92d19e5c0cb533c2614a4ca0a3d70c1b184e`; it preserved historical PR #59 slice evidence and made no runtime, deployment, hosted Supabase, Firebase, Auth, data, or Production change.
 - **Verified current fact:** The fourth and fifth SQL slices remain local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase operation, Firebase access, Production/TEST data operation, data migration, seed, backfill, deployment, or remote SQL occurred.
 - The third SQL slice remains local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase, deployment, Production data, migration, seed, or backfill occurred.
 - The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.
@@ -151,7 +152,7 @@ Do not combine results from different commits or PRs into a new automated-test t
 - **Verified current fact:** GitHub `main` contains the first local migration-control SQL slice: migration `supabase/migrations/20260804000136_migration_control_foundation.sql` creates six governance tables in the non-exposed `internal` schema, and `supabase/tests/migration_control_foundation.sql` supplies repository-tracked synthetic pgTAP coverage.
 - **Verified current fact:** GitHub `main` contains five local business/application tables: `public.user_profiles`, `public.supplier_profiles`, `public.categories`, `public.administrative_areas`, and non-exposed `internal.identity_provider_links`. No RLS, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
 - **Verified current fact:** No browser integration, API policy, application grant, hosted Supabase project link, or remote migration application exists.
-- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, or PR #62.
+- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, PR #62, or PR #64.
 
 The merged local infrastructure and migration-governance SQL, a future business/application schema, any hosted Supabase project, and Firebase Production are separate states. Supabase is not currently a Production authority.
 
