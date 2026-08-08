@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-08-sup-001-resolved`
+Baseline ID: `baseline-2026-08-08-id-001-resolved`
 Updated: 2026-08-08
 Canonical Production URL: `https://mujahiz.com`
 
@@ -186,7 +186,7 @@ The merged local infrastructure and migration-governance SQL, a future business/
 - **Verified current fact:** Core Phase 1 remains a maximum candidate set, not approval to create all 36 concepts in one PR. PR #51 implemented the approved two-table identity boundary, PR #54 implemented only the separately bounded `supplier_profiles` local root, PR #59 implemented only `categories`, PR #62 implemented only `administrative_areas`, and PR #68 implemented only `supplier_locations`.
 - **Verified current fact:** The design maps all 35 verified Firestore collections, registers 36 synchronized decisions, and provides a 119-item schema review checklist. DB-001 is resolved for the local first slice to database-generated UUIDv4 through `pg_catalog.gen_random_uuid()`; hosted compatibility remains a later validation gate.
 - **Verified current fact:** MIG-001 is partially implemented only at the declarative schema-contract level. Migration Engine locking, replay lookup, transformation, reconciliation, graph supersession, and rollback execution remain unimplemented.
-- **Verified current fact:** ID-001, MIG-002, RES-001, and all nine other approval gates remain Open; 12 approval gates remain Open in total. Firebase Auth is the verified current hybrid-phase authority, but ID-001 has no approved durable identity/privileged-actor contract yet.
+- **Verified current fact:** ID-001 is Resolved for the approved hybrid identity-authority and privileged-actor contract. The 11 unrelated approval gates remain Open.
 
 #### Merged second-slice boundary
 
@@ -199,9 +199,8 @@ The merged second slice remains local-only and synthetic-data-only, without RLS,
 
 #### Open approval gates
 
-The 12 remaining Open approval gates are:
+The 11 remaining Open approval gates are:
 
-- `ID-001`
 - `ORG-001`
 - `ORG-002`
 - `RFQ-003`
@@ -235,9 +234,9 @@ Merged PR #80 implemented exactly the approved empty, revoked, local-only `publi
 
 The owner approved Option D in [`31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md`](../supabase-migration/31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md): create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice. The first future producer path is `supplier_ownership.decide_claim`; the first concrete consumer is one claim-decision notification materializer; and both reliability tables may be introduced later only as one coherent foundation when that producer/consumer path and its delivery dependencies are approved. REL-001 is Resolved for this Option D planning decision only. AUD-001, MSG-003, and all other Open gates remain unchanged, and no SQL, worker, audit, notification, RLS/Auth, Firebase, hosted, Production/TEST, migration, or deployment work is authorized.
 
-The Product/Data/Security Owner approved [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](../supabase-migration/32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) on 8 August 2026. SUP-001 is Resolved for one active primary human controller per Supplier, multiple Suppliers per user, future delegate/admin memberships, separate optional organizations, unowned-Supplier-only ordinary Claims, immutable evidence/history, fail-closed conflict handling, and the design-only `supplier_ownership.decide_claim` contract. One empty, fully revoked, local-only `public.supplier_ownerships` foundation is selected as the proposed next SQL slice; this documentation approval implements no SQL or runtime and leaves all 12 Open approval gates unchanged.
+The Product/Data/Security Owner approved [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](../supabase-migration/32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) on 8 August 2026. SUP-001 is Resolved for one active primary human controller per Supplier, multiple Suppliers per user, future delegate/admin memberships, separate optional organizations, unowned-Supplier-only ordinary Claims, immutable evidence/history, fail-closed conflict handling, and the design-only `supplier_ownership.decide_claim` contract. One empty, fully revoked, local-only `public.supplier_ownerships` foundation is selected as the proposed next SQL slice; that documentation approval implemented no SQL or runtime.
 
-[`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md`](../supabase-migration/33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md) proposes the smallest Firebase-authoritative hybrid identity and privileged-actor contract. It recommends resolving ID-001 only after explicit Product/Security/Data Owner approval, identifies `platform_role_assignments` as necessary but insufficient before Claim runtime, and finds one empty revoked role foundation dependency-safe as a later separately approved candidate. The proposal does not close ID-001, select SQL, or authorize Auth/RLS/runtime/data work.
+[`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md`](../supabase-migration/33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md) records the Owner-approved Firebase-authoritative hybrid identity and privileged-actor contract. ID-001 is Resolved; `public.user_profiles` plus `internal.identity_provider_links` are the approved provider-neutral identity foundation; and one empty, fully revoked, local-only `public.platform_role_assignments` foundation is selected as the next identity/access structural SQL candidate. The approval authorizes no SQL, role population, Auth/RLS/runtime, data, hosted, or Production work.
 
 ### Product priorities
 

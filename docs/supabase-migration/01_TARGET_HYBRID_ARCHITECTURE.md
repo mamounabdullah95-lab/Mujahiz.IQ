@@ -8,7 +8,7 @@
 
 - **[Future plan]** Keep one React/Vite frontend and the current visual identity. Introduce backend-provider boundaries beneath the existing service modules; do not build a second interface.
 - **[Future plan]** Keep Firebase Hosting serving `mujahiz.com` and the existing Firebase origins during the initial backend migration. No DNS or Hosting migration belongs to the initial phases.
-- **[Future plan]** Keep Firebase Auth as the initial identity provider unless a separately reviewed TEST/UAT phase proves that Supabase Auth migration is safer and worthwhile.
+- **[Future plan]** Keep Firebase Auth as the sole authentication and email-verification authority throughout the approved hybrid phase. Any future provider migration requires a separately approved ADR and TEST/UAT evidence.
 - **[Future plan]** Introduce Supabase PostgreSQL and RLS gradually. Introduce Supabase Storage, Realtime, and Edge Functions only after their own schema, policy, privacy, cost, and rollback reviews.
 - **[Future plan]** Every feature has exactly one authoritative write backend at a time. No Production dual writes and no automatic Firebase fallback after a Supabase failure.
 - **[Future plan]** Use Firebase legacy IDs as stable mapping values even when PostgreSQL uses UUID/bigint primary keys.
@@ -127,7 +127,7 @@ Official Supabase guidance used for this plan: [Firebase third-party authenticat
 3. **[Future plan]** Supabase verifies the registered Firebase issuer/audience before the request reaches PostgreSQL.
 4. **[Future plan]** The Firebase token must carry Postgres `role: authenticated`; application Owner/Admin roles remain in protected `platform_role_assignments` and are not trusted as Postgres roles.
 5. **[Future plan]** A protected identity resolver maps `auth.jwt()->>'sub'` through the exact active `internal.identity_provider_links` Firebase subject to `public.user_profiles.id`. Do not assume a Firebase UID is a PostgreSQL UUID or use a provider-link ID as a domain FK.
-6. **[Future plan]** RLS/trusted functions then validate current profile, provider state, platform role/access, security eligibility, and Supplier ownership/membership from their separate relational authorities. High-impact commands also require current Firebase-authoritative provider evidence under document 33.
+6. **[Future plan]** RLS/trusted functions then validate current profile, provider state, platform role/access, security eligibility, and Supplier ownership/membership from their separate relational authorities. High-impact commands also require current Firebase-authoritative provider evidence under approved document 33.
 
 - **[Verified current fact]** No repository code currently assigns the Firebase custom claim `role: authenticated`; current authorization reads Firestore application-role data. Source: repository search and `functions/src/callableAuth.ts`.
 - **[Future plan]** Adding the claim for existing/future users is a separate Firebase Auth/Functions mutation and requires TEST proof, rollback, token-refresh handling, and explicit approval. It is not part of this baseline.

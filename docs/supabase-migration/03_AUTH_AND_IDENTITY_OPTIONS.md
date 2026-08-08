@@ -2,7 +2,7 @@
 
 ## ID-001 contract status
 
-[`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md`](33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md) is the decision-ready successor for the hybrid-phase authority, provider-neutral principal/link, verification-mirror, privileged-actor, lifecycle, reconciliation, and Claim dependency contract. It recommends Firebase Auth as the sole hybrid authentication/email-verification authority and does not design Option B. ID-001 remains Open until explicit Product/Security/Data Owner approval; this document authorizes no integration or hosted work.
+[`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md`](33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md) is the Owner-approved hybrid-phase authority, provider-neutral principal/link, verification-mirror, privileged-actor, lifecycle, reconciliation, and Claim dependency contract. Firebase Auth remains the sole hybrid authentication/email-verification authority; `public.user_profiles` plus `internal.identity_provider_links` are the approved identity foundation; and ID-001 is Resolved. The contract authorizes no integration or hosted work.
 
 ## Current identity contract
 

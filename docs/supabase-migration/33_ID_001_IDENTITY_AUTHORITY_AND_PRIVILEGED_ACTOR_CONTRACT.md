@@ -1,6 +1,6 @@
 # ID-001 identity authority and privileged actor contract
 
-Status: **Proposed Product/Security/Data contract; ID-001 remains Open pending explicit Owner approval; no SQL or runtime implementation authorized**
+Status: **Owner-approved Product/Security/Data contract; ID-001 Resolved for the hybrid phase; `public.platform_role_assignments` selected as the next identity/access structural SQL candidate; no SQL or runtime implementation authorized**
 
 Date: 2026-08-08
 
@@ -15,7 +15,7 @@ The verified repository starting point is refreshed `origin/main` commit `666985
 - `public.platform_role_assignments` does not exist;
 - SUP-001 is Resolved and one empty, revoked `public.supplier_ownerships` foundation is approved for separate implementation;
 - REL-001 is Resolved only for Option D planning, with no reliability SQL selected;
-- the 12 Open gates remain `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`;
+- before this contract's approval, the 12 Open gates were `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`;
 - Firebase Auth remains authoritative for passwords, sessions, provider account existence/disablement, email verification, recovery, and email actions;
 - Firestore remains the current application-profile and role authority for the Firebase runtime; and
 - Supabase is local-only and non-authoritative. No hosted Supabase project is known or authorized here.
@@ -35,7 +35,7 @@ The smallest safe hybrid architecture is:
 7. Domain rows reference `user_profiles`; provider-link IDs never become claimant, owner, reviewer, decision-actor, creator, updater, recipient, or membership foreign keys.
 8. Missing, stale, duplicated, ambiguous, or contradictory identity/role evidence fails closed and enters reconciliation; no link or privilege is inferred from email, name, organization, legacy role text, or one-sided Supplier backlinks.
 
-ID-001 can therefore be resolved contractually for the hybrid phase without selecting a post-Firebase provider. This document recommends that resolution, but does not record it: explicit Product/Security/Data Owner approval is still required.
+On 8 August 2026, the Product/Security/Data Owner approved this complete contract. ID-001 is therefore Resolved for the hybrid phase without selecting a post-Firebase provider. The 11 unrelated Open gates remain unchanged.
 
 ## 3. Authority separation
 
@@ -215,11 +215,11 @@ No reconciliation result changes Firebase credentials, verification, disablement
 
 Yes. `public.user_profiles` plus `internal.identity_provider_links` are sufficient as the hybrid provider-neutral identity foundation, but they deliberately contain no platform privilege. A future relational `supplier_ownership.decide_claim` cannot derive Admin/Owner authority from `legacy_role`, account context, provider links, ownership, membership, JWT application claims, or Firestore after the relational role cutover. Therefore `public.platform_role_assignments` is a required structural dependency before that runtime.
 
-It is necessary, not sufficient. Runtime also requires the exact access-grant/role-backed administration contract, role/bootstrap reconciliation, trusted role commands and final-Owner guard, ID-001 approval, Claim structures, AUD-001, the REL/MSG producer-consumer foundation, security/RLS delivery, and hosted-environment approvals where applicable.
+It is necessary, not sufficient. Runtime also requires the exact access-grant/role-backed administration contract, role/bootstrap reconciliation, trusted role commands and final-Owner guard, implementation of this approved identity contract, Claim structures, AUD-001, the REL/MSG producer-consumer foundation, security/RLS delivery, and hosted-environment approvals where applicable.
 
 ### 11.2 Is an empty local-only foundation safe?
 
-Yes, as a future separately approved slice after this contract receives Owner approval and exact DDL/pgTAP is reviewed. The dependency-safe candidate is exactly one empty, fully revoked, local-only temporal role-assignment table with:
+Yes. The Owner selected exactly one empty, fully revoked, local-only temporal role-assignment table as the next identity/access structural SQL candidate. Exact DDL/pgTAP remains a separate technical task. The selected candidate has:
 
 - database-generated UUID identity;
 - restrictive FKs to the subject and human assignment/revocation actors in `user_profiles`;
@@ -233,13 +233,13 @@ Yes, as a future separately approved slice after this contract receives Owner ap
 
 To avoid a circular structural dependency, `platform_role_assignments` does not FK forward to `access_grants`. A later `access_grants` row may reference its Owner assignment. The role-assignment row can carry no effective privilege until the trusted runtime verifies the separate current administration grant and every other usable-actor predicate.
 
-The candidate is not selected or authorized by this documentation PR. Exact status vocabulary, columns, constraints, indexes, and pgTAP belong to a separate technical selection/implementation task. No real assignment row is safe until bootstrap/migration authority, access-grant behavior, audit/security outcomes, trusted commands, concurrency/final-Owner tests, and authority cutover are separately approved.
+This documentation PR selects the candidate but does not authorize or implement SQL. Exact status vocabulary, columns, constraints, indexes, and pgTAP belong to a separate technical implementation task. No real assignment row is safe until bootstrap/migration authority, access-grant behavior, audit/security outcomes, trusted commands, concurrency/final-Owner tests, and authority cutover are separately approved.
 
 ## 12. Claim dependency and gate matrix
 
 | Gate/dependency | Empty revoked `platform_role_assignments` foundation | Real role/identity rows | `supplier_ownership.decide_claim` runtime |
 |---|---|---|---|
-| ID-001 | Requires explicit approval of this contract before selection | Required | Required for actor and claimant authentication/provider validation |
+| ID-001 | **Resolved**; selected candidate may proceed only in a separate SQL/pgTAP task | Approved contract must still be implemented before real rows | Approved contract must still be implemented for actor and claimant authentication/provider validation |
 | SUP-001 | Does not block | Ownership contract governs relationships | Resolved for design; command still not implementation-authorized |
 | ORG-001 / ORG-002 | Do not block | Do not block platform roles; block organization-derived authority | Do not block unowned-Supplier Claim v1; required only if organization authority is later added |
 | Platform-role/access contract | Empty role table may precede access table under section 11 | Bootstrap, role-backed access, trusted commands, and final-Owner safety required | Required; assignment alone is insufficient |
@@ -250,7 +250,7 @@ The candidate is not selected or authorized by this documentation PR. Exact stat
 | MIG-002 / RES-001 | Do not block local-only DDL | Block hosted identity/role migration | Block hosted/Production execution |
 | RFQ-003, MSG-002, SEARCH-001, BILL-001 | Do not block | Do not block | Do not block Claim v1 |
 
-Before `supplier_ownership.decide_claim` is implemented, ID-001 must resolve all of the following: exact Firebase authority, token/current-user validation, provider-link resolution, mirror freshness/mismatch rules, stable principal references, usable privileged-actor predicate, platform-role necessity, claimant/reviewer/decision provenance, lifecycle fail-closed behavior, and reconciliation/quarantine rules. This document proposes each of those decisions.
+ID-001 resolves the contractual decisions for exact Firebase authority, token/current-user validation, provider-link resolution, mirror freshness/mismatch rules, stable principal references, usable privileged-actor predicate, platform-role necessity, claimant/reviewer/decision provenance, lifecycle fail-closed behavior, and reconciliation/quarantine rules. `supplier_ownership.decide_claim` remains blocked until those approved contracts and the other dependencies in this section are implemented.
 
 The following may remain deferred until their named implementation phase: Supabase Auth or another future provider, provider migration/cutover, exact Auth bridge code, exact RLS policies, exact role/access DDL, migration execution, hosted project choice, organization/membership design, notification rendering/retention, audit retention, and file storage. Deferral does not permit the Claim runtime to bypass any dependency named above.
 
@@ -258,7 +258,7 @@ The following may remain deferred until their named implementation phase: Supaba
 
 ### A. Can ID-001 be resolved contractually now while Firebase Auth remains authoritative?
 
-**Yes.** Resolve it for the hybrid phase by naming Firebase Auth as the sole authentication/email-verification/disablement authority and PostgreSQL as a provider-neutral profile, linkage-mirror, and later application-authorization store. A future provider/cutover requires a new approved ADR; it need not remain an ambiguity inside ID-001. ID-001 remains Open in this PR pending explicit Owner approval.
+**Yes.** It is Resolved for the hybrid phase by naming Firebase Auth as the sole authentication/email-verification/disablement authority and PostgreSQL as a provider-neutral profile, linkage-mirror, and later application-authorization store. A future provider/cutover requires a new approved ADR; it is not an ambiguity inside ID-001.
 
 ### B. Are `user_profiles` and `identity_provider_links` sufficient for the hybrid identity foundation?
 
@@ -270,22 +270,22 @@ The following may remain deferred until their named implementation phase: Supaba
 
 ### D. Is an empty revoked role foundation dependency-safe as a future slice?
 
-**Yes, under section 11's restrictions.** It may precede `access_grants` if it contains no forward FK to access grants and grants no effective authority. Before selection it still needs explicit approval of this contract plus an exact DDL/pgTAP task. Before any real row or runtime it needs the additional bootstrap, access, audit/security, trusted-command, reconciliation, and cutover approvals.
+**Yes, under section 11's restrictions.** `public.platform_role_assignments` is selected as the next identity/access structural SQL candidate. It may precede `access_grants` if it contains no forward FK to access grants and grants no effective authority. Exact DDL/pgTAP remains separate. Before any real row or runtime it needs the additional bootstrap, access, audit/security, trusted-command, reconciliation, and cutover approvals.
 
 ### E. Which gates block Claim approval runtime versus empty structural SQL?
 
-For empty local-only role DDL, this ID-001 contract approval and exact technical selection are the only identity-specific prerequisites; unrelated Open gates do not block a fully revoked zero-row table. For Claim runtime, ID-001, platform-role/access/bootstrap implementation, AUD-001, MSG-003 plus the coherent REL foundation/consumer, trusted-command and RLS/security approval, and hosted MIG-002/RES-001 approval are blockers. FILE-001 is conditional on stored file evidence. ORG-001, ORG-002, RFQ-003, MSG-002, SEARCH-001, and BILL-001 do not block the unowned-Supplier Claim v1 contract.
+For empty local-only role DDL, ID-001 is Resolved and the candidate is selected; exact technical DDL/pgTAP remains the next separate task. For Claim runtime, platform-role/access/bootstrap implementation, implementation of the approved identity contract, AUD-001, MSG-003 plus the coherent REL foundation/consumer, trusted-command and RLS/security approval, and hosted MIG-002/RES-001 approval are blockers. FILE-001 is conditional on stored file evidence. ORG-001, ORG-002, RFQ-003, MSG-002, SEARCH-001, and BILL-001 do not block the unowned-Supplier Claim v1 contract.
 
-## 14. Owner decision and stop point
+## 14. Owner approval record and stop point
 
-The Product/Security/Data Owner is asked to approve or reject this contract as one decision:
+On 8 August 2026, the Product/Security/Data Owner approved this contract as one decision:
 
 - Firebase Auth remains sole hybrid authentication and email-verification authority;
 - `user_profiles` is the stable domain principal and `identity_provider_links` is a non-domain provider mapping/mirror;
 - the usable privileged-actor predicate and fail-closed lifecycle/reconciliation rules are approved;
 - `platform_role_assignments` is required before relational Claim decision runtime; and
-- the empty revoked role table is a dependency-safe future candidate under section 11, without selecting or authorizing SQL in this PR.
+- the empty revoked `public.platform_role_assignments` table is dependency-safe and selected as the next identity/access structural SQL candidate under section 11, without authorizing or implementing SQL in this PR.
 
-If approved, update ID-001 to Resolved for the hybrid-phase contract with the approval evidence and reduce the Open-gate count from 12 to 11. If any material clause is rejected or left undecided, ID-001 remains Open and no role SQL should be selected.
+ID-001 is Resolved for the hybrid-phase contract. The Open-gate count is reduced from 12 to 11; only ID-001 is removed, and every unrelated Open gate is preserved.
 
-This task stops at documentation and a Draft PR. It performs no SQL, pgTAP, RLS, Auth bridge, role assignment, trusted command, Firebase/config change, hosted Supabase access, Production/TEST data access, migration, seed, backfill, deployment, merge, or readiness transition.
+This task stops at documentation and PR #83 Ready for review. It performs no SQL, pgTAP, RLS, Auth bridge, role assignment, trusted command, Firebase/config change, hosted Supabase access, Production/TEST data access, migration, seed, backfill, deployment, or merge.
