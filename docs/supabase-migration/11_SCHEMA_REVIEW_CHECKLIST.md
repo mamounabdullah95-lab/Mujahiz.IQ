@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Review Checklist
 
 Status: Reviewer gate for documentation only
-Baseline: `origin/main` at `0640d640e52b743929d4b4b7bedcd1e496ca133c`
+Baseline: `origin/main` at `1849d12dc52ca99f215fd90762948a67b95117c9`
 Review together: `09_POSTGRESQL_SCHEMA_DESIGN.md` and `10_SCHEMA_DECISION_REGISTER.md`
 Checklist items: 119
 
@@ -19,7 +19,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] The phase manifest lists all 79 proposed tables exactly once and reconciles Core Phase 1 36, Core Later 10, Future-Compatible 13, Deferred 13, and Remove/Merge 7; `supplier_ownership_claims` remains authoritative but is Core Later, not in the initial slice.
 - [ ] Future-Compatible and Deferred entries explicitly say "do not create yet," and every Remove/Merge entry identifies its replacement.
 - [ ] All 36 decision IDs have one canonical topic/status across design, register, checklist, and cross-references; resolution date, evidence/reference, and resolved state fields are present.
-- [ ] ID-001, ORG-001, ORG-002, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates; SUP-003 and SUP-004 are Approved, and DB-001 is resolved for the implemented local SQL slices only.
+- [ ] ID-001, ORG-001, ORG-002, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates; REL-001 is Resolved for Option D with no SQL slice, SUP-003/SUP-004/SUP-005 are Resolved, and DB-001 is resolved for the implemented local SQL slices only.
 ### Second SQL-slice implementation evidence
 
 - [x] Local implementation branch adds exactly public.user_profiles and internal.identity_provider_links in migration 20260804000200; no third identity/access table, RLS, policy, Auth bridge, browser/API grant, hosted operation, or data operation is included.
@@ -38,7 +38,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Merged PR #59 adds exactly `public.categories` in migration `20260805000100`; no taxonomy vocabulary, alias, Supplier assignment, RLS, policy, browser/API grant, hosted operation, or data operation is included.
 - [x] The focused synthetic pgTAP contract covers table shape, UUIDv4, depth/type/leaf and archive boundaries, bilingual collision indexes, lifecycle/replacement state combinations, nullable/restricting actors, migration-control compatibility, deferred-table absence, and absent API access.
 - [x] Clean local reset applied all four migrations; focused synthetic pgTAP passed 118/118, complete local pgTAP passed 340/340, warning-level lint found no schema errors, and catalog checks confirmed 26 columns, 27 named constraints, 13 exact indexes, five exact RESTRICT FKs, zero API/RLS/policy/trigger/routine/view access objects, one table, and zero taxonomy rows.
-- [x] `SUP-003`, `SUP-004`, and `SUP-005` are Resolved; `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002` remain Open. Merged PR #78 adds `public.supplier_payment_options`; `main` is 13 implemented / 23 deferred across 15 physical tables.
+- [x] `SUP-003`, `SUP-004`, `SUP-005`, and REL-001 Option D are Resolved; `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002` remain Open. Merged PR #80 adds `public.supplier_contacts`; `main` is 14 implemented / 22 deferred across 16 physical tables.
 
 ### Sixth SQL-slice planning decision (not part of the 119 design-review items)
 
@@ -48,7 +48,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Contacts remain a later dependency on locations through nullable `supplier_contacts.location_id`; branch phone evidence is neither copied into the location row nor discarded, and no contact table or FK from locations is selected.
 - [x] Mapping manifests, precedence/deduplication rules, collision/exception reports, reconciliation, and rollback artifacts are mandatory before future data transformation but do not block an empty local table.
 - [x] Base rows remain non-public and revoked from API roles; RLS, policies, projections, Auth, organizations, RFQ logic, search ranking, audit/event routines, hosted Supabase, Firebase access, data movement, and Production behavior remain excluded.
-- [x] At the sixth-slice selection point the count was 11 physical / 9 implemented / 27 deferred. PR #68 moved that historical state to 12 / 10 / 26; merged PR #73 and PR #75 later moved it to 14 / 12 / 24; merged PR #78 moved the verified current state to 15 / 13 / 23. The 12 gates remain Open.
+- [x] At the sixth-slice selection point the count was 11 physical / 9 implemented / 27 deferred. PR #68 moved that historical state to 12 / 10 / 26; merged PR #73 and PR #75 later moved it to 14 / 12 / 24; PR #78 moved it to 15 / 13 / 23; and merged PR #80 moved the verified current state to 16 / 14 / 22. The 12 gates remain Open.
 
 ### Supplier-category assignment contract review (not part of the 119 design-review items)
 
@@ -59,7 +59,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Provenance, lifecycle, reviewer/owner responsibility, declarative-versus-trusted enforcement, category deprecation behavior, transformation evidence, and future field-minimized projection constraints are explicit.
 - [x] Merged PR #73 implements the selected one empty, revoked, local-only assignment table plus structural enforcement and disposable synthetic pgTAP; no alias table, rows, mapping execution, RLS, Auth, application access, hosted work, Firebase, or Production behavior is included.
 - [x] On 6 August 2026, the founder-led Product/Data Owner explicitly approved Option B and the complete `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` as written.
-- [x] The same owner decision selected the exact seventh-slice SQL/test boundary; merged PR #73 implemented it without scope expansion. Merged PR #78 establishes the current state at 15 physical / 13 implemented / 23 deferred.
+- [x] The same owner decision selected the exact seventh-slice SQL/test boundary; merged PR #73 implemented it without scope expansion. Merged PR #80 establishes the current state at 16 physical / 14 implemented / 22 deferred.
 - [x] SUP-003 was already Resolved and remains closed. All 12 Open gates remain unresolved and unchanged; this contract approval neither closes nor weakens any of them.
 
 ### Supplier capabilities and payment-options contract review (not part of the 119 design-review items)
@@ -95,9 +95,9 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Product/Data Owner approval is recorded for the complete payment contract, code sets, exact credit/advance meanings, restricted note/provenance boundary, no-client-projection boundary, deferred freshness/reviewer-authority decisions, and proposed ninth-slice direction.
 - [x] Merged PR #78 implemented exactly the approved empty, revoked, local-only payment-option DDL plus focused synthetic pgTAP; it added no rows, mapping, RLS, Auth, client access, hosted, Firebase, Production/TEST, or deployment behavior.
 
-### Post-PR #78 owner-approved Supplier contacts review (not part of the 119 design-review items)
+### Historical post-PR #78 owner-approved Supplier contacts review (not part of the 119 design-review items)
 
-- [x] Verified refreshed `origin/main` `0640d640e52b743929d4b4b7bedcd1e496ca133c`, merged PR #78 and PR #77/#76/#75 lineage, 15 physical tables, 13 implemented / 23 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
+- [x] At the PR #79 contract-review point, refreshed `origin/main` was `0640d640e52b743929d4b4b7bedcd1e496ca133c` after PR #78, with 15 physical tables, 13 implemented / 23 deferred Core Phase 1 concepts, and 12 unchanged Open gates; the post-PR #80 section below supersedes those current-state values.
 - [x] The contact model is endpoint-oriented: `phone|email|website` channel, technical phone kind, and `company|named_person|unspecified` subject are separate; a named person is not a channel or authority record.
 - [x] Every contact belongs to one Supplier. Company-level scope is null location; a location-scoped contact uses declarative same-Supplier plus `physical_location` enforcement and never links to service coverage.
 - [x] Purpose and person role are separate and never inferred; one positive preference rank defines the preferred/default endpoint only within the exact Supplier/scope/purpose set and grants no exposure, verification, consent, or RFQ meaning.
@@ -111,7 +111,15 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] One empty fully revoked contacts table plus only the supporting location uniqueness object/composite FK is approved, dependency-safe before RLS/migration under the documented restrictions, and selected as the proposed tenth local SQL slice; omission of the composite physical-location enforcement is not safe.
 - [x] The approved contract compares and rejects or defers split people/channels, table-per-channel, JSON/header, profile/location columns, and person-only rows; it does not modify or depend on merged payment-options ninth-slice behavior.
 - [x] Product/Data/Security/Privacy Owner approval is recorded for the complete endpoint/subject/scope/integrity/purpose/verification/privacy/normalization/duplicate/lifecycle/projection/provenance contract and the proposed tenth-slice boundary; SUP-005 is Resolved.
-- [ ] A separate future implementation task has fixed and authorized exact contacts SQL/pgTAP. This documentation task includes no SQL, data, RLS, Auth, mapping execution, hosted, Firebase, Production/TEST, merge, or deployment work.
+- [x] Merged PR #80 implemented exactly the approved empty, revoked contacts SQL/pgTAP boundary plus the supporting location uniqueness object, with no rows, mapping execution, RLS, Auth, hosted, Firebase, Production/TEST, or deployment work.
+
+### Post-PR #80 REL-001 Option D review (not part of the 119 design-review items)
+
+- [x] Verified refreshed `origin/main` `1849d12dc52ca99f215fd90762948a67b95117c9`, merged PR #80, 16 physical tables, 14 implemented / 22 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
+- [x] REL-001 is Resolved for the owner-approved Option D planning decision: create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice.
+- [x] Future `supplier_ownership.decide_claim` is the first trusted producer path and one claim-decision notification materializer is the first concrete consumer; both reliability tables may be introduced later only as one coherent foundation after that workflow and its dependencies are approved.
+- [x] `audit_logs` and notification-delivery implementation remain outside REL-001; AUD-001 and MSG-003 remain Open with every unrelated Open gate preserved.
+- [x] This PR adds documentation only and does not implement SQL, pgTAP, worker/runtime, RLS, Auth, Firebase, hosted Supabase, Production/TEST, migration, or deployment behavior.
 
 ## B. Relational model and integrity
 
@@ -182,12 +190,12 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] Message sender is active at creation time and message body/history remains private under the same interval rule.
 - [ ] Receipt mutation is self-only and monotonic.
 - [ ] MSG-002 message edit/delete, attachment, export, moderation, exceptional quarantine, and retention policies remain explicit gates.
-- [ ] REL-001 `domain_events` is a transactional outbox plus durable minimal integration fact, not full event sourcing and not a replacement for domain history/audit.
+- [x] REL-001 document 31 defines `domain_events` as a transactional outbox plus durable minimal integration fact, not full event sourcing or a replacement for domain history/audit, while Option D intentionally selects no SQL slice.
 - [ ] Exactly one worker creates notifications; domain commands write only their aggregate, audit, and domain event.
 - [ ] Notifications include channel, are unique per event/recipient/channel, and recipients may mutate only their own read state.
 - [ ] Notification body/reference contains the minimum information and class-based retention is approved.
-- [ ] Idempotency scope, subject, request digest, replay result, expiry, and mismatch handling are defined per trusted command.
-- [ ] Retry/lease/dead-letter behavior cannot duplicate ownership, revisions, access grants, audit facts, or notifications, and poison events have bounded failure handling.
+- [x] REL-001 defines the reusable idempotency scope, subject, request digest, replay result, expiry, and mismatch contract; the later approved trusted command must register its exact canonical request/result class.
+- [x] REL-001 defines fenced retry/lease/dead-letter and producer/event/materialization duplicate-prevention invariants; runtime proof remains required before any command or worker implementation.
 
 ## G. Security, privacy, deletion, and audit
 
