@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-08-supplier-payment-options-contract-review`
+Baseline ID: `baseline-2026-08-08-supplier-payment-options-slice-selected`
 Updated: 2026-08-08
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `25536e09d84adac950023e5903c855cbf847b236`.
+- **Verified current fact:** Current GitHub `main`: `f9a09061305b99929b598ba34581629f1178b5e5`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -51,6 +51,7 @@ Evidence labels used below:
 - **Verified current fact:** PR #73 was merged as current `main` commit `cb51da7267f3fa61af9d35ade66890f096f2c51a`; its reviewed head `74d412d04ca480c01aa04b18576114d83a34e786` added exactly the empty local-only `public.supplier_category_assignments` foundation plus focused synthetic pgTAP as the seventh local SQL slice.
 - **Verified current fact:** PR #74 was merged as commit `38c22030205493ce561c13f748dc5a6bc9a265ee` and approved the Supplier-capability contract and capability-only eighth-slice selection while deferring Supplier payment options. It made no SQL, data, Firebase, hosted Supabase, or Production change.
 - **Verified current fact:** PR #75 was merged as current `main` commit `25536e09d84adac950023e5903c855cbf847b236`; its reviewed head `ce1f76ee2173616a3694b5ee373c64f7d23e13ee` added exactly the empty local-only `public.supplier_capabilities` foundation plus focused synthetic pgTAP as the eighth local SQL slice.
+- **Verified current fact:** PR #76 was merged as current `main` commit `f9a09061305b99929b598ba34581629f1178b5e5`; it synchronized and preserved the post-PR75 canonical 14 physical / 12 implemented / 24 deferred baseline and made no SQL, data, Firebase, hosted Supabase, Production/TEST, or deployment change.
 - **Verified current fact:** The fourth, fifth, sixth, seventh, and eighth SQL slices remain local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase operation, Firebase access, Production/TEST data operation, data migration, seed, backfill, deployment, or remote SQL occurred.
 - The third SQL slice remains local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase, deployment, Production data, migration, seed, or backfill occurred.
 - The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.
@@ -222,9 +223,9 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**The `public.supplier_payment_options` contract is decision-ready; no ninth SQL slice is selected or authorized**
+**The `public.supplier_payment_options` contract is approved and the empty foundation is the proposed ninth SQL slice; implementation is not authorized**
 
-Merged PR #75 implemented the approved empty, revoked, local-only `public.supplier_capabilities` eighth slice. [`29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md`](../supabase-migration/29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md) now recommends one typed, empty, revoked, local-only `public.supplier_payment_options` table as the smallest dependency-safe future ninth slice, but Product/Data Owner approval and a separate exact SQL/pgTAP selection task remain required. Preserve the current 14 physical / 12 implemented / 24 deferred state. This decision-ready documentation authorizes no SQL, pgTAP, mapping execution, data, RLS, Auth, Firebase, hosted Supabase, Production/TEST, merge, or deployment work, and all 12 unrelated Open gates remain unchanged.
+Merged PR #75 implemented the approved empty, revoked, local-only `public.supplier_capabilities` eighth slice, and merged PR #76 preserved the canonical post-PR75 state. The Product/Data Owner has now approved [`29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md`](../supabase-migration/29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md) and selected exactly one typed, empty, revoked, local-only `public.supplier_payment_options` table as the dependency-safe proposed ninth slice. Preserve the current 14 physical / 12 implemented / 24 deferred state until a separate task explicitly approves and implements exact SQL/pgTAP. This documentation authorizes no SQL, pgTAP, mapping execution, data, RLS, Auth, Firebase, hosted Supabase, Production/TEST, merge, or deployment work, and all 12 unrelated Open gates remain unchanged.
 
 ### Product priorities
 

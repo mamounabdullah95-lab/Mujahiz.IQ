@@ -77,6 +77,25 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] `public.supplier_payment_options` remains deferred; its detailed semantics, mappings, audience, DDL, and tests are not approved by this decision.
 - [ ] A separate implementation-selection task has fixed and authorized the exact capability DDL/pgTAP boundary. This documentation task includes no SQL, data, RLS, Auth, hosted, Firebase, Production/TEST, merge, or deployment work.
 
+### Post-PR #76 baseline and approved payment-options-only contract review (not part of the 119 design-review items)
+
+- [x] The two preceding historical capability-review lines are superseded for current-state verification: merged PR #75 implemented the selected empty capability DDL/pgTAP boundary.
+- [x] Verified refreshed `origin/main` `f9a09061305b99929b598ba34581629f1178b5e5`, merged PR #76 and PR #75 lineage, 14 physical tables, 12 implemented / 24 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
+- [x] Payment options are indicative Supplier-profile assertions only; RFQs, quotations, purchase orders, invoices, and contracts independently own transaction terms and always take precedence.
+- [x] Methods `cash|bank_transfer|cheque|letter_of_credit` and settlement currencies `IQD|USD` are separate controlled semantics; pricing language, `official_invoice`, advance timing, and transaction payment terms do not imply them.
+- [x] Credit availability, explicit `credit_not_offered`, absence-as-unknown, 1-365 calendar-day duration, positive/negative mutual exclusion, and exact `invoice_date|delivery_acceptance_date` start events are explicit; no ambiguous current Firebase start value maps automatically.
+- [x] Advance payment is a separate non-default timing option with a nullable reviewed percentage bounded from 1 through 100 when present; mandatory/refundable/milestone meaning and RFQ-derived evidence are excluded.
+- [x] Notes are bounded internal review evidence only; bank, account, cheque, LC, credential, contact, and full-record data are prohibited from the table and projections.
+- [x] Product/Data ownership, source/mapping/reviewer provenance, temporal lifecycle, validity, material-change supersession, and no-normal-hard-delete behavior are explicit; the table grants no reviewer authority.
+- [x] Type-specific semantic keys, active uniqueness, repeated-evidence merge handling, position semantics, and trusted cross-row credit/lifecycle enforcement boundaries are explicit.
+- [x] Current Firebase methods/currencies, pricing tags, `official_invoice`, incomplete/contradictory credit, notes, cheque/LC/advance free text, RFQ constants, and derived search intent have lossless mapped/pending/no-target treatment.
+- [x] The base relation remains revoked/non-public; no anonymous, public, authenticated-Buyer, or other client projection is approved in this slice; any future projection remains a separate SEC-001/Product decision.
+- [x] The pre-migration package requires bounded manifests, approved vocabularies/mappings, collision/exception reports, deterministic traces, dry-run reconciliation, rollback, lifecycle-date treatment, and explicit environment/data authority; it invents no freshness/expiry policy or projection.
+- [x] One typed, empty, revoked, local-only table is selected over partial, four-table, parent/child, JSONB/profile, capability, RFQ, quotation, or billing boundaries as the dependency-safe proposed ninth slice.
+- [x] Product/Data Owner approval is recorded for the complete payment contract, code sets, exact credit/advance meanings, restricted note/provenance boundary, no-client-projection boundary, deferred freshness/reviewer-authority decisions, and proposed ninth-slice direction.
+- [ ] A separate implementation-selection task has fixed and authorized exact payment-option DDL/pgTAP. This documentation task includes no SQL, data, RLS, Auth, hosted, Firebase, Production/TEST, merge, or deployment work.
+
+
 ## B. Relational model and integrity
 
 - [ ] Every proposed table concept has a clear logical purpose/catalog entry and exactly one phase disposition; Remove/Merge entries are not mistaken for tables to create.

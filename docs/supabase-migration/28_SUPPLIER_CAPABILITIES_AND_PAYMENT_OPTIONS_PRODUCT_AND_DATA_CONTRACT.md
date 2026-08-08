@@ -8,6 +8,8 @@ Primary task profile: Documentation
 ## 1. Decision boundary
 
 This document records the approved product/data contract for future `public.supplier_capabilities` and retains the payment-option analysis for later review. The Product/Data Owner approval recorded in section 15 selects the capability-only eighth SQL slice, defers `public.supplier_payment_options`, authorizes no SQL or data work, and resolves no unrelated Open decision gate.
+Successor note: this document preserves the historical PR #74 capability approval and payment deferral. `29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md` now owns the separately approved payment-options-only contract and proposed ninth-slice selection; it does not amend this document's capability boundary.
+
 
 The approved capability boundary and deferred payment-analysis boundary are:
 
