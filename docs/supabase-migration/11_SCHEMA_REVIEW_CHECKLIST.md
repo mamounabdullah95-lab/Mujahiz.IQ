@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Review Checklist
 
 Status: Reviewer gate for documentation only
-Baseline: `origin/main` at `22da8db4433c4fe7ca90ebe3b776a4da0a86eef2` after merged PR #85
+Baseline: `origin/main` at `7ca5145eaba2859e5d6b1bb30e4b595ac688dfbd` after merged PR #88
 Review together: `09_POSTGRESQL_SCHEMA_DESIGN.md` and `10_SCHEMA_DECISION_REGISTER.md`
 Checklist items: 119
 
@@ -19,7 +19,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] The phase manifest lists all 79 proposed tables exactly once and reconciles Core Phase 1 36, Core Later 10, Future-Compatible 13, Deferred 13, and Remove/Merge 7; `supplier_ownership_claims` remains authoritative but is Core Later, not in the initial slice.
 - [ ] Future-Compatible and Deferred entries explicitly say "do not create yet," and every Remove/Merge entry identifies its replacement.
 - [ ] All 36 decision IDs have one canonical topic/status across design, register, checklist, and cross-references; resolution date, evidence/reference, and resolved state fields are present.
-- [x] ID-001 is Resolved by approved document 33. ORG-001, ORG-002, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain the 11 Open approval gates; REL-001 is Resolved for Option D with no SQL slice, SUP-003/SUP-004/SUP-005 are Resolved, and DB-001 is resolved for the implemented local SQL slices only.
+- [x] ID-001 and AUD-001 are Resolved by approved documents 33 and 35. ORG-001, ORG-002, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, RES-001, and MIG-002 remain the 10 Open approval gates; REL-001 is Resolved for Option D with no SQL slice, SUP-003/SUP-004/SUP-005 are Resolved, and DB-001 is resolved for the implemented local SQL slices only.
 ### Second SQL-slice implementation evidence
 
 - [x] Local implementation branch adds exactly public.user_profiles and internal.identity_provider_links in migration 20260804000200; no third identity/access table, RLS, policy, Auth bridge, browser/API grant, hosted operation, or data operation is included.
@@ -132,8 +132,22 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] `active|revoked|expired|superseded`, non-overlapping validity, immutable assignment history, terminal provenance, and final-usable-Owner serialization are explicit.
 - [x] Ordinary role administration requires a usable Owner; the recommended first-Owner path is a one-time environment-bound trusted bootstrap of at least two usable Owners plus protected external governance evidence, never a real local seed.
 - [x] Missing/ambiguous profile, provider link, Firebase account, verification, assignment, access, or security evidence fails closed; legacy claims/text/email/domain/ownership/membership never imply a role.
-- [x] The inert `public.platform_role_assignments` table remains fully revoked with no rows, RLS, grants, routine, Auth bridge, access grant, mapping, hosted operation, or authority; exact SQL/pgTAP remains separate.
-- [x] Product/Security/Data Owner approval of document 34 is recorded on 8 August 2026. The contract is complete, `public.platform_role_assignments` is selected as the next SQL slice, exact SQL remains outside PR #86, and all 11 Open gates remain unchanged.
+- [x] Merged PR #87 implements only the inert `public.platform_role_assignments` foundation with no rows, RLS, grants, routine, Auth bridge, access grant, mapping, hosted operation, or authority.
+- [x] Product/Security/Data Owner approval of document 34 is recorded on 8 August 2026; merged PR #87 later implemented its selected empty structural slice, and all 11 Open gates remain unchanged.
+
+### Post-PR #88 AUD-001 contract review (not part of the 119 design-review items)
+
+- [x] Refreshed `origin/main` is exact commit `7ca5145eaba2859e5d6b1bb30e4b595ac688dfbd` after merged PR #88; repository migrations prove 12 migrations, 18 physical tables, 16 implemented / 20 deferred Core Phase 1 concepts, and 11 Open gates.
+- [x] Audit evidence is separated from domain events/idempotency, domain/application history, operational logs/traces/metrics, and analytics; audit is never a notification or event-delivery mechanism.
+- [x] Durable scope is limited to privileged role/bootstrap, Claim/ownership, migration/reconciliation, security correction, and audit-governance actions; ordinary reads and low-value activity are excluded by default.
+- [x] Human actors use provider-neutral user-profile UUIDs; trusted service, migration operator, automated worker, and narrow system/bootstrap provenance are explicit without using Firebase UID/email/provider subject as a domain FK.
+- [x] The proposed record contains stable action/actor/target/time/outcome/reason, correlation/causation, environment/source, minimized versioned change evidence, provenance, retention, and correction linkage while prohibiting copied Claim/contact/Auth/document/request payloads.
+- [x] Append-only immutability, correction by linked new record, no ordinary update/delete/cascade, legal-hold-aware privileged maintenance, and later enforcement/verification proof are explicit.
+- [x] Retention is class-based without invented legal periods; exact durations, holds, privacy/pseudonymization, archive/purge, backup, and maintenance decisions remain required before real rows/runtime.
+- [x] Successful Claim decisions and role/bootstrap mutations fail closed unless primary audit evidence commits atomically; accountable denied/conflicted attempts receive minimized durable outcomes without domain events or mutation; completed replay reuses the original success audit.
+- [x] `internal.audit_logs` remains logically independent of `internal.idempotency_keys` and `internal.domain_events`; correlation does not create a delivery or FK dependency and does not reopen REL-001 Option D.
+- [x] Owner approval selects one empty, fully revoked, non-exposed local-only `internal.audit_logs` structure as the next slice; exact SQL/pgTAP remains a separate task, and current `main` remains 18 / 16 / 20.
+- [x] Product/Security/Data Owner approval of document 35 is recorded on 8 August 2026. AUD-001 is Resolved, exactly one empty `internal.audit_logs` table is selected as the next SQL slice, REL-001 Option D is unchanged, and all 10 unrelated Open gates remain Open.
 
 ## B. Relational model and integrity
 

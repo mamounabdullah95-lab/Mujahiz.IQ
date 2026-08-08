@@ -13,7 +13,7 @@ For REL-001, this document is the specific successor contract to the earlier hig
 
 **Selected option: D — no-go until a first trusted command and its first real event consumer are approved.**
 
-The approved first future producer path is a Supabase-authoritative `supplier_ownership.decide_claim` trusted command. Its first concrete consumer is one future claim-decision notification materializer for the affected claimant. That pairing is concrete and follows the existing Firebase Claim decision, event, audit, and notification behavior, but implementation is not currently authorized: Claim Supplier is undeployed, its relational command/aggregate is unimplemented, and `ID-001`, `AUD-001`, and `MSG-003` remain Open.
+The approved first future producer path is a Supabase-authoritative `supplier_ownership.decide_claim` trusted command. Its first concrete consumer is one future claim-decision notification materializer for the affected claimant. That pairing is concrete and follows the existing Firebase Claim decision, event, audit, and notification behavior, but implementation is not currently authorized: Claim Supplier is undeployed, its relational command/aggregate is unimplemented, and implementation of the approved ID-001 and AUD-001 contracts, plus MSG-003, remains required.
 
 The two concepts are not universally inseparable. A trusted command that has no asynchronous consequence may use idempotency without a domain event. A domain event must never be created without a named producer, at least one approved consumer or durable integration use, and a replay/retention policy. For the selected first Claim decision path, both concepts belong to one later coherent implementation because that command needs request replay protection and emits a notification-driving fact.
 
@@ -153,7 +153,7 @@ The minimum foundation uses a code- and documentation-owned registry, not a thir
 
 Version is separate from event type. Additive optional fields may keep a version only when all registered consumers demonstrably tolerate them; removing, renaming, changing meaning/type/nullability, or changing normalization increments the version. Historical event type/version/payload rows are never rewritten. Consumers explicitly accept supported versions and dead-letter unsupported versions with a safe error code.
 
-The first proposed registry entries are `supplier_ownership.claim_approved` version 1 and `supplier_ownership.claim_rejected` version 1, produced by `supplier_ownership.decide_claim`. Their initial named consumer is `supplier_claim_decision_notification_materializer`. Owner-approved document 32 also defines a bounded `supplier_ownership.claim_superseded` event for competing claimants and exact minimal payload fields for design purposes. Runtime remains blocked by `AUD-001`, `MSG-003`, and the other named delivery gates; no registry or notification behavior is implemented.
+The first proposed registry entries are `supplier_ownership.claim_approved` version 1 and `supplier_ownership.claim_rejected` version 1, produced by `supplier_ownership.decide_claim`. Their initial named consumer is `supplier_claim_decision_notification_materializer`. Owner-approved document 32 also defines a bounded `supplier_ownership.claim_superseded` event for competing claimants and exact minimal payload fields for design purposes. Runtime remains blocked by implementation of the approved AUD-001 contract, `MSG-003`, and the other named delivery gates; no registry or notification behavior is implemented.
 
 ## 10. Payload envelope, provenance, and timestamps
 
@@ -208,7 +208,9 @@ Until the implementation approvals corresponding to all nine requirements are sa
 
 A domain event states that an approved domain transition committed. A future audit record states who attempted or performed an action, under which authority, with what outcome/reason and safe investigation evidence. Rejected authorization and failed attempts may need audit but produce no success domain event. Events avoid audit summaries; audit avoids worker lifecycle. They may share correlation ID and, for committed transitions, an optional event reference.
 
-AUD-001 remains Open. This document chooses no audit retention duration, partition, legal-hold behavior, pseudonymization rule, before/after shape, actor access, or append-only implementation. `audit_logs` is not part of a later REL-001 SQL slice unless separately approved.
+At document 31's approval point, AUD-001 remained Open and this REL-001 contract chose no audit retention duration, partition, legal-hold behavior, pseudonymization rule, before/after shape, actor access, or append-only implementation. `audit_logs` was never part of the REL-001 SQL boundary.
+
+Successor note: the Product/Security/Data Owner approved document 35 on 8 August 2026. AUD-001 is Resolved, and exactly one empty `internal.audit_logs` table is selected independently as the next SQL slice. REL-001 Option D remains unchanged with no reliability SQL selected.
 
 ### Notifications
 
@@ -255,12 +257,12 @@ On 8 August 2026, the owner approved REL-001 Option D:
 2. use future `supplier_ownership.decide_claim` as the first trusted producer path;
 3. use one claim-decision notification materializer as the first concrete consumer;
 4. introduce the two reliability tables later as one coherent foundation only when that producer/consumer path and its delivery dependencies are approved; and
-5. keep `audit_logs` and notification-delivery implementation outside this contract while AUD-001 and MSG-003 remain Open.
+5. keep `audit_logs` outside this REL-001 contract under separately resolved AUD-001, and keep notification-delivery implementation outside while MSG-003 remains Open.
 
 The following delivery approvals remain before any REL-001 SQL selection or runtime implementation:
 
 1. ID-001 approval for the authoritative principal/actor identity used by the command.
-2. AUD-001 approval for the separately required decision audit contract; this document does not design it.
+2. implementation of the separately approved AUD-001 audit contract; this document does not implement it.
 3. MSG-003 approval for the notification materializer's rendering inputs, protected-notice behavior, and notification retention; this document does not design notification delivery.
 4. Technical/Security/Operations approval of the 60-second lease, 10-attempt cap, error classes, alert/operator ownership, and dead-letter requeue runbook.
 5. Separate runtime approval of the exact aggregate implementation, registry/payload limits, event retention classes, idempotency compaction/tombstone classes, and exact durations beyond the approved 30-day Claim minimum.
