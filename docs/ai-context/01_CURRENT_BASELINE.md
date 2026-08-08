@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-08-supplier-contacts-contract-review`
+Baseline ID: `baseline-2026-08-08-supplier-contacts-slice-selected`
 Updated: 2026-08-08
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `52d81cf19102b07c1aa378ac7b3548e3f11822a6`.
+- **Verified current fact:** Current GitHub `main`: `0640d640e52b743929d4b4b7bedcd1e496ca133c`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -53,7 +53,8 @@ Evidence labels used below:
 - **Verified current fact:** PR #75 was merged as current `main` commit `25536e09d84adac950023e5903c855cbf847b236`; its reviewed head `ce1f76ee2173616a3694b5ee373c64f7d23e13ee` added exactly the empty local-only `public.supplier_capabilities` foundation plus focused synthetic pgTAP as the eighth local SQL slice.
 - **Verified current fact:** PR #76 was merged as current `main` commit `f9a09061305b99929b598ba34581629f1178b5e5`; it synchronized and preserved the post-PR75 canonical 14 physical / 12 implemented / 24 deferred baseline and made no SQL, data, Firebase, hosted Supabase, Production/TEST, or deployment change.
 - **Verified current fact:** PR #77 was merged as current `main` commit `52d81cf19102b07c1aa378ac7b3548e3f11822a6`; it approved the Supplier payment-options contract and selected the empty local-only foundation as the proposed ninth SQL slice, but made no SQL, data, Firebase, hosted Supabase, Production/TEST, or deployment change.
-- **Verified current fact:** The fourth, fifth, sixth, seventh, and eighth SQL slices remain local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase operation, Firebase access, Production/TEST data operation, data migration, seed, backfill, deployment, or remote SQL occurred.
+- **Verified current fact:** PR #78 was merged as current `main` commit `0640d640e52b743929d4b4b7bedcd1e496ca133c`; its reviewed head `775475451d5f19b130ba60f56299c49c49aeb33c` added exactly the empty local-only `public.supplier_payment_options` foundation plus focused synthetic pgTAP as the ninth local SQL slice.
+- **Verified current fact:** The fourth through ninth SQL slices remain local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase operation, Firebase access, Production/TEST data operation, data migration, seed, backfill, deployment, or remote SQL occurred.
 - The third SQL slice remains local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase, deployment, Production data, migration, seed, or backfill occurred.
 - The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.
 - Local branches and future PRs must start from this current `main` unless a newer commit appears.
@@ -145,7 +146,7 @@ PR #54 validated the third local SQL slice on its exact merged head. PR #51 vali
 - **Verified current fact, PR #51 corrected-head evidence (`a56ed15097a39cb36feebcc2e9e604e7b34aeb57`):** Focused synthetic pgTAP passed **78/78**, complete local pgTAP passed **138/138**, repository tests passed **181/181**, and the Production application build passed.
 - **Verified current fact, PR #54 merged-head evidence:** Focused synthetic pgTAP passed **84/84**, complete local pgTAP passed **222/222**, repository tests passed **181/181**, and the Production application build passed.
 - **Verified current fact, PR #47 exact-head evidence:** GitHub PR gate run `30856547810` passed. This check result is separate from the local PostgreSQL, pgTAP, repository-test, and build evidence above.
-- **Verified current fact:** Current `main` tracks eight local SQL migrations and eight focused pgTAP files. Their declared plans are **60**, **78**, **84**, **118**, **85**, **56**, **54**, and **62** assertions respectively (**597 planned assertions**); this static planned total is not a claim that a new combined run was executed for this baseline update.
+- **Verified current fact:** Current `main` tracks nine local SQL migrations and nine focused pgTAP files. Their declared plans are **60**, **78**, **84**, **118**, **85**, **56**, **54**, **62**, and **67** assertions respectively (**664 planned assertions**); this static planned total is not a claim that a new combined run was executed for this baseline update.
 - **Verified current fact:** GitHub PR #73 verification run `31118132318` passed on the reviewed implementation head. This does not constitute Firebase, hosted Supabase, Production-data, or deployment evidence.
 - **Verified current fact:** PR #70 added `npm run test:supabase:sql`, which applies every tracked migration in filename order and runs every tracked pgTAP file in an isolated disposable PostgreSQL `17.6` container with no published host ports. The runner does not link or contact hosted Supabase, Firebase, or Production.
 
@@ -166,17 +167,17 @@ Do not combine results from different commits or PRs into a new automated-test t
 - **Verified current fact:** `supabase/config.toml` exists for local project ID `mujahiz-iq-local`; local start, status, Studio access, and normal stop were validated, and the local stack is currently stopped.
 - **Verified current fact:** No hosted Supabase implementation or linkage exists. No hosted project was authenticated, accessed, queried, changed, or independently verified through this repository work, and the merged SQL migrations have not been applied remotely.
 - **Verified current fact:** GitHub `main` contains the first local migration-control SQL slice: migration `supabase/migrations/20260804000136_migration_control_foundation.sql` creates six governance tables in the non-exposed `internal` schema, and `supabase/tests/migration_control_foundation.sql` supplies repository-tracked synthetic pgTAP coverage.
-- **Verified current fact:** GitHub `main` contains eight local identity/business/application tables: `public.user_profiles`, `public.supplier_profiles`, `public.categories`, `public.administrative_areas`, `public.supplier_locations`, `public.supplier_category_assignments`, `public.supplier_capabilities`, and non-exposed `internal.identity_provider_links`. No RLS, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
+- **Verified current fact:** GitHub `main` contains nine local identity/business/application tables: `public.user_profiles`, `public.supplier_profiles`, `public.categories`, `public.administrative_areas`, `public.supplier_locations`, `public.supplier_category_assignments`, `public.supplier_capabilities`, `public.supplier_payment_options`, and non-exposed `internal.identity_provider_links`. No RLS, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
 - **Verified current fact:** No browser integration, API policy, application grant, hosted Supabase project link, or remote migration application exists.
-- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, PR #62, PR #64, PR #65, PR #66, PR #67, PR #68, PR #69, PR #70, PR #71, PR #72, PR #73, PR #74, PR #75, PR #76, or PR #77.
+- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, PR #62, PR #64, PR #65, PR #66, PR #67, PR #68, PR #69, PR #70, PR #71, PR #72, PR #73, PR #74, PR #75, PR #76, PR #77, or PR #78.
 
 The merged local infrastructure and migration-governance SQL, a future business/application schema, any hosted Supabase project, and Firebase Production are separate states. Supabase is not currently a Production authority.
 
 ### PostgreSQL schema-design state
 
-- **Verified current fact:** The authoritative logical PostgreSQL schema design and its first local migration-control/traceability slice are merged; the second local identity, third local Supplier-profile, fourth local category, fifth local administrative-area, sixth local Supplier-location, seventh local Supplier-category assignment, and eighth local Supplier-capability slices are implemented and merged, while the remaining business/application schema remains unimplemented.
+- **Verified current fact:** The authoritative logical PostgreSQL schema design and its first local migration-control/traceability slice are merged; the second local identity, third local Supplier-profile, fourth local category, fifth local administrative-area, sixth local Supplier-location, seventh local Supplier-category assignment, eighth local Supplier-capability, and ninth local Supplier-payment-option slices are implemented and merged, while the remaining business/application schema remains unimplemented.
 - **Verified current fact:** The design classifies 79 logical concepts: 36 Core Phase 1, 10 Core Later, 13 Future-Compatible, 13 Deferred, and 7 Remove/Merge.
-- **Verified current fact:** Of the 36 Core Phase 1 concepts, 12 are implemented locally and 24 remain deferred. The first 4 logical concepts use 6 physical tables because `migration_record_mappings` is decomposed across 3 relations; the local SQL foundation has 14 physical tables.
+- **Verified current fact:** Of the 36 Core Phase 1 concepts, 13 are implemented locally and 23 remain deferred. The first 4 logical concepts use 6 physical tables because `migration_record_mappings` is decomposed across 3 relations; the local SQL foundation has 15 physical tables.
 - **Verified current fact:** The approved second slice is exactly `public.user_profiles` and `internal.identity_provider_links`. `platform_role_assignments`, all access/trial ledger tables, and the other remaining Core Phase 1 concepts are deferred.
 - **Verified current fact:** Core Phase 1 remains a maximum candidate set, not approval to create all 36 concepts in one PR. PR #51 implemented the approved two-table identity boundary, PR #54 implemented only the separately bounded `supplier_profiles` local root, PR #59 implemented only `categories`, PR #62 implemented only `administrative_areas`, and PR #68 implemented only `supplier_locations`.
 - **Verified current fact:** The design maps all 35 verified Firestore collections, registers 36 synchronized decisions, and provides a 119-item schema review checklist. DB-001 is resolved for the local first slice to database-generated UUIDv4 through `pg_catalog.gen_random_uuid()`; hosted compatibility remains a later validation gate.
@@ -224,11 +225,11 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**The `public.supplier_payment_options` contract is approved and the empty foundation is the proposed ninth SQL slice; implementation is not authorized**
+**The `public.supplier_contacts` contract is approved and the empty foundation is the proposed tenth local SQL slice; implementation is not authorized**
 
-Merged PR #75 implemented the approved empty, revoked, local-only `public.supplier_capabilities` eighth slice, merged PR #76 preserved that canonical state, and merged PR #77 approved [`29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md`](../supabase-migration/29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md) and selected exactly one typed, empty, revoked, local-only `public.supplier_payment_options` table as the dependency-safe proposed ninth slice. Preserve the current 14 physical / 12 implemented / 24 deferred state until a separate task explicitly approves and implements exact SQL/pgTAP. This documentation authorizes no SQL, pgTAP, mapping execution, data, RLS, Auth, Firebase, hosted Supabase, Production/TEST, merge, or deployment work, and all 12 unrelated Open gates remain unchanged.
+Merged PR #78 implemented exactly the approved empty, revoked, local-only `public.supplier_payment_options` ninth slice plus focused synthetic pgTAP. Current `main` therefore contains 15 physical tables representing 13 implemented Core Phase 1 concepts; 23 remain deferred.
 
-[`30_SUPPLIER_CONTACTS_PRODUCT_AND_DATA_CONTRACT.md`](../supabase-migration/30_SUPPLIER_CONTACTS_PRODUCT_AND_DATA_CONTRACT.md) is a decision-ready recommendation for a conditional later contacts foundation. It does not replace, depend on, or modify the selected ninth slice; SUP-005 remains unresolved, no contacts slice is selected, and personal-data activation/projection remains blocked on explicit Product/Data/Security/Privacy approval.
+The Product/Data/Security/Privacy Owner approved [`30_SUPPLIER_CONTACTS_PRODUCT_AND_DATA_CONTRACT.md`](../supabase-migration/30_SUPPLIER_CONTACTS_PRODUCT_AND_DATA_CONTRACT.md), resolved SUP-005, and selected exactly one empty, fully revoked `public.supplier_contacts` table plus only the minimal supporting `supplier_locations` uniqueness object as the proposed tenth local SQL slice and next Supplier-domain slice. Preserve the current 15 / 13 / 23 state until a separate task explicitly approves and implements exact SQL/pgTAP. This documentation authorizes no contact row, activation routine, grant, mapping, RLS, projection, Auth, Firebase, hosted Supabase, Production/TEST, merge, or deployment work, and all 12 unrelated Open gates remain unchanged.
 
 ### Product priorities
 

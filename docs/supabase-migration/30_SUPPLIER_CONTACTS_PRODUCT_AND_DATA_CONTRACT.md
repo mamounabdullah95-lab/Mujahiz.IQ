@@ -1,37 +1,37 @@
 # Supplier contacts product/data/security contract
 
-Status: **Decision-ready recommendation; Product/Data/Security/Privacy Owner approval required; no SQL slice selected or authorized**
+Status: **Product/Data/Security/Privacy Owner approved; SUP-005 resolved; proposed tenth local SQL slice selected; no SQL implementation authorized**
 Contract date: 8 August 2026
-Verified refresh: `origin/main` `52d81cf19102b07c1aa378ac7b3548e3f11822a6` after merged PR #77
+Verified refresh: `origin/main` `0640d640e52b743929d4b4b7bedcd1e496ca133c` after merged PR #78
 Primary task profile: Documentation
 
-## 1. Decision boundary and recommendation
+## 1. Decision boundary and approval
 
-This document defines the decision-ready contract for future `public.supplier_contacts`. It does not approve the contract, resolve SUP-005, select an ordinal SQL slice, or authorize SQL/pgTAP, RLS, Auth, mapping, data movement, Firebase access, hosted work, or Production behavior.
+This document records the approved contract for future `public.supplier_contacts`, resolves SUP-005, and selects the empty foundation as the proposed tenth local SQL slice and next Supplier-domain slice. It authorizes no SQL/pgTAP implementation, RLS, Auth, mapping, data movement, Firebase access, hosted work, or Production behavior.
 
-The recommended contract is:
+The approved contract is:
 
 - one row represents one normalized contact endpoint associated with exactly one Supplier profile;
 - channel, phone kind, subject, scope, purpose, verification, disclosure, and legal-basis concepts remain separate rather than being inferred from one another;
 - the first channel set is `phone`, `email`, and `website`; a phone is further classified as `fixed_line`, `mobile`, or `unspecified` only when evidence supports that technical classification;
-- a company phone is a phone endpoint whose reviewed subject is `generic_company`; `mobile` describes the number type and does not prove company ownership, personal ownership, consent, WhatsApp availability, or public exposure;
+- a company phone is a phone endpoint whose reviewed subject is `company`; `mobile` describes the number type and does not prove company ownership, personal ownership, consent, WhatsApp availability, or public exposure;
 - a named person is a contact subject, not a channel type. A named-person row must name one person and one endpoint; person-only legacy values create no canonical contact row;
 - every row has a non-null Supplier owner. An optional location link may name only a physical location owned by that same Supplier;
 - base rows and exact normalized values remain restricted. No anonymous, authenticated, Supplier-owner, Buyer, search, or RFQ projection is approved by this contract;
 - named-person and uncertain-subject phone/email data are treated as personal or potentially personal. Absence of consent or other approved basis never becomes consent; and
 - ambiguous, incomplete, multi-valued, contradictory, or unproven Firebase evidence creates no active row and remains in restricted review/quarantine evidence.
 
-Subject to owner approval of section 17, the smallest dependency-safe future SQL boundary is one empty, revoked, local-only `public.supplier_contacts` table plus the narrow supporting uniqueness object on `public.supplier_locations` needed for a declarative same-Supplier physical-location foreign key. That boundary is structurally safe before RLS and migration only while it contains no rows, grants no API/browser access, and authorizes no activation.
+The approved smallest dependency-safe future SQL boundary is one empty, revoked, local-only `public.supplier_contacts` table plus the narrow supporting uniqueness object on `public.supplier_locations` needed for a declarative same-Supplier physical-location foreign key. That boundary is structurally safe before RLS and migration only while it contains no rows, grants no API/browser access, and authorizes no activation.
 
 ## 2. Verified starting state and domain separation
 
-- PR #77 is merged into `origin/main` at `52d81cf19102b07c1aa378ac7b3548e3f11822a6`. It approved the Supplier payment-options contract and proposed ninth-slice direction but implemented no SQL.
-- The tracked local migrations contain 14 physical SQL tables representing 12 implemented Core Phase 1 concepts. Of the 36 Core Phase 1 concepts, 24 remain deferred.
-- `public.supplier_profiles`, `public.supplier_locations`, and `public.user_profiles` exist locally. `public.supplier_contacts` and `public.supplier_payment_options` do not.
-- The active Supplier payment-options implementation work is not merged and is not a dependency of this contract. This contract does not modify or select the ninth slice.
+- PR #78 is merged into `origin/main` at `0640d640e52b743929d4b4b7bedcd1e496ca133c`. It implemented exactly the approved empty local-only `public.supplier_payment_options` ninth slice plus focused synthetic pgTAP.
+- The tracked local migrations contain 15 physical SQL tables representing 13 implemented Core Phase 1 concepts. Of the 36 Core Phase 1 concepts, 23 remain deferred.
+- `public.supplier_profiles`, `public.supplier_locations`, `public.user_profiles`, and `public.supplier_payment_options` exist locally. `public.supplier_contacts` does not.
+- The merged payment-options ninth slice is not a dependency of contacts. This contract selects contacts as the proposed tenth local SQL slice without modifying payment options.
 - Firebase remains authoritative in Production. Supabase remains local-only. This task accesses neither backend and moves no data.
 - The 12 Open approval gates remain `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
-- SUP-005 remains a Recommended, unresolved contact/audience decision. This document makes it decision-ready but does not record owner approval.
+- SUP-005 is Resolved by the owner approval recorded in sections 1 and 17. This resolution changes none of the 12 unrelated Open gates.
 
 Current repository values are source evidence, not canonical contact facts:
 
@@ -57,7 +57,7 @@ The initial channel codes are:
 |---|---|---|
 | `phone` | One canonical international phone number; optional separately parsed extension | Requires one `phone_kind`; no email or URL fields |
 | `email` | One syntactically valid mailbox with normalized domain | No phone kind or URL fields |
-| `website` | One absolute `http` or `https` URL under the section 10 rules | Subject must be `generic_company`; no person fields or phone kind |
+| `website` | One absolute `http` or `https` URL under the section 10 rules | Subject must be `company`; no person fields or phone kind |
 
 Phone kind is exactly `fixed_line`, `mobile`, or `unspecified`. It is a technical number classification. It does not prove who owns, controls, answers, or may disclose the number. A source value that merely resembles an Iraqi mobile number may become a review candidate, but no active `mobile` classification is created until the approved phone library/numbering-plan version validates it.
 
@@ -65,7 +65,7 @@ Phone kind is exactly `fixed_line`, `mobile`, or `unspecified`. It is a technica
 
 `subject_kind` is exactly:
 
-- `generic_company` — reviewed evidence identifies a Supplier-wide or location-wide organizational endpoint such as a switchboard, generic mailbox, or company website;
+- `company` — reviewed evidence identifies a Supplier-wide or location-wide organizational endpoint such as a switchboard, generic mailbox, or company website;
 - `named_person` — the endpoint is explicitly associated with one named individual in the source/evidence; or
 - `unspecified` — the Supplier association is reviewed but the evidence does not safely distinguish an organizational endpoint from a personal endpoint.
 
@@ -117,7 +117,7 @@ The exact SQL names, types, lengths, constraint/index expressions, and assertion
 | Identity/owner | Database UUID; non-null restrictive Supplier FK |
 | Scope | Nullable physical-location ID plus constant linked class under the composite same-Supplier FK |
 | Endpoint | Channel type, phone kind only for phone, display value, normalized value, optional phone extension |
-| Subject | `generic_company`, `named_person`, or `unspecified`; person name/role only for named-person rows |
+| Subject | `company`, `named_person`, or `unspecified`; person name/role only for named-person rows |
 | Routing | Nullable controlled purpose and positive preference rank within the exact scope/purpose set |
 | Verification | State, method/version, verified/failed time, nullable provider-neutral actor, and restricted evidence reference under section 7 |
 | Privacy/disclosure | Personal-data classification, legal-basis status/reference where required, and maximum disclosure classification defaulting to `restricted` |
@@ -131,6 +131,7 @@ Material changes to endpoint, subject/person, Supplier, location, purpose, norma
 ## 7. Verification status and provenance
 
 Recommended verification states are `unverified`, `pending`, `verified`, `failed`, and `stale`.
+Absence of approved verification evidence requires `verification_status = unverified`; it never defaults to verified.
 
 - `verified` means only that an approved verification method confirmed the exact fact named by that method and version at the recorded time.
 - Endpoint reachability, Supplier association, company control, person identity, employment/role, legal basis, consent, and public disclosure are different facts. One cannot stand in for another.
@@ -149,7 +150,7 @@ The default disclosure classification is `restricted`. A named person, named mai
 - Consent, if selected as the applicable basis, must record the exact person/data/audience/purpose scope, capture method, authoritative time, evidence reference, and withdrawal state. Consent for internal review does not imply authenticated or public disclosure.
 - Other legal bases may be represented only after the Privacy/Legal Owner approves the jurisdiction, controlled basis codes, evidence standard, notices, purpose limitation, retention, rights handling, and audience consequences.
 - A Supplier's proposal, a Firebase field, a public webpage, a company domain, or a reviewer decision does not by itself prove the legal basis to store or disclose a named person's contact data.
-- Named-person or potentially personal rows require a documented approved basis before activation. Until then they remain absent from the canonical active set and are handled only in restricted quarantine/review evidence under an approved retention rule.
+- Named-person or potentially personal rows require an approved internal handling basis before non-synthetic activation and explicit legal-basis/consent evidence before any future public or broad client projection. Until then they remain absent from those uses and are handled only in restricted review/quarantine evidence under an approved retention rule.
 - Generic business endpoints remain restricted by default even when reviewed as non-personal. Their future disclosure still requires explicit audience approval.
 - Do not store identity documents, consent documents, message bodies, call recordings, passwords, tokens, raw Firebase records, full workbooks, unrelated notes, or secret evidence in this table.
 
@@ -190,7 +191,7 @@ Normalization is versioned and channel-specific. Current application normalizers
 - Do not silently upgrade `http` to `https`, strip meaningful paths/queries, collapse subdomains, or treat the registered domain as the exact endpoint.
 - Cross-domain redirects and ownership require separate verification; the current scheme/`www` stripping normalizer is duplicate-discovery evidence only.
 
-Active exact uniqueness is one row per `(Supplier, company-or-location scope, channel type, canonical endpoint, extension)` regardless of purpose, subject, source, reviewer, or rank. A repeated endpoint in the same scope is one contact whose conflicting person/purpose/preference evidence must be reconciled; it is not several active rows. The same endpoint at company and location scopes, or at several locations, is allowed only with explicit evidence and appears in the collision report.
+Active exact uniqueness is one row per `(Supplier, company-or-location scope, subject, channel type, canonical endpoint, extension)` regardless of purpose, source, reviewer, or rank. A repeated endpoint in the same subject/scope is one contact whose conflicting person/purpose/preference evidence must be reconciled; it is not several active rows. A different-subject use, use at company and location scopes, or use at several locations is allowed only with explicit evidence and appears in the collision report; none is inferred from Firebase presence or array order.
 
 Many source values that resolve to one semantic endpoint produce one target and preserve contributing evidence through the existing migration merge/reconciliation contract. Cross-Supplier endpoint equality is a protected duplicate-review signal only; it never reassigns, merges, verifies, publishes, or proves ownership.
 
@@ -202,7 +203,7 @@ Many source values that resolve to one semantic endpoint produce one target and 
 | Current `normalizedPhones[]` value | Discovery/collision evidence only; never canonical identity by itself |
 | Several numbers in one string | No active row unless an approved deterministic parser produces complete, reviewable dispositions |
 | Top-level email with no subject evidence | Candidate `email` with `subject_kind = unspecified`; restricted and not active until association/privacy requirements pass |
-| Generic mailbox/domain inferred from label or address text | No automatic `generic_company` or purpose classification |
+| Generic mailbox/domain inferred from label or address text | No automatic `company` or purpose classification |
 | Website with missing/unsafe/ambiguous scheme or mixed social value | No active website row; preserve as pending/unmapped evidence |
 | `contactPerson` and role plus several phones and one email | Do not attach the person to any endpoint without exact association evidence; preserve all coordinates for review |
 | `contactPerson`/role only | No contact row; restricted person evidence pending a later people model or exact endpoint association |
@@ -259,7 +260,7 @@ The `public` schema name is not a visibility decision.
 
 | Option | Boundary | Benefit | Cost/risk | Disposition |
 |---|---|---|---|---|
-| A | One endpoint-oriented `supplier_contacts` table with channel/phone-kind/subject shapes and optional same-Supplier physical location | One Core Phase 1 concept; normalized endpoint uniqueness; supports company and named-person channels without a separate people identity; smallest RLS/lifecycle surface | Repeats a person's name if several endpoints are later needed; deliberately cannot model person-only records or shared/multi-channel people | **Recommended conditional future slice** |
+| A | One endpoint-oriented `supplier_contacts` table with channel/phone-kind/subject shapes and optional same-Supplier physical location | One Core Phase 1 concept; normalized endpoint uniqueness; supports company and named-person channels without a separate people identity; smallest RLS/lifecycle surface | Repeats a person's name if several endpoints are later needed; deliberately cannot model person-only records or shared/multi-channel people | **Approved proposed tenth slice** |
 | B | `supplier_contact_people` plus `supplier_contact_channels` | Clean reusable person identity and several channels per person | Two sensitive tables, person lifecycle/linkage/duplicate rules, broader RLS/retention surface, and no proven current need for a people directory | Defer until product evidence requires it |
 | C | Separate phone, email, website, and person tables | Homogeneous channel columns | Four or more tables, duplicated governance, inconsistent ranking/scope, and wider security surface | Reject |
 | D | One contact header plus JSON/arrays of endpoints | Close to current Firebase and flexible | Weak type/FK/duplicate enforcement, coarse privacy/retention, and difficult field-minimized projection | Reject |
@@ -268,11 +269,11 @@ The `public` schema name is not a visibility decision.
 
 Option A is not an organization address book and does not preclude the later two-table people model. A later approved migration can introduce people and relink named-person endpoints without changing generic-company endpoint meaning.
 
-## 16. Smallest safe future SQL slice and dependency conclusion
+## 16. Selected smallest safe future SQL slice and dependency conclusion
 
-An empty local-only Supplier contacts foundation **can be dependency-safe before RLS and migration, conditionally**. It is not selected or authorized by this documentation task.
+The empty local-only Supplier contacts foundation **is dependency-safe before RLS and migration under the approved restrictions** and is selected as the proposed tenth local SQL slice. This documentation task authorizes no SQL or pgTAP implementation.
 
-A later owner-approved exact SQL/pgTAP task may include only:
+A later separately authorized exact SQL/pgTAP task may include only:
 
 - one empty `public.supplier_contacts` table implementing the field groups and invariants in sections 3-10;
 - one narrow non-partial supporting unique key/index on `supplier_locations (supplier_profile_id, id, record_class)` for the composite child FK;
@@ -285,35 +286,34 @@ It must include no contact row, raw evidence, parser/mapping execution, trigger/
 
 The supporting location uniqueness object is additive and redundant with the location UUID identity, but it is required to make Supplier/class agreement declarative. Without that object and composite FK, the empty contact table is not dependency-safe because a later row could link across Suppliers or to service coverage.
 
-The empty boundary is safe without RLS because it is explicitly revoked and contains no data. It is safe without migration because no source transformation runs. It is **not** safe for non-synthetic activation until owner approval, trusted lifecycle/reviewer authority, personal-data basis/retention, and appropriate RLS/projection work exist.
+The empty boundary is safe without RLS because it is explicitly revoked and contains no data. It is safe without migration because no source transformation runs. It is **not** safe for non-synthetic activation until trusted lifecycle/reviewer authority and approved personal-data handling/retention exist, or for client exposure until separately approved RLS/projection work exists.
 
-If the payment-options ninth slice were separately merged first, its count change belongs only to that branch/merge. If this later contact boundary were then separately authorized and merged, contacts would add one Core Phase 1 concept and one physical table; this documentation does not project a canonical ordinal/count across the unmerged ninth-slice work. The verified state remains 14 physical / 12 implemented / 24 deferred.
+Merged PR #78 establishes the verified current state at 15 physical tables, 13 implemented Core Phase 1 concepts, and 23 deferred concepts. If the selected contacts boundary were later separately implemented and merged, the projected state would be 16 physical / 14 implemented / 22 deferred. This documentation task leaves the verified state at 15 / 13 / 23.
 
-## 17. Recommended owner decisions still required
+## 17. Recorded owner decisions and remaining delivery gates
 
-SUP-005 remains unresolved until the designated owners explicitly approve or amend:
+On 8 August 2026, the Product/Data/Security/Privacy Owner approved:
 
-1. the endpoint-oriented Option A boundary and rejection of person-only canonical rows;
-2. channel, phone-kind, subject, company/location scope, purpose, and preference-rank semantics;
-3. the composite same-Supplier physical-location enforcement and the supporting location uniqueness object;
-4. exact verification methods, what fact each verifies, verifier/system authority, failure behavior, and freshness/re-verification policy;
-5. applicable privacy jurisdictions, personal-data classification, acceptable legal-basis codes/evidence, notices, consent scope/withdrawal, retention, erasure, legal holds, and quarantine handling;
-6. whether any public or authenticated projection will ever be allowed and, if so, the exact audience/field/purpose gates—named-person exposure must remain separately explicit;
-7. source/mapping/normalizer versions, collision/exception treatment, and the pre-migration evidence package;
-8. trusted reviewer/activation/deactivation/erasure authority without deriving authority from recorded actor IDs; and
-9. whether to select the conditional empty table plus supporting location object as a later SQL slice after the active ninth-slice work is resolved.
+1. one normalized `phone|email|website` endpoint per row, with subject `company|named_person|unspecified` separate from channel and mobile treated only as a technical phone classification;
+2. exactly one Supplier owner per contact, distinct company/location scope, and an optional composite same-Supplier `physical_location` reference using the minimal supporting location uniqueness object;
+3. explicit purpose/role, verification/provenance, lifecycle, and primary/preferred semantics, with no inference from Firebase presence, position, or array order;
+4. restricted-by-default named-person data, later projection-only eligibility for company data, and no anonymous/public projection in this slice;
+5. absence of verification or consent evidence as absence, ambiguous/incomplete source quarantine, versioned comparison normalization, preserved bounded source evidence, and Supplier/subject/channel/scope semantic duplicate prevention;
+6. `draft|active|superseded|archived` minimum lifecycle, immediate deactivation/restriction of personal data, audit-preserving retention/erasure, and no silent hard deletion of reviewed history;
+7. restricted internal notes, provenance, evidence, reviewer identity, legal-basis/consent evidence, and ambiguous legacy values, with actor recording granting no authority; and
+8. Option A as the proposed tenth local SQL slice: one empty fully revoked `public.supplier_contacts` table plus only the supporting location uniqueness object, with no rows, routines, grants, mapping, RLS, projections, Auth, Firebase, hosted, Production, or TEST work.
 
-Technical-owner choices remain later: exact SQL names/types/lengths, E.164/IDNA libraries and versions, URL/email validation details, constraint/index expressions, evidence-reference format, tombstone mechanics, and focused pgTAP assertions. Those choices cannot weaken the approved product/privacy boundary.
+These decisions satisfy and resolve SUP-005 for the empty foundation. No remaining owner decision blocks its exact SQL/pgTAP selection task. Exact SQL types/lengths/constraints/indexes/tests, E.164/IDNA library versions, verification methods/freshness, trusted mutation/reviewer authority, internal personal-data handling and exact retention periods before real rows, mapping artifacts, and any future client projection/RLS remain separately approved delivery work. They cannot weaken or reopen this contract silently.
 
 ## 18. Risks, validation, and exact stop point
 
 Key risks are false person-channel attachment, treating mobile format as company ownership, publishing named-person details without a valid basis, copying branch phones onto the wrong Supplier/location, over-normalizing email/URL aliases, exposing protected exact-match keys, retaining PII indefinitely, and using contact presence as RFQ eligibility or search ranking. The contract fails closed on each risk.
 
-Required validation is documentation-only: latest refreshed `origin/main` after merged PR #77 and PR #76/#75 lineage, 14 physical tables, 12 implemented / 24 deferred Core Phase 1 concepts, 12 unchanged Open gates, links, terminology, sensitive-content patterns, documentation-only diff, and `git diff --check`.
+Required validation is documentation-only: latest refreshed `origin/main` after merged PR #78 and PR #77/#76/#75 lineage, 15 physical tables, 13 implemented / 23 deferred Core Phase 1 concepts, 12 unchanged Open gates, links, terminology, sensitive-content patterns, documentation-only diff, and `git diff --check`.
 
-Do not start Supabase, replay migrations, run pgTAP, access Firebase, run the application build, run repository/runtime/database suites, implement SQL, create data, or modify the active Supplier payment-options implementation branch.
+Do not start Supabase, replay migrations, run pgTAP, access Firebase, run the application build, run repository/runtime/database suites, implement SQL, create data, or modify the merged Supplier payment-options foundation.
 
-Exact stop point: one Draft PR containing the decision-ready Supplier contacts contract and synchronized planning documents. Stop before owner approval, SUP-005 resolution, SQL/pgTAP selection or implementation, RLS/Auth, mapping execution, data movement, Firebase/hosted access, Ready-for-review state, merge, or deployment.
+Exact stop point: existing PR #79 rebased onto merged PR #78, containing the approved Supplier contacts contract and synchronized planning documents, and marked Ready for review after focused checks. Stop before SQL/pgTAP implementation, RLS/Auth, mapping execution, data movement, Firebase/hosted access, merge, or deployment.
 
 ## 19. References
 

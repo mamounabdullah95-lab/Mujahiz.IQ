@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Review Checklist
 
 Status: Reviewer gate for documentation only
-Baseline: `origin/main` at `52d81cf19102b07c1aa378ac7b3548e3f11822a6`
+Baseline: `origin/main` at `0640d640e52b743929d4b4b7bedcd1e496ca133c`
 Review together: `09_POSTGRESQL_SCHEMA_DESIGN.md` and `10_SCHEMA_DECISION_REGISTER.md`
 Checklist items: 119
 
@@ -38,7 +38,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Merged PR #59 adds exactly `public.categories` in migration `20260805000100`; no taxonomy vocabulary, alias, Supplier assignment, RLS, policy, browser/API grant, hosted operation, or data operation is included.
 - [x] The focused synthetic pgTAP contract covers table shape, UUIDv4, depth/type/leaf and archive boundaries, bilingual collision indexes, lifecycle/replacement state combinations, nullable/restricting actors, migration-control compatibility, deferred-table absence, and absent API access.
 - [x] Clean local reset applied all four migrations; focused synthetic pgTAP passed 118/118, complete local pgTAP passed 340/340, warning-level lint found no schema errors, and catalog checks confirmed 26 columns, 27 named constraints, 13 exact indexes, five exact RESTRICT FKs, zero API/RLS/policy/trigger/routine/view access objects, one table, and zero taxonomy rows.
-- [ ] `SUP-003` and `SUP-004` are Approved; `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002` remain Open. Merged PR #62 adds `public.administrative_areas`; `main` is 12 implemented / 24 deferred across 14 physical tables.
+- [x] `SUP-003`, `SUP-004`, and `SUP-005` are Resolved; `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002` remain Open. Merged PR #78 adds `public.supplier_payment_options`; `main` is 13 implemented / 23 deferred across 15 physical tables.
 
 ### Sixth SQL-slice planning decision (not part of the 119 design-review items)
 
@@ -48,7 +48,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Contacts remain a later dependency on locations through nullable `supplier_contacts.location_id`; branch phone evidence is neither copied into the location row nor discarded, and no contact table or FK from locations is selected.
 - [x] Mapping manifests, precedence/deduplication rules, collision/exception reports, reconciliation, and rollback artifacts are mandatory before future data transformation but do not block an empty local table.
 - [x] Base rows remain non-public and revoked from API roles; RLS, policies, projections, Auth, organizations, RFQ logic, search ranking, audit/event routines, hosted Supabase, Firebase access, data movement, and Production behavior remain excluded.
-- [x] At the sixth-slice selection point the count was 11 physical / 9 implemented / 27 deferred. PR #68 moved that historical state to 12 / 10 / 26; merged PR #73 and PR #75 later moved the verified current state to 14 / 12 / 24. The 12 gates remain Open.
+- [x] At the sixth-slice selection point the count was 11 physical / 9 implemented / 27 deferred. PR #68 moved that historical state to 12 / 10 / 26; merged PR #73 and PR #75 later moved it to 14 / 12 / 24; merged PR #78 moved the verified current state to 15 / 13 / 23. The 12 gates remain Open.
 
 ### Supplier-category assignment contract review (not part of the 119 design-review items)
 
@@ -59,7 +59,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Provenance, lifecycle, reviewer/owner responsibility, declarative-versus-trusted enforcement, category deprecation behavior, transformation evidence, and future field-minimized projection constraints are explicit.
 - [x] Merged PR #73 implements the selected one empty, revoked, local-only assignment table plus structural enforcement and disposable synthetic pgTAP; no alias table, rows, mapping execution, RLS, Auth, application access, hosted work, Firebase, or Production behavior is included.
 - [x] On 6 August 2026, the founder-led Product/Data Owner explicitly approved Option B and the complete `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` as written.
-- [x] The same owner decision selected the exact seventh-slice SQL/test boundary; merged PR #73 implemented it without scope expansion. Current state is 14 physical / 12 implemented / 24 deferred.
+- [x] The same owner decision selected the exact seventh-slice SQL/test boundary; merged PR #73 implemented it without scope expansion. Merged PR #78 establishes the current state at 15 physical / 13 implemented / 23 deferred.
 - [x] SUP-003 was already Resolved and remains closed. All 12 Open gates remain unresolved and unchanged; this contract approval neither closes nor weakens any of them.
 
 ### Supplier capabilities and payment-options contract review (not part of the 119 design-review items)
@@ -93,25 +93,25 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] The pre-migration package requires bounded manifests, approved vocabularies/mappings, collision/exception reports, deterministic traces, dry-run reconciliation, rollback, lifecycle-date treatment, and explicit environment/data authority; it invents no freshness/expiry policy or projection.
 - [x] One typed, empty, revoked, local-only table is selected over partial, four-table, parent/child, JSONB/profile, capability, RFQ, quotation, or billing boundaries as the dependency-safe proposed ninth slice.
 - [x] Product/Data Owner approval is recorded for the complete payment contract, code sets, exact credit/advance meanings, restricted note/provenance boundary, no-client-projection boundary, deferred freshness/reviewer-authority decisions, and proposed ninth-slice direction.
-- [ ] A separate implementation-selection task has fixed and authorized exact payment-option DDL/pgTAP. This documentation task includes no SQL, data, RLS, Auth, hosted, Firebase, Production/TEST, merge, or deployment work.
+- [x] Merged PR #78 implemented exactly the approved empty, revoked, local-only payment-option DDL plus focused synthetic pgTAP; it added no rows, mapping, RLS, Auth, client access, hosted, Firebase, Production/TEST, or deployment behavior.
 
-### Post-PR #77 decision-ready Supplier contacts review (not part of the 119 design-review items)
+### Post-PR #78 owner-approved Supplier contacts review (not part of the 119 design-review items)
 
-- [x] Verified refreshed `origin/main` `52d81cf19102b07c1aa378ac7b3548e3f11822a6`, merged PR #77 and PR #76/#75 lineage, 14 physical tables, 12 implemented / 24 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
-- [x] The contact model is endpoint-oriented: `phone|email|website` channel, technical phone kind, and `generic_company|named_person|unspecified` subject are separate; a named person is not a channel or authority record.
+- [x] Verified refreshed `origin/main` `0640d640e52b743929d4b4b7bedcd1e496ca133c`, merged PR #78 and PR #77/#76/#75 lineage, 15 physical tables, 13 implemented / 23 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
+- [x] The contact model is endpoint-oriented: `phone|email|website` channel, technical phone kind, and `company|named_person|unspecified` subject are separate; a named person is not a channel or authority record.
 - [x] Every contact belongs to one Supplier. Company-level scope is null location; a location-scoped contact uses declarative same-Supplier plus `physical_location` enforcement and never links to service coverage.
 - [x] Purpose and person role are separate and never inferred; one positive preference rank defines the preferred/default endpoint only within the exact Supplier/scope/purpose set and grants no exposure, verification, consent, or RFQ meaning.
-- [x] Verification records the exact method/version/fact/time and provenance without implying association, ownership, identity, role, consent, legal basis, or disclosure; actor/reviewer FKs grant no authority.
+- [x] Verification records the exact method/version/fact/time and provenance without implying association, ownership, identity, role, consent, legal basis, or disclosure; absence of approved evidence requires `unverified`; actor/reviewer FKs grant no authority.
 - [x] Named-person and uncertain-subject phone/email data default to restricted. Absence of consent/evidence is not consent, and non-synthetic activation remains blocked on approved legal basis, retention, erasure, and trusted authority.
 - [x] Phone, email, and website normalization boundaries are versioned and stricter than current discovery normalizers; unsafe country/provider/URL inference and automatic alias merge are prohibited.
-- [x] Active endpoint/scope uniqueness, collision review, many-source-to-one reconciliation, and cross-Supplier exact-match confidentiality are explicit.
+- [x] Active endpoint/scope/subject uniqueness, collision review, many-source-to-one reconciliation, and cross-Supplier exact-match confidentiality are explicit.
 - [x] Ambiguous, incomplete, multi-valued, malformed, contradictory, unattached person, unproved branch, WhatsApp, and social evidence creates no active row and retains an explicit bounded quarantine/review disposition.
 - [x] Lifecycle supports immediate suppression, supersession/archive, and policy-driven erasure; audit convenience and retained hashes cannot silently defeat personal-data rights.
 - [x] No public or authenticated projection is approved. Named-person data is never public by default; internal access is task-minimized; search/RFQ eligibility/routing/snapshots do not consume contacts without separate approval.
-- [x] One empty revoked contacts table plus a supporting location uniqueness object/composite FK is conditionally dependency-safe before RLS and migration; omission of the composite physical-location enforcement is not safe.
-- [x] The recommendation compares and rejects/defer-splits people/channels, table-per-channel, JSON/header, profile/location columns, and person-only rows; it does not modify or depend on the active payment-options ninth-slice work.
-- [ ] Product/Data/Security/Privacy Owners have approved SUP-005 semantics, verification/freshness, legal basis/consent, audience, retention/erasure, trusted authority, and conditional later-slice selection.
-- [ ] A separate future task has selected and authorized exact contacts SQL/pgTAP. This documentation task includes no SQL, data, RLS, Auth, mapping execution, hosted, Firebase, Production/TEST, Ready, merge, or deployment work.
+- [x] One empty fully revoked contacts table plus only the supporting location uniqueness object/composite FK is approved, dependency-safe before RLS/migration under the documented restrictions, and selected as the proposed tenth local SQL slice; omission of the composite physical-location enforcement is not safe.
+- [x] The approved contract compares and rejects or defers split people/channels, table-per-channel, JSON/header, profile/location columns, and person-only rows; it does not modify or depend on merged payment-options ninth-slice behavior.
+- [x] Product/Data/Security/Privacy Owner approval is recorded for the complete endpoint/subject/scope/integrity/purpose/verification/privacy/normalization/duplicate/lifecycle/projection/provenance contract and the proposed tenth-slice boundary; SUP-005 is Resolved.
+- [ ] A separate future implementation task has fixed and authorized exact contacts SQL/pgTAP. This documentation task includes no SQL, data, RLS, Auth, mapping execution, hosted, Firebase, Production/TEST, merge, or deployment work.
 
 ## B. Relational model and integrity
 
