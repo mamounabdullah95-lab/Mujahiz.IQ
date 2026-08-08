@@ -26,7 +26,7 @@ The minimum safe foundation **now is no new table**. Once the first command, reg
 - `internal.idempotency_keys` and `internal.domain_events` are deferred Core Phase 1 concepts and do not exist in local SQL.
 - Merged PR #80 implemented exactly the approved empty, revoked, local-only `public.supplier_contacts` tenth slice plus focused synthetic pgTAP. This contract does not modify or depend on that implementation.
 - Firebase remains authoritative in Production. Supabase remains local-only, unhosted, and non-authoritative.
-- ID-001 is resolved for the Firebase-authoritative hybrid authority boundary by document 33. The 11 remaining Open approval gates are `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+- Document 33 proposes the Firebase-authoritative hybrid authority boundary, but ID-001 remains Open pending explicit Product/Security/Data Owner approval. All 12 Open approval gates remain unchanged.
 - REL-001 is `Resolved` for the approved Option D planning decision only. It is not implemented and selects no SQL slice.
 
 Current Firebase behavior is evidence, not authority to copy its storage shape. The implemented but undeployed Claim creation command hashes a caller-supplied key, binds it to claimant and payload, returns the same claim for an identical retry, rejects changed-payload or cross-user reuse, and uses a 30-day Claim horizon. Claim decisions create deterministic ownership events, audit rows, and claimant notifications in one Firestore transaction. The relational design preserves those invariants while separating replay protection, integration facts, audit, and notification delivery.
@@ -190,7 +190,7 @@ The minimum `domain_events` foundation supports one approved internal processor 
 
 The approved design-only first command is `supplier_ownership.decide_claim` because it has a real aggregate transition and an already evidenced claimant-notification consequence. A later runtime implementation approval must satisfy, at minimum:
 
-1. current actor/authentication and Admin/Owner authorization under the resolved ID-001 boundary;
+1. current actor/authentication and Admin/Owner authorization under the proposed ID-001 boundary, once explicitly approved and implemented;
 2. Claim, claimant, Supplier, current owner, competing-claim, and lock reads plus serialization order;
 3. request fingerprint fields, expected Claim state/version, and idempotency result contract;
 4. approval/rejection/supersession transaction, affected aggregate sequence rules, and compensation;

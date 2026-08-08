@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-08-id-001-hybrid-authority-resolved`
+Baseline ID: `baseline-2026-08-08-sup-001-resolved`
 Updated: 2026-08-08
 Canonical Production URL: `https://mujahiz.com`
 
@@ -186,7 +186,7 @@ The merged local infrastructure and migration-governance SQL, a future business/
 - **Verified current fact:** Core Phase 1 remains a maximum candidate set, not approval to create all 36 concepts in one PR. PR #51 implemented the approved two-table identity boundary, PR #54 implemented only the separately bounded `supplier_profiles` local root, PR #59 implemented only `categories`, PR #62 implemented only `administrative_areas`, and PR #68 implemented only `supplier_locations`.
 - **Verified current fact:** The design maps all 35 verified Firestore collections, registers 36 synchronized decisions, and provides a 119-item schema review checklist. DB-001 is resolved for the local first slice to database-generated UUIDv4 through `pg_catalog.gen_random_uuid()`; hosted compatibility remains a later validation gate.
 - **Verified current fact:** MIG-001 is partially implemented only at the declarative schema-contract level. Migration Engine locking, replay lookup, transformation, reconciliation, graph supersession, and rollback execution remain unimplemented.
-- **Verified current fact:** ID-001 is resolved for the Firebase-authoritative hybrid authority boundary in document 33; no future Auth authority has been chosen. The 11 remaining approval gates are Open.
+- **Verified current fact:** ID-001, MIG-002, RES-001, and all nine other approval gates remain Open; 12 approval gates remain Open in total. Firebase Auth is the verified current hybrid-phase authority, but ID-001 has no approved durable identity/privileged-actor contract yet.
 
 #### Merged second-slice boundary
 
@@ -199,8 +199,9 @@ The merged second slice remains local-only and synthetic-data-only, without RLS,
 
 #### Open approval gates
 
-The 11 remaining Open approval gates are:
+The 12 Open approval gates are:
 
+- `ID-001`
 - `ORG-001`
 - `ORG-002`
 - `RFQ-003`
@@ -236,7 +237,7 @@ The owner approved Option D in [`31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDA
 
 The Product/Data/Security Owner approved [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](../supabase-migration/32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) on 8 August 2026. SUP-001 is Resolved for one active primary human controller per Supplier, multiple Suppliers per user, future delegate/admin memberships, separate optional organizations, unowned-Supplier-only ordinary Claims, immutable evidence/history, fail-closed conflict handling, and the design-only `supplier_ownership.decide_claim` contract. One empty, fully revoked, local-only `public.supplier_ownerships` foundation is selected as the proposed next SQL slice; this documentation approval implements no SQL or runtime.
 
-The ID-001 review in [`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md`](../supabase-migration/33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md) resolves Firebase-authenticated hybrid authority while preserving Firebase Auth as the authority for authentication, verification, and disablement. The existing provider-neutral identity tables are sufficient as an empty identity foundation but not for privileged runtime. A future empty, fully revoked `platform_role_assignments` foundation is dependency-safe; it remains unimplemented and does not authorize the Claim command. The 11 remaining Open gates are unchanged.
+[`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md`](../supabase-migration/33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md) proposes the smallest Firebase-authoritative hybrid identity and privileged-actor contract. It recommends resolving ID-001 only after explicit Product/Security/Data Owner approval, identifies `platform_role_assignments` as necessary but insufficient before Claim runtime, and finds one empty revoked role foundation dependency-safe as a later separately approved candidate. The proposal does not close ID-001, select SQL, or authorize Auth/RLS/runtime/data work.
 
 ### Product priorities
 

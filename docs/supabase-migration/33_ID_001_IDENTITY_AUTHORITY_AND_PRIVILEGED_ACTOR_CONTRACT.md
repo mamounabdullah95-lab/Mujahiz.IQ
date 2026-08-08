@@ -1,12 +1,12 @@
 # ID-001 Identity Authority and Privileged Actor Contract
 
-Status: **Resolved for the hybrid-phase authority boundary**
+Status: **Proposed Product/Security/Data contract; ID-001 remains Open pending explicit Owner approval**
 Decision date: 2026-08-08
 Owner: Product / Security / Data
 
 ## 1. Purpose and exact boundary
 
-This contract resolves `ID-001` only for the hybrid phase in which Firebase Auth remains the authentication authority and PostgreSQL is local-only. It makes no choice about a future Supabase Auth cutover, hosted project, RLS policy, trusted runtime, migration execution, or Production authority.
+This contract proposes resolution of `ID-001` only for the hybrid phase in which Firebase Auth remains the authentication authority and PostgreSQL is local-only. It makes no choice about a future Supabase Auth cutover, hosted project, RLS policy, trusted runtime, migration execution, or Production authority.
 
 It defines the identity facts that a future trusted operation must use, the minimum privileged-actor proof, and the dependency boundary for `supplier_ownership.decide_claim`. It does not implement that command or create `platform_role_assignments`.
 
@@ -17,7 +17,7 @@ It defines the identity facts that a future trusted operation must use, the mini
 3. `internal.identity_provider_links` is the restricted mapping from provider subject to the provider-neutral profile. A Firebase UID is represented only as the exact pair `provider_code = firebase` and `provider_subject = <Firebase UID>`.
 4. PostgreSQL may retain bounded, trusted mirrors and later relational authorization facts, but no mirror can authenticate a request, prove current Firebase verification/disablement, or select a second authority while Firebase remains authoritative.
 5. `public.user_profiles` plus `internal.identity_provider_links` are sufficient as the empty hybrid **identity foundation**. They are not a complete authorization foundation and do not make any actor an Admin, Owner, reviewer, claimant, or Supplier controller.
-6. A future fully revoked, empty, local-only `public.platform_role_assignments` foundation is the next required structural dependency before `supplier_ownership.decide_claim` runtime. It is dependency-safe only under the limits in section 7.
+6. A future fully revoked, empty, local-only `platform_role_assignments` foundation is proposed as the next required structural dependency before `supplier_ownership.decide_claim` runtime. It is dependency-safe only under the limits in section 7. The approved design defines only the unqualified logical name; this proposal intentionally selects no schema namespace.
 
 ## 3. Authority model
 
@@ -108,6 +108,7 @@ The later technical contract must create no role beyond the minimal platform cod
 - assign/revoke/expire provenance as provider-neutral actor/system references with bounded reason codes; provenance never grants authority;
 - explicit no-overlap/one-effective-active-role enforcement absent a separately approved exception, with Owner and Admin mutually incompatible;
 - trusted-only assignment, revocation, expiry, correction, and final-usable-Owner protection; no normal hard delete or self-assignment;
+- no forward FK to `access_grants`; a later access grant may reference the assignment only under its own approved contract, and a role row alone never grants effective authority;
 - no organization or Supplier relationship, no membership, no access-ledger implementation, no JWT application-role claim, no client projection, and no RLS/policy in the structural slice; and
 - full revocation from `public`, `anon`, `authenticated`, and `service_role`, with no browser/application access path.
 
@@ -115,7 +116,7 @@ The exact SQL columns, constraints, indexes, clock/concurrency strategy, pgTAP p
 
 ### 7.3 Empty structural-slice conclusion
 
-An empty, fully revoked, local-only `public.platform_role_assignments` foundation is dependency-safe as a future one-table SQL slice if it references only existing `public.user_profiles`, contains zero role rows, and satisfies section 7.2. It does not require `ORG-001`, `ORG-002`, `AUD-001`, `MSG-003`, `REL-001`, `FILE-001`, `MIG-002`, or `RES-001` merely to create its empty structural boundary.
+Subject to explicit Owner approval and a later slice selection, an empty, fully revoked, local-only `platform_role_assignments` foundation is dependency-safe as a future one-table SQL slice if it references only existing `public.user_profiles`, contains zero role rows, and satisfies section 7.2. It does not require `ORG-001`, `ORG-002`, `AUD-001`, `MSG-003`, `REL-001`, `FILE-001`, `MIG-002`, or `RES-001` merely to create its empty structural boundary.
 
 It must not create a role assignment from legacy role text, Firebase custom claims, or any Production data; create an organization/member relation; add browser/API grants; implement a role-management command; or represent a role row as proof of an active Firebase session, verification, or administration eligibility.
 
@@ -152,7 +153,7 @@ Reconciliation reports use counts, disposition totals, and safe sample keys only
 
 | Gate or dependency | Empty role-table foundation | `supplier_ownership.decide_claim` runtime |
 |---|---|---|
-| `ID-001` | **Resolved by this contract** | No longer a gate; provider-validation implementation remains required |
+| `ID-001` | **Proposed; remains Open pending explicit Owner approval** | Blocks runtime and any claim that the authority contract is resolved; provider-validation implementation remains required after approval |
 | `platform_role_assignments` | The selected next structural dependency | Required and insufficient alone |
 | `AUD-001` | Does not block empty local DDL | **Blocks** required decision-audit implementation |
 | `MSG-003` | Does not block empty local DDL | **Blocks** the named notification materializer/delivery path |
@@ -163,11 +164,11 @@ Reconciliation reports use counts, disposition totals, and safe sample keys only
 | `RFQ-003`, `MSG-002`, `SEARCH-001`, `BILL-001` | Do not block | Do not block Claim decision version 1 |
 | `SEC-001` and trusted-operation design | Does not block empty DDL | Required security delivery work; it is a recommendation, not one of the remaining Open gates |
 
-After this decision there are 11 Open approval gates: `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+Until explicit Owner approval, there are 12 Open approval gates: `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
 
 ## 11. Decision status, remaining owner decisions, and stop point
 
-`ID-001` is resolved contractually for the hybrid phase. It does not resolve a future Firebase-to-Supabase Auth migration, select an Auth provider after the hybrid phase, authorize a hosted project, or make PostgreSQL a Production authentication authority.
+This document recommends that `ID-001` be resolved contractually for the hybrid phase, but does not record that resolution: explicit Product/Security/Data Owner approval is still required. It does not resolve a future Firebase-to-Supabase Auth migration, select an Auth provider after the hybrid phase, authorize a hosted project, or make PostgreSQL a Production authentication authority.
 
 The remaining Owner decisions for Claim runtime include the `AUD-001` and `MSG-003` gates, the later technical/operational approval of the REL-001 foundation, the exact privileged-role implementation and recovery contract, Claim/ownership runtime selection, and the required security/RLS/trusted-command review. `ORG-001`, `ORG-002`, `FILE-001`, `MIG-002`, and `RES-001` retain the scope stated in section 10.
 

@@ -1,5 +1,9 @@
 # Authentication and identity options
 
+## ID-001 contract status
+
+[`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md`](33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md) is the decision-ready successor for the hybrid-phase authority, provider-neutral principal/link, verification-mirror, privileged-actor, lifecycle, reconciliation, and Claim dependency contract. It recommends Firebase Auth as the sole hybrid authentication/email-verification authority and does not design Option B. ID-001 remains Open until explicit Product/Security/Data Owner approval; this document authorizes no integration or hosted work.
+
 ## Current identity contract
 
 - **[Verified current fact]** Firebase Auth is the password, session, email-verification, password-reset, and email-action authority. Sources: `src/contexts/AuthContext.tsx`, `src/services/emailVerification.ts`, `src/services/passwordRecovery.ts`, and `src/services/emailActions.ts`.
@@ -11,9 +15,9 @@
 
 Official platform references: [Supabase Firebase third-party Auth](https://supabase.com/docs/guides/auth/third-party/firebase-auth), [third-party Auth overview](https://supabase.com/docs/guides/auth/third-party/overview), and [Firebase-to-Supabase Auth migration](https://supabase.com/docs/guides/platform/migrating-to-supabase/firebase-auth).
 
-## Hybrid-phase authority decision
+## Hybrid-phase authority contract proposal
 
-`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md` resolves ID-001 for the hybrid phase: Firebase Auth remains the sole authority for authentication, session/token validity, Firebase UID existence, disablement, email verification, password reset, recovery, and email-action state. `user_profiles` and `identity_provider_links` are provider-neutral application identity and restricted provider-state mirrors; neither authenticates a request or grants privilege from a stale mirror.
+Document 33 proposes the ID-001 hybrid contract: Firebase Auth remains the sole authority for authentication, session/token validity, Firebase UID existence, disablement, email verification, password reset, recovery, and email-action state. `user_profiles` and `identity_provider_links` are provider-neutral application identity and restricted provider-state mirrors; neither authenticates a request or grants privilege from a stale mirror. ID-001 remains Open unless and until explicit Product/Security/Data Owner approval is recorded.
 
 This does not choose a post-hybrid Auth provider or authorize the Option A third-party Auth proof of concept. A future trusted boundary must validate the current Firebase subject, map it uniquely to a provider-neutral profile, and then evaluate protected relational role/status/ownership facts. Email, Firebase UID text outside the protected link, JWT application role metadata, and client-provided profile fields never grant authority.
 
@@ -25,7 +29,7 @@ This does not choose a post-hybrid Auth provider or authorize the Option A third
 2. **[Future plan]** Configure a reviewed Supabase third-party Auth integration for the correct Firebase project.
 3. **[Future plan]** Assign Firebase JWT `role: authenticated` for Supabase Postgres role selection; never put application Owner/Admin/Buyer/Supplier into that claim.
 4. **[Future plan]** Pass the current Firebase ID token through the future Supabase client's access-token callback.
-5. **[Future plan]** Map `auth.jwt()->>'sub'` to unique `application_users.firebase_uid`; do not assume the subject is a UUID.
+5. **[Future plan]** Resolve `auth.jwt()->>'sub'` through the exact active Firebase subject in `internal.identity_provider_links` to `public.user_profiles.id`; do not assume the subject is a UUID or use the link as a domain FK.
 6. **[Future plan]** Resolve application role, status, entitlement, `supplierProfileId`, and ownership from PostgreSQL current state inside RLS/trusted functions.
 
 ### Advantages
@@ -39,7 +43,7 @@ This does not choose a post-hybrid Auth provider or authorize the Option A third
 
 | Topic | Option A implication |
 |---|---|
-| RLS | **[Future plan]** Policies validate registered issuer/audience, require Postgres role `authenticated`, then join Firebase subject to `application_users.firebase_uid`. Missing/mismatched profile fails closed. |
+| RLS | **[Future plan]** Policies validate registered issuer/audience, require Postgres role `authenticated`, then use a protected resolver from Firebase subject through `identity_provider_links` to `user_profiles`. Missing, stale, duplicate, or mismatched evidence fails closed. |
 | Custom claims | **[Future plan]** Existing and future users need `role: authenticated`. A trusted backfill plus on-create/sign-in mechanism is a Firebase Auth/Functions write/deploy and needs a separate approved task. Token refresh is required before the claim appears. |
 | Application roles | **[Future plan]** Never trust the JWT `role` as application privilege. Store Owner/Admin/Buyer/Supplier in relational application data and audit changes. |
 | Sessions | **[Future plan]** Firebase token refresh/expiry remains authoritative. Supabase request failures must distinguish token expiry from RLS denial/provider outage. |

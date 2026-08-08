@@ -125,9 +125,9 @@ Official Supabase guidance used for this plan: [Firebase third-party authenticat
 1. **[Future plan]** The browser authenticates with Firebase Auth using the existing session, verification, and recovery behavior.
 2. **[Future plan]** A future Supabase client obtains a current Firebase ID token through an asynchronous access-token callback.
 3. **[Future plan]** Supabase verifies the registered Firebase issuer/audience before the request reaches PostgreSQL.
-4. **[Future plan]** The Firebase token must carry Postgres `role: authenticated`; application roles remain in `application_users` and are not trusted as Postgres roles.
-5. **[Future plan]** RLS maps `auth.jwt()->>'sub'` to `application_users.firebase_uid`. Do not assume a Firebase UID is a PostgreSQL UUID.
-6. **[Future plan]** RLS/trusted functions then validate current role/status/access and Supplier ownership from relational data.
+4. **[Future plan]** The Firebase token must carry Postgres `role: authenticated`; application Owner/Admin roles remain in a future protected `platform_role_assignments` relation and are not trusted as Postgres roles. Its schema placement is not selected by this contract.
+5. **[Future plan]** A protected identity resolver maps `auth.jwt()->>'sub'` through the exact active `internal.identity_provider_links` Firebase subject to `public.user_profiles.id`. Do not assume a Firebase UID is a PostgreSQL UUID or use a provider-link ID as a domain FK.
+6. **[Future plan]** RLS/trusted functions then validate current profile, provider state, platform role/access, security eligibility, and Supplier ownership/membership from their separate relational authorities. High-impact commands also require current Firebase-authoritative provider evidence under proposed document 33.
 
 - **[Verified current fact]** No repository code currently assigns the Firebase custom claim `role: authenticated`; current authorization reads Firestore application-role data. Source: repository search and `functions/src/callableAuth.ts`.
 - **[Future plan]** Adding the claim for existing/future users is a separate Firebase Auth/Functions mutation and requires TEST proof, rollback, token-refresh handling, and explicit approval. It is not part of this baseline.

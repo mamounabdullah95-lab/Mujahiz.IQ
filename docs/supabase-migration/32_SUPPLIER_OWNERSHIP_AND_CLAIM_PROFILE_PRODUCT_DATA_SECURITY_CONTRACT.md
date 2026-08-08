@@ -32,7 +32,7 @@ On 8 August 2026, the Product/Data/Security Owner approved this contract, resolv
 - Firebase remains authoritative in Production. Current Production ownership, if present, is represented by the two-sided agreement between `users.supplierProfileId` and `suppliers.accountOwnerId`.
 - Supabase remains local-only, unhosted, unlinked, and non-authoritative. No RLS, Auth bridge, application grants, client access, rows, migration engine, or hosted environment exists.
 - REL-001 is decision-complete under Option D: no reliability SQL exists. The approved future producer path is `supplier_ownership.decide_claim`; its first concrete consumer is one claim-decision notification materializer.
-- At this contract's approval, the 12 Open gates included `ID-001`. Document 33 subsequently resolves ID-001 for the Firebase-authoritative hybrid boundary; the remaining 11 Open gates are `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+- At this contract's approval, the 12 Open gates included `ID-001`. Document 33 subsequently proposes the Firebase-authoritative hybrid boundary, but ID-001 remains Open pending explicit Product/Security/Data Owner approval; all 12 Open gates remain unchanged.
 
 Current Firebase Claim behavior is implementation evidence, not a relational storage template. Repository code currently uses `pending_review|approved|rejected|withdrawn|expired|superseded`, a 30-day horizon, one active Claim per claimant, concurrent claims by different claimants, deterministic events/audits/notices, and two-sided ownership backlinks. The feature is not deployed; no live Claim or ownership-foundation record was found.
 
@@ -133,7 +133,7 @@ The initial active horizon remains 30 calendar days from trusted submission time
 
 A Claim may be submitted only by the claimant for themself through a trusted boundary. At submission and approval, the claimant must have:
 
-- a current authenticated provider identity accepted under the resolved ID-001 hybrid boundary in document 33;
+- a current authenticated provider identity accepted under the proposed ID-001 hybrid boundary in document 33, once explicitly approved and implemented;
 - an active, non-suspended `user_profiles` row;
 - current provider verification where the approved ownership evidence method requires it;
 - Supplier account context under the current hybrid product model; and
@@ -143,7 +143,7 @@ Anonymous users, public visitors, unverified/disabled identities, and a platform
 
 ### Reviewer and decision actor
 
-Review assignment and decision require a current authorized platform Admin or Owner under the resolved identity/role/access boundary. A reviewer/decision actor must not be:
+Review assignment and decision require a current authorized platform Admin or Owner under the separately approved and implemented identity/role/access boundary. A reviewer/decision actor must not be:
 
 - the claimant;
 - the current or proposed primary owner in another role;
@@ -385,7 +385,8 @@ Ambiguous or conflicting Firebase ownership evidence is always quarantined. Manu
 | Dependency | Empty revoked `supplier_ownerships` foundation | Claim/ownership rows or mapping | `decide_claim` implementation and notification path |
 |---|---|---|---|
 | SUP-001 Product/Data/Security Owner approval | **Resolved**; empty one-table selection approved | Approved contract governs any later rows/mapping | Command contract approved for design only; runtime remains separately gated |
-| ID-001 | Resolved by document 33; does not block | The authority contract is resolved, but provider validation, role assignments, and source-specific activation controls remain required | No longer an Open gate; runtime still requires the unimplemented privileged-role/provider-validation boundary |
+| ID-001 | Does not block empty provider-neutral FKs | Blocks authoritative principal/provider validation and real rows | Document 33 proposes the complete actor/claimant authentication contract, but runtime remains blocked until explicit approval and implementation |
+| Platform role/access foundation | Does not block the ownership table | Required before non-synthetic privileged decisions | `platform_role_assignments` is required but insufficient; current Firebase/profile/link/access/security and reviewer-conflict checks must also pass |
 | ORG-001 / ORG-002 | Do not block under recommended Option B | Block only organization-owned tenancy/bootstrap or organization-derived access | Not required for unowned-Supplier Claim v1; required if organization authority is later added |
 | AUD-001 | Does not block empty table | Blocks non-synthetic ownership decisions/transfer/revocation | Blocks required decision audit implementation |
 | MSG-003 | Does not block empty table or ownership history | Does not block an inert empty table | Blocks notification materializer and therefore the approved REL-001 producer/consumer delivery path |
