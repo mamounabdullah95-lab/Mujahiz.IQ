@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Review Checklist
 
 Status: Reviewer gate for documentation only
-Baseline: `origin/main` at `b1afb5a92d2b2e6f1182076c900a8947e049ebf3` after merged PR #81
+Baseline: `origin/main` at `66698525e6aaba4522f9bef44adef57a05f4a067` after merged PR #82
 Review together: `09_POSTGRESQL_SCHEMA_DESIGN.md` and `10_SCHEMA_DECISION_REGISTER.md`
 Checklist items: 119
 
@@ -19,7 +19,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] The phase manifest lists all 79 proposed tables exactly once and reconciles Core Phase 1 36, Core Later 10, Future-Compatible 13, Deferred 13, and Remove/Merge 7; `supplier_ownership_claims` remains authoritative but is Core Later, not in the initial slice.
 - [ ] Future-Compatible and Deferred entries explicitly say "do not create yet," and every Remove/Merge entry identifies its replacement.
 - [ ] All 36 decision IDs have one canonical topic/status across design, register, checklist, and cross-references; resolution date, evidence/reference, and resolved state fields are present.
-- [ ] ID-001, ORG-001, ORG-002, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain Open approval gates; REL-001 is Resolved for Option D with no SQL slice, SUP-003/SUP-004/SUP-005 are Resolved, and DB-001 is resolved for the implemented local SQL slices only.
+- [x] ID-001 is Resolved by approved document 33. ORG-001, ORG-002, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain the 11 Open approval gates; REL-001 is Resolved for Option D with no SQL slice, SUP-003/SUP-004/SUP-005 are Resolved, and DB-001 is resolved for the implemented local SQL slices only.
 ### Second SQL-slice implementation evidence
 
 - [x] Local implementation branch adds exactly public.user_profiles and internal.identity_provider_links in migration 20260804000200; no third identity/access table, RLS, policy, Auth bridge, browser/API grant, hosted operation, or data operation is included.
@@ -113,14 +113,19 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Product/Data/Security/Privacy Owner approval is recorded for the complete endpoint/subject/scope/integrity/purpose/verification/privacy/normalization/duplicate/lifecycle/projection/provenance contract and the proposed tenth-slice boundary; SUP-005 is Resolved.
 - [x] Merged PR #80 implemented exactly the approved empty, revoked contacts SQL/pgTAP boundary plus the supporting location uniqueness object, with no rows, mapping execution, RLS, Auth, hosted, Firebase, Production/TEST, or deployment work.
 
-### Post-PR #81 REL-001 and SUP-001 contract review (not part of the 119 design-review items)
+### Post-PR #82 REL-001, SUP-001, and approved ID-001 contract review (not part of the 119 design-review items)
 
-- [x] Verified refreshed `origin/main` `b1afb5a92d2b2e6f1182076c900a8947e049ebf3`, merged PR #81, 16 physical tables, 14 implemented / 22 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
+- [x] Verified refreshed `origin/main` `66698525e6aaba4522f9bef44adef57a05f4a067`, merged PR #82, 16 physical tables, 14 implemented / 22 deferred Core Phase 1 concepts, and 12 Open gates at that merge point.
 - [x] REL-001 is Resolved for the owner-approved Option D planning decision: create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice.
-- [x] Future `supplier_ownership.decide_claim` is the first trusted producer path and one claim-decision notification materializer is the first concrete consumer; document 32 approves the command/aggregate contract for design purposes before reliability SQL, while ID-001, AUD-001, MSG-003, consumer/operations approval, and exact reliability SQL selection remain required before runtime implementation.
+- [x] Future `supplier_ownership.decide_claim` is the first trusted producer path and one claim-decision notification materializer is the first concrete consumer; document 32 approves the command/aggregate contract for design purposes before reliability SQL, while implementation of the approved ID-001 contract, AUD-001, MSG-003, consumer/operations approval, and exact reliability SQL selection remain required before runtime implementation.
 - [x] `audit_logs` and notification-delivery implementation remain outside REL-001; AUD-001 and MSG-003 remain Open with every unrelated Open gate preserved.
 - [x] This PR adds documentation only and does not implement SQL, pgTAP, worker/runtime, RLS, Auth, Firebase, hosted Supabase, Production/TEST, migration, or deployment behavior.
 - [x] Product/Data/Security Owner approval is recorded for the complete SUP-001 contract; SUP-001 is Resolved and one empty, fully revoked, local-only `public.supplier_ownerships` foundation is selected as the proposed next SQL slice, with SQL implementation kept outside PR #82.
+- [x] Document 33 separates Firebase authentication/email-verification authority, stable `user_profiles` principals, non-domain `identity_provider_links`, temporal platform roles, Supplier ownership, future memberships, RLS, and command-specific authorization.
+- [x] Document 33 defines exact-link/no-email inference, current high-risk Firebase observation, stale/mismatch failure, collision quarantine, disable/delete/unlink/relink/email/verification/profile lifecycle behavior, and provider-neutral actor provenance.
+- [x] Document 33 finds `user_profiles` plus `identity_provider_links` sufficient for the identity root but not privileged authorization; `platform_role_assignments` is required before relational Claim runtime and remains insufficient without access/bootstrap/security dependencies.
+- [x] The selected empty, fully revoked, local-only `public.platform_role_assignments` foundation has no forward access-grant FK and grants no effective authority; exact SQL/pgTAP remains a separate task.
+- [x] Product/Security/Data Owner approval of document 33 is recorded in PR #83. ID-001 is Resolved, the 11 unrelated Open gates remain unchanged, and `public.platform_role_assignments` is selected as the next identity/access structural SQL candidate without authorizing SQL.
 
 ## B. Relational model and integrity
 
@@ -138,9 +143,9 @@ Check an item only when the cited design is explicit and evidence supports it. R
 ## C. Identity, organization, and authorization readiness
 
 - [ ] Application user UUID is separated from provider subject/Firebase UID under ID-002.
-- [ ] Authentication authority and migration duration remain Open under ID-001; Stage 1 idempotently bootstraps an unverified Firebase profile/link with current account context and no verified-only benefit, while Stage 2 refreshes Firebase-authoritative verification/disablement and grants the first verified trial/access benefit at most once.
+- [x] ID-001 is Resolved by approved document 33. Firebase Auth remains authoritative, an unverified profile/link bootstraps no privilege, high-risk commands require a current Firebase observation, and verified-only benefits remain idempotent and separately gated.
 - [ ] Platform Owner/Admin assignments follow ID-003: temporal, trusted-only, one effective active role absent reviewed exception, and Owner/Admin incompatible.
-- [ ] The usable-Owner predicate requires an active profile, approved account status, compatible current account context, active Firebase link, Firebase-verified/non-disabled identity, active Owner assignment, valid trusted administration access, and all repository-backed trusted-admin/security eligibility conditions.
+- [x] The approved usable-Owner predicate requires a current validated Firebase identity/current Admin observation, exact active Firebase link, active profile with compatible `buyer` platform context, active Owner assignment, valid trusted administration access, no identity/security conflict, and all repository-backed trusted-admin/security eligibility conditions.
 - [ ] Provider unlink/disable, verification loss/mirror correction, profile suspension, account-status/context change, role demotion/removal/expiry, access revocation/correction/expiry, identity disablement, and future eligibility corrections all serialize on and re-evaluate the complete usable-Owner set.
 - [ ] Direct commands and background expiry/correction/reconciliation jobs share the same locks, fail-closed postcondition, audit/security outcome, compensation, and recovery contract; the role-backed Owner administration grant is non-expiring while usable authority is held, so expiry cannot silently strand administration.
 - [ ] ORG-001/ORG-002 keep organization linkage nullable/deferred; current users and 480 Suppliers migrate without fabricated organizations or inferred memberships.

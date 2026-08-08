@@ -32,7 +32,7 @@ On 8 August 2026, the Product/Data/Security Owner approved this contract, resolv
 - Firebase remains authoritative in Production. Current Production ownership, if present, is represented by the two-sided agreement between `users.supplierProfileId` and `suppliers.accountOwnerId`.
 - Supabase remains local-only, unhosted, unlinked, and non-authoritative. No RLS, Auth bridge, application grants, client access, rows, migration engine, or hosted environment exists.
 - REL-001 is decision-complete under Option D: no reliability SQL exists. The approved future producer path is `supplier_ownership.decide_claim`; its first concrete consumer is one claim-decision notification materializer.
-- The 12 Open gates remain `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+- ID-001 is Resolved under approved document 33. The 11 Open gates remain `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
 
 Current Firebase Claim behavior is implementation evidence, not a relational storage template. Repository code currently uses `pending_review|approved|rejected|withdrawn|expired|superseded`, a 30-day horizon, one active Claim per claimant, concurrent claims by different claimants, deterministic events/audits/notices, and two-sided ownership backlinks. The feature is not deployed; no live Claim or ownership-foundation record was found.
 
@@ -133,7 +133,7 @@ The initial active horizon remains 30 calendar days from trusted submission time
 
 A Claim may be submitted only by the claimant for themself through a trusted boundary. At submission and approval, the claimant must have:
 
-- a current authenticated provider identity accepted under the eventual ID-001 decision;
+- a current authenticated provider identity accepted under the approved ID-001 contract;
 - an active, non-suspended `user_profiles` row;
 - current provider verification where the approved ownership evidence method requires it;
 - Supplier account context under the current hybrid product model; and
@@ -385,7 +385,8 @@ Ambiguous or conflicting Firebase ownership evidence is always quarantined. Manu
 | Dependency | Empty revoked `supplier_ownerships` foundation | Claim/ownership rows or mapping | `decide_claim` implementation and notification path |
 |---|---|---|---|
 | SUP-001 Product/Data/Security Owner approval | **Resolved**; empty one-table selection approved | Approved contract governs any later rows/mapping | Command contract approved for design only; runtime remains separately gated |
-| ID-001 | Does not block empty provider-neutral FKs | Blocks authoritative principal/provider validation and real rows | Blocks actor/claimant authentication contract and runtime authorization |
+| ID-001 | **Resolved**; does not block empty provider-neutral FKs | Approved contract must be implemented before authoritative principal/provider validation and real rows | Document 33 approves the complete actor/claimant authentication contract; runtime remains blocked until implementation |
+| Platform role/access foundation | Does not block the ownership table | Required before non-synthetic privileged decisions | `platform_role_assignments` is required but insufficient; current Firebase/profile/link/access/security and reviewer-conflict checks must also pass |
 | ORG-001 / ORG-002 | Do not block under recommended Option B | Block only organization-owned tenancy/bootstrap or organization-derived access | Not required for unowned-Supplier Claim v1; required if organization authority is later added |
 | AUD-001 | Does not block empty table | Blocks non-synthetic ownership decisions/transfer/revocation | Blocks required decision audit implementation |
 | MSG-003 | Does not block empty table or ownership history | Does not block an inert empty table | Blocks notification materializer and therefore the approved REL-001 producer/consumer delivery path |
@@ -404,13 +405,13 @@ An empty, fully revoked, local-only `public.supplier_ownerships` foundation is a
 - it has one-active-primary-owner-per-Supplier enforcement and deliberately no one-Supplier-per-owner enforcement;
 - it includes restrictive FKs, structural indexes/comments, complete API-role privilege revocation, and zero rows/access objects;
 - it includes no organization, membership, Claim, audit, notification, event, idempotency, routine, trigger, RLS, policy, view, RPC, Auth bridge, mapping execution, data migration, seed, backfill, Firebase, hosted, Production, or TEST work; and
-- no row may be activated until source-specific provenance/FKs, ID-001, trusted commands, audit, security policy, and migration approvals required for that source are implemented.
+- no row may be activated until source-specific provenance/FKs, the approved ID-001 contract, trusted commands, audit, security policy, and migration approvals required for that source are implemented.
 
 The table must not contain generic unvalidated `source_type/source_id` polymorphic references as a substitute for future Claim/submission/event FKs. The empty foundation may reserve bounded source classes; source-specific relationships are added before the first row of that class.
 
 If later separately implemented and merged, the projected local state would be 17 physical tables, 15 implemented Core Phase 1 concepts, and 21 deferred. This documentation task leaves the verified state at 16 / 14 / 22.
 
-`supplier_ownership_claims` is not part of that slice. It remains Core Later and waits for separate Claim retention/evidence, ID-001, AUD-001, trusted-command runtime, RLS, and REL/MSG delivery approvals.
+`supplier_ownership_claims` is not part of that slice. It remains Core Later and waits for separate Claim retention/evidence, implementation of the approved ID-001 contract, AUD-001, trusted-command runtime, RLS, and REL/MSG delivery approvals.
 
 ## 21. Decision status and remaining owner decisions
 
@@ -426,7 +427,7 @@ The Product/Data/Security Owner approved these SUP-001 decisions on 8 August 202
 6. authoritative relational ownership after cutover, with Firebase backlinks retained only as reconciled compatibility evidence; and
 7. the exact empty one-table boundary in section 20 as the proposed next SQL slice.
 
-No additional Owner decision remains for SUP-001, the approved Claim contract, the design-only `decide_claim` contract, or selection of the empty structural table. Exact SQL/pgTAP remains a separate technical task. Real rows and runtime still require the named ID-001, AUD-001, MSG-003/REL-001, security/RLS, mapping, retention, migration, hosted, and Production approvals.
+No additional Owner decision remains for SUP-001, the approved Claim contract, the design-only `decide_claim` contract, or selection of the empty structural table. Exact SQL/pgTAP remains a separate technical task. Real rows and runtime still require implementation of the approved ID-001 contract, AUD-001, MSG-003/REL-001, security/RLS, mapping, retention, migration, hosted, and Production approvals.
 
 ## 22. Risks, validation, and exact stop point
 

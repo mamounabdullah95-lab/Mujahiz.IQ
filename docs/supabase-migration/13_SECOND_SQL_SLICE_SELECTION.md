@@ -8,6 +8,8 @@ Approved PR head: `6e22d8acd0e7c9e94cd7934a23af1a42d113cdcf`
 Merge commit and current verified `main`: `77179728d9b2a942f210790cbb31f0a7842dcbda`
 Primary task profile: Documentation
 
+Successor note (2026-08-08): this document remains the historical authority for excluding `platform_role_assignments` from the second SQL slice. Owner-approved document 33 later removes a forward role-to-access-grant FK, resolves ID-001, and selects the standalone empty, fully revoked `public.platform_role_assignments` foundation as the next identity/access structural SQL candidate. That decision does not revise the historical two-table slice, authorize SQL, or make real role rows/runtime safe before the access/bootstrap/command/audit/security dependencies.
+
 ## 1. Decision
 
 The approved second local SQL slice is the reduced Identity Foundation:
