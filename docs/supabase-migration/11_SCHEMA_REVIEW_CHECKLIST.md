@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Review Checklist
 
 Status: Reviewer gate for documentation only
-Baseline: `origin/main` at `66698525e6aaba4522f9bef44adef57a05f4a067` after merged PR #82
+Baseline: `origin/main` at `22da8db4433c4fe7ca90ebe3b776a4da0a86eef2` after merged PR #85
 Review together: `09_POSTGRESQL_SCHEMA_DESIGN.md` and `10_SCHEMA_DECISION_REGISTER.md`
 Checklist items: 119
 
@@ -38,7 +38,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Merged PR #59 adds exactly `public.categories` in migration `20260805000100`; no taxonomy vocabulary, alias, Supplier assignment, RLS, policy, browser/API grant, hosted operation, or data operation is included.
 - [x] The focused synthetic pgTAP contract covers table shape, UUIDv4, depth/type/leaf and archive boundaries, bilingual collision indexes, lifecycle/replacement state combinations, nullable/restricting actors, migration-control compatibility, deferred-table absence, and absent API access.
 - [x] Clean local reset applied all four migrations; focused synthetic pgTAP passed 118/118, complete local pgTAP passed 340/340, warning-level lint found no schema errors, and catalog checks confirmed 26 columns, 27 named constraints, 13 exact indexes, five exact RESTRICT FKs, zero API/RLS/policy/trigger/routine/view access objects, one table, and zero taxonomy rows.
-- [x] `SUP-003`, `SUP-004`, `SUP-005`, and REL-001 Option D are Resolved; `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002` remain Open. Merged PR #80 adds `public.supplier_contacts`; `main` is 14 implemented / 22 deferred across 16 physical tables.
+- [x] At the post-PR #80 checkpoint, `SUP-003`, `SUP-004`, `SUP-005`, and REL-001 Option D were Resolved; the 12 gates including ID-001 remained Open, and the local state was 14 implemented / 22 deferred across 16 physical tables. The post-PR #85 section below supersedes those current-state values.
 
 ### Sixth SQL-slice planning decision (not part of the 119 design-review items)
 
@@ -59,7 +59,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Provenance, lifecycle, reviewer/owner responsibility, declarative-versus-trusted enforcement, category deprecation behavior, transformation evidence, and future field-minimized projection constraints are explicit.
 - [x] Merged PR #73 implements the selected one empty, revoked, local-only assignment table plus structural enforcement and disposable synthetic pgTAP; no alias table, rows, mapping execution, RLS, Auth, application access, hosted work, Firebase, or Production behavior is included.
 - [x] On 6 August 2026, the founder-led Product/Data Owner explicitly approved Option B and the complete `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` as written.
-- [x] The same owner decision selected the exact seventh-slice SQL/test boundary; merged PR #73 implemented it without scope expansion. Merged PR #80 establishes the current state at 16 physical / 14 implemented / 22 deferred.
+- [x] The same owner decision selected the exact seventh-slice SQL/test boundary; merged PR #73 implemented it without scope expansion. PR #80 later established the historical 16 physical / 14 implemented / 22 deferred checkpoint; PR #85 supersedes it below.
 - [x] SUP-003 was already Resolved and remains closed. All 12 Open gates remain unresolved and unchanged; this contract approval neither closes nor weakens any of them.
 
 ### Supplier capabilities and payment-options contract review (not part of the 119 design-review items)
@@ -113,19 +113,27 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Product/Data/Security/Privacy Owner approval is recorded for the complete endpoint/subject/scope/integrity/purpose/verification/privacy/normalization/duplicate/lifecycle/projection/provenance contract and the proposed tenth-slice boundary; SUP-005 is Resolved.
 - [x] Merged PR #80 implemented exactly the approved empty, revoked contacts SQL/pgTAP boundary plus the supporting location uniqueness object, with no rows, mapping execution, RLS, Auth, hosted, Firebase, Production/TEST, or deployment work.
 
-### Post-PR #82 REL-001, SUP-001, and approved ID-001 contract review (not part of the 119 design-review items)
+### Post-PR #85 REL-001, SUP-001, ID-001, and platform-role contract review (not part of the 119 design-review items)
 
-- [x] Verified refreshed `origin/main` `66698525e6aaba4522f9bef44adef57a05f4a067`, merged PR #82, 16 physical tables, 14 implemented / 22 deferred Core Phase 1 concepts, and 12 Open gates at that merge point.
+- [x] Verified refreshed `origin/main` `22da8db4433c4fe7ca90ebe3b776a4da0a86eef2`, merged PR #85, 11 migrations, 17 physical tables, 15 implemented / 21 deferred Core Phase 1 concepts, and 11 Open gates after ID-001 resolution.
 - [x] REL-001 is Resolved for the owner-approved Option D planning decision: create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice.
 - [x] Future `supplier_ownership.decide_claim` is the first trusted producer path and one claim-decision notification materializer is the first concrete consumer; document 32 approves the command/aggregate contract for design purposes before reliability SQL, while implementation of the approved ID-001 contract, AUD-001, MSG-003, consumer/operations approval, and exact reliability SQL selection remain required before runtime implementation.
 - [x] `audit_logs` and notification-delivery implementation remain outside REL-001; AUD-001 and MSG-003 remain Open with every unrelated Open gate preserved.
 - [x] This PR adds documentation only and does not implement SQL, pgTAP, worker/runtime, RLS, Auth, Firebase, hosted Supabase, Production/TEST, migration, or deployment behavior.
-- [x] Product/Data/Security Owner approval is recorded for the complete SUP-001 contract; SUP-001 is Resolved and one empty, fully revoked, local-only `public.supplier_ownerships` foundation is selected as the proposed next SQL slice, with SQL implementation kept outside PR #82.
+- [x] Product/Data/Security Owner approval is recorded for the complete SUP-001 contract; SUP-001 is Resolved, and merged PR #85 implements only its selected empty, fully revoked, local-only `public.supplier_ownerships` foundation plus focused synthetic pgTAP.
 - [x] Document 33 separates Firebase authentication/email-verification authority, stable `user_profiles` principals, non-domain `identity_provider_links`, temporal platform roles, Supplier ownership, future memberships, RLS, and command-specific authorization.
 - [x] Document 33 defines exact-link/no-email inference, current high-risk Firebase observation, stale/mismatch failure, collision quarantine, disable/delete/unlink/relink/email/verification/profile lifecycle behavior, and provider-neutral actor provenance.
 - [x] Document 33 finds `user_profiles` plus `identity_provider_links` sufficient for the identity root but not privileged authorization; `platform_role_assignments` is required before relational Claim runtime and remains insufficient without access/bootstrap/security dependencies.
 - [x] The selected empty, fully revoked, local-only `public.platform_role_assignments` foundation has no forward access-grant FK and grants no effective authority; exact SQL/pgTAP remains a separate task.
 - [x] Product/Security/Data Owner approval of document 33 is recorded in PR #83. ID-001 is Resolved, the 11 unrelated Open gates remain unchanged, and `public.platform_role_assignments` is selected as the next identity/access structural SQL candidate without authorizing SQL.
+- [x] Owner-approved document 34 keeps platform roles separate from Firebase Auth, identity linkage, account context, Supplier ownership/membership, organizations, PostgreSQL roles, and RLS.
+- [x] The approved vocabulary is exactly `owner|admin`; `reviewer` is a versioned Claim work assignment and grants nothing without usable Admin/Owner authority.
+- [x] Many users may hold each role, but one user has at most one effective active role; roles have explicit command policies and no implicit numeric precedence.
+- [x] `active|revoked|expired|superseded`, non-overlapping validity, immutable assignment history, terminal provenance, and final-usable-Owner serialization are explicit.
+- [x] Ordinary role administration requires a usable Owner; the recommended first-Owner path is a one-time environment-bound trusted bootstrap of at least two usable Owners plus protected external governance evidence, never a real local seed.
+- [x] Missing/ambiguous profile, provider link, Firebase account, verification, assignment, access, or security evidence fails closed; legacy claims/text/email/domain/ownership/membership never imply a role.
+- [x] The inert `public.platform_role_assignments` table remains fully revoked with no rows, RLS, grants, routine, Auth bridge, access grant, mapping, hosted operation, or authority; exact SQL/pgTAP remains separate.
+- [x] Product/Security/Data Owner approval of document 34 is recorded on 8 August 2026. The contract is complete, `public.platform_role_assignments` is selected as the next SQL slice, exact SQL remains outside PR #86, and all 11 Open gates remain unchanged.
 
 ## B. Relational model and integrity
 

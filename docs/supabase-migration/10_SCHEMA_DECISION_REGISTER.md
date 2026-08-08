@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Decision Register
 
 Status: Design register with local SQL-slice evidence
-Baseline: `origin/main` at `66698525e6aaba4522f9bef44adef57a05f4a067` after merged PR #82
+Baseline: `origin/main` at `22da8db4433c4fe7ca90ebe3b776a4da0a86eef2` after merged PR #85
 Companion design: `09_POSTGRESQL_SCHEMA_DESIGN.md`
 
 ## 1. Use of this register
@@ -36,9 +36,9 @@ On 7 August 2026, the Product/Data Owner approved the capability portion of `28_
 
 The same owner decision selects one future empty, revoked, local-only `public.supplier_capabilities` table as the eighth SQL slice and defers `public.supplier_payment_options`. It creates no decision ID, authorizes no SQL/data work, and resolves none of the 12 Open gates. RFQ-003 remains the legacy quotation price/currency gate; BILL-001 remains the platform billing-subject gate; SEC-001 still owns later client-accessible RLS delivery.
 
-### Post-PR #80 Supplier foundation implementation state
+### Post-PR #85 Supplier foundation implementation state
 
-Merged PR #75 implemented exactly the approved empty, revoked, local-only `public.supplier_capabilities` table plus focused synthetic pgTAP as the eighth local SQL slice. Merged PR #78 implemented exactly the approved empty, revoked, local-only `public.supplier_payment_options` table plus focused synthetic pgTAP as the ninth slice. Merged PR #80 then implemented exactly the approved empty, revoked, local-only `public.supplier_contacts` table, the narrow supporting `supplier_locations` uniqueness object, and focused synthetic pgTAP as the tenth slice. Current `main` therefore contains 16 physical tables representing 14 implemented Core Phase 1 concepts; 22 remain deferred. These implementations added no data, mapping execution, RLS, API access, hosted behavior, Firebase access, or Production/TEST behavior.
+Merged PR #75 implemented exactly the approved empty, revoked, local-only `public.supplier_capabilities` table plus focused synthetic pgTAP as the eighth local SQL slice. Merged PR #78 implemented exactly the empty `public.supplier_payment_options` foundation as the ninth slice, PR #80 implemented the empty `public.supplier_contacts` foundation and narrow supporting location object as the tenth, and PR #85 implemented exactly the empty, fully revoked, local-only `public.supplier_ownerships` foundation plus focused synthetic pgTAP as the eleventh. Current `main` therefore contains 17 physical tables representing 15 implemented Core Phase 1 concepts; 21 remain deferred. These implementations added no real data, mapping execution, RLS, API access, hosted behavior, Firebase access, or Production/TEST behavior.
 
 On 8 August 2026, the Product/Data Owner approved `29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md` for payment options only: indicative Supplier-profile assertions; methods `cash|bank_transfer|cheque|letter_of_credit`; currencies `IQD|USD`; explicit `credit_not_offered` with absence-as-unknown; 1-365 calendar-day credit using only exact `invoice_date|delivery_acceptance_date` starts; separate reviewed 1-100 advance percentage; internal-only notes/provenance/review/ambiguous values; no client projection; and no invented freshness or reviewer authority. Transaction documents remain independently authoritative.
 
@@ -56,13 +56,19 @@ The owner approved `31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT
 
 ### SUP-001 ownership and Claim approval
 
-The Product/Data/Security Owner approved `32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md` on 8 August 2026: one temporal primary human controller per Supplier, one user across multiple Suppliers, future delegates/admins in `supplier_memberships`, optional/separate organizations, private Claim lifecycle/evidence, separate transfer/revocation, same-Supplier privacy, Firebase reconciliation, and the future `supplier_ownership.decide_claim` contract for design purposes only.
+The Product/Data/Security Owner approved `32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md` on 8 August 2026: one temporal primary human controller per Supplier, one user across multiple Suppliers, future delegates/admins in `supplier_memberships`, optional/separate organizations, private Claim lifecycle/evidence, separate transfer/revocation, same-Supplier privacy, Firebase reconciliation, and the future `supplier_ownership.decide_claim` contract for design purposes only. Merged PR #85 implements only the selected empty, fully revoked, local-only ownership foundation.
 
 ### Approved ID-001 contract
 
 On 8 August 2026, the Product/Security/Data Owner approved `33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md` as the complete hybrid Firebase-authority, provider-neutral identity/link, verification mirror, privileged-actor, lifecycle, actor-provenance, reconciliation, and Claim dependency contract. ID-001 is Resolved. `public.platform_role_assignments` is required but insufficient before relational Claim runtime and is selected as the next identity/access structural SQL candidate as one empty, fully revoked, local-only table. The 11 unrelated Open gates remain unchanged; no SQL or runtime is authorized.
 
-SUP-001 is Resolved. One empty, fully revoked, local-only `public.supplier_ownerships` table is selected as the proposed next SQL slice; no SQL, row, Claim table, command runtime, RLS/Auth, audit, notification, reliability runtime, Firebase, hosted, or data work is authorized in this documentation PR.
+SUP-001 is Resolved. Merged PR #85 implements the approved empty, fully revoked, local-only `public.supplier_ownerships` table only; no real row, Claim table, command runtime, RLS/Auth, audit, notification, reliability runtime, Firebase, hosted, or data work is authorized.
+
+### Owner-approved platform-role successor contract
+
+On 8 August 2026, the Product/Security/Data Owner approved `34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md`: exactly `owner|admin`; Claim reviewer remains a versioned work assignment rather than a platform role; many holders per role but only one effective active role per user; `active|revoked|expired|superseded` history; Owner-only ordinary grant authority; future protected bootstrap of at least two usable Owners plus external governance evidence; fail-closed identity/reconciliation; and the empty fully revoked `public.platform_role_assignments` table selected as the next local SQL slice after PR #85.
+
+The approval adds or resolves no gate and preserves all 11 Open gates. It authorizes no SQL, real role rows, bootstrap execution, access, Auth/RLS, Claim runtime, hosted, data, or Production work.
 
 ## 2. Decisions
 
@@ -108,9 +114,9 @@ SUP-001 is Resolved. One empty, fully revoked, local-only `public.supplier_owner
 ## 3. Documentation synchronization
 
 - PR #46 synchronized the normalized zero-to-many wording in `06_CUTOVER_AND_ROLLBACK_PRINCIPLES.md` before this SQL slice began.
-- PR #82 is merged into `origin/main` at `66698525e6aaba4522f9bef44adef57a05f4a067`; the refreshed baseline remains 16 physical / 14 implemented / 22 deferred; at that merge point all 12 gates were still Open.
+- PR #85 is merged into `origin/main` at `22da8db4433c4fe7ca90ebe3b776a4da0a86eef2`; the refreshed baseline is 17 physical / 15 implemented / 21 deferred with 11 Open gates after ID-001 resolution.
 
-Document 32 records the Owner-approved SUP-001 contract and design-only `supplier_ownership.decide_claim` contract. SUP-001 is Resolved and the empty revoked `public.supplier_ownerships` foundation is selected as the proposed next local SQL slice. Document 33 records the approved ID-001 contract and selects the empty revoked `public.platform_role_assignments` foundation as the next identity/access structural SQL candidate without authorizing SQL. REL-001 remains Resolved only for Option D, and the 11 unrelated Open approval gates remain unchanged.
+Document 32 records the Owner-approved SUP-001 and design-only `supplier_ownership.decide_claim` contract; merged PR #85 implements only its empty revoked ownership foundation. Document 33 records the approved ID-001 contract and identifies the empty revoked `public.platform_role_assignments` structural candidate. Owner-approved document 34 fixes the exact role/bootstrap/Claim boundary and selects that table as the next SQL slice while keeping exact SQL separate. REL-001 remains Resolved only for Option D, and all 11 Open approval gates remain unchanged.
 
 ## 4. Approval record
 

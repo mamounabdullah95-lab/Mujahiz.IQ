@@ -5,6 +5,8 @@ Contract date: 8 August 2026
 Verified refresh: `origin/main` `b1afb5a92d2b2e6f1182076c900a8947e049ebf3` after merged PR #81
 Primary task profile: Documentation
 
+Successor note: merged PR #85 implemented the selected empty, fully revoked, local-only `public.supplier_ownerships` foundation as the eleventh SQL slice. Current `main` is `22da8db4433c4fe7ca90ebe3b776a4da0a86eef2` with 17 physical tables, 15 implemented / 21 deferred Core Phase 1 concepts, and 11 Open gates after ID-001 resolution. The historical starting point, validation, and PR #82 stop point below remain evidence for this contract's decision task.
+
 ## 1. Decision boundary and recommendation
 
 This document defines the approved future contract for `public.supplier_ownerships` and the Claim Supplier Profile workflow. It succeeds the higher-level SUP-001 direction in documents 02, 09, 10, and 11 and fixes the command dependency named by REL-001 in document 31 for design purposes only.
