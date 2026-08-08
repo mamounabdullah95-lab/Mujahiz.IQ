@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `22da8db4433c4fe7ca90ebe3b776a4da0a86eef2`.
+- **Verified current fact:** Current GitHub `main`: `7ca5145eaba2859e5d6b1bb30e4b595ac688dfbd`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -205,7 +205,7 @@ The merged second slice remains local-only and synthetic-data-only, without RLS,
 
 #### Open approval gates
 
-The 11 remaining Open approval gates are:
+The 10 remaining Open approval gates are:
 
 - `ORG-001`
 - `ORG-002`
@@ -215,7 +215,6 @@ The 11 remaining Open approval gates are:
 - `SEARCH-001`
 - `FILE-001`
 - `BILL-001`
-- `AUD-001`
 - `RES-001`
 - `MIG-002`
 
@@ -234,11 +233,11 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**AUD-001 audit-evidence contract review is the next documentation decision; no audit SQL is selected on current `main`**
+**`internal.audit_logs` is selected as the next local SQL slice; SQL remains unimplemented**
 
 Merged PR #87 implemented exactly the approved empty, fully revoked, local-only `public.platform_role_assignments` twelfth slice plus focused synthetic pgTAP. Merged PR #88 then added only the local-worktree ignore. Current `main` therefore contains 18 physical tables representing 16 implemented Core Phase 1 concepts; 20 remain deferred.
 
-The owner approved Option D in [`31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md`](../supabase-migration/31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md): create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice. The first future producer path is `supplier_ownership.decide_claim`; the first concrete consumer is one claim-decision notification materializer; and both reliability tables may be introduced later only as one coherent foundation when that producer/consumer path and its delivery dependencies are approved. REL-001 is Resolved for this Option D planning decision only. AUD-001, MSG-003, and all other Open gates remain unchanged, and no SQL, worker, audit, notification, RLS/Auth, Firebase, hosted, Production/TEST, migration, or deployment work is authorized.
+The owner approved Option D in [`31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md`](../supabase-migration/31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md): create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice. The first future producer path is `supplier_ownership.decide_claim`; the first concrete consumer is one claim-decision notification materializer; and both reliability tables may be introduced later only as one coherent foundation when that path and its delivery dependencies are approved. REL-001 remains Resolved for Option D and is unchanged by the separately resolved AUD-001 contract. MSG-003 and all other unrelated Open gates remain unchanged, and no SQL, worker, audit, notification, RLS/Auth, Firebase, hosted, Production/TEST, migration, or deployment work is authorized.
 
 The Product/Data/Security Owner approved [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](../supabase-migration/32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) on 8 August 2026. SUP-001 is Resolved for one active primary human controller per Supplier, multiple Suppliers per user, future delegate/admin memberships, separate optional organizations, unowned-Supplier-only ordinary Claims, immutable evidence/history, fail-closed conflict handling, and the design-only `supplier_ownership.decide_claim` contract. Merged PR #85 later implemented only its selected empty, fully revoked, local-only `public.supplier_ownerships` foundation; real rows and runtime remain unauthorized.
 
@@ -246,7 +245,7 @@ The Product/Data/Security Owner approved [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFI
 
 The Product/Security/Data Owner approved [`34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md`](../supabase-migration/34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md) on 8 August 2026. The complete contract fixes exactly `owner|admin`, excludes `reviewer` as a platform role, preserves one-effective-role cardinality and temporal provenance, and approves a future protected bootstrap of at least two usable Owners. Merged PR #87 later implemented only its selected empty, fully revoked, local-only `public.platform_role_assignments` foundation; no real role rows, bootstrap, Auth/RLS/runtime, hosted, or Production work is authorized.
 
-Decision-ready [`35_AUD_001_AUDIT_EVIDENCE_AND_TRUSTED_MUTATION_CONTRACT.md`](../supabase-migration/35_AUD_001_AUDIT_EVIDENCE_AND_TRUSTED_MUTATION_CONTRACT.md) proposes the minimum append-only, minimized, trusted-command-only audit boundary and one empty, fully revoked, local-only `internal.audit_logs` structural candidate independently of REL-001. AUD-001 remains Open until explicit Product/Security/Data Owner approval. No SQL, audit rows, trusted command, retention job, RLS/grant, reliability/notification runtime, hosted operation, or Production/TEST action is authorized.
+The Product/Security/Data Owner approved [`35_AUD_001_AUDIT_EVIDENCE_AND_TRUSTED_MUTATION_CONTRACT.md`](../supabase-migration/35_AUD_001_AUDIT_EVIDENCE_AND_TRUSTED_MUTATION_CONTRACT.md) on 8 August 2026. AUD-001 is Resolved for the minimum append-only, minimized, trusted-command-only audit boundary; exactly one empty, fully revoked, local-only `internal.audit_logs` table is selected as the next SQL slice independently of REL-001. Exact legal/operational retention periods, holds, purge/privacy rules, registries, access, enforcement, and runtime remain later decisions or implementation gates and do not block the empty foundation. No SQL, audit rows, trusted command, retention job, RLS/grant, reliability/notification runtime, hosted operation, or Production/TEST action is authorized.
 
 ### Product priorities
 

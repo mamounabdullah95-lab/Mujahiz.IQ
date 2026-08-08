@@ -1,8 +1,9 @@
 # AUD-001 audit evidence and trusted mutation contract
 
-Status: **Decision-ready recommendation awaiting Product/Security/Data Owner approval; AUD-001 remains Open; proposes one empty, fully revoked, local-only `internal.audit_logs` table as the next SQL slice; no SQL or runtime implementation authorized**
+Status: **Owner-approved complete Product/Security/Data contract; AUD-001 Resolved; exactly one empty, fully revoked, local-only `internal.audit_logs` table selected as the next SQL slice; no SQL or runtime implementation authorized**
 
 Date: 2026-08-08
+Approval date: 2026-08-08
 
 ## 1. Scope and verified starting point
 
@@ -13,13 +14,13 @@ The verified starting point is refreshed `origin/main` commit `7ca5145eaba2859e5
 - 12 tracked local migrations create 18 physical tables representing 16 implemented Core Phase 1 concepts; 20 of 36 concepts remain deferred;
 - merged PR #85 implemented `public.supplier_ownerships`, and merged PR #87 implemented `public.platform_role_assignments`, as empty, fully revoked, local-only structural foundations;
 - SUP-001 and ID-001 are Resolved, while REL-001 is decision-complete under Option D with no reliability SQL selected;
-- the 11 Open approval gates are `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`;
+- before this approval, the 11 Open gates included AUD-001; after the approval, the 10 remaining Open gates are `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`;
 - Firebase remains authoritative in Production; Supabase remains local-only and non-authoritative; and
 - no Firebase, hosted Supabase, Production/TEST, data, migration, seed, backfill, or deployment access is authorized here.
 
 ## 2. Decision summary
 
-The minimum safe recommendation is:
+The Owner-approved minimum safe contract is:
 
 1. Audit evidence records accountable security- or business-significant attempts and outcomes. It is not domain-event delivery, application activity history, operational logging, or analytics.
 2. Durable audit is required for privileged role and ownership mutations, Claim decisions, trusted migration/reconciliation actions, security-sensitive corrections, and privileged audit-retention maintenance. Ordinary reads and low-value activity are excluded by default.
@@ -32,7 +33,7 @@ The minimum safe recommendation is:
 9. A rejected or conflicted trusted attempt creates no authoritative domain mutation or event. After actor resolution, it requires a separate minimized durable audit outcome; failure to record it cannot turn denial into success.
 10. `internal.audit_logs` is structurally independent from `internal.idempotency_keys` and `internal.domain_events`. Correlation does not make audit an outbox or replay store and does not require a foreign-key dependency.
 11. The empty structural table is non-exposed and fully revoked from `PUBLIC`, `anon`, `authenticated`, and `service_role`, with no rows, RLS, policies, grants, routines, triggers, browser/API path, Auth bridge, or runtime authority.
-12. AUD-001 may be resolved contractually only after explicit Owner approval of this complete boundary. This Draft recommendation does not close the gate.
+12. The explicit Owner approval recorded on 8 August 2026 resolves AUD-001 for this complete contractual boundary and selects only the inert structural foundation; it authorizes no SQL or runtime.
 
 ## 3. Purpose and responsibility boundary
 
@@ -208,12 +209,12 @@ Therefore AUD-001 can select an empty structural audit foundation before the REL
 
 ## 14. Empty structural foundation and dependency matrix
 
-One empty, fully revoked, local-only `internal.audit_logs` table is dependency-safe after Owner approval of this contract when it includes only structural columns/constraints/indexes/comments and focused synthetic pgTAP. It must include no rows, import, trigger, routine, view, RLS/policy, API grant, Auth bridge, trusted command, retention job, event/idempotency table, hosted access, or data movement.
+Exactly one empty, fully revoked, local-only `internal.audit_logs` table is selected as the next SQL slice and is dependency-safe when it includes only structural columns/constraints/indexes/comments and focused synthetic pgTAP. It must include no rows, import, trigger, routine, view, RLS/policy, API grant, Auth bridge, trusted command, retention job, event/idempotency table, hosted access, or data movement.
 
 | Gate/dependency | Empty revoked local audit table | Real audit rows / trusted mutation runtime |
 |---|---|---|
-| Product/Security/Data Owner approval of this contract | Required before exact SQL selection | Required |
-| AUD-001 | Would become Resolved for the approved contract boundary | Approved contract plus remaining operational decisions must be implemented |
+| Product/Security/Data Owner approval of this contract | Satisfied on 8 August 2026 | Satisfied for the contract; remaining implementation/operational approvals still apply |
+| AUD-001 | Resolved for the approved contract boundary | Approved contract plus remaining operational decisions must be implemented |
 | ID-001 / SUP-001 | Resolved; provider-neutral actor/target roots exist | Approved identity/ownership/Claim behavior must be implemented for those actions |
 | `public.platform_role_assignments` | Implemented but empty/inert; no dependency for audit DDL | Role/access/bootstrap/trusted commands required for privilege actions |
 | REL-001 / MSG-003 | No dependency; do not add reliability SQL | Required only for commands with the approved asynchronous consequence; audit never delivers it |
@@ -228,11 +229,11 @@ If separately approved, implemented, and merged, the projected local state becom
 
 ### A. Can AUD-001 be resolved contractually now?
 
-**Yes, after explicit Product/Security/Data Owner approval of this complete contract.** The material purpose, scope, actors, record shape, immutability, minimization, retention-class boundary, Claim/role transaction behavior, REL separation, and trusted-access boundary are decision-ready. This Draft does not silently close AUD-001; it remains Open until that approval is recorded.
+**Yes.** The Product/Security/Data Owner explicitly approved the complete contract on 8 August 2026. Every material purpose, scope, actor, record-shape, immutability, minimization, retention-class, Claim/role transaction, REL-separation, and trusted-access decision is satisfied; AUD-001 is Resolved for this contractual boundary.
 
 ### B. Is one empty, fully revoked local-only audit foundation dependency-safe?
 
-**Yes, conditionally.** It is safe only as the inert `internal.audit_logs` structure in sections 13 and 14, with no rows or runtime behavior and after Owner approval plus a separate exact SQL/pgTAP task.
+**Yes, conditionally.** It is safe only as the inert `internal.audit_logs` structure in sections 13 and 14, with no rows or runtime behavior and with exact SQL/pgTAP kept in a separate task.
 
 ### C. What exact schema-qualified table name does the authoritative design support?
 
@@ -240,7 +241,7 @@ If separately approved, implemented, and merged, the projected local state becom
 
 ### D. Can it become the next SQL slice independently of idempotency/domain events?
 
-**Yes, after Owner approval.** The empty audit foundation has no runtime, consumer, delivery, or foreign-key dependency on REL-001. It does not reopen Option D or select `internal.idempotency_keys`/`internal.domain_events`.
+**Yes; it is selected now.** The empty audit foundation has no runtime, consumer, delivery, or foreign-key dependency on REL-001. It does not reopen Option D or select `internal.idempotency_keys`/`internal.domain_events`.
 
 ### E. Which audit decisions remain required before real rows/runtime?
 
@@ -248,7 +249,7 @@ Exact action/reason/outcome registries and per-action evidence schemas; exact DD
 
 ### F. Which Open gates continue to block `supplier_ownership.decide_claim` after AUD-001 is resolved?
 
-Among the 10 gates that would remain Open after explicit AUD-001 approval:
+Among the 10 gates that remain Open after explicit AUD-001 approval:
 
 - `MSG-003` directly blocks the approved event-to-notification materializer path paired with REL-001 Option D;
 - `RES-001` blocks hosted-environment/runtime approval;
@@ -257,23 +258,23 @@ Among the 10 gates that would remain Open after explicit AUD-001 approval:
 
 `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `SEARCH-001`, and `BILL-001` do not block the approved unowned-Supplier Claim v1 boundary. Separate non-gate blockers remain: implementation of the approved ID-001 behavior; real Claim structures; role-backed access/bootstrap and trusted commands; reviewer/conflict enforcement; exact audit SQL/runtime; the coherent REL-001 reliability foundation and named consumer; RLS/security projections and tests; retention/registry approvals; and explicit hosted/Production authority.
 
-## 16. Remaining Owner decision and recommendation
+## 16. Owner approval record and remaining decisions
 
-One bundled Product/Security/Data Owner decision remains:
+On 8 August 2026, the Product/Security/Data Owner approved this complete contract as written: the strict responsibility separation; scoped authoritative actions; provider-neutral human/service/operator/worker actor model; minimized versioned record shape; append-only correction boundary; sensitive-data exclusions; conceptual retention classes; atomic success audit and fail-closed mutation behavior; minimized accountable denial evidence; Claim and platform-role dependencies; trusted-only access; REL-001 independence; and exactly one empty, fully revoked, local-only `internal.audit_logs` table as the next SQL slice.
 
-> Approve this minimum audit-evidence contract; keep audit separate from events, idempotency, activity, logs, and analytics; require the scoped privileged actions and provider-neutral actor model; require append-only minimized evidence and class-based retention with later legal/operational periods; require same-transaction audit for successful authoritative mutations and minimized durable outcomes for accountable denials; confirm trusted-command-only writes and non-exposed reads; resolve AUD-001 for this contractual boundary; and select exactly one empty, fully revoked, local-only `internal.audit_logs` table as the proposed next SQL slice independently of REL-001.
+AUD-001 is Resolved for that contractual boundary. Exact retention periods, legal holds, purge/privacy rules, registries, DDL/enforcement, read projections, trusted writers, tests, and hosted/runtime approvals remain later decisions or implementation work. They do not block the empty structural foundation.
 
-Approval would resolve AUD-001 contractually and select only the inert structural candidate. It would not approve SQL/pgTAP, real audit rows, retention periods, legal-hold/purge operations, trusted commands, Claim decisions, role bootstrap, role/access rows, RLS/grants, events/idempotency, notifications, Firebase, hosted Supabase, Production/TEST data, migration, merge, or deployment.
+The approval does not authorize SQL/pgTAP, real audit rows, trusted commands, Claim decisions, role bootstrap, role/access rows, RLS/grants, events/idempotency, notifications, Firebase, hosted Supabase, Production/TEST data, migration, merge, or deployment.
 
 ## 17. Validation, risks, and exact stop point
 
 Key risks are turning audit into an outbox or request dump; using Firebase/provider identity as a domain FK; logging unnecessary reads; copying Claim, contact, Auth, or file content; permitting mutable/deletable evidence; allowing client-authored audit; treating a digest as anonymization; committing a privileged mutation without audit; duplicating success evidence on replay; and letting retention expiry silently authorize deletion. This contract fails closed on each risk.
 
-Required checks are documentation-only: refreshed `origin/main` and merged PR #88 evidence; 12 migrations, 18 physical tables, 16 implemented / 20 deferred concepts; exact 11 Open gates; authoritative `internal.audit_logs` naming; relative links and terminology; sensitive-content scan; documentation-only diff; and `git diff --check`.
+Required checks are documentation-only: refreshed `origin/main` and merged PR #88 evidence; 12 migrations, 18 physical tables, 16 implemented / 20 deferred concepts; exact 10 Open gates; authoritative `internal.audit_logs` naming; relative links and terminology; sensitive-content scan; documentation-only diff; and `git diff --check`.
 
-Do not start Supabase, execute migrations, run pgTAP, access Firebase, inspect Production/TEST data, implement SQL, insert audit/role/Claim rows, run bootstrap, change Auth/RLS/grants, implement Claim/reliability/notification runtime, mark the PR Ready, merge, or deploy.
+Do not start Supabase, execute migrations, run pgTAP, access Firebase, inspect Production/TEST data, implement SQL, insert audit/role/Claim rows, run bootstrap, change Auth/RLS/grants, implement Claim/reliability/notification runtime, merge, or deploy.
 
-Exact stop point: one Draft PR containing the decision-ready AUD-001 documentation and current-baseline synchronization. Stop before Owner approval is recorded, AUD-001 is marked Resolved, exact SQL/pgTAP selection or implementation begins, or any real row/runtime/hosted/Production action occurs.
+Exact stop point: PR #89 marked Ready for review with Owner approval recorded, AUD-001 Resolved, all 10 unrelated Open gates preserved, and `internal.audit_logs` selected as the next SQL slice. Stop before exact SQL/pgTAP implementation, any real audit row or trusted-command/runtime/hosted/Production action, merge, or deployment.
 
 ## 18. References
 

@@ -19,7 +19,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] The phase manifest lists all 79 proposed tables exactly once and reconciles Core Phase 1 36, Core Later 10, Future-Compatible 13, Deferred 13, and Remove/Merge 7; `supplier_ownership_claims` remains authoritative but is Core Later, not in the initial slice.
 - [ ] Future-Compatible and Deferred entries explicitly say "do not create yet," and every Remove/Merge entry identifies its replacement.
 - [ ] All 36 decision IDs have one canonical topic/status across design, register, checklist, and cross-references; resolution date, evidence/reference, and resolved state fields are present.
-- [x] ID-001 is Resolved by approved document 33. ORG-001, ORG-002, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, AUD-001, RES-001, and MIG-002 remain the 11 Open approval gates; REL-001 is Resolved for Option D with no SQL slice, SUP-003/SUP-004/SUP-005 are Resolved, and DB-001 is resolved for the implemented local SQL slices only.
+- [x] ID-001 and AUD-001 are Resolved by approved documents 33 and 35. ORG-001, ORG-002, RFQ-003, MSG-002, MSG-003, SEARCH-001, FILE-001, BILL-001, RES-001, and MIG-002 remain the 10 Open approval gates; REL-001 is Resolved for Option D with no SQL slice, SUP-003/SUP-004/SUP-005 are Resolved, and DB-001 is resolved for the implemented local SQL slices only.
 ### Second SQL-slice implementation evidence
 
 - [x] Local implementation branch adds exactly public.user_profiles and internal.identity_provider_links in migration 20260804000200; no third identity/access table, RLS, policy, Auth bridge, browser/API grant, hosted operation, or data operation is included.
@@ -146,8 +146,8 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Retention is class-based without invented legal periods; exact durations, holds, privacy/pseudonymization, archive/purge, backup, and maintenance decisions remain required before real rows/runtime.
 - [x] Successful Claim decisions and role/bootstrap mutations fail closed unless primary audit evidence commits atomically; accountable denied/conflicted attempts receive minimized durable outcomes without domain events or mutation; completed replay reuses the original success audit.
 - [x] `internal.audit_logs` remains logically independent of `internal.idempotency_keys` and `internal.domain_events`; correlation does not create a delivery or FK dependency and does not reopen REL-001 Option D.
-- [x] One empty, fully revoked, non-exposed local-only `internal.audit_logs` structure is recommended as the next slice only after Owner approval and a separate SQL/pgTAP task; current `main` remains 18 / 16 / 20.
-- [ ] Product/Security/Data Owner approves document 35 and explicitly resolves AUD-001 for the contractual boundary. This Draft documentation PR keeps AUD-001 and all 10 unrelated Open gates unchanged.
+- [x] Owner approval selects one empty, fully revoked, non-exposed local-only `internal.audit_logs` structure as the next slice; exact SQL/pgTAP remains a separate task, and current `main` remains 18 / 16 / 20.
+- [x] Product/Security/Data Owner approval of document 35 is recorded on 8 August 2026. AUD-001 is Resolved, exactly one empty `internal.audit_logs` table is selected as the next SQL slice, REL-001 Option D is unchanged, and all 10 unrelated Open gates remain Open.
 
 ## B. Relational model and integrity
 

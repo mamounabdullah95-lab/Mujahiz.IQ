@@ -5,7 +5,7 @@ Status: **Owner-approved complete Product/Security/Data contract; exactly `owner
 Date: 2026-08-08
 Approval date: 2026-08-08
 
-Successor implementation note: merged PR #87 later implemented exactly the selected empty, fully revoked, local-only `public.platform_role_assignments` foundation plus focused synthetic pgTAP. It created no real role rows, bootstrap, access, Auth/RLS/runtime, hosted behavior, or authority. Decision-ready document 35 now proposes the separate AUD-001 contract; AUD-001 remains Open pending explicit Owner approval.
+Successor implementation note: merged PR #87 later implemented exactly the selected empty, fully revoked, local-only `public.platform_role_assignments` foundation plus focused synthetic pgTAP. It created no real role rows, bootstrap, access, Auth/RLS/runtime, hosted behavior, or authority. The Product/Security/Data Owner approved document 35 on 8 August 2026; AUD-001 is Resolved and `internal.audit_logs` is selected as the next empty local SQL slice.
 
 ## 1. Scope and verified starting point
 
@@ -256,15 +256,14 @@ If separately approved, implemented, and merged, the projected local state would
 
 ### E. What remains required before populating any real role rows?
 
-Exact DDL/pgTAP implementation; the role-backed platform-administration access contract and tables; current Firebase/profile/link bridge behavior; approved bootstrap/reconciliation manifests and one-time command; trusted role commands with final-Owner serialization and dual control; AUD-001; security/RLS/projection design and tests; authority-manifest/cutover and rollback plans; MIG-002/RES-001 for hosted use; bounded real-data approval; and applicable migration/Production approvals.
+Exact DDL/pgTAP implementation; the role-backed platform-administration access contract and tables; current Firebase/profile/link bridge behavior; approved bootstrap/reconciliation manifests and one-time command; trusted role commands with final-Owner serialization and dual control; implementation of the approved AUD-001 contract; security/RLS/projection design and tests; authority-manifest/cutover and rollback plans; MIG-002/RES-001 for hosted use; bounded real-data approval; and applicable migration/Production approvals.
 
 Synthetic disposable pgTAP rows in a later local SQL task are not real role population.
 
 ### F. Which Open gates still block `supplier_ownership.decide_claim` runtime?
 
-Among the 11 Open gates:
+After Owner approval of document 35, 10 gates remain Open:
 
-- `AUD-001` blocks required decision and privilege-mutation audit behavior;
 - `MSG-003` blocks the approved event-to-notification materializer path;
 - `MIG-002` and `RES-001` block hosted/Production environment execution; and
 - `FILE-001` is conditional and blocks only a Claim path that stores file-backed evidence.

@@ -344,7 +344,7 @@ Payloads contain no names, email/phone, evidence, notes, notification text, prov
 
 AUD-001 remains the source for attempt/outcome/actor/reason/investigation retention. The audit record is not an outbox and the event is not a complete audit history.
 
-Successor note: decision-ready document 35 proposes one primary audit outcome in the same transaction as every successful approval/rejection; a separate minimized durable outcome for accountable denied/conflicted attempts, including reviewer conflict; and reuse of the original success audit on completed idempotent replay. AUD-001 remains Open pending explicit Owner approval and no command/runtime is authorized.
+Successor note: the Product/Security/Data Owner approved document 35 on 8 August 2026. AUD-001 is Resolved for one primary audit outcome in the same transaction as every successful approval/rejection; a separate minimized durable outcome for accountable denied/conflicted attempts, including reviewer conflict; and reuse of the original success audit on completed idempotent replay. No command/runtime is authorized.
 
 MSG-003 remains the source for bilingual rendering snapshots, protected-notice behavior, class-based retention, read state, channels, and external delivery. The first materializer creates at most one notification per `(event_id, recipient_id, channel)` and marks the event processed in the same transaction. Historical/imported events are fan-out-suppressed.
 
@@ -392,7 +392,7 @@ Ambiguous or conflicting Firebase ownership evidence is always quarantined. Manu
 | ID-001 | **Resolved**; does not block empty provider-neutral FKs | Approved contract must be implemented before authoritative principal/provider validation and real rows | Document 33 approves the complete actor/claimant authentication contract; runtime remains blocked until implementation |
 | Platform role/access foundation | Does not block the ownership table | Required before non-synthetic privileged decisions | `platform_role_assignments` is required but insufficient; current Firebase/profile/link/access/security and reviewer-conflict checks must also pass |
 | ORG-001 / ORG-002 | Do not block under recommended Option B | Block only organization-owned tenancy/bootstrap or organization-derived access | Not required for unowned-Supplier Claim v1; required if organization authority is later added |
-| AUD-001 | Does not block empty table | Blocks non-synthetic ownership decisions/transfer/revocation | Blocks required decision audit implementation |
+| AUD-001 | Resolved; does not block empty table | Approved audit SQL/runtime still blocks non-synthetic ownership decisions/transfer/revocation | Required decision audit contract is approved but unimplemented |
 | MSG-003 | Does not block empty table or ownership history | Does not block an inert empty table | Blocks notification materializer and therefore the approved REL-001 producer/consumer delivery path |
 | REL-001 Option D | No reliability table is included | No event/idempotency runtime yet | Command can be documented now; runtime waits for the coherent reliability foundation and approved consumer |
 | FILE-001 | Does not block ownership table | Blocks file-backed Claim evidence; bounded controlled descriptors remain the only pre-FILE-001 path | Not required if approved evidence uses no stored file object |
@@ -415,7 +415,7 @@ The table must not contain generic unvalidated `source_type/source_id` polymorph
 
 If later separately implemented and merged, the projected local state would be 17 physical tables, 15 implemented Core Phase 1 concepts, and 21 deferred. This documentation task leaves the verified state at 16 / 14 / 22.
 
-`supplier_ownership_claims` is not part of that slice. It remains Core Later and waits for separate Claim retention/evidence, implementation of the approved ID-001 contract, AUD-001, trusted-command runtime, RLS, and REL/MSG delivery approvals.
+`supplier_ownership_claims` is not part of that slice. It remains Core Later and waits for separate Claim retention/evidence, implementation of the approved ID-001 and AUD-001 contracts, trusted-command runtime, RLS, and REL/MSG delivery approvals.
 
 ## 21. Decision status and remaining owner decisions
 
@@ -431,7 +431,7 @@ The Product/Data/Security Owner approved these SUP-001 decisions on 8 August 202
 6. authoritative relational ownership after cutover, with Firebase backlinks retained only as reconciled compatibility evidence; and
 7. the exact empty one-table boundary in section 20 as the proposed next SQL slice.
 
-No additional Owner decision remains for SUP-001, the approved Claim contract, the design-only `decide_claim` contract, or selection of the empty structural table. Exact SQL/pgTAP remains a separate technical task. Real rows and runtime still require implementation of the approved ID-001 contract, AUD-001, MSG-003/REL-001, security/RLS, mapping, retention, migration, hosted, and Production approvals.
+No additional Owner decision remains for SUP-001, the approved Claim contract, the design-only `decide_claim` contract, or selection of the empty structural table. Exact SQL/pgTAP remains a separate technical task. Real rows and runtime still require implementation of the approved ID-001 and AUD-001 contracts, MSG-003/REL-001, security/RLS, mapping, retention, migration, hosted, and Production approvals.
 
 ## 22. Risks, validation, and exact stop point
 
