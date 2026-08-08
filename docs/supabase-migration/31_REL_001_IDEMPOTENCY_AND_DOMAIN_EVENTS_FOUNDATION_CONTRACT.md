@@ -1,8 +1,8 @@
 # REL-001 idempotency and domain-events foundation contract
 
-Status: **Recommended contract; Option D selected; no SQL or runtime implementation authorized**
+Status: **REL-001 resolved for Option D; decision-complete with no SQL slice selected or runtime implementation authorized**
 Contract date: 8 August 2026
-Verified refresh: `origin/main` `1b3c7787fe4ccda7f48c84b037d6f929c4567dd8` after merged PR #79
+Verified refresh: `origin/main` `1849d12dc52ca99f215fd90762948a67b95117c9` after merged PR #80
 Primary task profile: Documentation
 
 ## 1. Decision and implementation boundary
@@ -13,7 +13,7 @@ For REL-001, this document is the specific successor contract to the earlier hig
 
 **Selected option: D — no-go until a first trusted command and its first real event consumer are approved.**
 
-The recommended first producer is a future Supabase-authoritative `decide_supplier_ownership_claim` trusted command. Its first event consumer is one future claim-decision notification materializer for the affected claimant. That pairing is concrete and follows the existing Firebase Claim decision, event, audit, and notification behavior, but it is not currently authorized: Claim Supplier is undeployed, its relational command/aggregate is unimplemented, and `ID-001`, `AUD-001`, and `MSG-003` remain Open.
+The approved first future producer path is a Supabase-authoritative `supplier_ownership.decide_claim` trusted command. Its first concrete consumer is one future claim-decision notification materializer for the affected claimant. That pairing is concrete and follows the existing Firebase Claim decision, event, audit, and notification behavior, but implementation is not currently authorized: Claim Supplier is undeployed, its relational command/aggregate is unimplemented, and `ID-001`, `AUD-001`, and `MSG-003` remain Open.
 
 The two concepts are not universally inseparable. A trusted command that has no asynchronous consequence may use idempotency without a domain event. A domain event must never be created without a named producer, at least one approved consumer or durable integration use, and a replay/retention policy. For the selected first Claim decision path, both concepts belong to one later coherent implementation because that command needs request replay protection and emits a notification-driving fact.
 
@@ -21,13 +21,13 @@ The minimum safe foundation **now is no new table**. Once the first command, reg
 
 ## 2. Verified starting state and authority separation
 
-- Merged PR #79 is the refreshed `origin/main` at `1b3c7787fe4ccda7f48c84b037d6f929c4567dd8`.
-- The tracked local migrations contain 15 physical tables representing 13 implemented Core Phase 1 concepts; 23 of 36 remain deferred.
+- Merged PR #80 is the refreshed `origin/main` at `1849d12dc52ca99f215fd90762948a67b95117c9`.
+- The tracked local migrations contain 16 physical tables representing 14 implemented Core Phase 1 concepts; 22 of 36 remain deferred.
 - `internal.idempotency_keys` and `internal.domain_events` are deferred Core Phase 1 concepts and do not exist in local SQL.
-- Supplier Contacts SQL implementation is active in a separate isolated worktree. This contract neither modifies nor depends on it.
+- Merged PR #80 implemented exactly the approved empty, revoked, local-only `public.supplier_contacts` tenth slice plus focused synthetic pgTAP. This contract does not modify or depend on that implementation.
 - Firebase remains authoritative in Production. Supabase remains local-only, unhosted, and non-authoritative.
 - All 12 Open approval gates remain unchanged: `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
-- REL-001 remains `Recommended`, not `Resolved` or implemented.
+- REL-001 is `Resolved` for the approved Option D planning decision only. It is not implemented and selects no SQL slice.
 
 Current Firebase behavior is evidence, not authority to copy its storage shape. The implemented but undeployed Claim creation command hashes a caller-supplied key, binds it to claimant and payload, returns the same claim for an identical retry, rejects changed-payload or cross-user reuse, and uses a 30-day Claim horizon. Claim decisions create deterministic ownership events, audit rows, and claimant notifications in one Firestore transaction. The relational design preserves those invariants while separating replay protection, integration facts, audit, and notification delivery.
 
@@ -241,32 +241,39 @@ No migration, replay, seed, backfill, TTL cleanup, event import, notification fa
 | A | `idempotency_keys` only | Useful once one approved trusted command needs replay protection but emits no asynchronous fact | Empty table before a command cannot prove fingerprint, result, retention, or lease behavior | Not selected now; valid only with a separately approved concrete command |
 | B | `domain_events` only | Outbox for a named producer/consumer | Without request/source dedupe, a retried producer can duplicate facts; no approved consumer exists | Reject for the current state |
 | C | Both tables treated as universally inseparable | One reliability slice for commands that need both | Overstates the architecture; some commands need only idempotency and some imported events use source identity | Not selected as a universal rule; expected for the proposed first Claim decision path |
-| D | No SQL until the first trusted command, registry entries, consumer, and blocking gates are approved | Prevents an abstract unused outbox and premature identity/retention choices while preserving a complete contract | Defers the tenth/non-Supplier reliability slice and runtime proof | **Selected** |
+| D | No SQL until the first trusted command, registry entries, consumer, and blocking gates are approved | Prevents an abstract unused outbox and premature identity/retention choices while preserving a complete contract | Defers any reliability SQL slice and runtime proof | **Selected and owner-approved** |
 
 Therefore the current minimum safe empty local-only foundation is zero new relations. After approval of the Claim decision path, the minimum coherent foundation becomes exactly `internal.idempotency_keys` plus `internal.domain_events`; it does not include `audit_logs`, `notifications`, a registry table, or a general delivery table.
 
-## 17. Remaining owner decisions and unchanged gates
+## 17. Recorded decision and remaining delivery gates
 
-The following approvals remain before any SQL selection or implementation:
+On 8 August 2026, the owner approved REL-001 Option D:
 
-1. Product/Technical/Security approval that `supplier_ownership.decide_claim` is the first Supabase trusted consumer of idempotency and producer of domain events, including exact aggregate effects and result contract.
-2. ID-001 approval for the authoritative principal/actor identity used by the command.
-3. AUD-001 approval for the separately required decision audit contract; this document does not design it.
-4. MSG-003 approval for the first notification materializer, rendering inputs, protected-notice behavior, and notification retention; this document does not design notification delivery.
-5. Technical/Security/Operations approval of the 60-second lease, 10-attempt cap, error classes, alert/operator ownership, and dead-letter requeue runbook.
-6. Product/Technical/Security/Privacy approval of the two version-1 registry entries, payload fields/limits, event retention classes, idempotency compaction/tombstone classes, and exact durations beyond the 30-day minimum.
-7. Migration/Data approval of legacy event classification, fan-out suppression, replay eligibility, and cutover/rollback reconciliation horizon.
-8. A separate exact SQL/pgTAP selection and implementation task after the preceding decisions; SEC-001 remains required before any client-accessible path, while RES-001 and MIG-002 remain required before hosted work.
+1. implement neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice;
+2. use future `supplier_ownership.decide_claim` as the first trusted producer path;
+3. use one claim-decision notification materializer as the first concrete consumer;
+4. introduce the two reliability tables later as one coherent foundation only when that producer/consumer path and its delivery dependencies are approved; and
+5. keep `audit_logs` and notification-delivery implementation outside this contract while AUD-001 and MSG-003 remain Open.
 
-No Open gate changes status. REL-001 remains Recommended because this document selects the contract and Option D but deliberately withholds implementation approval.
+The following delivery approvals remain before any SQL selection or implementation:
+
+1. ID-001 approval for the authoritative principal/actor identity used by the command.
+2. AUD-001 approval for the separately required decision audit contract; this document does not design it.
+3. MSG-003 approval for the notification materializer's rendering inputs, protected-notice behavior, and notification retention; this document does not design notification delivery.
+4. Technical/Security/Operations approval of the 60-second lease, 10-attempt cap, error classes, alert/operator ownership, and dead-letter requeue runbook.
+5. Product/Technical/Security/Privacy approval of the exact aggregate effects/result contract, two version-1 registry payloads, payload fields/limits, event retention classes, idempotency compaction/tombstone classes, and exact durations beyond the 30-day minimum.
+6. Migration/Data approval of legacy event classification, fan-out suppression, replay eligibility, and cutover/rollback reconciliation horizon.
+7. A later exact SQL/pgTAP selection and implementation task after the preceding decisions; SEC-001 remains required before any client-accessible path, while RES-001 and MIG-002 remain required before hosted work.
+
+No Open gate changes status. REL-001 is Resolved for the Option D architecture/planning decision only; this resolution intentionally selects no SQL slice and implements no command, event, audit, notification, worker, or table.
 
 ## 18. Validation and exact stop point
 
-Required validation is documentation-only: refreshed `origin/main` after merged PR #79; 15 physical tables; 13 implemented and 23 deferred Core Phase 1 concepts; 12 unchanged Open gates; cross-document links and terminology; sensitive-content patterns; documentation-only diff; and `git diff --check`.
+Required validation is documentation-only: refreshed `origin/main` after merged PR #80; 16 physical tables; 14 implemented and 22 deferred Core Phase 1 concepts; 12 unchanged Open gates; cross-document links and terminology; sensitive-content patterns; documentation-only diff; and `git diff --check`.
 
-Do not start Supabase, execute migrations, run pgTAP, access Firebase, inspect Production/TEST data, run worker/runtime tests, implement SQL, modify Supplier Contacts work, mark the PR Ready, merge, or deploy.
+Do not start Supabase, execute migrations, run pgTAP, access Firebase, inspect Production/TEST data, run worker/runtime tests, implement SQL, modify the merged Supplier Contacts foundation, merge, or deploy.
 
-Exact stop point: one Draft PR containing this REL-001 successor contract. Stop before owner approval, SQL/pgTAP selection or implementation, command/worker implementation, audit/notification design, RLS/Auth, data movement, hosted access, Ready status, merge, or deployment.
+Exact stop point: existing PR #81 rebased onto merged PR #80, updated with the owner-approved Option D decision, and marked Ready for review after focused checks. Stop before SQL/pgTAP selection or implementation, command/worker implementation, audit/notification design, RLS/Auth, data movement, hosted access, merge, or deployment.
 
 ## 19. References
 
