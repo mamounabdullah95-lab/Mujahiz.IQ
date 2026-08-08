@@ -153,7 +153,7 @@ The minimum foundation uses a code- and documentation-owned registry, not a thir
 
 Version is separate from event type. Additive optional fields may keep a version only when all registered consumers demonstrably tolerate them; removing, renaming, changing meaning/type/nullability, or changing normalization increments the version. Historical event type/version/payload rows are never rewritten. Consumers explicitly accept supported versions and dead-letter unsupported versions with a safe error code.
 
-The first proposed registry entries are `supplier_ownership.claim_approved` version 1 and `supplier_ownership.claim_rejected` version 1, produced by `supplier_ownership.decide_claim`. Their initial named consumer is `supplier_claim_decision_notification_materializer`. Exact payload schemas and notification behavior remain unapproved until the command contract, `AUD-001`, and `MSG-003` are resolved.
+The first proposed registry entries are `supplier_ownership.claim_approved` version 1 and `supplier_ownership.claim_rejected` version 1, produced by `supplier_ownership.decide_claim`. Their initial named consumer is `supplier_claim_decision_notification_materializer`. Decision-ready document 32 also proposes a bounded `supplier_ownership.claim_superseded` event for competing claimants and exact minimal payload fields. Those successor proposals remain unapproved with SUP-001, `AUD-001`, and `MSG-003`; no registry or notification behavior is implemented.
 
 ## 10. Payload envelope, provenance, and timestamps
 
@@ -186,6 +186,8 @@ The minimum `domain_events` foundation supports one approved internal processor 
 
 ## 12. First trusted command and consumer dependency
 
+[`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) is the decision-ready successor for the version-1 command inputs, outputs, locks, aggregate effects, Claim lifecycle, event payload proposal, and same-Supplier security boundary. SUP-001 remains Recommended pending explicit Owner approval, so that document narrows the contract without authorizing this reliability foundation or runtime work.
+
 The proposed first command is `supplier_ownership.decide_claim` because it has a real aggregate transition and an already evidenced claimant-notification consequence. A later command approval must define, at minimum:
 
 1. current actor/authentication and Admin/Owner authorization under the resolved ID-001 boundary;
@@ -198,7 +200,7 @@ The proposed first command is `supplier_ownership.decide_claim` because it has a
 8. lease, retry, dead-letter, observability, and operator ownership; and
 9. focused concurrency, mismatch, crash, stale-lease, duplicate-event, duplicate-notification, replay, and authorization tests.
 
-Until all nine are approved, `domain_events` has no authorized first processor and the two-table SQL foundation remains no-go. This contract does not enable the undeployed Firebase Claim feature or authorize a Supabase Claim implementation.
+Until the implementation approvals corresponding to all nine requirements are satisfied, `domain_events` has no authorized first processor and the two-table SQL foundation remains no-go. A decision-ready command contract does not enable the undeployed Firebase Claim feature or authorize a Supabase Claim implementation.
 
 ## 13. Boundary with audit logs and notifications
 
@@ -261,7 +263,7 @@ The following delivery approvals remain before any SQL selection or implementati
 2. AUD-001 approval for the separately required decision audit contract; this document does not design it.
 3. MSG-003 approval for the notification materializer's rendering inputs, protected-notice behavior, and notification retention; this document does not design notification delivery.
 4. Technical/Security/Operations approval of the 60-second lease, 10-attempt cap, error classes, alert/operator ownership, and dead-letter requeue runbook.
-5. Product/Technical/Security/Privacy approval of the exact aggregate effects/result contract, two version-1 registry payloads, payload fields/limits, event retention classes, idempotency compaction/tombstone classes, and exact durations beyond the 30-day minimum.
+5. Product/Technical/Security/Privacy approval of document 32's proposed aggregate effects/result contract, approved/rejected/superseded version-1 registry payloads, payload fields/limits, event retention classes, idempotency compaction/tombstone classes, and exact durations beyond the 30-day minimum.
 6. Migration/Data approval of legacy event classification, fan-out suppression, replay eligibility, and cutover/rollback reconciliation horizon.
 7. A later exact SQL/pgTAP selection and implementation task after the preceding decisions; SEC-001 remains required before any client-accessible path, while RES-001 and MIG-002 remain required before hosted work.
 
@@ -283,5 +285,6 @@ Exact stop point: existing PR #81 rebased onto merged PR #80, updated with the o
 - [`10_SCHEMA_DECISION_REGISTER.md`](10_SCHEMA_DECISION_REGISTER.md)
 - [`11_SCHEMA_REVIEW_CHECKLIST.md`](11_SCHEMA_REVIEW_CHECKLIST.md)
 - [`30_SUPPLIER_CONTACTS_PRODUCT_AND_DATA_CONTRACT.md`](30_SUPPLIER_CONTACTS_PRODUCT_AND_DATA_CONTRACT.md)
+- [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md)
 - [`../claim-supplier-backend-deployment.md`](../claim-supplier-backend-deployment.md)
 - [`../ai-context/01_CURRENT_BASELINE.md`](../ai-context/01_CURRENT_BASELINE.md)
