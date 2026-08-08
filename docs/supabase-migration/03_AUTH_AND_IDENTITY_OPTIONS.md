@@ -11,6 +11,12 @@
 
 Official platform references: [Supabase Firebase third-party Auth](https://supabase.com/docs/guides/auth/third-party/firebase-auth), [third-party Auth overview](https://supabase.com/docs/guides/auth/third-party/overview), and [Firebase-to-Supabase Auth migration](https://supabase.com/docs/guides/platform/migrating-to-supabase/firebase-auth).
 
+## Hybrid-phase authority decision
+
+`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md` resolves ID-001 for the hybrid phase: Firebase Auth remains the sole authority for authentication, session/token validity, Firebase UID existence, disablement, email verification, password reset, recovery, and email-action state. `user_profiles` and `identity_provider_links` are provider-neutral application identity and restricted provider-state mirrors; neither authenticates a request or grants privilege from a stale mirror.
+
+This does not choose a post-hybrid Auth provider or authorize the Option A third-party Auth proof of concept. A future trusted boundary must validate the current Firebase subject, map it uniquely to a provider-neutral profile, and then evaluate protected relational role/status/ownership facts. Email, Firebase UID text outside the protected link, JWT application role metadata, and client-provided profile fields never grant authority.
+
 ## Option A — retain Firebase Auth and use it with Supabase
 
 ### Proposed flow

@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-08-rel-001-option-d-resolved`
+Baseline ID: `baseline-2026-08-08-id-001-hybrid-authority-resolved`
 Updated: 2026-08-08
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `b1afb5a92d2b2e6f1182076c900a8947e049ebf3`.
+- **Verified current fact:** Current GitHub `main`: `66698525e6aaba4522f9bef44adef57a05f4a067`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -56,7 +56,8 @@ Evidence labels used below:
 - **Verified current fact:** PR #78 was merged as commit `0640d640e52b743929d4b4b7bedcd1e496ca133c`; its reviewed head `775475451d5f19b130ba60f56299c49c49aeb33c` added exactly the empty local-only `public.supplier_payment_options` foundation plus focused synthetic pgTAP as the ninth local SQL slice.
 - **Verified current fact:** PR #79 was merged as commit `1b3c7787fe4ccda7f48c84b037d6f929c4567dd8`; it approved the Supplier Contacts product/data/security/privacy contract and proposed tenth-slice boundary without SQL or data work.
 - **Verified current fact:** PR #80 was merged as current `main` commit `1849d12dc52ca99f215fd90762948a67b95117c9`; its reviewed head `6dcb6a6b4ba8052b17e47d8964df334869c257eb` added exactly the empty, revoked, local-only `public.supplier_contacts` foundation, the approved supporting location uniqueness object, and focused synthetic pgTAP as the tenth local SQL slice.
-- **Verified current fact:** PR #81 was merged as current `main` commit `b1afb5a92d2b2e6f1182076c900a8947e049ebf3`; it resolved REL-001 for the owner-approved Option D planning decision, selected no SQL slice, and made no SQL, runtime, Firebase, hosted Supabase, Production/TEST, data, or deployment change.
+- **Verified current fact:** PR #81 was merged as commit `b1afb5a92d2b2e6f1182076c900a8947e049ebf3`; it resolved REL-001 for the owner-approved Option D planning decision, selected no SQL slice, and made no SQL, runtime, Firebase, hosted Supabase, Production/TEST, data, or deployment change.
+- **Verified current fact:** PR #82 was merged as current `main` commit `66698525e6aaba4522f9bef44adef57a05f4a067`; it approved the SUP-001 ownership/Claim contract and selected `public.supplier_ownerships` as a proposed local-only slice. It made no SQL, Firebase, hosted Supabase, Production/TEST, data, or deployment change.
 - **Verified current fact:** The fourth through tenth SQL slices remain local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase operation, Firebase access, Production/TEST data operation, data migration, seed, backfill, deployment, or remote SQL occurred.
 - The third SQL slice remains local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase, deployment, Production data, migration, seed, or backfill occurred.
 - The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.
@@ -172,7 +173,7 @@ Do not combine results from different commits or PRs into a new automated-test t
 - **Verified current fact:** GitHub `main` contains the first local migration-control SQL slice: migration `supabase/migrations/20260804000136_migration_control_foundation.sql` creates six governance tables in the non-exposed `internal` schema, and `supabase/tests/migration_control_foundation.sql` supplies repository-tracked synthetic pgTAP coverage.
 - **Verified current fact:** GitHub `main` contains ten local identity/business/application tables: `public.user_profiles`, `public.supplier_profiles`, `public.categories`, `public.administrative_areas`, `public.supplier_locations`, `public.supplier_category_assignments`, `public.supplier_capabilities`, `public.supplier_payment_options`, `public.supplier_contacts`, and non-exposed `internal.identity_provider_links`. No RLS, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
 - **Verified current fact:** No browser integration, API policy, application grant, hosted Supabase project link, or remote migration application exists.
-- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, PR #62, PR #64, PR #65, PR #66, PR #67, PR #68, PR #69, PR #70, PR #71, PR #72, PR #73, PR #74, PR #75, PR #76, PR #77, PR #78, PR #79, PR #80, or PR #81.
+- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, PR #62, PR #64, PR #65, PR #66, PR #67, PR #68, PR #69, PR #70, PR #71, PR #72, PR #73, PR #74, PR #75, PR #76, PR #77, PR #78, PR #79, PR #80, PR #81, or PR #82.
 
 The merged local infrastructure and migration-governance SQL, a future business/application schema, any hosted Supabase project, and Firebase Production are separate states. Supabase is not currently a Production authority.
 
@@ -185,7 +186,7 @@ The merged local infrastructure and migration-governance SQL, a future business/
 - **Verified current fact:** Core Phase 1 remains a maximum candidate set, not approval to create all 36 concepts in one PR. PR #51 implemented the approved two-table identity boundary, PR #54 implemented only the separately bounded `supplier_profiles` local root, PR #59 implemented only `categories`, PR #62 implemented only `administrative_areas`, and PR #68 implemented only `supplier_locations`.
 - **Verified current fact:** The design maps all 35 verified Firestore collections, registers 36 synchronized decisions, and provides a 119-item schema review checklist. DB-001 is resolved for the local first slice to database-generated UUIDv4 through `pg_catalog.gen_random_uuid()`; hosted compatibility remains a later validation gate.
 - **Verified current fact:** MIG-001 is partially implemented only at the declarative schema-contract level. Migration Engine locking, replay lookup, transformation, reconciliation, graph supersession, and rollback execution remain unimplemented.
-- **Verified current fact:** ID-001, MIG-002, RES-001, and all nine other approval gates remain Open; no Auth authority has been chosen, and 12 approval gates remain Open in total.
+- **Verified current fact:** ID-001 is resolved for the Firebase-authoritative hybrid authority boundary in document 33; no future Auth authority has been chosen. The 11 remaining approval gates are Open.
 
 #### Merged second-slice boundary
 
@@ -198,9 +199,8 @@ The merged second slice remains local-only and synthetic-data-only, without RLS,
 
 #### Open approval gates
 
-The 12 remaining Open approval gates are:
+The 11 remaining Open approval gates are:
 
-- `ID-001`
 - `ORG-001`
 - `ORG-002`
 - `RFQ-003`
@@ -232,9 +232,11 @@ Migration sequencing and product priorities are separate.
 
 Merged PR #80 implemented exactly the approved empty, revoked, local-only `public.supplier_contacts` tenth slice plus focused synthetic pgTAP. Current `main` therefore contains 16 physical tables representing 14 implemented Core Phase 1 concepts; 22 remain deferred.
 
-The owner approved Option D in [`31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md`](../supabase-migration/31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md): create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice. The first future producer path is `supplier_ownership.decide_claim`; the first concrete consumer is one claim-decision notification materializer; and both reliability tables may be introduced later only as one coherent foundation when that producer/consumer path and its delivery dependencies are approved. REL-001 is Resolved for this Option D planning decision only. AUD-001, MSG-003, and all other Open gates remain unchanged, and no SQL, worker, audit, notification, RLS/Auth, Firebase, hosted, Production/TEST, migration, or deployment work is authorized.
+The owner approved Option D in [`31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md`](../supabase-migration/31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md): create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice. The first future producer path is `supplier_ownership.decide_claim`; the first concrete consumer is one claim-decision notification materializer; and both reliability tables may be introduced later only as one coherent foundation when that producer/consumer path and its dependencies are approved. REL-001 is Resolved for this Option D planning decision only. AUD-001, MSG-003, and the other remaining Open gates are unchanged, and no SQL, worker, audit, notification, RLS/Auth, Firebase, hosted, Production/TEST, migration, or deployment work is authorized.
 
-The Product/Data/Security Owner approved [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](../supabase-migration/32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) on 8 August 2026. SUP-001 is Resolved for one active primary human controller per Supplier, multiple Suppliers per user, future delegate/admin memberships, separate optional organizations, unowned-Supplier-only ordinary Claims, immutable evidence/history, fail-closed conflict handling, and the design-only `supplier_ownership.decide_claim` contract. One empty, fully revoked, local-only `public.supplier_ownerships` foundation is selected as the proposed next SQL slice; this documentation approval implements no SQL or runtime and leaves all 12 Open approval gates unchanged.
+The Product/Data/Security Owner approved [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](../supabase-migration/32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) on 8 August 2026. SUP-001 is Resolved for one active primary human controller per Supplier, multiple Suppliers per user, future delegate/admin memberships, separate optional organizations, unowned-Supplier-only ordinary Claims, immutable evidence/history, fail-closed conflict handling, and the design-only `supplier_ownership.decide_claim` contract. One empty, fully revoked, local-only `public.supplier_ownerships` foundation is selected as the proposed next SQL slice; this documentation approval implements no SQL or runtime.
+
+The ID-001 review in [`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md`](../supabase-migration/33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md) resolves Firebase-authenticated hybrid authority while preserving Firebase Auth as the authority for authentication, verification, and disablement. The existing provider-neutral identity tables are sufficient as an empty identity foundation but not for privileged runtime. A future empty, fully revoked `platform_role_assignments` foundation is dependency-safe; it remains unimplemented and does not authorize the Claim command. The 11 remaining Open gates are unchanged.
 
 ### Product priorities
 

@@ -13,7 +13,7 @@ For REL-001, this document is the specific successor contract to the earlier hig
 
 **Selected option: D — no-go until a first trusted command and its first real event consumer are approved.**
 
-The approved first future producer path is a Supabase-authoritative `supplier_ownership.decide_claim` trusted command. Its first concrete consumer is one future claim-decision notification materializer for the affected claimant. That pairing is concrete and follows the existing Firebase Claim decision, event, audit, and notification behavior, but implementation is not currently authorized: Claim Supplier is undeployed, its relational command/aggregate is unimplemented, and `ID-001`, `AUD-001`, and `MSG-003` remain Open.
+The approved first future producer path is a Supabase-authoritative `supplier_ownership.decide_claim` trusted command. Its first concrete consumer is one future claim-decision notification materializer for the affected claimant. That pairing is concrete and follows the existing Firebase Claim decision, event, audit, and notification behavior, but implementation is not currently authorized: Claim Supplier is undeployed, its relational command/aggregate is unimplemented, the required privileged-role/provider-validation boundary is unimplemented, and `AUD-001` and `MSG-003` remain Open.
 
 The two concepts are not universally inseparable. A trusted command that has no asynchronous consequence may use idempotency without a domain event. A domain event must never be created without a named producer, at least one approved consumer or durable integration use, and a replay/retention policy. For the selected first Claim decision path, both concepts belong to one later coherent implementation because that command needs request replay protection and emits a notification-driving fact.
 
@@ -26,7 +26,7 @@ The minimum safe foundation **now is no new table**. Once the first command, reg
 - `internal.idempotency_keys` and `internal.domain_events` are deferred Core Phase 1 concepts and do not exist in local SQL.
 - Merged PR #80 implemented exactly the approved empty, revoked, local-only `public.supplier_contacts` tenth slice plus focused synthetic pgTAP. This contract does not modify or depend on that implementation.
 - Firebase remains authoritative in Production. Supabase remains local-only, unhosted, and non-authoritative.
-- All 12 Open approval gates remain unchanged: `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
+- ID-001 is resolved for the Firebase-authoritative hybrid authority boundary by document 33. The 11 remaining Open approval gates are `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002`.
 - REL-001 is `Resolved` for the approved Option D planning decision only. It is not implemented and selects no SQL slice.
 
 Current Firebase behavior is evidence, not authority to copy its storage shape. The implemented but undeployed Claim creation command hashes a caller-supplied key, binds it to claimant and payload, returns the same claim for an identical retry, rejects changed-payload or cross-user reuse, and uses a 30-day Claim horizon. Claim decisions create deterministic ownership events, audit rows, and claimant notifications in one Firestore transaction. The relational design preserves those invariants while separating replay protection, integration facts, audit, and notification delivery.
@@ -259,7 +259,7 @@ On 8 August 2026, the owner approved REL-001 Option D:
 
 The following delivery approvals remain before any REL-001 SQL selection or runtime implementation:
 
-1. ID-001 approval for the authoritative principal/actor identity used by the command.
+1. implementation and review of document 33's authoritative principal/provider-validation and privileged-role boundary, including `platform_role_assignments`.
 2. AUD-001 approval for the separately required decision audit contract; this document does not design it.
 3. MSG-003 approval for the notification materializer's rendering inputs, protected-notice behavior, and notification retention; this document does not design notification delivery.
 4. Technical/Security/Operations approval of the 60-second lease, 10-attempt cap, error classes, alert/operator ownership, and dead-letter requeue runbook.

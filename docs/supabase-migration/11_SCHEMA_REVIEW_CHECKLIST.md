@@ -25,14 +25,14 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Local implementation branch adds exactly public.user_profiles and internal.identity_provider_links in migration 20260804000200; no third identity/access table, RLS, policy, Auth bridge, browser/API grant, hosted operation, or data operation is included.
 - [x] Synthetic focused pgTAP covers accepted/rejected profile and provider-link states, Firebase text-subject traceability, active uniqueness, lifecycle coherence, RESTRICT delete behavior, migration-control compatibility, and absent API access; the focused result is 78/78 and the complete local suite is 138/138.
 - [x] Local warning-level lint and catalog checks verify expected constraints/indexes and zero application triggers, functions, policies, and direct anon/authenticated/service API table privileges.
-- [ ] ID-001, MIG-002, RES-001, and every other listed Open gate remain unresolved; Firebase Auth remains authoritative and a later trusted validation/reconciliation phase is required before integration.
+- [ ] At the first-slice implementation point, ID-001, MIG-002, RES-001, and every other listed Open gate remained unresolved. Document 33 later resolves ID-001 for the Firebase-authoritative hybrid boundary; trusted validation/reconciliation implementation remains required before integration.
 
 ### Third SQL-slice implementation evidence
 
 - [x] Local implementation branch adds exactly `public.supplier_profiles` in migration `20260804000300`; no Supplier child, ownership, organization, eligibility, Auth, RLS, policy, browser/API grant, hosted operation, or data operation is included.
 - [x] Synthetic focused pgTAP covers the Supplier root shape, UUID default, bounded bilingual names and lifecycle/provenance values, nullable/restricting actor references, legacy-ID uniqueness, migration-control compatibility, deferred-table absence, and absent API access; the focused result is 84/84 and the complete local suite is 222/222.
 - [x] Local warning-level lint and catalog checks verify expected constraints/indexes and zero application triggers, functions, policies, and direct anon/authenticated/service API table privileges.
-- [ ] At the third-slice merge, ID-001, ORG-001, ORG-002, SUP-003, SUP-004, MIG-002, RES-001, and every other listed Open gate remained unresolved; Firebase Auth remained authoritative and Supplier ownership/RLS/Auth work remained a later separately approved phase.
+- [ ] At the third-slice merge, ID-001, ORG-001, ORG-002, SUP-003, SUP-004, MIG-002, RES-001, and every other listed Open gate remained unresolved. Document 33 later resolves only the Firebase-authoritative hybrid ID-001 boundary; Firebase Auth remains authoritative and Supplier ownership/RLS/Auth work remains separately approved.
 ### Fourth SQL-slice implementation evidence
 
 - [x] Merged PR #59 adds exactly `public.categories` in migration `20260805000100`; no taxonomy vocabulary, alias, Supplier assignment, RLS, policy, browser/API grant, hosted operation, or data operation is included.
@@ -60,7 +60,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Merged PR #73 implements the selected one empty, revoked, local-only assignment table plus structural enforcement and disposable synthetic pgTAP; no alias table, rows, mapping execution, RLS, Auth, application access, hosted work, Firebase, or Production behavior is included.
 - [x] On 6 August 2026, the founder-led Product/Data Owner explicitly approved Option B and the complete `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` as written.
 - [x] The same owner decision selected the exact seventh-slice SQL/test boundary; merged PR #73 implemented it without scope expansion. Merged PR #80 establishes the current state at 16 physical / 14 implemented / 22 deferred.
-- [x] SUP-003 was already Resolved and remains closed. All 12 Open gates remain unresolved and unchanged; this contract approval neither closes nor weakens any of them.
+- [x] SUP-003 was already Resolved and remains closed. At that contract approval, all 12 Open gates remained unresolved and unchanged; document 33 later resolves only ID-001 for the hybrid boundary.
 
 ### Supplier capabilities and payment-options contract review (not part of the 119 design-review items)
 
@@ -138,7 +138,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 ## C. Identity, organization, and authorization readiness
 
 - [ ] Application user UUID is separated from provider subject/Firebase UID under ID-002.
-- [ ] Authentication authority and migration duration remain Open under ID-001; Stage 1 idempotently bootstraps an unverified Firebase profile/link with current account context and no verified-only benefit, while Stage 2 refreshes Firebase-authoritative verification/disablement and grants the first verified trial/access benefit at most once.
+- [x] ID-001 resolves the hybrid authority boundary: Firebase Auth remains authoritative for authentication, verification, and disablement; provider-neutral PostgreSQL profiles/links are bounded mirrors and no mirror authenticates or grants privilege. A later Auth-provider cutover remains separately deferred; see document 33.
 - [ ] Platform Owner/Admin assignments follow ID-003: temporal, trusted-only, one effective active role absent reviewed exception, and Owner/Admin incompatible.
 - [ ] The usable-Owner predicate requires an active profile, approved account status, compatible current account context, active Firebase link, Firebase-verified/non-disabled identity, active Owner assignment, valid trusted administration access, and all repository-backed trusted-admin/security eligibility conditions.
 - [ ] Provider unlink/disable, verification loss/mirror correction, profile suspension, account-status/context change, role demotion/removal/expiry, access revocation/correction/expiry, identity disablement, and future eligibility corrections all serialize on and re-evaluate the complete usable-Owner set.
