@@ -139,7 +139,7 @@ The fifth SQL slice merged by PR #62 adds only `public.administrative_areas` thr
 
 ### Sixth local SQL-slice selection status
 
-The documentation decision in `25_SIXTH_SQL_SLICE_SUPPLIER_LOCATIONS_SELECTION.md` selected exactly one empty `public.supplier_locations` table. PR #68 later implemented that exact local-only, synthetic-data-only boundary without rows, mapping execution, contacts, RLS, policies, API privileges, application integration, hosted operations, Firebase access, or Production behavior. The verified state is now 12 implemented / 24 deferred Core Phase 1 concepts across 14 physical tables.
+The documentation decision in `25_SIXTH_SQL_SLICE_SUPPLIER_LOCATIONS_SELECTION.md` selected exactly one empty `public.supplier_locations` table. PR #68 later implemented that exact local-only, synthetic-data-only boundary without rows, mapping execution, contacts, RLS, policies, API privileges, application integration, hosted operations, Firebase access, or Production behavior. The verified state at the sixth-slice implementation point was 10 implemented / 26 deferred Core Phase 1 concepts across 12 physical tables.
 
 ### Seventh local SQL-slice selection status
 
