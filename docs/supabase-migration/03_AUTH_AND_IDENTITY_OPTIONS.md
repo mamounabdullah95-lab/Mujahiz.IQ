@@ -4,6 +4,8 @@
 
 [`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md`](33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md) is the Owner-approved hybrid-phase authority, provider-neutral principal/link, verification-mirror, privileged-actor, lifecycle, reconciliation, and Claim dependency contract. Firebase Auth remains the sole hybrid authentication/email-verification authority; `public.user_profiles` plus `internal.identity_provider_links` are the approved identity foundation; and ID-001 is Resolved. The contract authorizes no integration or hosted work.
 
+[`34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md`](34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md) is the decision-ready successor recommendation for exactly `owner|admin`, temporal assignments, first-Owner bootstrap, fail-closed identity use, and the Claim reviewer boundary. Owner approval and separate SQL/runtime tasks remain required.
+
 ## Current identity contract
 
 - **[Verified current fact]** Firebase Auth is the password, session, email-verification, password-reset, and email-action authority. Sources: `src/contexts/AuthContext.tsx`, `src/services/emailVerification.ts`, `src/services/passwordRecovery.ts`, and `src/services/emailActions.ts`.
