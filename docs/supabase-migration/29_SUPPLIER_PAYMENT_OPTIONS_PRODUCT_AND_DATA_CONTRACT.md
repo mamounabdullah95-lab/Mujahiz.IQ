@@ -1,29 +1,29 @@
 # Supplier payment options product/data contract
 
-Status: **Decision-ready recommendation; Product/Data Owner approval required; no SQL selected or authorized**
+Status: **Product/Data Owner approved; proposed ninth SQL slice selected; no SQL implementation authorized**
 Contract date: 8 August 2026
-Verified start: `origin/main` `25536e09d84adac950023e5903c855cbf847b236` after merged PR #75
+Verified refresh: `origin/main` `f9a09061305b99929b598ba34581629f1178b5e5` after merged PR #76
 Primary task profile: Documentation
 
-## 1. Decision boundary and recommendation
+## 1. Decision boundary and approval
 
-This document defines the recommended product/data contract for future `public.supplier_payment_options` only. It succeeds the deferred payment analysis in `28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md`; it does not change the approved or implemented `public.supplier_capabilities` boundary.
+This document defines the approved product/data contract for future `public.supplier_payment_options` only. It succeeds the deferred payment analysis in `28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md`; it does not change the approved or implemented `public.supplier_capabilities` boundary.
 
-The recommended contract is:
+The approved contract is:
 
-- one payment-option row is a reviewed, time-bounded, indicative Supplier-profile assertion that a payment method, settlement currency, credit arrangement, or advance-payment arrangement is generally available for consideration;
+- one payment-option row is a reviewed, lifecycle-managed, indicative Supplier-profile assertion that a payment method, settlement currency, credit arrangement, or advance-payment arrangement is generally available for consideration;
 - the assertion is not a quotation term, purchase-order term, contract acceptance, credit approval, payment instruction, bank detail, promise to transact, or evidence of settlement;
 - methods, settlement currencies, positive or negative credit availability, and advance-payment timing use mutually exclusive type-specific row shapes in one table;
 - absence of a row means unknown, never a negative assertion;
 - ambiguous, contradictory, inferred, unknown, or unmapped evidence creates no active canonical row;
 - the base table remains non-public and unavailable to API roles until a separately approved RLS/projection task; and
-- RFQs, quotations, purchase orders, and executed contracts independently state their own commercial terms and always take precedence for their transaction. A Supplier payment option never overrides, fills, defaults, or amends those terms.
+- RFQs, quotations, purchase orders, invoices, and executed contracts independently state their own commercial terms and always take precedence for their transaction. A Supplier payment option never overrides, fills, defaults, or amends those terms.
 
-The smallest dependency-safe future SQL slice is one empty, revoked, local-only `public.supplier_payment_options` table with focused disposable synthetic pgTAP. This is a recommendation, not approval or implementation authority. Product/Data Owner approval and a separate exact SQL/pgTAP selection task are still required.
+The Product/Data Owner approved this contract and selected exactly one empty, revoked, local-only `public.supplier_payment_options` table as the proposed ninth SQL slice. This selection authorizes no SQL or pgTAP implementation; exact DDL and focused disposable synthetic pgTAP remain a separate future task.
 
 ## 2. Verified starting state
 
-- PR #75 is merged into `origin/main` at `25536e09d84adac950023e5903c855cbf847b236`; its reviewed head `ce1f76ee2173616a3694b5ee373c64f7d23e13ee` implemented exactly the empty local-only `public.supplier_capabilities` foundation plus focused synthetic pgTAP.
+- PR #76 is merged into `origin/main` at `f9a09061305b99929b598ba34581629f1178b5e5`, preserving the post-PR75 canonical baseline. PR #75 implemented exactly the empty local-only `public.supplier_capabilities` foundation plus focused synthetic pgTAP.
 - The tracked local migrations contain 14 physical SQL tables representing 12 implemented Core Phase 1 concepts. Of the 36 Core Phase 1 concepts, 24 remain deferred.
 - `public.supplier_profiles`, `public.user_profiles`, and `public.supplier_capabilities` exist locally. `public.supplier_payment_options` does not.
 - Firebase remains the live Production backend. Supabase remains local-only. This task accesses neither backend and moves no data.
@@ -37,13 +37,13 @@ Current repository values are source evidence, not the canonical contract:
 | `acceptsCredit` | Optional boolean | Absence is unknown; `false` is a reviewed explicit-negative candidate; `true` is incomplete without valid days and an approved exact start-event mapping |
 | `creditDays[]` | Zero to 12 unique integers, each 1-365 | Each distinct reviewed days/start pair is a positive credit option; array order has no meaning |
 | `creditStart` | `invoice_date`, `delivery_date`, or `invoice_approval` | Preserve as pending evidence; none maps automatically to the exact codes in section 5 |
-| `creditTermsNote` | Optional bounded text | Restricted supporting evidence only; it never creates an option or enters the first Buyer projection |
+| `creditTermsNote` | Optional bounded text | Restricted supporting evidence only; it never creates an option or enters any client projection without separate approval |
 | Commercial-looking `capabilityTags[]` | Includes cash, transfer, and pricing-language tags | Route to payment review, but pricing is not settlement-currency acceptance |
 | RFQ payment-term constants and search inference | Transaction request values and derived search intent | Never Supplier-profile provenance and never migrated into this table |
 
 ## 3. Canonical semantics and type shapes
 
-The recommended first contract uses exactly four option types. Each active row satisfies exactly one shape; fields for every other shape are null.
+The approved first contract uses exactly four option types. Each active row satisfies exactly one shape; fields for every other shape are null.
 
 | `option_type` | Required value | Type-specific parameters | Exact meaning |
 |---|---|---|---|
@@ -60,7 +60,7 @@ Position is presentation order within the Supplier's active payment-option set o
 
 ### Methods
 
-The recommended initial method codes are:
+The approved initial method codes are:
 
 | Code | Exact indicative meaning | Does not mean |
 |---|---|---|
@@ -73,7 +73,7 @@ The recommended initial method codes are:
 
 ### Settlement currencies
 
-The recommended contract version supports exactly `IQD` and `USD`, stored as uppercase ISO 4217 codes. A settlement-currency row means only that the Supplier may generally consider receiving transaction settlement in that currency.
+The approved contract version supports exactly `IQD` and `USD`, stored as uppercase ISO 4217 codes. A settlement-currency row means only that the Supplier may generally consider receiving transaction settlement in that currency.
 
 It does not mean that the Supplier prices every quotation in that currency, that the Buyer must pay in it, that conversion is available, that an exchange rate is fixed, or that every method supports that currency. Other currencies remain `unknown` or `pending_review` until a versioned contract expansion approves them.
 
@@ -99,20 +99,18 @@ The Supplier-profile row does not calculate a payable amount, due timestamp, hol
 
 ### Exact credit-start codes
 
-The recommended exact codes are:
+The approved initial exact codes are:
 
 | Code | Exact start-event meaning | Explicit exclusions |
 |---|---|---|
-| `invoice_issue_date` | The issue date printed on the Supplier's final transaction invoice | Draft/pro-forma date, Buyer receipt date, submission date, or approval date |
-| `goods_receipt_date` | The calendar date on which the Buyer acknowledges physical receipt of the goods at the transaction's agreed delivery point | Dispatch date, carrier pickup, estimated delivery, inspection completion, or acceptance unless the transaction explicitly makes them the same event |
-| `service_acceptance_date` | The calendar date on which the Buyer records formal acceptance of the completed service under the transaction's acceptance process | Work start, informal completion claim, invoice issue, or mere invoice receipt |
-| `buyer_invoice_approval_date` | The calendar date on which the Buyer's authorized workflow gives final approval of the invoice for payment | Supplier approval, invoice issue, invoice receipt, data entry, or an intermediate review |
+| `invoice_date` | The issue date printed on the Supplier's final transaction invoice | Draft/pro-forma date, Buyer receipt date, submission date, approval date, or any other unlabeled invoice event |
+| `delivery_acceptance_date` | The calendar date on which the Buyer formally records delivery acceptance under the transaction-specific acceptance process | Dispatch, carrier pickup, estimate, informal completion, or mere receipt unless the transaction explicitly defines that receipt as formal acceptance |
 
-No combined `delivery_or_acceptance_date` or generic `invoice_date` code is canonical because either would hide materially different events. The current Firebase values remain pending:
+The code name alone never proves source equivalence. Current Firebase values remain pending evidence even where a label resembles an approved code:
 
-- `invoice_date` does not prove issue versus receipt or another invoice date;
-- `delivery_date` is labeled as delivery in English and receipt in Arabic and does not distinguish goods receipt from service acceptance; and
-- `invoice_approval` does not identify the approving party or finality of approval.
+- legacy `invoice_date` does not prove issue versus receipt or another invoice event;
+- legacy `delivery_date` is labeled as delivery in English and receipt in Arabic and does not prove formal delivery acceptance; and
+- legacy `invoice_approval` is not an approved start event and does not identify the approving party or finality.
 
 A later source-specific mapping may activate only when versioned evidence proves one exact event. Otherwise the value remains `pending_review`, `unmapped`, or `rejected` with no target row.
 
@@ -122,14 +120,14 @@ A later source-specific mapping may activate only when versioned evidence proves
 
 - It is a timing arrangement, not a payment method, currency, credit plan, deposit receipt, or default requirement.
 - A null `advance_percentage` means the existence of an indicative advance arrangement is reviewed but no percentage is proven. It never means 100%.
-- A known percentage is greater than 0 and at most 100, recorded exactly to a later selected bounded decimal scale. Zero is invalid; 100 is allowed only with explicit evidence.
+- A known percentage must be reviewed and bounded from 1 through 100 inclusive, recorded exactly to a later selected bounded decimal scale. Zero is invalid; 100 is allowed only with explicit evidence.
 - The percentage applies to the transaction total as that later quotation/contract defines it. The Supplier-profile assertion does not define tax, freight, retention, installment base, or payable amount and therefore does not resolve RFQ-003.
 - Evidence that says an advance is mandatory, refundable, milestone-specific, secured, or conditional is more specific than this first profile assertion and remains restricted review evidence unless a later contract adds that meaning.
 - Current Supplier Firebase controlled values prove no advance-payment option. RFQ constants such as `full_advance` and `partial_advance` describe a transaction request, not a Supplier profile, and create no Supplier payment row.
 
 ## 7. Notes and information boundaries
 
-The first base-table boundary permits one optional bounded `review_note` attached by a commercial reviewer to one exact option. It is internal restricted evidence.
+The first base-table boundary permits one optional bounded `review_note` attached during a later authorized review to one exact option. It is internal restricted evidence and records no authority by itself.
 
 - `review_note` never creates an option, supplies a missing required code/parameter, repairs a contradiction, or changes canonical semantics.
 - Current `creditTermsNote` may become a row note only when review can attach it unambiguously to one exact credit plan. Otherwise it remains no-target source evidence.
@@ -139,7 +137,7 @@ The first base-table boundary permits one optional bounded `review_note` attache
 
 The `public` schema name is not a visibility decision. The base relation remains revoked and non-public.
 
-## 8. Provenance, review, lifecycle, ownership, and freshness
+## 8. Provenance, review, lifecycle, ownership, and deferred authority
 
 Payment rows follow the bounded governance pattern already used for reviewed Supplier children:
 
@@ -151,13 +149,13 @@ Payment rows follow the bounded governance pattern already used for reviewed Sup
 | Review | Provider-neutral reviewer FK and review time required before activation; a note and confidence value are evidence only |
 | Actors/time | Provider-neutral created/updated actor FKs and timestamps; browser identity and client timestamps are never authoritative |
 | Lifecycle | `draft`, `active`, `superseded`, `archived`; terminal rows are retained as history |
-| Validity | `valid_from` on activation; `valid_until` on reviewed terminal closure; strict increasing interval |
+| Validity | `valid_from` records activation; `valid_until` records reviewed terminal closure and is not an invented freshness expiry; strict increasing interval |
 
-The Product/Data Owner owns the contract vocabulary, method/currency/start-event versions, mapping versions, note policy, projection wording, review cadence, and reviewer delegation. A designated commercial data reviewer owns activation and closure decisions. A Supplier owner, contributor, import, migration process, or administrator may later propose evidence only under separately approved authority; none may self-activate a canonical row merely by writing source data.
+The Product/Data Owner owns the contract vocabulary, method/currency/start-event versions, mapping versions, and note policy. Reviewer identity and review evidence are recorded as provenance, but this table grants no reviewer authority. Reviewer delegation, trusted activation/closure operations, and their security checks remain a future trusted-operation/security concern. A Supplier owner, contributor, import, migration process, administrator, or recorded reviewer may later act only under separately approved authority; none may self-activate a canonical row merely by writing source data.
 
 Material changes to option type/code, currency, credit availability/days/start, advance percentage, source decision, or canonical meaning close the active row and create a reviewed successor. Presentation-only order may use a later trusted update when history and concurrency checks allow it. No normal hard delete is allowed after activation, migration mapping, or downstream historical reference.
 
-This contract recommends time-bounded validity but does not silently choose a universal review interval. Product/Data Owner approval must select the initial freshness/review-cadence policy before non-synthetic activation or projection.
+This foundation invents no universal review cadence, freshness interval, automatic expiry, or stale-row behavior. Any later freshness policy requires a separate owner decision and must not be inferred from lifecycle dates.
 
 ## 9. Normalization and duplicate prevention
 
@@ -212,11 +210,11 @@ Mapping outcomes remain `unknown`, `pending_review`, `mapped`, `unmapped`, and `
 - The base table is non-public and revoked from `public`, `anon`, `authenticated`, and `service_role` in any future empty local slice.
 - No browser role directly inserts, activates, changes, archives, or deletes a row. Future proposals and reviews use separately approved trusted commands.
 - RLS is not column security. Audience reads require field-minimized security-invoker views or RPC projections after an Extra High Security review under SEC-001.
-- No anonymous payment-option projection is recommended.
-- A future separately approved authenticated-Buyer projection may expose only active, in-validity standardized labels: method, settlement currency, positive/negative credit label with days/start label, and advance label/percentage, always accompanied by clear indicative/non-binding wording.
-- The Buyer projection excludes internal notes, evidence, source namespace/reference, mapping versions, confidence, reviewer/actor identity, review timestamps unless separately justified as a freshness label, position metadata, drafts/history, contradictions, unknown/unmapped values, and prohibited bank/instrument data.
-- Whether explicit `credit_not_offered` is shown to Buyers is an owner product decision; it must never be inferred from absence.
-- Supplier-owner proposal/view access, reviewer access, freshness wording, localization, and exact Buyer eligibility remain later Product/Security decisions. This contract selects no Auth provider, role, grant, policy, view, RPC, or command.
+- No anonymous or public payment-option projection is approved in this slice.
+- No authenticated-Buyer or other client projection is approved in this slice; any future projection requires a separate Product/Security contract and approval.
+- Internal notes, evidence, source namespace/reference, mapping versions, confidence, reviewer/actor identity, review timestamps, position metadata, drafts/history, contradictions, ambiguous/unmapped values, and prohibited bank/instrument data remain restricted and outside every unapproved client boundary.
+- Explicit `credit_not_offered` is not projected in this slice and must never be inferred from absence.
+- Supplier-owner proposal/view access, reviewer access, any freshness wording, localization, audience eligibility, and every future projected field remain later Product/Security decisions. This contract selects no Auth provider, role, grant, policy, view, RPC, or command.
 - Payment options do not participate in search ranking, RFQ eligibility, automatic RFQ defaults, quotation generation, commercial comparison, or billing. Each requires a separate contract and implementation.
 
 ## 12. Evidence required before any data movement
@@ -234,9 +232,9 @@ Before any Supplier payment transformation, population, backfill, reconciliation
 9. dry-run reconciliation by source outcome, Supplier, option type/code, explicit negatives, positive credit pairs, duplicates collapsed, contradictions, unknowns, and deterministic replay;
 10. forward/reverse trace and target-content fingerprints for every active target and reviewed merge contributor;
 11. rollback/supersession plan preserving source dispositions, historical rows, shared targets, and dependency order;
-12. Product/Data Owner-approved freshness/review-cadence and stale-row handling;
+12. explicit lifecycle-date treatment under this contract, with no fabricated freshness, expiry, review cadence, or stale-row rule;
 13. separately approved field-minimized projection/RLS design with positive/negative tests before any client access; and
-14. explicit Product/Data Owner approval of the contract/mapping versions plus separately authorized environment and data-migration plans.
+14. this recorded contract approval plus explicit future approval of the mapping version, environment, data authority, and migration plan.
 
 Counts alone are insufficient. Any unexplained value, contradiction, collision, target, duplicate, reverse trace, source disposition, or replay difference blocks movement.
 
@@ -244,7 +242,7 @@ Counts alone are insufficient. Any unexplained value, contradiction, collision, 
 
 | Option | Boundary | Benefit | Cost/risk | Disposition |
 |---|---|---|---|---|
-| A | One typed `supplier_payment_options` table with mutually exclusive method/currency/credit/advance shapes | One Core Phase 1 concept, one Supplier/reviewer lifecycle, one provenance contract, and type-specific active uniqueness without new reference-table dependencies | Some cross-row rules require a later trusted command; nullable typed columns require exact shape checks | **Recommended smallest dependency-safe slice after owner approval** |
+| A | One typed `supplier_payment_options` table with mutually exclusive method/currency/credit/advance shapes | One Core Phase 1 concept, one Supplier/reviewer lifecycle, one provenance contract, and type-specific active uniqueness without new reference-table dependencies | Some cross-row rules require a later trusted command; nullable typed columns require exact shape checks | **Selected proposed ninth slice** |
 | B | Methods and currencies now; defer credit and advance columns/constraints | Smallest immediate semantic surface | Partially implements one logical concept, invites a second schema expansion, and leaves the central credit contract unresolved | Do not select |
 | C | Four tables: methods, currencies, credit terms, and timing | Homogeneous rows and simpler per-table checks | Four tables, repeated governance columns, broader pgTAP/RLS/projection surface, and unnecessary joins for the current scale | Reject for the next slice |
 | D | One payment-profile header plus four type-specific child tables | Strong extensibility and shared review header | Five tables and a parent lifecycle not justified by current evidence | Reject for the next slice |
@@ -253,11 +251,11 @@ Counts alone are insufficient. Any unexplained value, contradiction, collision, 
 
 Option A depends only on the existing restrictive `public.supplier_profiles` root and existing provider-neutral `public.user_profiles` reviewer/actor identities. It needs no capability/category/location relation, currency reference table, organization, RFQ/quotation table, billing table, Auth bridge, RLS, hosted environment, or data row.
 
-## 14. Recommended smallest SQL slice
+## 14. Selected smallest SQL slice
 
-After Product/Data Owner approval and a separate implementation-selection task, the recommended ninth SQL slice is exactly one future empty `public.supplier_payment_options` table plus its focused disposable synthetic pgTAP contract.
+The approved product/data direction selects exactly one future empty, revoked, local-only `public.supplier_payment_options` table as the proposed ninth SQL slice. No SQL or pgTAP implementation is approved in this documentation task.
 
-The later exact selection may include:
+A later separately authorized exact SQL/pgTAP task may include:
 
 - database-generated UUIDv4 identity;
 - restrictive Supplier and nullable provider-neutral reviewer/actor FKs;
@@ -267,38 +265,38 @@ The later exact selection may include:
 - structural lookup indexes, table/column comments, and complete API-role privilege revocation; and
 - focused synthetic pgTAP proving accepted/rejected shapes, duplicate boundaries, restrictive FKs, absence of rows/access objects, and continued deferral of all out-of-scope concepts.
 
-The empty table is dependency-safe as the next SQL slice only after the contract and exact DDL/test boundary are explicitly approved. Non-synthetic activation remains blocked until a trusted mutation path can enforce cross-row credit contradiction and lifecycle rules. Data movement remains blocked on section 12.
+The product/data contract is complete and the empty table is dependency-safe as the proposed next SQL slice. Exact DDL and test approval still precede implementation. Non-synthetic activation remains blocked until a separately approved trusted mutation path can enforce review authority, cross-row credit contradiction, and lifecycle rules. Data movement remains blocked on section 12.
 
 If that one-table slice were later authorized and merged, the projected local state would be 15 physical tables, 13 implemented Core Phase 1 concepts, and 23 deferred concepts. This documentation task leaves the verified state at 14 / 12 / 24.
 
-## 15. Remaining owner decisions
+## 15. Recorded owner decisions and remaining technical boundary
 
-The Product/Data Owner must explicitly approve, reject, or amend:
+On 8 August 2026, the Product/Data Owner approved:
 
 1. the indicative/non-binding Supplier-profile meaning and the rule that transaction terms always remain independent and authoritative;
 2. the one-table Option A boundary and four mutually exclusive option types;
 3. method codes `cash`, `bank_transfer`, `cheque`, and `letter_of_credit`;
 4. initial settlement currencies `IQD` and `USD`, including the pricing-versus-settlement distinction;
 5. `credit_offered`/`credit_not_offered`, absence-as-unknown, positive/negative mutual exclusion, and 1-365 calendar-day meaning;
-6. the four exact credit-start codes and the decision not to auto-map any current Firebase start label;
-7. the advance-availability meaning, nullable percentage, and treatment of mandatory/refundable/milestone wording as later evidence;
+6. exact credit-start codes `invoice_date` and `delivery_acceptance_date`, with no automatic mapping from any ambiguous current Firebase start label;
+7. the separate advance-availability meaning, nullable reviewed percentage bounded from 1 through 100 when present, and treatment of mandatory/refundable/milestone wording as later evidence;
 8. internal-only first-boundary notes and the prohibition on note-driven semantics;
-9. no anonymous projection, the future authenticated-Buyer projection boundary, and whether explicit no-credit may be shown;
-10. the initial freshness/review cadence, stale-row handling, and commercial reviewer delegation; and
-11. whether `public.supplier_payment_options` may proceed to a separate exact SQL/pgTAP selection task as the ninth slice.
+9. no anonymous, public, authenticated-Buyer, or other client projection in this slice; internal/restricted fields stay outside any future projection unless separately approved;
+10. no invented freshness, expiry, review cadence, or reviewer authority in this foundation; reviewer authority remains a future trusted-operation/security concern; and
+11. exactly one empty, revoked, local-only `public.supplier_payment_options` foundation as the proposed ninth SQL slice, without approving its SQL or pgTAP implementation.
 
 Technical-owner decisions remain later and do not belong to this product approval: exact column names/types/lengths, decimal scale, constraint/index expressions, comment wording, and the focused pgTAP assertion plan.
 
 ## 16. Unchanged approval gates and domain separation
 
-This recommendation creates no new decision ID and resolves none of the 12 Open gates.
+This approval and proposed-slice selection create no new decision ID and resolve none of the 12 Open gates.
 
 - RFQ-003 remains Open for legacy quotation price, amount, currency, tax, freight, and comparison semantics. A Supplier settlement-currency or advance row does not answer it.
 - BILL-001 remains Open for platform subscription/billing ownership. Supplier-to-Buyer commercial options are not platform billing.
 - SEC-001 remains the recommended later RLS/projection delivery gate; this task designs no policy or client access.
 - ID-001, ORG-001, ORG-002, MSG-002, MSG-003, SEARCH-001, FILE-001, AUD-001, RES-001, and MIG-002 remain unchanged and outside this contract.
 
-Open means not approved. Neither this document nor a Draft PR approval silently closes a gate or authorizes SQL, data movement, hosted work, merge, or deployment.
+Open means not approved. This recorded payment-contract approval closes no unrelated gate and authorizes no SQL, data movement, hosted work, merge, or deployment.
 
 ## 17. Risks
 
@@ -308,16 +306,16 @@ Open means not approved. Neither this document nor a Draft PR approval silently 
 - Explicit no-credit can be incorrectly inferred from absence or allowed to coexist with positive plans without a trusted cross-row mutation boundary.
 - Indicative values can be mistaken for accepted terms unless every projection carries non-binding wording and every RFQ/quotation snapshots independent terms.
 - Cheque, LC, advance, and notes can attract bank, instrument, personal, or commercially sensitive data that this table must prohibit.
-- Stale payment assertions may mislead Buyers unless review cadence and validity behavior are approved before activation/projection.
+- Any future activation or projection could mislead its audience unless that separate task approves the required review authority and, where needed, a freshness policy; this foundation invents neither.
 - A one-table design needs rigorous mutually exclusive checks; implementation before exact review would allow invalid mixed shapes.
 
 ## 18. Validation and exact stop point
 
-Required validation is documentation-only: latest refreshed `origin/main`/PR #75 lineage, 14 physical tables, 12 implemented / 24 deferred Core Phase 1 concepts, 12 unchanged Open gates, links, terminology, sensitive-content review, documentation-only diff, and `git diff --check`.
+Required validation is documentation-only: latest refreshed `origin/main` after merged PR #76 and PR #75 lineage, 14 physical tables, 12 implemented / 24 deferred Core Phase 1 concepts, 12 unchanged Open gates, links, terminology, sensitive-content review, documentation-only diff, and `git diff --check`.
 
 Do not start Supabase, replay migrations, run pgTAP, access Firebase, run the application build, run repository suites, implement SQL, or create data.
 
-Exact stop point: one Draft PR containing the decision-ready payment-options-only contract and synchronized documentation. Stop before Product/Data Owner approval, Ready-for-review transition, exact SQL/pgTAP selection, SQL implementation, mapping execution, data movement, RLS, Auth, hosted work, merge, or deployment.
+Exact stop point: existing PR #77 refreshed onto merged PR #76, containing the approved payment-options-only contract and synchronized documentation, and marked Ready for review after focused checks. Stop before SQL/pgTAP implementation, mapping execution, data movement, RLS, Auth, hosted work, merge, or deployment.
 
 ## 19. References
 

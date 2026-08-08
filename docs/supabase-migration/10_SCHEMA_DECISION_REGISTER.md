@@ -36,13 +36,13 @@ On 7 August 2026, the Product/Data Owner approved the capability portion of `28_
 
 The same owner decision selects one future empty, revoked, local-only `public.supplier_capabilities` table as the eighth SQL slice and defers `public.supplier_payment_options`. It creates no decision ID, authorizes no SQL/data work, and resolves none of the 12 Open gates. RFQ-003 remains the legacy quotation price/currency gate; BILL-001 remains the platform billing-subject gate; SEC-001 still owns later client-accessible RLS delivery.
 
-### Post-PR #75 capability implementation and payment-option recommendation
+### Post-PR #75 capability implementation and approved payment-option selection
 
 Merged PR #75 implemented exactly the approved empty, revoked, local-only `public.supplier_capabilities` table plus focused synthetic pgTAP as the eighth local SQL slice. Current `main` therefore contains 14 physical tables representing 12 implemented Core Phase 1 concepts; 24 remain deferred. This implementation did not add payment options, rows, mapping execution, RLS, API access, hosted behavior, Firebase access, or Production/TEST behavior.
 
-`29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md` is the decision-ready successor for payment options only. It recommends one typed table, controlled method and settlement-currency codes, exact positive/negative credit semantics and start events, bounded advance semantics, internal-only notes, reviewed provenance/lifecycle, type-specific duplicate prevention, lossless ambiguous Firebase routing, no anonymous projection, and a future field-minimized Buyer projection. The Product/Data Owner has not yet approved that contract or selected the ninth SQL slice.
+On 8 August 2026, the Product/Data Owner approved `29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md` for payment options only: indicative Supplier-profile assertions; methods `cash|bank_transfer|cheque|letter_of_credit`; currencies `IQD|USD`; explicit `credit_not_offered` with absence-as-unknown; 1-365 calendar-day credit using only exact `invoice_date|delivery_acceptance_date` starts; separate reviewed 1-100 advance percentage; internal-only notes/provenance/review/ambiguous values; no client projection; and no invented freshness or reviewer authority. Transaction documents remain independently authoritative.
 
-This recommendation creates no decision ID and resolves none of the 12 Open gates. RFQ-003 remains the legacy quotation price/currency gate; BILL-001 remains the platform billing-subject gate; SEC-001 still owns later client-accessible RLS delivery. A Draft PR approval, without an explicit Product/Data Owner decision recorded in the contract, does not approve the payment vocabulary, exact mapping, SQL/pgTAP selection, data movement, RLS, or hosted work.
+The same owner decision selects exactly one future empty, revoked, local-only `public.supplier_payment_options` table as the proposed ninth SQL slice. It creates no decision ID, resolves none of the 12 Open gates, and authorizes no SQL/pgTAP implementation, mapping, data movement, RLS, or hosted work. RFQ-003 remains the legacy quotation price/currency gate; BILL-001 remains the platform billing-subject gate; SEC-001 still owns any later client-accessible RLS/projection delivery.
 
 
 ## 2. Decisions
