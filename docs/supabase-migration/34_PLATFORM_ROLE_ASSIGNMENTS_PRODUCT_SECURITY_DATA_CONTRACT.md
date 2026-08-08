@@ -1,8 +1,10 @@
 # Platform role assignments Product/Security/Data contract
 
-Status: **Decision-ready recommendation awaiting Product/Security/Data Owner approval; proposes one empty, fully revoked, local-only `public.platform_role_assignments` table as the next SQL slice; no SQL or runtime implementation authorized**
+Status: **Owner-approved complete Product/Security/Data contract; exactly `owner|admin`; one empty, fully revoked, local-only `public.platform_role_assignments` table selected as the next SQL slice; no SQL or runtime implementation authorized**
 
 Date: 2026-08-08
+Approval date: 2026-08-08
+
 
 ## 1. Scope and verified starting point
 
@@ -20,14 +22,14 @@ The verified starting point is refreshed `origin/main` commit `22da8db4433c4fe7c
 
 ## 2. Decision summary
 
-The smallest safe recommendation is:
+The approved smallest safe contract is:
 
 1. Platform roles authorize privileged platform administration only. They are separate from authentication identity, Firebase Auth, account context, Supplier ownership, Supplier memberships/delegation, organizations, PostgreSQL roles, and RLS.
 2. The initial platform-role vocabulary is exactly `owner|admin`. `reviewer` is a versioned Claim work assignment/capability, not a platform role.
 3. One user profile may have historical assignments but at most one effective active platform role at a time. One role may be held by multiple users. Duplicate or overlapping effective assignments for the same user are prohibited.
 4. Owner and Admin are independent policy codes, not a numeric hierarchy. Owner-only governance powers are explicit; an Owner does not receive every future Admin operation through implicit precedence.
 5. Assignments are temporal, append-and-terminalize history. Active authority requires both active lifecycle state and an in-time validity interval. Revoked, expired, or superseded assignments authorize nothing and are never reactivated.
-6. Ordinary role grants and terminations require a currently usable Owner acting through a trusted command. The first Owner is the only bootstrap exception and requires an approved one-time external-authority bootstrap process.
+6. Ordinary role grants and terminations require a currently usable Owner acting through a trusted command. The initial Owner set is the only bootstrap exception and requires the approved one-time external-authority process for at least two usable Owners.
 7. A role row alone grants no authority. Current Firebase, exact identity linkage, active profile, current platform-administration access, security eligibility, and command-specific checks must all pass in the same authorization attempt.
 8. Both Admin and Owner may eventually execute `supplier_ownership.decide_claim` only when the command policy expressly permits the role and every Claim assignment/conflict predicate passes. A reviewer assignment alone is insufficient.
 9. The empty structural table has no RLS, browser/API grants, trusted routines, Auth bridge, access grants, rows, or authority. Its base privileges remain revoked from `PUBLIC`, `anon`, `authenticated`, and `service_role`.
@@ -93,7 +95,7 @@ This prevents a future Admin permission from silently becoming an Owner permissi
 
 ## 6. Temporal lifecycle and immutable history
 
-The decision-ready lifecycle vocabulary is exactly:
+The approved lifecycle vocabulary is exactly:
 
 - `active` — the assignment may be considered only while the current time is within its half-open validity interval and every external eligibility predicate passes;
 - `revoked` — intentionally ended by an authorized governance action;
@@ -217,7 +219,7 @@ Missing, duplicated, one-sided, stale, or contradictory evidence is quarantined.
 
 | Gate/dependency | Empty revoked local table | Real role rows | `supplier_ownership.decide_claim` runtime |
 |---|---|---|---|
-| Product/Security/Data Owner approval of this contract | **Required before exact SQL selection** | Required | Required contract boundary |
+| Product/Security/Data Owner approval of this contract | **Resolved**; exact empty-table slice selected | Approved contract still governs later real rows | Approved contract boundary; runtime remains separately gated |
 | ID-001 | **Resolved**; does not block inert structure | Approved contract must be implemented | Current Firebase/profile/link validation must be implemented |
 | SUP-001 | Resolved; does not block | Does not grant platform roles | Ownership/Claim contract approved for design; runtime still gated |
 | Platform access/bootstrap/trusted commands | No forward access FK; not required for empty table | Required before any real assignment | Required; role assignment alone is insufficient |
@@ -235,7 +237,7 @@ All 11 Open gates remain Open. This contract resolves no approval-gate ID and do
 
 ### A. What is the minimum approved role vocabulary?
 
-The recommendation is exactly `owner|admin`. It becomes approved only when the Product/Security/Data Owner approves this complete contract. `reviewer` is deliberately excluded as a platform role.
+The approved vocabulary is exactly `owner|admin`. `reviewer` is deliberately excluded as a platform role and remains a future Claim/workflow assignment concept.
 
 ### B. Can `platform_role_assignments` be dependency-safe as one empty, fully revoked local-only table?
 
@@ -247,13 +249,13 @@ The recommendation is exactly `owner|admin`. It becomes approved only when the P
 
 ### D. Can it become the next SQL slice?
 
-**Yes, after Owner approval of this contract.** Document 33 already selected it as the next identity/access structural candidate. PR #85 implemented the prior ownership slice, so one empty `public.platform_role_assignments` table is the smallest coherent next local slice. Exact DDL and focused synthetic pgTAP require a separate task and approval.
+**Yes; it is selected now.** Document 33 identified it as the next identity/access structural candidate, and this approved contract selects exactly one empty, fully revoked, local-only `public.platform_role_assignments` table as the next SQL slice. Exact DDL and focused synthetic pgTAP remain a separate task and approval.
 
 If separately approved, implemented, and merged, the projected local state would become 18 physical tables, 16 implemented Core Phase 1 concepts, and 20 deferred. This documentation task leaves current `main` at 17 / 15 / 21.
 
 ### E. What remains required before populating any real role rows?
 
-Owner approval of this contract; exact DDL/pgTAP implementation; the role-backed platform-administration access contract and tables; current Firebase/profile/link bridge behavior; approved bootstrap/reconciliation manifests and one-time command; trusted role commands with final-Owner serialization and dual control; AUD-001; security/RLS/projection design and tests; authority-manifest/cutover and rollback plans; MIG-002/RES-001 for hosted use; bounded real-data approval; and applicable migration/Production approvals.
+Exact DDL/pgTAP implementation; the role-backed platform-administration access contract and tables; current Firebase/profile/link bridge behavior; approved bootstrap/reconciliation manifests and one-time command; trusted role commands with final-Owner serialization and dual control; AUD-001; security/RLS/projection design and tests; authority-manifest/cutover and rollback plans; MIG-002/RES-001 for hosted use; bounded real-data approval; and applicable migration/Production approvals.
 
 Synthetic disposable pgTAP rows in a later local SQL task are not real role population.
 
@@ -268,13 +270,22 @@ Among the 11 Open gates:
 
 `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `SEARCH-001`, and `BILL-001` do not block the approved unowned-Supplier Claim v1 boundary. Separate non-gate blockers remain: implementing the approved ID-001 behavior, platform-role/access/bootstrap/trusted commands, Claim structures, the REL-001 coherent reliability foundation and consumer, reviewer/conflict enforcement, RLS/security delivery, and exact hosted/Production approvals.
 
-## 15. Remaining Owner decision and recommended approval
+## 15. Owner approval record and remaining decisions
 
-One bundled Product/Security/Data Owner decision remains:
+On 8 August 2026, the Product/Security/Data Owner approved this complete contract and recorded these decisions:
 
-> Approve this contract with exactly `owner|admin`; exclude `reviewer` as a platform role; allow at most one effective active platform role per user with multiple holders per role and no implicit precedence; approve the four-state temporal/provenance boundary and Owner-only post-bootstrap grant authority; select the one-time trusted bootstrap command plus external governance evidence as the safest future bootstrap method; allow Admin and Owner to execute assigned Claim reviews only under the complete usable-actor/conflict predicate; and confirm one empty, fully revoked, local-only `public.platform_role_assignments` table as the proposed next SQL slice.
+1. the platform-role vocabulary is exactly `owner|admin`, and `reviewer` is not a platform role;
+2. one user has at most one effective active role, multiple users may hold either role, and no implicit precedence exists;
+3. command permissions remain explicit, role history/provenance remains preserved, and lifecycle is exactly `active|revoked|expired|superseded`;
+4. platform roles remain separate from Firebase authentication/email verification, Supplier ownership/membership/delegation, organizations, and RLS, with all missing/stale/ambiguous/conflicting evidence failing closed;
+5. ordinary future role administration is Owner-controlled through separately approved trusted operations;
+6. the future protected bootstrap establishes at least two usable Owners from protected external governance evidence and explicit reconciliation, without authorizing execution now;
+7. usable Owner and Admin actors may later perform assigned Claim decisions only after identity, role, reviewer-assignment, conflict, and command-specific security checks pass; and
+8. exactly one empty, fully revoked, local-only `public.platform_role_assignments` table is selected as the next SQL slice.
 
-Approval would make the contract decision-complete and select the structural slice only. It would not authorize SQL, pgTAP, real assignments, bootstrap execution, access grants, Auth/RLS, Claim runtime, audit/reliability/notification work, hosted access, data movement, merge, or deployment.
+No Owner decision remains for this contract or its empty structural slice selection. Exact SQL/pgTAP remains a separate technical task. Real rows and runtime remain subject to the dependencies and approvals in sections 13-14.
+
+This approval does not authorize SQL, pgTAP, real assignments, bootstrap execution, access grants, Auth/RLS, Claim runtime, audit/reliability/notification work, hosted access, data movement, merge, or deployment.
 
 ## 16. Validation, risks, and exact stop point
 
@@ -282,9 +293,9 @@ Key risks are creating a global reviewer privilege; treating Owner/Admin as a un
 
 Required checks are documentation-only: refreshed `origin/main` and PR #85 merge evidence; 11 migrations, 17 physical tables, 15 implemented / 21 deferred concepts; ID-001/SUP-001 resolution; exact 11 Open gates; cross-document links and terminology; sensitive-content scan; documentation-only diff; and `git diff --check`.
 
-Do not start Supabase, execute migrations, run pgTAP, access Firebase, inspect Production/TEST data, implement SQL, create role rows, run bootstrap, change Auth/RLS/grants, implement Claim/audit/reliability/notification runtime, mark the PR Ready, merge, or deploy.
+Do not start Supabase, execute migrations, run pgTAP, access Firebase, inspect Production/TEST data, implement SQL, create role rows, run bootstrap, change Auth/RLS/grants, implement Claim/audit/reliability/notification runtime, merge, or deploy.
 
-Exact stop point: one Draft PR containing the decision-ready documentation and current-baseline synchronization. Stop before Owner approval is recorded, exact SQL/pgTAP selection or implementation begins, any real role assignment is created, or any runtime/hosted/Production action occurs.
+Exact stop point: PR #86 marked Ready for review with Owner approval recorded, the contract complete, all 11 unrelated Open gates preserved, and `public.platform_role_assignments` selected as the next SQL slice. Stop before exact SQL/pgTAP implementation, any real role assignment/bootstrap/runtime/hosted/Production action, merge, or deployment.
 
 ## 17. References
 

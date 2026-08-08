@@ -231,7 +231,7 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**Platform role assignments contract review; no SQL authorized**
+**`public.platform_role_assignments` is selected as the next local SQL slice; SQL remains unimplemented**
 
 Merged PR #85 implemented exactly the approved empty, revoked, local-only `public.supplier_ownerships` eleventh slice plus focused synthetic pgTAP. Current `main` therefore contains 17 physical tables representing 15 implemented Core Phase 1 concepts; 21 remain deferred.
 
@@ -241,7 +241,7 @@ The Product/Data/Security Owner approved [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFI
 
 [`33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md`](../supabase-migration/33_ID_001_IDENTITY_AUTHORITY_AND_PRIVILEGED_ACTOR_CONTRACT.md) records the Owner-approved Firebase-authoritative hybrid identity and privileged-actor contract. ID-001 is Resolved; `public.user_profiles` plus `internal.identity_provider_links` are the approved provider-neutral identity foundation; and one empty, fully revoked, local-only `public.platform_role_assignments` foundation is selected as the next identity/access structural SQL candidate. The approval authorizes no SQL, role population, Auth/RLS/runtime, data, hosted, or Production work.
 
-[`34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md`](../supabase-migration/34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md) is the decision-ready successor recommendation for the exact role vocabulary, temporal/cardinality/provenance contract, first-Owner bootstrap, Claim reviewer boundary, and inert next-slice restrictions. Product/Security/Data Owner approval remains required; this documentation task authorizes no SQL, role rows, bootstrap, runtime, hosted, or Production work.
+The Product/Security/Data Owner approved [`34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md`](../supabase-migration/34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md) on 8 August 2026. The complete contract fixes exactly `owner|admin`, excludes `reviewer` as a platform role, preserves one-effective-role cardinality and temporal provenance, approves a future protected bootstrap of at least two usable Owners, and selects exactly one empty, fully revoked, local-only `public.platform_role_assignments` table as the next SQL slice. No SQL, role rows, bootstrap, Auth/RLS/runtime, hosted, or Production work is authorized.
 
 ### Product priorities
 

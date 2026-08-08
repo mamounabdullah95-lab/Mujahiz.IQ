@@ -4,7 +4,7 @@ Status: **Owner-approved Product/Security/Data contract; ID-001 Resolved for the
 
 Date: 2026-08-08
 
-Successor note: merged PR #85 implemented `public.supplier_ownerships`; current `main` is `22da8db4433c4fe7ca90ebe3b776a4da0a86eef2` with 17 physical tables, 15 implemented / 21 deferred Core Phase 1 concepts, and 11 Open gates. [`34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md`](34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md) supplies the decision-ready exact role vocabulary, lifecycle/cardinality/provenance, bootstrap, and Claim-review boundary while preserving this approved ID-001 contract. Product/Security/Data Owner approval and separate SQL/runtime work remain required.
+Successor note: merged PR #85 implemented `public.supplier_ownerships`; current `main` is `22da8db4433c4fe7ca90ebe3b776a4da0a86eef2` with 17 physical tables, 15 implemented / 21 deferred Core Phase 1 concepts, and 11 Open gates. Owner-approved [`34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md`](34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md) fixes the exact role vocabulary, lifecycle/cardinality/provenance, protected bootstrap, and Claim-review boundary while preserving this approved ID-001 contract, and selects the empty role table as the next SQL slice. Separate SQL/runtime work remains required.
 
 ## 1. Decision scope and verified starting point
 

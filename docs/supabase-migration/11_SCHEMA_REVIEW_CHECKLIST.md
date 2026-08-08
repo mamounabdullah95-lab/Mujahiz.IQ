@@ -126,14 +126,14 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Document 33 finds `user_profiles` plus `identity_provider_links` sufficient for the identity root but not privileged authorization; `platform_role_assignments` is required before relational Claim runtime and remains insufficient without access/bootstrap/security dependencies.
 - [x] The selected empty, fully revoked, local-only `public.platform_role_assignments` foundation has no forward access-grant FK and grants no effective authority; exact SQL/pgTAP remains a separate task.
 - [x] Product/Security/Data Owner approval of document 33 is recorded in PR #83. ID-001 is Resolved, the 11 unrelated Open gates remain unchanged, and `public.platform_role_assignments` is selected as the next identity/access structural SQL candidate without authorizing SQL.
-- [x] Decision-ready document 34 keeps platform roles separate from Firebase Auth, identity linkage, account context, Supplier ownership/membership, organizations, PostgreSQL roles, and RLS.
-- [x] The minimum recommended vocabulary is exactly `owner|admin`; `reviewer` is a versioned Claim work assignment and grants nothing without usable Admin/Owner authority.
+- [x] Owner-approved document 34 keeps platform roles separate from Firebase Auth, identity linkage, account context, Supplier ownership/membership, organizations, PostgreSQL roles, and RLS.
+- [x] The approved vocabulary is exactly `owner|admin`; `reviewer` is a versioned Claim work assignment and grants nothing without usable Admin/Owner authority.
 - [x] Many users may hold each role, but one user has at most one effective active role; roles have explicit command policies and no implicit numeric precedence.
 - [x] `active|revoked|expired|superseded`, non-overlapping validity, immutable assignment history, terminal provenance, and final-usable-Owner serialization are explicit.
 - [x] Ordinary role administration requires a usable Owner; the recommended first-Owner path is a one-time environment-bound trusted bootstrap of at least two usable Owners plus protected external governance evidence, never a real local seed.
 - [x] Missing/ambiguous profile, provider link, Firebase account, verification, assignment, access, or security evidence fails closed; legacy claims/text/email/domain/ownership/membership never imply a role.
 - [x] The inert `public.platform_role_assignments` table remains fully revoked with no rows, RLS, grants, routine, Auth bridge, access grant, mapping, hosted operation, or authority; exact SQL/pgTAP remains separate.
-- [ ] Product/Security/Data Owner approves document 34 and its proposed next-slice selection. This Draft documentation PR records the recommendation only and leaves all 11 Open gates unchanged.
+- [x] Product/Security/Data Owner approval of document 34 is recorded on 8 August 2026. The contract is complete, `public.platform_role_assignments` is selected as the next SQL slice, exact SQL remains outside PR #86, and all 11 Open gates remain unchanged.
 
 ## B. Relational model and integrity
 

@@ -64,11 +64,11 @@ On 8 August 2026, the Product/Security/Data Owner approved `33_ID_001_IDENTITY_A
 
 SUP-001 is Resolved. Merged PR #85 implements the approved empty, fully revoked, local-only `public.supplier_ownerships` table only; no real row, Claim table, command runtime, RLS/Auth, audit, notification, reliability runtime, Firebase, hosted, or data work is authorized.
 
-### Decision-ready platform-role successor contract
+### Owner-approved platform-role successor contract
 
-`34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md` recommends exactly `owner|admin`; treats Claim reviewer as a versioned work assignment rather than a platform role; permits many holders per role but only one effective active role per user; defines `active|revoked|expired|superseded` history, Owner-only ordinary grant authority, and a one-time trusted bootstrap of at least two usable Owners plus external governance evidence; and confirms the inert `public.platform_role_assignments` table as the proposed next local SQL slice after PR #85.
+On 8 August 2026, the Product/Security/Data Owner approved `34_PLATFORM_ROLE_ASSIGNMENTS_PRODUCT_SECURITY_DATA_CONTRACT.md`: exactly `owner|admin`; Claim reviewer remains a versioned work assignment rather than a platform role; many holders per role but only one effective active role per user; `active|revoked|expired|superseded` history; Owner-only ordinary grant authority; future protected bootstrap of at least two usable Owners plus external governance evidence; fail-closed identity/reconciliation; and the empty fully revoked `public.platform_role_assignments` table selected as the next local SQL slice after PR #85.
 
-Product/Security/Data Owner approval remains required. The recommendation adds or resolves no gate and authorizes no SQL, real role rows, bootstrap, access, Auth/RLS, Claim runtime, hosted, data, or Production work.
+The approval adds or resolves no gate and preserves all 11 Open gates. It authorizes no SQL, real role rows, bootstrap execution, access, Auth/RLS, Claim runtime, hosted, data, or Production work.
 
 ## 2. Decisions
 
@@ -116,7 +116,7 @@ Product/Security/Data Owner approval remains required. The recommendation adds o
 - PR #46 synchronized the normalized zero-to-many wording in `06_CUTOVER_AND_ROLLBACK_PRINCIPLES.md` before this SQL slice began.
 - PR #85 is merged into `origin/main` at `22da8db4433c4fe7ca90ebe3b776a4da0a86eef2`; the refreshed baseline is 17 physical / 15 implemented / 21 deferred with 11 Open gates after ID-001 resolution.
 
-Document 32 records the Owner-approved SUP-001 and design-only `supplier_ownership.decide_claim` contract; merged PR #85 implements only its empty revoked ownership foundation. Document 33 records the approved ID-001 contract and selects the empty revoked `public.platform_role_assignments` structural candidate. Decision-ready document 34 recommends the exact role/bootstrap/Claim boundary and the candidate as the proposed next SQL slice, pending Owner approval and separate SQL selection. REL-001 remains Resolved only for Option D, and the 11 Open approval gates remain unchanged.
+Document 32 records the Owner-approved SUP-001 and design-only `supplier_ownership.decide_claim` contract; merged PR #85 implements only its empty revoked ownership foundation. Document 33 records the approved ID-001 contract and identifies the empty revoked `public.platform_role_assignments` structural candidate. Owner-approved document 34 fixes the exact role/bootstrap/Claim boundary and selects that table as the next SQL slice while keeping exact SQL separate. REL-001 remains Resolved only for Option D, and all 11 Open approval gates remain unchanged.
 
 ## 4. Approval record
 
