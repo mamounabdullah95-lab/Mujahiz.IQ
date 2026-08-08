@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-08-platform-role-assignments-slice-implemented`
+Baseline ID: `baseline-2026-08-08-aud-001-contract-approved`
 Updated: 2026-08-08
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `7ca5145eaba2859e5d6b1bb30e4b595ac688dfbd`.
+- **Verified current fact:** Current GitHub `main`: `703092761de57e51c35d63ee6d80742c51c4721d`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -63,6 +63,7 @@ Evidence labels used below:
 - **Verified current fact:** PR #86 was merged as commit `55034f9368b385588bd639d371be7d06a0cfb2e2`; it approved the complete Platform Role Assignments Product/Security/Data contract and selected one empty, fully revoked, local-only `public.platform_role_assignments` table for separate SQL implementation. It made no SQL, role-row, bootstrap, Auth/RLS/runtime, hosted, data, or Production change.
 - **Verified current fact:** PR #87 was merged as commit `f1ff3ddbd579d38c5be49a2901b8464b46b875d4`; its reviewed head `83a9df45203cb18ab8af1a6b8bc648ce9e870224` added exactly the empty, fully revoked, local-only `public.platform_role_assignments` foundation plus focused synthetic pgTAP as the twelfth local SQL slice.
 - **Verified current fact:** PR #88 was merged as current `main` commit `7ca5145eaba2859e5d6b1bb30e4b595ac688dfbd`; its reviewed head `ccba2463beab11276be651ba14253e34e272a403` ignores repository-local `.worktrees/` and made no SQL, runtime, Firebase, hosted Supabase, Production/TEST, data, or deployment change.
+- **Verified current fact:** PR #89 was merged as current `main` commit `703092761de57e51c35d63ee6d80742c51c4721d`; its approved head `e32da8b3f4ba600ee25d7e40a494e02d78a937b8` added the AUD-001 audit-evidence and trusted-mutation contract only, resolved AUD-001, selected exactly one empty, fully revoked, local-only `internal.audit_logs` table as the separate thirteenth SQL slice, and made no SQL, runtime, Firebase, hosted Supabase, Production/TEST, data, or deployment change.
 - **Verified current fact:** The fourth through twelfth SQL slices remain local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase operation, Firebase access, Production/TEST data operation, data migration, seed, backfill, deployment, or remote SQL occurred.
 - The third SQL slice remains local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase, deployment, Production data, migration, seed, or backfill occurred.
 - The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.
@@ -179,20 +180,20 @@ Do not combine results from different commits or PRs into a new automated-test t
 - **Verified current fact:** GitHub `main` contains the first local migration-control SQL slice: migration `supabase/migrations/20260804000136_migration_control_foundation.sql` creates six governance tables in the non-exposed `internal` schema, and `supabase/tests/migration_control_foundation.sql` supplies repository-tracked synthetic pgTAP coverage.
 - **Verified current fact:** GitHub `main` contains twelve local identity/business/application tables: `public.user_profiles`, `public.platform_role_assignments`, `public.supplier_profiles`, `public.categories`, `public.administrative_areas`, `public.supplier_locations`, `public.supplier_category_assignments`, `public.supplier_capabilities`, `public.supplier_payment_options`, `public.supplier_contacts`, `public.supplier_ownerships`, and non-exposed `internal.identity_provider_links`. No real platform-role rows, RLS, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
 - **Verified current fact:** No browser integration, API policy, application grant, hosted Supabase project link, or remote migration application exists.
-- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, PR #62, PR #64, PR #65, PR #66, PR #67, PR #68, PR #69, PR #70, PR #71, PR #72, PR #73, PR #74, PR #75, PR #76, PR #77, PR #78, PR #79, PR #80, PR #81, PR #82, PR #83, PR #85, PR #86, PR #87, or PR #88.
+- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, PR #62, PR #64, PR #65, PR #66, PR #67, PR #68, PR #69, PR #70, PR #71, PR #72, PR #73, PR #74, PR #75, PR #76, PR #77, PR #78, PR #79, PR #80, PR #81, PR #82, PR #83, PR #85, PR #86, PR #87, or PR #88, or PR #89.
 
 The merged local infrastructure and migration-governance SQL, a future business/application schema, any hosted Supabase project, and Firebase Production are separate states. Supabase is not currently a Production authority.
 
 ### PostgreSQL schema-design state
 
-- **Verified current fact:** The authoritative logical PostgreSQL schema design and its first local migration-control/traceability slice are merged; the second local identity, third local Supplier-profile, fourth local category, fifth local administrative-area, sixth local Supplier-location, seventh local Supplier-category assignment, eighth local Supplier-capability, ninth local Supplier-payment-option, tenth local Supplier-contact, eleventh local Supplier-ownership, and twelfth local platform-role-assignment slices are implemented and merged, while the remaining business/application schema remains unimplemented.
+- **Verified current fact:** The authoritative logical PostgreSQL schema design and its first local migration-control/traceability slice are merged; 12 tracked local SQL migrations implement the second local identity, third local Supplier-profile, fourth local category, fifth local administrative-area, sixth local Supplier-location, seventh local Supplier-category assignment, eighth local Supplier-capability, ninth local Supplier-payment-option, tenth local Supplier-contact, eleventh local Supplier-ownership, and twelfth local platform-role-assignment slices, while the remaining business/application schema remains unimplemented.
 - **Verified current fact:** The design classifies 79 logical concepts: 36 Core Phase 1, 10 Core Later, 13 Future-Compatible, 13 Deferred, and 7 Remove/Merge.
 - **Verified current fact:** Of the 36 Core Phase 1 concepts, 16 are implemented locally and 20 remain deferred. The first 4 logical concepts use 6 physical tables because `migration_record_mappings` is decomposed across 3 relations; the local SQL foundation has 18 physical tables.
 - **Verified current fact:** The approved second slice is exactly `public.user_profiles` and `internal.identity_provider_links`. `public.platform_role_assignments` was deferred at that checkpoint and was later implemented separately by merged PR #87; all access/trial ledger tables and the other remaining Core Phase 1 concepts remain deferred.
 - **Verified current fact:** Core Phase 1 remains a maximum candidate set, not approval to create all 36 concepts in one PR. PR #51 implemented the approved two-table identity boundary, PR #54 implemented only the separately bounded `supplier_profiles` local root, PR #59 implemented only `categories`, PR #62 implemented only `administrative_areas`, and PR #68 implemented only `supplier_locations`.
 - **Verified current fact:** The design maps all 35 verified Firestore collections, registers 36 synchronized decisions, and provides a 119-item schema review checklist. DB-001 is resolved for the local first slice to database-generated UUIDv4 through `pg_catalog.gen_random_uuid()`; hosted compatibility remains a later validation gate.
 - **Verified current fact:** MIG-001 is partially implemented only at the declarative schema-contract level. Migration Engine locking, replay lookup, transformation, reconciliation, graph supersession, and rollback execution remain unimplemented.
-- **Verified current fact:** ID-001 is Resolved for the approved hybrid identity-authority and privileged-actor contract. The 11 unrelated approval gates remain Open.
+- **Verified current fact:** ID-001 is Resolved for the approved hybrid identity-authority and privileged-actor contract, and AUD-001 is Resolved for the approved audit-evidence and trusted-mutation contract. Exactly 10 unrelated approval gates remain Open.
 
 #### Merged second-slice boundary
 
@@ -233,9 +234,9 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**`internal.audit_logs` is selected as the next local SQL slice; SQL remains unimplemented**
+**`internal.audit_logs` is selected as the separate thirteenth local SQL slice; SQL remains unimplemented**
 
-Merged PR #87 implemented exactly the approved empty, fully revoked, local-only `public.platform_role_assignments` twelfth slice plus focused synthetic pgTAP. Merged PR #88 then added only the local-worktree ignore. Current `main` therefore contains 18 physical tables representing 16 implemented Core Phase 1 concepts; 20 remain deferred.
+Merged PR #87 implemented exactly the approved empty, fully revoked, local-only `public.platform_role_assignments` twelfth slice plus focused synthetic pgTAP. Merged PR #88 then added only the local-worktree ignore, and PR #89 resolved AUD-001 without SQL. Current `main` therefore contains 12 tracked local SQL migrations and 18 physical tables representing 16 implemented Core Phase 1 concepts; 20 remain deferred. The next implementation task is the separate thirteenth local SQL slice: `internal.audit_logs`.
 
 The owner approved Option D in [`31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md`](../supabase-migration/31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md): create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice. The first future producer path is `supplier_ownership.decide_claim`; the first concrete consumer is one claim-decision notification materializer; and both reliability tables may be introduced later only as one coherent foundation when that path and its delivery dependencies are approved. REL-001 remains Resolved for Option D and is unchanged by the separately resolved AUD-001 contract. MSG-003 and all other unrelated Open gates remain unchanged, and no SQL, worker, audit, notification, RLS/Auth, Firebase, hosted, Production/TEST, migration, or deployment work is authorized.
 
