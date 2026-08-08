@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Review Checklist
 
 Status: Reviewer gate for documentation only
-Baseline: `origin/main` at `1849d12dc52ca99f215fd90762948a67b95117c9`
+Baseline: `origin/main` at `b1afb5a92d2b2e6f1182076c900a8947e049ebf3` after merged PR #81
 Review together: `09_POSTGRESQL_SCHEMA_DESIGN.md` and `10_SCHEMA_DECISION_REGISTER.md`
 Checklist items: 119
 
@@ -113,13 +113,14 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Product/Data/Security/Privacy Owner approval is recorded for the complete endpoint/subject/scope/integrity/purpose/verification/privacy/normalization/duplicate/lifecycle/projection/provenance contract and the proposed tenth-slice boundary; SUP-005 is Resolved.
 - [x] Merged PR #80 implemented exactly the approved empty, revoked contacts SQL/pgTAP boundary plus the supporting location uniqueness object, with no rows, mapping execution, RLS, Auth, hosted, Firebase, Production/TEST, or deployment work.
 
-### Post-PR #80 REL-001 Option D review (not part of the 119 design-review items)
+### Post-PR #81 REL-001 and SUP-001 contract review (not part of the 119 design-review items)
 
-- [x] Verified refreshed `origin/main` `1849d12dc52ca99f215fd90762948a67b95117c9`, merged PR #80, 16 physical tables, 14 implemented / 22 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
+- [x] Verified refreshed `origin/main` `b1afb5a92d2b2e6f1182076c900a8947e049ebf3`, merged PR #81, 16 physical tables, 14 implemented / 22 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
 - [x] REL-001 is Resolved for the owner-approved Option D planning decision: create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice.
-- [x] Future `supplier_ownership.decide_claim` is the first trusted producer path and one claim-decision notification materializer is the first concrete consumer; both reliability tables may be introduced later only as one coherent foundation after that workflow and its dependencies are approved.
+- [x] Future `supplier_ownership.decide_claim` is the first trusted producer path and one claim-decision notification materializer is the first concrete consumer; document 32 approves the command/aggregate contract for design purposes before reliability SQL, while ID-001, AUD-001, MSG-003, consumer/operations approval, and exact reliability SQL selection remain required before runtime implementation.
 - [x] `audit_logs` and notification-delivery implementation remain outside REL-001; AUD-001 and MSG-003 remain Open with every unrelated Open gate preserved.
 - [x] This PR adds documentation only and does not implement SQL, pgTAP, worker/runtime, RLS, Auth, Firebase, hosted Supabase, Production/TEST, migration, or deployment behavior.
+- [x] Product/Data/Security Owner approval is recorded for the complete SUP-001 contract; SUP-001 is Resolved and one empty, fully revoked, local-only `public.supplier_ownerships` foundation is selected as the proposed next SQL slice, with SQL implementation kept outside PR #82.
 
 ## B. Relational model and integrity
 
@@ -144,8 +145,8 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [ ] Direct commands and background expiry/correction/reconciliation jobs share the same locks, fail-closed postcondition, audit/security outcome, compensation, and recovery contract; the role-backed Owner administration grant is non-expiring while usable authority is held, so expiry cannot silently strand administration.
 - [ ] ORG-001/ORG-002 keep organization linkage nullable/deferred; current users and 480 Suppliers migrate without fabricated organizations or inferred memberships.
 - [ ] Free-text organization/sector, legacy role, `accountType`, and Buyer/Supplier context remain restricted migration evidence through bootstrap.
-- [ ] Supplier verified ownership is separate from future operational Supplier membership, and current Supplier profiles exist independently of both organization and membership rows.
-- [ ] Active-row uniqueness is explicit for provider links, organization memberships, Supplier ownerships, and Supplier memberships.
+- [ ] Supplier verified primary ownership is separate from future operational Supplier membership and legal organization identity; current Supplier profiles require neither, and one owner user may own/manage multiple Suppliers.
+- [ ] Active-row uniqueness is explicit for provider links, organization memberships, one primary ownership per Supplier without owner-only uniqueness, one Supplier membership per user/Supplier, and non-overlapping temporal intervals.
 - [ ] Authorization never relies on cached display names, client-supplied role, email, or object key.
 - [ ] Owner/Admin/support access is not assumed without an explicit policy.
 - [ ] `can_receive_rfqs` has exact derivation inputs, policy version, invalidation-to-false behavior, reason codes, recomputation triggers, timestamp, and reconciliation path.
@@ -154,13 +155,13 @@ Check an item only when the cited design is explicit and evidence supports it. R
 
 ## D. Supplier integrity and duplicate prevention
 
-- [ ] Base Supplier tables are non-public; approved audiences use field-minimized security-invoker view/RPC projections, and anonymous exposure is a future approval.
+- [ ] Base Supplier/ownership/Claim tables are non-public; approved audiences use field-minimized security-invoker view/RPC projections, and same-Supplier ownership/membership alone never exposes a competing claimant's evidence, snapshot, reviewer, or notes.
 - [ ] Supplier profile, contacts, locations/coverage, category assignments, capabilities, payment options, products, and documents have distinct visibility/retention rules.
 - [ ] Physical locations and service coverage are distinguishable; area FK is conditional; original text/exceptions are retained; `all_iraq` is a bounded non-area coverage value; and `imports_outside_iraq` belongs to Supplier capabilities, not administrative areas or service coverage.
-- [ ] One-active-primary-owner and current one-profile-per-owner constraints are represented without blocking future memberships.
-- [ ] Claim creation, expiry, approval, rejection, withdrawal, supersession, transfer, and revoke history remains in the authoritative Core Later design; zero Production rows and undeployed GitHub-only behavior do not require a Core Phase 1 Claim table.
-- [ ] Claim evidence is merged as bounded immutable private Claim metadata/snapshot with the controlled pre-FILE-001 reference rules; `supplier_ownership_claim_evidence` and `supplier_ownership_events` are not created.
-- [ ] Approval revalidates current Auth/app eligibility, current canonical owner, and claimant lock within one trusted operation.
+- [ ] One active primary controller per Supplier is enforced; no owner-only uniqueness blocks one user from owning/managing multiple Suppliers; delegates/admins remain future memberships and organizations remain optional/deferred.
+- [ ] Claim `submitted`, `under_review`, `approved`, `rejected`, `withdrawn`, `expired`, and `superseded`, 30-day expiry, new-row resubmission, transfer, and revoke history remain authoritative; ordinary Claim approval is unowned-Supplier-only and the zero-row undeployed feature does not require a Core Phase 1 Claim table.
+- [ ] Claim reason/snapshot/up-to-three evidence descriptors are immutable/private with controlled pre-FILE-001 references; review method/outcome is write-once; `supplier_ownership_claim_evidence` and `supplier_ownership_events` are not created.
+- [ ] `supplier_ownership.decide_claim` revalidates actor conflict/authority, assignment/version, claimant/provider/account eligibility, Supplier eligibility, active ownership, all competing Claims, evidence/security holds, idempotency, audit, and deterministic events in one trusted operation; notifications come only from the materializer.
 - [ ] Exact duplicate fingerprints are protected, key/normalizer-versioned, trusted-only, unique while active, and promoted from pending to approved atomically.
 - [ ] Fuzzy duplicate candidates use versioned normalized names, bounded Dice/equivalent lookup, area/category/supporting evidence, a review queue, and never auto-merge/delete.
 - [ ] `supplierDuplicateIndex`, canonical uniqueness, and submission duplicate guards map to one coherent relational design.
