@@ -36,6 +36,15 @@ On 7 August 2026, the Product/Data Owner approved the capability portion of `28_
 
 The same owner decision selects one future empty, revoked, local-only `public.supplier_capabilities` table as the eighth SQL slice and defers `public.supplier_payment_options`. It creates no decision ID, authorizes no SQL/data work, and resolves none of the 12 Open gates. RFQ-003 remains the legacy quotation price/currency gate; BILL-001 remains the platform billing-subject gate; SEC-001 still owns later client-accessible RLS delivery.
 
+### Post-PR #75 capability implementation and payment-option recommendation
+
+Merged PR #75 implemented exactly the approved empty, revoked, local-only `public.supplier_capabilities` table plus focused synthetic pgTAP as the eighth local SQL slice. Current `main` therefore contains 14 physical tables representing 12 implemented Core Phase 1 concepts; 24 remain deferred. This implementation did not add payment options, rows, mapping execution, RLS, API access, hosted behavior, Firebase access, or Production/TEST behavior.
+
+`29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md` is the decision-ready successor for payment options only. It recommends one typed table, controlled method and settlement-currency codes, exact positive/negative credit semantics and start events, bounded advance semantics, internal-only notes, reviewed provenance/lifecycle, type-specific duplicate prevention, lossless ambiguous Firebase routing, no anonymous projection, and a future field-minimized Buyer projection. The Product/Data Owner has not yet approved that contract or selected the ninth SQL slice.
+
+This recommendation creates no decision ID and resolves none of the 12 Open gates. RFQ-003 remains the legacy quotation price/currency gate; BILL-001 remains the platform billing-subject gate; SEC-001 still owns later client-accessible RLS delivery. A Draft PR approval, without an explicit Product/Data Owner decision recorded in the contract, does not approve the payment vocabulary, exact mapping, SQL/pgTAP selection, data movement, RLS, or hosted work.
+
+
 ## 2. Decisions
 
 | ID | Topic | Status | Decision / recommendation | Rationale and evidence | Alternatives considered | Schema and delivery impact | Required approver | Must resolve before phase | Resolution date | Evidence / reference | Resolved state |
