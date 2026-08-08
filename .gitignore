@@ -3,6 +3,7 @@ dist
 .tools/
 .runtime/
 .codex/
+.worktrees/
 .agents/
 .secrets/
 .env
