@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Review Checklist
 
 Status: Reviewer gate for documentation only
-Baseline: `main` at `1a4e5a59a37b2f1eb05d5cf8fa555d8f7dfe84d6`
+Baseline: `origin/main` at `25536e09d84adac950023e5903c855cbf847b236`
 Review together: `09_POSTGRESQL_SCHEMA_DESIGN.md` and `10_SCHEMA_DECISION_REGISTER.md`
 Checklist items: 119
 
@@ -38,7 +38,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Merged PR #59 adds exactly `public.categories` in migration `20260805000100`; no taxonomy vocabulary, alias, Supplier assignment, RLS, policy, browser/API grant, hosted operation, or data operation is included.
 - [x] The focused synthetic pgTAP contract covers table shape, UUIDv4, depth/type/leaf and archive boundaries, bilingual collision indexes, lifecycle/replacement state combinations, nullable/restricting actors, migration-control compatibility, deferred-table absence, and absent API access.
 - [x] Clean local reset applied all four migrations; focused synthetic pgTAP passed 118/118, complete local pgTAP passed 340/340, warning-level lint found no schema errors, and catalog checks confirmed 26 columns, 27 named constraints, 13 exact indexes, five exact RESTRICT FKs, zero API/RLS/policy/trigger/routine/view access objects, one table, and zero taxonomy rows.
-- [ ] `SUP-003` and `SUP-004` are Approved; `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002` remain Open. Merged PR #62 adds `public.administrative_areas`; `main` is 9 implemented / 27 deferred across 11 physical tables.
+- [ ] `SUP-003` and `SUP-004` are Approved; `ID-001`, `ORG-001`, `ORG-002`, `RFQ-003`, `MSG-002`, `MSG-003`, `SEARCH-001`, `FILE-001`, `BILL-001`, `AUD-001`, `RES-001`, and `MIG-002` remain Open. Merged PR #62 adds `public.administrative_areas`; `main` is 12 implemented / 24 deferred across 14 physical tables.
 
 ### Sixth SQL-slice planning decision (not part of the 119 design-review items)
 
@@ -48,7 +48,7 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Contacts remain a later dependency on locations through nullable `supplier_contacts.location_id`; branch phone evidence is neither copied into the location row nor discarded, and no contact table or FK from locations is selected.
 - [x] Mapping manifests, precedence/deduplication rules, collision/exception reports, reconciliation, and rollback artifacts are mandatory before future data transformation but do not block an empty local table.
 - [x] Base rows remain non-public and revoked from API roles; RLS, policies, projections, Auth, organizations, RFQ logic, search ranking, audit/event routines, hosted Supabase, Firebase access, data movement, and Production behavior remain excluded.
-- [x] At the sixth-slice selection point the count was 11 physical / 9 implemented / 27 deferred. PR #68 moved that historical state to 12 / 10 / 26; merged PR #73 later moved the verified current state to 13 / 11 / 25. The 12 gates remain Open.
+- [x] At the sixth-slice selection point the count was 11 physical / 9 implemented / 27 deferred. PR #68 moved that historical state to 12 / 10 / 26; merged PR #73 and PR #75 later moved the verified current state to 14 / 12 / 24. The 12 gates remain Open.
 
 ### Supplier-category assignment contract review (not part of the 119 design-review items)
 
@@ -59,12 +59,12 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Provenance, lifecycle, reviewer/owner responsibility, declarative-versus-trusted enforcement, category deprecation behavior, transformation evidence, and future field-minimized projection constraints are explicit.
 - [x] Merged PR #73 implements the selected one empty, revoked, local-only assignment table plus structural enforcement and disposable synthetic pgTAP; no alias table, rows, mapping execution, RLS, Auth, application access, hosted work, Firebase, or Production behavior is included.
 - [x] On 6 August 2026, the founder-led Product/Data Owner explicitly approved Option B and the complete `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` as written.
-- [x] The same owner decision selected the exact seventh-slice SQL/test boundary; merged PR #73 implemented it without scope expansion. Current state is 13 physical / 11 implemented / 25 deferred.
+- [x] The same owner decision selected the exact seventh-slice SQL/test boundary; merged PR #73 implemented it without scope expansion. Current state is 14 physical / 12 implemented / 24 deferred.
 - [x] SUP-003 was already Resolved and remains closed. All 12 Open gates remain unresolved and unchanged; this contract approval neither closes nor weakens any of them.
 
 ### Supplier capabilities and payment-options contract review (not part of the 119 design-review items)
 
-- [x] Verified current `origin/main` `cb51da7267f3fa61af9d35ade66890f096f2c51a`, merged PR #73 lineage, 13 physical tables, 11 implemented / 25 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
+- [x] Verified current `origin/main` `25536e09d84adac950023e5903c855cbf847b236`, merged PR #73 and PR #75 lineage, 14 physical tables, 12 implemented / 24 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
 - [x] Capability and payment assertions remain separate from categories, locations/coverage, RFQ/quotation terms, platform billing, eligibility, and contractual acceptance.
 - [x] `imports_outside_iraq` has one positive capability meaning and creates no geographic row; `import_only` remains pending rather than being silently equated.
 - [x] Controlled and custom capabilities have mutually exclusive shapes, reviewed moderation, versioned normalization, category-scope rules, semantic duplicate prevention, and historical lifecycle.

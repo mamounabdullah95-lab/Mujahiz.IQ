@@ -1,6 +1,6 @@
 # Authoritative PostgreSQL schema design
 
-Status: **Recommended logical design; first local migration-control slice implemented on the Draft branch**
+Status: **Recommended logical design; eight local SQL slices implemented; remaining concepts unimplemented**
 Design base: `1a4e5a59a37b2f1eb05d5cf8fa555d8f7dfe84d6`
 Evidence date: 3 August 2026
 Primary task profile: Documentation
@@ -9,9 +9,9 @@ Primary task profile: Documentation
 
 This document is the authoritative logical design for a future Mujahiz IQ PostgreSQL schema. It is documentation only.
 
-- At the design base, no Mujahiz application SQL existed. The first local migration-control slice is now documented in `12_POSTGRESQL_SQL_FOUNDATION.md`.
-- No Mujahiz business/application table exists locally or in a verified hosted environment; the Draft slice contains only non-exposed internal governance tables.
-- The Draft slice implements one local schema migration only. No seed, custom database function, trigger, grant, database role, or RLS policy is implemented.
+- At the design base, no Mujahiz application SQL existed. Current `main` contains eight tracked local migrations and 14 physical tables across the internal migration-control foundation plus eight identity/business/application tables.
+- The eight local slices implement 12 of 36 Core Phase 1 concepts; 24 remain deferred. No verified hosted environment contains these local tables.
+- The local slices contain no seed, custom database function, trigger, application grant, database role, or RLS policy.
 - No hosted Supabase project was linked, authenticated, queried, or independently verified.
 - The local Supabase runtime was not started for the documentation-only design; the separate SQL slice was later verified in the disposable local runtime.
 - Firebase Production remains operational, authoritative, and unchanged.
@@ -139,15 +139,23 @@ The fifth SQL slice merged by PR #62 adds only `public.administrative_areas` thr
 
 ### Sixth local SQL-slice selection status
 
-The documentation decision in `25_SIXTH_SQL_SLICE_SUPPLIER_LOCATIONS_SELECTION.md` selected exactly one empty `public.supplier_locations` table. PR #68 later implemented that exact local-only, synthetic-data-only boundary without rows, mapping execution, contacts, RLS, policies, API privileges, application integration, hosted operations, Firebase access, or Production behavior. The verified state is now 10 implemented / 26 deferred Core Phase 1 concepts across 12 physical tables.
+The documentation decision in `25_SIXTH_SQL_SLICE_SUPPLIER_LOCATIONS_SELECTION.md` selected exactly one empty `public.supplier_locations` table. PR #68 later implemented that exact local-only, synthetic-data-only boundary without rows, mapping execution, contacts, RLS, policies, API privileges, application integration, hosted operations, Firebase access, or Production behavior. The verified state is now 12 implemented / 24 deferred Core Phase 1 concepts across 14 physical tables.
 
 ### Seventh local SQL-slice selection status
 
-`26_SEVENTH_SQL_SLICE_SELECTION.md` records the historical hard stop at `public.supplier_category_assignments`, and `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` records the approved Option B contract. Merged PR #73 implemented exactly the selected empty, revoked, local-only `public.supplier_category_assignments` table plus focused synthetic pgTAP as the seventh slice. It added no alias infrastructure, rows, mapping execution, RLS, data operation, hosted behavior, Firebase access, or Production behavior. The current local state is 13 physical tables, 11 implemented Core Phase 1 concepts, and 25 deferred concepts.
+`26_SEVENTH_SQL_SLICE_SELECTION.md` records the historical hard stop at `public.supplier_category_assignments`, and `27_SUPPLIER_CATEGORY_ASSIGNMENT_PRODUCT_AND_DATA_CONTRACT.md` records the approved Option B contract. Merged PR #73 implemented exactly the selected empty, revoked, local-only `public.supplier_category_assignments` table plus focused synthetic pgTAP as the seventh slice. It added no alias infrastructure, rows, mapping execution, RLS, data operation, hosted behavior, Firebase access, or Production behavior. The historical post-PR-73 local state was 13 physical tables, 11 implemented Core Phase 1 concepts, and 25 deferred concepts; PR #75 later moved the verified current state to 14 physical tables, 12 implemented concepts, and 24 deferred concepts.
 
 ### Supplier capability approval and payment-option deferral
 
 On 7 August 2026, the Product/Data Owner approved the capability contract in `28_SUPPLIER_CAPABILITIES_AND_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md`: indicative capability semantics, `imports_outside_iraq` routing, unresolved/excluded `import_only`, controlled/custom shapes, optional category scope, provenance/review/lifecycle/normalization, semantic duplicate prevention, restricted evidence, and future public labels-only projection. The same decision selects one future empty, revoked, local-only `public.supplier_capabilities` table as the eighth SQL slice. `public.supplier_payment_options` and its detailed commercial semantics remain deferred. No SQL, pgTAP, row, gate change, RLS, data operation, hosted behavior, Firebase access, or Production/TEST behavior is authorized.
+
+### Eighth local SQL-slice implementation and payment contract recommendation
+
+Merged PR #75 implemented exactly the approved empty, revoked, local-only `public.supplier_capabilities` table plus focused synthetic pgTAP as the eighth slice. It added no vocabulary rows, mapping execution, payment table, RLS, policy, API privilege, application integration, hosted operation, Firebase access, or Production/TEST data behavior. The verified current local state is 14 physical tables, 12 implemented Core Phase 1 concepts, and 24 deferred concepts.
+
+`29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md` now owns the decision-ready payment-options-only recommendation: one typed table with separate method, settlement-currency, credit, and advance shapes; exact no-credit/credit-duration/start-event semantics; internal-only notes; reviewed provenance/lifecycle; semantic duplicate prevention; lossless ambiguous-value routing; and no anonymous projection. Product/Data Owner approval and a separate exact SQL/pgTAP selection task remain required. The recommendation creates no decision ID, resolves no Open gate, and authorizes no implementation or data work.
+
+The earlier capability-section deferral remains the historical PR #74 decision. Document 29 is its unapproved successor recommendation for payment options only.
 
 
 ### Identity and access conclusions
