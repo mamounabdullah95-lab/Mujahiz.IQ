@@ -1,15 +1,15 @@
 # Supplier ownership and Claim Supplier Profile product/data/security contract
 
-Status: **Decision-ready recommendation; SUP-001 remains Recommended pending explicit Product/Data/Security Owner approval; no SQL or runtime implementation authorized**
+Status: **Owner-approved contract; SUP-001 Resolved; one empty, fully revoked, local-only `public.supplier_ownerships` foundation selected as the proposed next SQL slice; no SQL or runtime implementation authorized**
 Contract date: 8 August 2026
 Verified refresh: `origin/main` `b1afb5a92d2b2e6f1182076c900a8947e049ebf3` after merged PR #81
 Primary task profile: Documentation
 
 ## 1. Decision boundary and recommendation
 
-This document defines the recommended future contract for `public.supplier_ownerships` and the Claim Supplier Profile workflow. It is the proposed successor to the higher-level SUP-001 direction in documents 02, 09, 10, and 11 and the command dependency named by REL-001 in document 31.
+This document defines the approved future contract for `public.supplier_ownerships` and the Claim Supplier Profile workflow. It succeeds the higher-level SUP-001 direction in documents 02, 09, 10, and 11 and fixes the command dependency named by REL-001 in document 31 for design purposes only.
 
-The smallest safe architecture is:
+The approved smallest safe architecture is:
 
 - a Supplier profile is a business listing, not a user, Auth identity, organization, ownership proof, or entitlement;
 - `public.supplier_ownerships` records temporal, verified primary platform-control authority between one `user_profiles` row and one `supplier_profiles` row;
@@ -21,7 +21,7 @@ The smallest safe architecture is:
 - Claim evidence, claimant snapshot, and submitted reason are private and immutable after submission. Decisions, ownership activation/closure, events, and audit evidence are never inferred or silently rewritten; and
 - Firebase remains authoritative for Production ownership until an explicitly approved feature cutover. Local Supabase remains non-authoritative and contains no ownership or Claim rows.
 
-This recommendation does not resolve SUP-001 by itself. Explicit Product/Data/Security Owner approval is required before selecting `public.supplier_ownerships` as the next SQL slice. It authorizes no SQL, pgTAP, RLS, Auth bridge, audit, notification, Firebase change, data movement, hosted work, or Production/TEST action.
+On 8 August 2026, the Product/Data/Security Owner approved this contract, resolved SUP-001, and selected one empty, fully revoked, local-only `public.supplier_ownerships` foundation as the proposed next SQL slice. This planning approval authorizes no SQL, pgTAP, RLS, Auth bridge, trusted command, audit, notification, Firebase change, data movement, hosted work, or Production/TEST action.
 
 ## 2. Verified starting state and authority separation
 
@@ -55,7 +55,7 @@ The organization model is deliberately not embedded into `supplier_ownerships`. 
 | Option | Boundary | Benefit | Cost/risk | Disposition |
 |---|---|---|---|---|
 | A | Keep `users.supplierProfileId` and `suppliers.accountOwnerId` as the long-term model | Minimal conceptual change | Duplicated mutable authority, no temporal history, one-Supplier-per-user assumption, difficult transfer/reconciliation | Reject for relational authority; retain only as Firebase source evidence/compatibility during transition |
-| B | One active primary human owner/controller per Supplier in temporal `supplier_ownerships`; future delegates/admins in `supplier_memberships`; organizations separate | Smallest enforceable authority model, clear accountable controller, supports one user across multiple Suppliers, clean transfer/revocation history | Requires separate future membership and organization work | **Recommended** |
+| B | One active primary human owner/controller per Supplier in temporal `supplier_ownerships`; future delegates/admins in `supplier_memberships`; organizations separate | Smallest enforceable authority model, clear accountable controller, supports one user across multiple Suppliers, clean transfer/revocation history | Requires separate future membership and organization work | **Approved** |
 | C | Multiple active ownership rows/co-owners per Supplier | Represents several legal/operational controllers directly | Quorum, conflict, transfer, recovery, notification, and final-owner rules become substantially more complex; current evidence does not justify them | Defer pending explicit multi-controller product/security contract |
 | D | Organization is the only owner and users act only through organization membership | Strong tenant model if organizations are authoritative | ORG-001/ORG-002 are Open; no current organization collection or reliable bootstrap evidence; would fabricate relationships | Reject for the next slice; reconsider only after organization gates |
 | E | Membership alone grants all Supplier authority | One relationship surface | Loses the distinction between verified controller and delegated operator; weakens transfer/dispute evidence | Reject |
@@ -64,7 +64,7 @@ Option B does not assert legal share ownership. “Owner” in this contract mea
 
 ## 5. Cardinality and authority decisions
 
-| Question | Recommended contract |
+| Question | Approved contract |
 |---|---|
 | Active primary owner per Supplier | Zero or one |
 | Historical owners per Supplier | Zero to many non-overlapping temporal rows |
@@ -384,7 +384,7 @@ Ambiguous or conflicting Firebase ownership evidence is always quarantined. Manu
 
 | Dependency | Empty revoked `supplier_ownerships` foundation | Claim/ownership rows or mapping | `decide_claim` implementation and notification path |
 |---|---|---|---|
-| SUP-001 Product/Data/Security Owner approval | **Blocks selection now**; this document is the decision-ready proposal | Required | Required |
+| SUP-001 Product/Data/Security Owner approval | **Resolved**; empty one-table selection approved | Approved contract governs any later rows/mapping | Command contract approved for design only; runtime remains separately gated |
 | ID-001 | Does not block empty provider-neutral FKs | Blocks authoritative principal/provider validation and real rows | Blocks actor/claimant authentication contract and runtime authorization |
 | ORG-001 / ORG-002 | Do not block under recommended Option B | Block only organization-owned tenancy/bootstrap or organization-derived access | Not required for unowned-Supplier Claim v1; required if organization authority is later added |
 | AUD-001 | Does not block empty table | Blocks non-synthetic ownership decisions/transfer/revocation | Blocks required decision audit implementation |
@@ -397,26 +397,26 @@ No organization/account gate is required by the recommended empty ownership mode
 
 ## 20. Smallest safe SQL-slice conclusion
 
-An empty, fully revoked, local-only `public.supplier_ownerships` foundation is structurally dependency-safe **after explicit SUP-001 approval of this contract**. It does not need to wait for ID-001, ORG-001, ORG-002, AUD-001, MSG-003, or REL-001 SQL when all of the following restrictions hold:
+An empty, fully revoked, local-only `public.supplier_ownerships` foundation is approved as the proposed next local SQL slice and is structurally dependency-safe now. It does not need to wait for ID-001, ORG-001, ORG-002, AUD-001, MSG-003, or REL-001 SQL when all of the following restrictions hold:
 
 - exactly one empty table is created against the existing `user_profiles` and `supplier_profiles` roots;
 - it implements the temporal/cardinality/lifecycle/provenance field groups and constraints in sections 5-6;
 - it has one-active-primary-owner-per-Supplier enforcement and deliberately no one-Supplier-per-owner enforcement;
 - it includes restrictive FKs, structural indexes/comments, complete API-role privilege revocation, and zero rows/access objects;
-- it includes no organization, membership, Claim, audit, notification, event, idempotency, routine, trigger, RLS, policy, view, RPC, Auth bridge, mapping, data, Firebase, hosted, Production, or TEST work; and
+- it includes no organization, membership, Claim, audit, notification, event, idempotency, routine, trigger, RLS, policy, view, RPC, Auth bridge, mapping execution, data migration, seed, backfill, Firebase, hosted, Production, or TEST work; and
 - no row may be activated until source-specific provenance/FKs, ID-001, trusted commands, audit, security policy, and migration approvals required for that source are implemented.
 
 The table must not contain generic unvalidated `source_type/source_id` polymorphic references as a substitute for future Claim/submission/event FKs. The empty foundation may reserve bounded source classes; source-specific relationships are added before the first row of that class.
 
 If later separately implemented and merged, the projected local state would be 17 physical tables, 15 implemented Core Phase 1 concepts, and 21 deferred. This documentation task leaves the verified state at 16 / 14 / 22.
 
-`supplier_ownership_claims` is not part of that slice. It remains Core Later and waits for this contract’s owner approval plus Claim retention/evidence, ID-001, AUD-001, trusted-command, RLS, and REL/MSG delivery approvals.
+`supplier_ownership_claims` is not part of that slice. It remains Core Later and waits for separate Claim retention/evidence, ID-001, AUD-001, trusted-command runtime, RLS, and REL/MSG delivery approvals.
 
 ## 21. Decision status and remaining owner decisions
 
-The future `supplier_ownership.decide_claim` version-1 contract is defined in this document before reliability SQL exists, but it is not implementation-authorized. Its inputs, outputs, locks, aggregate effects, idempotency boundary, events, audit separation, and notification dependency are contractually explicit.
+The future `supplier_ownership.decide_claim` version-1 contract is approved for design purposes before reliability SQL exists, but it is not implementation-authorized. Its inputs, outputs, locks, aggregate effects, idempotency boundary, events, audit separation, and notification dependency are contractually explicit.
 
-The Product/Data/Security Owner must explicitly approve or modify these SUP-001 decisions before an ownership SQL-selection task:
+The Product/Data/Security Owner approved these SUP-001 decisions on 8 August 2026:
 
 1. Option B: one active primary human controller per Supplier, one user may own multiple Suppliers, and delegates/admins use future memberships;
 2. organization independence: no organization owner subject or fabricated organization/membership in the empty foundation;
@@ -426,7 +426,7 @@ The Product/Data/Security Owner must explicitly approve or modify these SUP-001 
 6. authoritative relational ownership after cutover, with Firebase backlinks retained only as reconciled compatibility evidence; and
 7. the exact empty one-table boundary in section 20 as the proposed next SQL slice.
 
-After that approval, no additional owner product decision is required for the empty structural table. Exact SQL/pgTAP remains a separate technical task. Real rows and runtime still require the named ID-001, AUD-001, MSG-003/REL-001, security/RLS, mapping, retention, migration, hosted, and Production approvals.
+No additional Owner decision remains for SUP-001, the approved Claim contract, the design-only `decide_claim` contract, or selection of the empty structural table. Exact SQL/pgTAP remains a separate technical task. Real rows and runtime still require the named ID-001, AUD-001, MSG-003/REL-001, security/RLS, mapping, retention, migration, hosted, and Production approvals.
 
 ## 22. Risks, validation, and exact stop point
 
@@ -434,9 +434,9 @@ Key risks are treating a listing or verified email as ownership; preserving the 
 
 Required validation is documentation-only: latest refreshed `origin/main` after merged PR #81; 16 physical tables; 14 implemented / 22 deferred Core Phase 1 concepts; 12 unchanged Open gates; cross-document links; terminology; sensitive-content patterns; documentation-only diff; and `git diff --check`.
 
-Do not start Supabase, execute migrations, run pgTAP, access Firebase, inspect Production/TEST data, implement SQL, create rows, change Auth/RLS, implement audit/notification/reliability code, merge, deploy, or mark the Draft PR Ready.
+Do not start Supabase, execute migrations, run pgTAP, access Firebase, inspect Production/TEST data, implement SQL, create rows, change Auth/RLS, implement audit/notification/reliability code, merge, or deploy.
 
-Exact stop point: one Draft PR containing this decision-ready contract and synchronized planning documentation. Stop before owner approval is recorded, SQL/pgTAP selection or implementation, Claim/command/RLS/Auth implementation, audit/notification work, data movement, hosted access, merge, or deployment.
+Exact stop point: PR #82 marked Ready for review with Owner approval recorded, SUP-001 Resolved, and the empty one-table foundation selected as the proposed next local SQL slice. Stop before SQL/pgTAP implementation, Claim/command/RLS/Auth implementation, audit/notification work, data movement, hosted access, merge, or deployment.
 
 ## 23. References
 

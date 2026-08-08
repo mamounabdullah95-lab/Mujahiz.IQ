@@ -153,7 +153,7 @@ The minimum foundation uses a code- and documentation-owned registry, not a thir
 
 Version is separate from event type. Additive optional fields may keep a version only when all registered consumers demonstrably tolerate them; removing, renaming, changing meaning/type/nullability, or changing normalization increments the version. Historical event type/version/payload rows are never rewritten. Consumers explicitly accept supported versions and dead-letter unsupported versions with a safe error code.
 
-The first proposed registry entries are `supplier_ownership.claim_approved` version 1 and `supplier_ownership.claim_rejected` version 1, produced by `supplier_ownership.decide_claim`. Their initial named consumer is `supplier_claim_decision_notification_materializer`. Decision-ready document 32 also proposes a bounded `supplier_ownership.claim_superseded` event for competing claimants and exact minimal payload fields. Those successor proposals remain unapproved with SUP-001, `AUD-001`, and `MSG-003`; no registry or notification behavior is implemented.
+The first proposed registry entries are `supplier_ownership.claim_approved` version 1 and `supplier_ownership.claim_rejected` version 1, produced by `supplier_ownership.decide_claim`. Their initial named consumer is `supplier_claim_decision_notification_materializer`. Owner-approved document 32 also defines a bounded `supplier_ownership.claim_superseded` event for competing claimants and exact minimal payload fields for design purposes. Runtime remains blocked by `AUD-001`, `MSG-003`, and the other named delivery gates; no registry or notification behavior is implemented.
 
 ## 10. Payload envelope, provenance, and timestamps
 
@@ -186,9 +186,9 @@ The minimum `domain_events` foundation supports one approved internal processor 
 
 ## 12. First trusted command and consumer dependency
 
-[`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) is the decision-ready successor for the version-1 command inputs, outputs, locks, aggregate effects, Claim lifecycle, event payload proposal, and same-Supplier security boundary. SUP-001 remains Recommended pending explicit Owner approval, so that document narrows the contract without authorizing this reliability foundation or runtime work.
+[`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) is the Owner-approved successor for the version-1 command inputs, outputs, locks, aggregate effects, Claim lifecycle, event payload proposal, and same-Supplier security boundary. SUP-001 is Resolved and the command is approved for design purposes only; document 32 does not authorize this reliability foundation or runtime work.
 
-The proposed first command is `supplier_ownership.decide_claim` because it has a real aggregate transition and an already evidenced claimant-notification consequence. A later command approval must define, at minimum:
+The approved design-only first command is `supplier_ownership.decide_claim` because it has a real aggregate transition and an already evidenced claimant-notification consequence. A later runtime implementation approval must satisfy, at minimum:
 
 1. current actor/authentication and Admin/Owner authorization under the resolved ID-001 boundary;
 2. Claim, claimant, Supplier, current owner, competing-claim, and lock reads plus serialization order;
@@ -200,7 +200,7 @@ The proposed first command is `supplier_ownership.decide_claim` because it has a
 8. lease, retry, dead-letter, observability, and operator ownership; and
 9. focused concurrency, mismatch, crash, stale-lease, duplicate-event, duplicate-notification, replay, and authorization tests.
 
-Until the implementation approvals corresponding to all nine requirements are satisfied, `domain_events` has no authorized first processor and the two-table SQL foundation remains no-go. A decision-ready command contract does not enable the undeployed Firebase Claim feature or authorize a Supabase Claim implementation.
+Until the implementation approvals corresponding to all nine requirements are satisfied, `domain_events` has no authorized first processor and the two-table SQL foundation remains no-go. The approved design-only command contract does not enable the undeployed Firebase Claim feature or authorize a Supabase Claim implementation.
 
 ## 13. Boundary with audit logs and notifications
 
@@ -257,17 +257,17 @@ On 8 August 2026, the owner approved REL-001 Option D:
 4. introduce the two reliability tables later as one coherent foundation only when that producer/consumer path and its delivery dependencies are approved; and
 5. keep `audit_logs` and notification-delivery implementation outside this contract while AUD-001 and MSG-003 remain Open.
 
-The following delivery approvals remain before any SQL selection or implementation:
+The following delivery approvals remain before any REL-001 SQL selection or runtime implementation:
 
 1. ID-001 approval for the authoritative principal/actor identity used by the command.
 2. AUD-001 approval for the separately required decision audit contract; this document does not design it.
 3. MSG-003 approval for the notification materializer's rendering inputs, protected-notice behavior, and notification retention; this document does not design notification delivery.
 4. Technical/Security/Operations approval of the 60-second lease, 10-attempt cap, error classes, alert/operator ownership, and dead-letter requeue runbook.
-5. Product/Technical/Security/Privacy approval of document 32's proposed aggregate effects/result contract, approved/rejected/superseded version-1 registry payloads, payload fields/limits, event retention classes, idempotency compaction/tombstone classes, and exact durations beyond the 30-day minimum.
+5. Separate runtime approval of the exact aggregate implementation, registry/payload limits, event retention classes, idempotency compaction/tombstone classes, and exact durations beyond the approved 30-day Claim minimum.
 6. Migration/Data approval of legacy event classification, fan-out suppression, replay eligibility, and cutover/rollback reconciliation horizon.
 7. A later exact SQL/pgTAP selection and implementation task after the preceding decisions; SEC-001 remains required before any client-accessible path, while RES-001 and MIG-002 remain required before hosted work.
 
-No Open gate changes status. REL-001 is Resolved for the Option D architecture/planning decision only; this resolution intentionally selects no SQL slice and implements no command, event, audit, notification, worker, or table.
+No Open gate changes status. REL-001 is Resolved for the Option D architecture/planning decision only; SUP-001's separate ownership-table selection does not select reliability SQL or implement any command, event, audit, notification, worker, or table.
 
 ## 18. Validation and exact stop point
 

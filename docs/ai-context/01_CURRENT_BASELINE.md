@@ -228,13 +228,13 @@ Migration sequencing and product priorities are separate.
 
 ### Recommended technical next task
 
-**Supplier ownership/Claim contract is the next decision checkpoint; no SQL slice is selected**
+**`public.supplier_ownerships` is selected as the proposed next local SQL slice; SQL remains unimplemented**
 
 Merged PR #80 implemented exactly the approved empty, revoked, local-only `public.supplier_contacts` tenth slice plus focused synthetic pgTAP. Current `main` therefore contains 16 physical tables representing 14 implemented Core Phase 1 concepts; 22 remain deferred.
 
 The owner approved Option D in [`31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md`](../supabase-migration/31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md): create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice. The first future producer path is `supplier_ownership.decide_claim`; the first concrete consumer is one claim-decision notification materializer; and both reliability tables may be introduced later only as one coherent foundation when that producer/consumer path and its delivery dependencies are approved. REL-001 is Resolved for this Option D planning decision only. AUD-001, MSG-003, and all other Open gates remain unchanged, and no SQL, worker, audit, notification, RLS/Auth, Firebase, hosted, Production/TEST, migration, or deployment work is authorized.
 
-The decision-ready recommendation in [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](../supabase-migration/32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) proposes one active primary human controller per Supplier, permits one user to own/manage multiple Suppliers, separates future delegates/admins into Supplier memberships, keeps organizations optional/deferred, and treats ordinary Claim approval as unowned-Supplier acquisition only. SUP-001 remains Recommended pending explicit Product/Data/Security Owner approval. Until that approval, no ownership SQL slice is selected.
+The Product/Data/Security Owner approved [`32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md`](../supabase-migration/32_SUPPLIER_OWNERSHIP_AND_CLAIM_PROFILE_PRODUCT_DATA_SECURITY_CONTRACT.md) on 8 August 2026. SUP-001 is Resolved for one active primary human controller per Supplier, multiple Suppliers per user, future delegate/admin memberships, separate optional organizations, unowned-Supplier-only ordinary Claims, immutable evidence/history, fail-closed conflict handling, and the design-only `supplier_ownership.decide_claim` contract. One empty, fully revoked, local-only `public.supplier_ownerships` foundation is selected as the proposed next SQL slice; this documentation approval implements no SQL or runtime and leaves all 12 Open approval gates unchanged.
 
 ### Product priorities
 

@@ -117,9 +117,10 @@ Check an item only when the cited design is explicit and evidence supports it. R
 
 - [x] Verified refreshed `origin/main` `b1afb5a92d2b2e6f1182076c900a8947e049ebf3`, merged PR #81, 16 physical tables, 14 implemented / 22 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
 - [x] REL-001 is Resolved for the owner-approved Option D planning decision: create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice.
-- [x] Future `supplier_ownership.decide_claim` is the first trusted producer path and one claim-decision notification materializer is the first concrete consumer; document 32 defines the proposed command/aggregate contract before reliability SQL, while SUP-001, ID-001, AUD-001, MSG-003, consumer/operations approval, and exact SQL selection remain required before implementation.
+- [x] Future `supplier_ownership.decide_claim` is the first trusted producer path and one claim-decision notification materializer is the first concrete consumer; document 32 approves the command/aggregate contract for design purposes before reliability SQL, while ID-001, AUD-001, MSG-003, consumer/operations approval, and exact reliability SQL selection remain required before runtime implementation.
 - [x] `audit_logs` and notification-delivery implementation remain outside REL-001; AUD-001 and MSG-003 remain Open with every unrelated Open gate preserved.
 - [x] This PR adds documentation only and does not implement SQL, pgTAP, worker/runtime, RLS, Auth, Firebase, hosted Supabase, Production/TEST, migration, or deployment behavior.
+- [x] Product/Data/Security Owner approval is recorded for the complete SUP-001 contract; SUP-001 is Resolved and one empty, fully revoked, local-only `public.supplier_ownerships` foundation is selected as the proposed next SQL slice, with SQL implementation kept outside PR #82.
 
 ## B. Relational model and integrity
 
