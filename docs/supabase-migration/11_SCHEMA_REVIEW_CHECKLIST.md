@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Review Checklist
 
 Status: Reviewer gate for documentation only
-Baseline: `origin/main` at `25536e09d84adac950023e5903c855cbf847b236`
+Baseline: `origin/main` at `52d81cf19102b07c1aa378ac7b3548e3f11822a6`
 Review together: `09_POSTGRESQL_SCHEMA_DESIGN.md` and `10_SCHEMA_DECISION_REGISTER.md`
 Checklist items: 119
 
@@ -95,6 +95,23 @@ Check an item only when the cited design is explicit and evidence supports it. R
 - [x] Product/Data Owner approval is recorded for the complete payment contract, code sets, exact credit/advance meanings, restricted note/provenance boundary, no-client-projection boundary, deferred freshness/reviewer-authority decisions, and proposed ninth-slice direction.
 - [ ] A separate implementation-selection task has fixed and authorized exact payment-option DDL/pgTAP. This documentation task includes no SQL, data, RLS, Auth, hosted, Firebase, Production/TEST, merge, or deployment work.
 
+### Post-PR #77 decision-ready Supplier contacts review (not part of the 119 design-review items)
+
+- [x] Verified refreshed `origin/main` `52d81cf19102b07c1aa378ac7b3548e3f11822a6`, merged PR #77 and PR #76/#75 lineage, 14 physical tables, 12 implemented / 24 deferred Core Phase 1 concepts, and 12 unchanged Open gates.
+- [x] The contact model is endpoint-oriented: `phone|email|website` channel, technical phone kind, and `generic_company|named_person|unspecified` subject are separate; a named person is not a channel or authority record.
+- [x] Every contact belongs to one Supplier. Company-level scope is null location; a location-scoped contact uses declarative same-Supplier plus `physical_location` enforcement and never links to service coverage.
+- [x] Purpose and person role are separate and never inferred; one positive preference rank defines the preferred/default endpoint only within the exact Supplier/scope/purpose set and grants no exposure, verification, consent, or RFQ meaning.
+- [x] Verification records the exact method/version/fact/time and provenance without implying association, ownership, identity, role, consent, legal basis, or disclosure; actor/reviewer FKs grant no authority.
+- [x] Named-person and uncertain-subject phone/email data default to restricted. Absence of consent/evidence is not consent, and non-synthetic activation remains blocked on approved legal basis, retention, erasure, and trusted authority.
+- [x] Phone, email, and website normalization boundaries are versioned and stricter than current discovery normalizers; unsafe country/provider/URL inference and automatic alias merge are prohibited.
+- [x] Active endpoint/scope uniqueness, collision review, many-source-to-one reconciliation, and cross-Supplier exact-match confidentiality are explicit.
+- [x] Ambiguous, incomplete, multi-valued, malformed, contradictory, unattached person, unproved branch, WhatsApp, and social evidence creates no active row and retains an explicit bounded quarantine/review disposition.
+- [x] Lifecycle supports immediate suppression, supersession/archive, and policy-driven erasure; audit convenience and retained hashes cannot silently defeat personal-data rights.
+- [x] No public or authenticated projection is approved. Named-person data is never public by default; internal access is task-minimized; search/RFQ eligibility/routing/snapshots do not consume contacts without separate approval.
+- [x] One empty revoked contacts table plus a supporting location uniqueness object/composite FK is conditionally dependency-safe before RLS and migration; omission of the composite physical-location enforcement is not safe.
+- [x] The recommendation compares and rejects/defer-splits people/channels, table-per-channel, JSON/header, profile/location columns, and person-only rows; it does not modify or depend on the active payment-options ninth-slice work.
+- [ ] Product/Data/Security/Privacy Owners have approved SUP-005 semantics, verification/freshness, legal basis/consent, audience, retention/erasure, trusted authority, and conditional later-slice selection.
+- [ ] A separate future task has selected and authorized exact contacts SQL/pgTAP. This documentation task includes no SQL, data, RLS, Auth, mapping execution, hosted, Firebase, Production/TEST, Ready, merge, or deployment work.
 
 ## B. Relational model and integrity
 
