@@ -385,7 +385,8 @@ Ambiguous or conflicting Firebase ownership evidence is always quarantined. Manu
 | Dependency | Empty revoked `supplier_ownerships` foundation | Claim/ownership rows or mapping | `decide_claim` implementation and notification path |
 |---|---|---|---|
 | SUP-001 Product/Data/Security Owner approval | **Resolved**; empty one-table selection approved | Approved contract governs any later rows/mapping | Command contract approved for design only; runtime remains separately gated |
-| ID-001 | Does not block empty provider-neutral FKs | Blocks authoritative principal/provider validation and real rows | Blocks actor/claimant authentication contract and runtime authorization |
+| ID-001 | Does not block empty provider-neutral FKs | Blocks authoritative principal/provider validation and real rows | Document 33 proposes the complete actor/claimant authentication contract, but runtime remains blocked until explicit approval and implementation |
+| Platform role/access foundation | Does not block the ownership table | Required before non-synthetic privileged decisions | `platform_role_assignments` is required but insufficient; current Firebase/profile/link/access/security and reviewer-conflict checks must also pass |
 | ORG-001 / ORG-002 | Do not block under recommended Option B | Block only organization-owned tenancy/bootstrap or organization-derived access | Not required for unowned-Supplier Claim v1; required if organization authority is later added |
 | AUD-001 | Does not block empty table | Blocks non-synthetic ownership decisions/transfer/revocation | Blocks required decision audit implementation |
 | MSG-003 | Does not block empty table or ownership history | Does not block an inert empty table | Blocks notification materializer and therefore the approved REL-001 producer/consumer delivery path |
