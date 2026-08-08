@@ -344,6 +344,8 @@ Payloads contain no names, email/phone, evidence, notes, notification text, prov
 
 AUD-001 remains the source for attempt/outcome/actor/reason/investigation retention. The audit record is not an outbox and the event is not a complete audit history.
 
+Successor note: decision-ready document 35 proposes one primary audit outcome in the same transaction as every successful approval/rejection; a separate minimized durable outcome for accountable denied/conflicted attempts, including reviewer conflict; and reuse of the original success audit on completed idempotent replay. AUD-001 remains Open pending explicit Owner approval and no command/runtime is authorized.
+
 MSG-003 remains the source for bilingual rendering snapshots, protected-notice behavior, class-based retention, read state, channels, and external delivery. The first materializer creates at most one notification per `(event_id, recipient_id, channel)` and marks the event processed in the same transaction. Historical/imported events are fan-out-suppressed.
 
 ## 17. Firebase-to-Supabase mapping and reconciliation

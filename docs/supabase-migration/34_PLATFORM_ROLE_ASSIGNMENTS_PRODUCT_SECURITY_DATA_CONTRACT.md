@@ -5,6 +5,7 @@ Status: **Owner-approved complete Product/Security/Data contract; exactly `owner
 Date: 2026-08-08
 Approval date: 2026-08-08
 
+Successor implementation note: merged PR #87 later implemented exactly the selected empty, fully revoked, local-only `public.platform_role_assignments` foundation plus focused synthetic pgTAP. It created no real role rows, bootstrap, access, Auth/RLS/runtime, hosted behavior, or authority. Decision-ready document 35 now proposes the separate AUD-001 contract; AUD-001 remains Open pending explicit Owner approval.
 
 ## 1. Scope and verified starting point
 

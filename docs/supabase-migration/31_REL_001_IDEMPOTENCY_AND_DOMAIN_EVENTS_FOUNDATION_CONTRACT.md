@@ -210,6 +210,8 @@ A domain event states that an approved domain transition committed. A future aud
 
 AUD-001 remains Open. This document chooses no audit retention duration, partition, legal-hold behavior, pseudonymization rule, before/after shape, actor access, or append-only implementation. `audit_logs` is not part of a later REL-001 SQL slice unless separately approved.
 
+Successor note: decision-ready document 35 now proposes the separate `internal.audit_logs` purpose, actor/evidence, immutability, minimization, retention-class, Claim/role transaction, and trusted-access contract. AUD-001 remains Open pending explicit Owner approval, and REL-001 Option D remains unchanged with no reliability SQL selected.
+
 ### Notifications
 
 The domain command commits its aggregate, idempotency completion, and domain event; it does not insert a notification. The one approved materializer derives the recipient/channel and safe bilingual snapshot, inserts at most one notification per `(event, recipient, channel)`, and marks the event processed in the same database transaction.
