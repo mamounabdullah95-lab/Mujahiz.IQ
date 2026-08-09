@@ -1,12 +1,12 @@
 # Claim v1 trusted-command atomicity, locking, and side-effects contract
 
-Status: **Owner-approved implementation architecture; documentation only; no trusted command, RLS, data, hosted, or Production action is implemented or authorized by this contract**
+Status: **Owner-approved implementation architecture; documentation only; no Claim mutation command, data, hosted, or Production action is implemented or authorized by this contract**
 
 Contract date: 2026-08-09
 
 Approval date: 2026-08-09
 
-Verified starting point: `origin/main` at `6544b16927b6a404ca4f7c3218993f26067e06c7`, the merge of PR #101 after the local Claim runtime identity-context foundation
+Verified starting point: `origin/main` at `d910bf43ea4fc5981da5869ed298b986a1bdb4bd`, the merge of PR #102 after the local claimant self-read RLS foundation
 
 Primary task profile: Documentation
 
@@ -33,8 +33,8 @@ This document creates no SQL, routine, RPC, role, grant, policy, RLS, Auth bridg
 - `public.supplier_ownership_claims` has one active-Claim-per-claimant/Supplier partial unique index, one Supplier-active-Claim lookup index, one write-once reviewer field group, lifecycle/version fields, a fixed stored `expires_at`, and a unique nullable resulting-ownership reference.
 - The Claim migration enforces only `expires_at > submitted_at`; it deliberately does not define “30 calendar days.”
 - The REL foundation provides one shared idempotency lifecycle and one immutable domain-event/outbox lifecycle. It contains no Claim-local request table or command runtime.
-- PR #101 added the sixteenth tracked local migration: dedicated `NOLOGIN NOINHERIT` role `mujahiz_claim_runtime`, non-exposed `claim_security`, and transaction-local invoker setter/accessor routines for the current Claim principal. The focused/full local evidence is 16 migrations, 16 pgTAP files, and 1,005/1,005 passing assertions, with 22 physical tables, 20 implemented and 16 deferred Core Phase 1 concepts, and zero RLS policies.
-- No RLS, application grant to a browser/generic runtime, trusted Claim command, notification table/materializer, real role/Claim/ownership row, or hosted authority exists. The PR #101 role and helper are a local identity-context foundation, not a command runtime or complete Auth bridge.
+- PR #101 added the sixteenth local migration with dedicated `NOLOGIN NOINHERIT` role `mujahiz_claim_runtime`, non-exposed `claim_security`, and transaction-local invoker principal context routines. PR #102 added the seventeenth local migration: Claim FORCE RLS, exactly one claimant self-select policy, and one minimized `SECURITY INVOKER` claimant status/history projection. The merged-tree evidence is 17 migrations, 17 pgTAP files, 1,068/1,068 passing assertions, 22 physical tables, 20 implemented and 16 deferred Core Phase 1 concepts, one Claim RLS policy, and one Claimant projection.
+- No Claim mutation policy, application/browser/API grant, trusted Claim command, notification table/materializer, real role/Claim/ownership row, or hosted authority exists. PR #102 grants only the dedicated runtime role the minimized claimant read path; it adds no mutation authority, reviewer/Admin/Owner access, gateway, or complete Auth bridge.
 - The current Firebase Claim implementation is undeployed evidence only. It proves transactional creation, retry binding, terminal withdrawal/rejection/expiry, one-winner approval, competing-Claim supersession, audit/event/notification side effects, and current-auth checks. Its global claimant lock, 20-conflict cap, direct command-side notification insert, two-sided Firebase ownership backlinks, and millisecond-based TTL are not authoritative relational design.
 
 **Approved existing contracts:**
@@ -47,7 +47,7 @@ This document creates no SQL, routine, RPC, role, grant, policy, RLS, Auth bridg
 - [MSG-003](39_MSG_003_NOTIFICATION_RETENTION_RENDERING_AND_MATERIALIZATION_CONTRACT.md) permits user-visible Claim-v1 notices only for approved, rejected, and superseded outcomes, produced asynchronously by one materializer.
 - [Claim structural readiness](41_CLAIM_SUPPLIER_PROFILE_STRUCTURAL_AND_COMMAND_READINESS_REVIEW.md) and [Claim foundation evidence](44_SUPPLIER_OWNERSHIP_CLAIMS_FOUNDATION_IMPLEMENTATION_EVIDENCE.md) fix one durable write-once reviewer, no reassignment, no Owner override, and one private Claim aggregate.
 - [SEC-001](42_CLAIM_FIRST_RLS_AND_TRUSTED_AUTHORIZATION_SECURITY_CONTRACT.md) fixes the server-mediated Firebase bridge, current-principal context, no direct client writes, RLS-versus-command separation, and required race/security tests.
-- [Claim runtime identity-context evidence](45_CLAIM_RUNTIME_IDENTITY_CONTEXT_FOUNDATION_EVIDENCE.md) records the local-only role/schema/context foundation added by PR #101; it implements no RLS or trusted command.
+- [Claim runtime identity-context evidence](45_CLAIM_RUNTIME_IDENTITY_CONTEXT_FOUNDATION_EVIDENCE.md) records the local-only role/schema/context foundation added by PR #101; [Claimant self-read evidence](47_CLAIM_RLS_SELF_READ_FOUNDATION_EVIDENCE.md) records the PR #102 read-only RLS/projection substrate; neither implements a Claim mutation command.
 
 ## 3. Owner-approved command model
 
@@ -475,7 +475,7 @@ Conflict, quarantine, evidence-source, abuse/investigation, and restricted decis
 
 ### 17.1 RLS prerequisites and independent command checks
 
-Before any command endpoint is executable, RLS/object grants/projections must already prove:
+Before any command endpoint is executable, the claimant self-read substrate must remain restricted to the PR #102 dedicated-role policy/projection, and the complete command-specific RLS/object grants/projections must prove:
 
 - no `anon`, browser `authenticated`, generic `service_role`, or unlisted runtime role can directly select or mutate Claim, ownership, role, identity-link, audit, idempotency, or event bases;
 - claimant reads are exact-self and field-minimized;
@@ -546,7 +546,7 @@ The seven named Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE
 
 ## 19. Approved first implementation slice
 
-**Owner-approved sequencing:** after the required claimant RLS/read substrate, default-deny grants, field-minimized claimant projection, PR #101 identity-context foundation, and applicable trusted helpers exist, implement `supplier_claim.submit` only as the first Claim mutation slice.
+**Owner-approved sequencing:** PR #102 now satisfies the claimant RLS/read substrate prerequisite through its dedicated-role FORCE-RLS policy and minimized claimant projection. After that substrate, default-deny command grants, the PR #101 identity-context foundation, and applicable trusted helpers are available, implement `supplier_claim.submit` only as the first Claim mutation slice; it remains unimplemented here.
 
 That slice contains only its minimum reviewed input/evidence registry, canonical 720-hour rule, shared Supplier/principal locking, `internal.idempotency_keys` integration, AUD-001-classified success/denial evidence, immutable Claim insert, `claim_submitted` domain event, minimal safe response, and focused synthetic authorization/race/replay/rollback tests. It has no notification write or notification-materializer dependency.
 
@@ -589,4 +589,5 @@ Exact stop point: commit and push the four-document synchronization to the exist
 - [`42_CLAIM_FIRST_RLS_AND_TRUSTED_AUTHORIZATION_SECURITY_CONTRACT.md`](42_CLAIM_FIRST_RLS_AND_TRUSTED_AUTHORIZATION_SECURITY_CONTRACT.md)
 - [`44_SUPPLIER_OWNERSHIP_CLAIMS_FOUNDATION_IMPLEMENTATION_EVIDENCE.md`](44_SUPPLIER_OWNERSHIP_CLAIMS_FOUNDATION_IMPLEMENTATION_EVIDENCE.md)
 - [`45_CLAIM_RUNTIME_IDENTITY_CONTEXT_FOUNDATION_EVIDENCE.md`](45_CLAIM_RUNTIME_IDENTITY_CONTEXT_FOUNDATION_EVIDENCE.md)
+- [`47_CLAIM_RLS_SELF_READ_FOUNDATION_EVIDENCE.md`](47_CLAIM_RLS_SELF_READ_FOUNDATION_EVIDENCE.md)
 - [`../ai-context/01_CURRENT_BASELINE.md`](../ai-context/01_CURRENT_BASELINE.md)
