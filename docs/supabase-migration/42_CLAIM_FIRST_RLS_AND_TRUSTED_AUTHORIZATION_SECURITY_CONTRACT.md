@@ -1,27 +1,32 @@
 # Claim-first RLS and trusted authorization security contract
 
-Status: **Proposal for Product/Security/Data Owner approval; SEC-001 remains unresolved; no RLS, grant, Auth bridge, trusted command, SQL, runtime, hosted, data, or Production implementation is authorized**
+Status: **Product/Security/Data Owner-approved Claim-v1 SEC-001 architecture; no RLS, grant, Auth bridge runtime, trusted command, Claim SQL, hosted, data, or Production implementation is authorized**
 
 Date: 2026-08-09
 
-Verified starting point: `origin/main` at `f5ee83096851991de680183c072b16987cb8784f`, the merge of PR #94
+Approval date: 2026-08-09
+
+Original proposal starting point: `origin/main` at `f5ee83096851991de680183c072b16987cb8784f`, the merge of PR #94
+
+Approval synchronization point: `origin/main` at `157c1615ec222ee088b97095fe69eb26c3c45064`, the merge of PR #98
 
 Primary task profile: Documentation
 
 ## 1. Scope, evidence labels, and decision status
 
-This document proposes the smallest fail-closed row-access and trusted-authorization contract required before a Supabase Claim Supplier Profile path may become client-accessible. It defines the identity assertion that future database authorization may trust, the base-table and column boundary, claimant/controller/reviewer visibility, trusted-command ownership, deterministic positive and negative tests, and rollout prerequisites.
+This document records the Owner-approved Claim-v1 SEC-001 architecture required before a Supabase Claim Supplier Profile path may become client-accessible. It fixes the identity assertion that future database authorization may trust, the base-table and column boundary, claimant/controller/reviewer visibility, trusted-command ownership, deterministic positive and negative tests, and rollout prerequisites.
 
-It does not implement or authorize RLS, policies, grants, functions, views, RPCs, an Auth bridge, Firebase configuration, Claim tables, Claim runtime, role/access bootstrap, audit writers, reliability tables, notifications, hosted Supabase, data movement, migration, deployment, or Production/TEST access.
+It does not implement or authorize RLS, policies, grants, functions, views, RPCs, an Auth bridge runtime, Firebase configuration, Claim tables, Claim runtime, role/access bootstrap, audit writers, REL command/worker integration, notifications, hosted Supabase, data movement, migration, deployment, or Production/TEST access.
 
 Evidence labels used below are:
 
-- **Verified current fact** — proved by the starting commit, current migrations, or an approved predecessor contract.
+- **Verified current fact** — proved by the synchronized commit, current migrations, or merged repository evidence.
 - **Approved existing contract** — already approved in a predecessor document, but not necessarily implemented.
-- **Recommendation** — the proposed SEC-001/Claim-first contract. It has no authority until explicitly approved.
-- **Unresolved** — an Owner, Security, Technical, Operations, Privacy, Legal, environment, or implementation decision still required.
+- **Owner-approved SEC-001 decision** — normative Claim-v1 architecture approved on 9 August 2026, without implementation or activation authority.
+- **Future implementation requirement** — a mandatory implementation or validation condition derived from the approved architecture.
+- **Unresolved delivery decision** — a Technical, Security, Operations, Privacy, Legal, environment, or implementation choice still required without reopening the approved architecture.
 
-This proposal does **not** resolve SEC-001 or any Open gate. The seven Open gates remain `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+This approval resolves **SEC-001 for Claim-v1 security architecture only**. It does not implement that architecture, authorize runtime or Production activation, or resolve any of the seven named Open gates: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 
 ## 2. Verified starting state
 
@@ -29,13 +34,17 @@ This proposal does **not** resolve SEC-001 or any Open gate. The seven Open gate
 
 - Firebase remains authoritative for authentication, account existence/disablement, email verification, sessions, recovery, and email actions during the hybrid phase.
 - PostgreSQL domain identity is provider-neutral: durable human relationships use `public.user_profiles.id`; Firebase UID is restricted to `internal.identity_provider_links.provider_subject`.
-- Local SQL contains the empty structural foundations for `public.user_profiles`, `internal.identity_provider_links`, `public.platform_role_assignments`, `public.supplier_profiles`, `public.supplier_ownerships`, and `internal.audit_logs`.
-- Those six foundations revoke table privileges from `PUBLIC`, `anon`, `authenticated`, and `service_role`; they have no RLS policies, browser/API grants, Auth bridge, trusted commands, or real authority.
+- Firebase UID/provider subject is never the Claim claimant FK, ownership-controller FK, notification-recipient domain FK, reviewer domain identity, or public application identity.
+- Current `origin/main` contains 14 tracked local SQL migrations and 21 physical PostgreSQL tables representing 19 implemented Core Phase 1 concepts; 17 remain deferred.
+- Local SQL contains the empty structural foundations for `public.user_profiles`, `internal.identity_provider_links`, `public.platform_role_assignments`, `public.supplier_profiles`, `public.supplier_ownerships`, `internal.audit_logs`, `internal.idempotency_keys`, and `internal.domain_events`.
+- Those eight foundations revoke table privileges from `PUBLIC`, `anon`, `authenticated`, and `service_role`; they have no RLS policies, browser/API grants, Auth bridge runtime, trusted Claim commands, real rows, or real authority.
 - The Supplier child foundations — locations, contacts, category assignments, capabilities, and payment options — are also fully revoked from browser/API roles and have no approved direct client access.
 - `internal` is absent from the local Data API exposed-schema list. The local Data API exposes `public` and `graphql_public`; object grants remain a separate required boundary.
-- `supplier_ownership_claims`, `internal.idempotency_keys`, `internal.domain_events`, and future relational `notifications` do not exist.
+- Merged PR #96 approved exactly one future `public.supplier_ownership_claims` table with one durable write-once assigned reviewer, no reassignment, no Owner override, and no separate evidence, reviewer, Claim-history/event, idempotency, rate-limit, attachment/file, or notification table. The Claim table is not implemented on the synchronized `origin/main`.
+- Merged PR #95 implemented the empty, fully revoked, local-only `internal.idempotency_keys` and `internal.domain_events` foundations. Their trusted-command, producer, consumer, lease/retry, and event-processing runtime does not exist.
+- Future relational `notifications` does not exist, and no notification materializer runtime exists.
 - `public.access_grants`, Claim reviewer assignments, security holds/denies, and the Firebase Auth bridge behavior required by the complete usable Admin/Owner predicate are not implemented.
-- Supabase is local-only and non-authoritative. No hosted project or hosted resource choice is approved. The GitHub Claim Supplier feature remains undeployed.
+- Supabase remains local-only, non-authoritative, and unhosted. No hosted project or hosted resource choice is approved. Firebase remains the live Production authority, and the GitHub Claim Supplier feature remains undeployed.
 
 **Approved existing contracts:**
 
@@ -45,10 +54,31 @@ This proposal does **not** resolve SEC-001 or any Open gate. The seven Open gate
 - [AUD-001](35_AUD_001_AUDIT_EVIDENCE_AND_TRUSTED_MUTATION_CONTRACT.md) requires minimized append-only audit evidence for accountable Claim decisions, privilege/ownership mutations, and post-auth security-sensitive failures.
 - [MSG-003](39_MSG_003_NOTIFICATION_RETENTION_RENDERING_AND_MATERIALIZATION_CONTRACT.md) requires provider-neutral self-only notification recipients, one materializer, immutable bilingual snapshots, and no Firebase fallback after feature cutover.
 - [SEARCH-001](37_SEARCH_001_POSTGRESQL_SEARCH_TECHNOLOGY_CONTRACT_REVIEW.md) approves a bounded Claim Supplier lookup result containing only Supplier ID, bilingual names, governorate, city, up to three categories, and a sanitized website domain; it does not approve base-table access.
+- [Claim structural readiness](41_CLAIM_SUPPLIER_PROFILE_STRUCTURAL_AND_COMMAND_READINESS_REVIEW.md), merged through PR #96, approves one future private Claim aggregate with one write-once reviewer and no reassignment or Owner override; it does not implement the table.
+
+### 2.1 Merged PR #98 local POC evidence
+
+**Verified current fact:** [PR #98's local Auth bridge POC](43_FIREBASE_SUPABASE_REQUEST_SCOPED_AUTH_BRIDGE_POC.md) is a **PASS for technical feasibility only**. With Firebase Auth Emulator identities and a disposable local PostgreSQL instance, it proved:
+
+- valid Firebase-derived resolution to exactly one active primary Firebase provider link and one active `user_profiles.id`;
+- fail-closed missing, invalid, wrong-project/audience, unverified, disabled, deleted/not-found, unmapped, inactive-link, inactive-profile, and duplicate-mapping cases;
+- caller-supplied profile UUID, Firebase UID, or provider-link UUID cannot override token-derived identity; and
+- transaction-local PostgreSQL context is absent after commit and rollback on the same reused physical backend connection.
+
+The POC used synthetic identities, Firebase Auth Emulator unsigned tokens, a disposable local database, a deliberately unapproved setting name, and a database superuser because no runtime role exists. It did **not** implement or approve Production Auth, a gateway runtime, RLS, policies, grants, Claim roles, Claim SQL, trusted commands, hosted Supabase, data movement, deployment, or Production activation.
+
+### 2.2 POC limitations retained as release gates
+
+The POC did **not** prove real signed Firebase token certificate/key behavior, TLS or network boundaries, Production Firebase Admin credential custody, or the selected hosted driver/pool/pooler behavior for exceptions, timeouts, cancellation, retries, connection return, and connection reuse. Before hosted, staging, or Production activation, the project must repeat:
+
+1. signed-token validation in an approved non-Production environment, covering issuer, audience, certificate/key retrieval and rotation, expiry, disabled/deleted/not-found/unverified current-user behavior, Firebase Admin outage/failure, and safe errors/logging; and
+2. context-isolation validation with the selected real driver/pool/pooler, covering commit, rollback, thrown exception, timeout, cancellation, retry, connection return, and connection reuse.
+
+Session-global principal state is prohibited. A PASS on the local POC is not Production-readiness evidence.
 
 ## 3. Security objective and invariants
 
-**Recommendation:** no client-accessible Supabase Claim feature may ship unless all of these invariants are simultaneously true:
+**Owner-approved SEC-001 decision:** no client-accessible Supabase Claim feature may ship unless all of these invariants are simultaneously true:
 
 1. The caller reaches PostgreSQL only through an authenticated bridge context produced from a current validated Firebase identity.
 2. The bridge resolves exactly one Firebase provider link to exactly one active provider-neutral `user_profiles` row.
@@ -60,6 +90,8 @@ This proposal does **not** resolve SEC-001 or any Open gate. The seven Open gate
 8. The `service_role` token is not an application authorization path, is never placed in a browser, and is not the generic Claim worker identity.
 9. `internal.*` remains outside Data API exposure and unavailable to browser/API roles.
 10. A feature cut over to Supabase never falls back to Firestore authorization, Firebase data reads, or Firebase notification creation for the same operation.
+11. Every protected Claim-v1 authorization attempt requires a current usable Firebase account observation; Firebase Admin unavailability, stale evidence, or contradictory current authority denies.
+12. The future bridge uses a dedicated least-privilege, non-owner, non-`BYPASSRLS`, non-browser runtime database role that is neither `service_role` nor a generic SQL execution path.
 
 ## 4. Threat model
 
@@ -77,7 +109,7 @@ This proposal does **not** resolve SEC-001 or any Open gate. The seven Open gate
 | Supplier controller reading competing Claims | Ownership is misused as Claim-review authority | Controller relationship grants no Claim-row policy. A controller sees another Claim only if independently the claimant or an assigned usable reviewer | Current/new/previous controller receives no competing Claim/evidence/reviewer data |
 | Admin without usable platform authority | An inert, stale, or forged role row grants review access | Reviewer resolution requires the complete usable Admin/Owner predicate, not role code alone | Active role with missing access, stale provider evidence, inactive profile, or security deny receives no reviewer row |
 | Global reviewer privilege | All Admins/Owners can browse private Claims | `reviewer` is not a platform role. Claim read/decision additionally requires a current exact assignment and no conflict | Usable but unassigned Admin/Owner cannot list or open an assigned Claim |
-| Reviewer conflict | Claimant, owner/member, or conflicted actor reviews the Claim | Conflict resolver runs for reviewer read, begin-review, approval, and rejection; conflict denies and requires reassignment | Each prohibited relationship fixture denies both read and decision and records the required safe denial evidence |
+| Reviewer conflict | Claimant, owner/member, or conflicted actor reviews the Claim | Conflict resolver runs for reviewer read, begin-review, approval, and rejection; conflict denies, and the write-once assignment is not reassigned or overridden | Each prohibited relationship fixture denies both read and decision and records the required safe denial evidence |
 | Last usable Owner loss | Role/identity/access change strands administration | RLS is not used for this invariant. Every eligibility-removing command/job uses the common final-Owner serialization guard | Concurrent role/profile/link/access changes cannot commit a state with zero usable Owners |
 | Direct browser insert/update/delete | Client bypasses lifecycle validation | No base mutation grants and no permissive mutation policy. Every authoritative mutation is a registered command with server-derived actor/state/time | `anon` and `authenticated` direct writes fail for every protected table, including guessed columns and bulk requests |
 | Hidden-column leakage | A row-valid response exposes contacts, provider subjects, evidence, notes, or provenance | Explicit response types/column allowlists; no `select *`, generic JSON row, automatic table endpoint, or client-selectable projection columns | Schema-contract tests compare exact output fields and attempt every excluded column/path |
@@ -91,11 +123,13 @@ This proposal does **not** resolve SEC-001 or any Open gate. The seven Open gate
 
 ## 5. Identity boundary and Auth bridge prerequisites
 
-### 5.1 Recommended first-release bridge pattern
+### 5.1 Approved Claim-v1 bridge pattern
 
-**Recommendation:** use a server-mediated Firebase Auth bridge/gateway for the first Claim release. The browser sends its Firebase ID token only to that trusted gateway. The gateway performs Firebase and relational identity checks, then executes one database request as a dedicated Claim runtime role with transaction-scoped identity context. The browser receives neither a reusable database credential nor a `service_role` token.
+**Owner-approved SEC-001 decision:** use a server-mediated Firebase Auth bridge/gateway for Claim v1. The browser sends its Firebase ID token only to that trusted gateway. The gateway performs Firebase and relational identity checks, then executes one bounded database request as a dedicated Claim runtime role with transaction-scoped identity context. The browser receives neither a reusable database credential nor a `service_role` token.
 
-Direct browser-to-PostgREST custom JWT exchange remains a later alternative. It is **not approved by this proposal**, because its exact signer custody, expiry, refresh, revocation latency, audience, issuer, replay, and browser-storage rules have not been reviewed.
+Browser-issued direct generic database authority, a long-lived custom Supabase/PostgREST JWT exchange, immediate migration to Supabase Auth, and `service_role` as application-user authorization are **not approved for Claim v1**. Any later alternative requires a separate architecture decision and review of signer custody, expiry, refresh, revocation latency, audience, issuer, replay, and browser storage.
+
+Merged PR #98 proves this direction is locally feasible; it does not implement the gateway or approve its POC-only setting name, superuser connection, or test harness as runtime design.
 
 ### 5.2 Required bridge validation
 
@@ -125,6 +159,8 @@ The database receives only the bounded values needed to verify the assertion:
 - the dedicated runtime role/purpose that established the context.
 
 Platform role, reviewer authority, Supplier ownership, membership, Claim identity, and target IDs are **not** trusted bridge claims. PostgreSQL re-reads those current relationships. A transport claim equivalent to PostgreSQL `authenticated` is only a technical role selector and never an application Owner/Admin/reviewer role.
+
+The final setting names and exact context representation are implementation details. They are not approved merely because PR #98 used a POC-only name. Whatever form is selected must be transaction-local, server-established, purpose/environment/policy-bound, absent after commit or rollback, and impossible for browser input to choose or persist.
 
 ### 5.4 Fail-closed resolver contract
 
@@ -156,8 +192,8 @@ The terms below mean:
 | `public.supplier_ownerships` | No direct client access | Current controller self projection and field-minimized ownership history only. Claimants/reviewers receive ownership facts only as safe eligibility/result fields, never controller identity unless independently authorized | Claim approval, transfer, revoke, correction, and reconciliation commands only |
 | Future `public.supplier_ownership_claims` | No direct client access | Claimant-own, assigned-reviewer, and separately controlled queue projections only; no generic Admin/Owner/Supplier access | Submit, withdraw, assignment, begin review, approve, reject, expire, supersede, and correction commands/workers only |
 | `internal.audit_logs` | Internal only | No Claim-v1 client read. Future investigation/export is a separate purpose-limited audited command | Registered trusted commands, migration, and audit maintenance only; append/correct, never ordinary update/delete |
-| Future `internal.idempotency_keys` | Internal only | No client read | Registered trusted commands/workers only |
-| Future `internal.domain_events` | Internal only | No client read | Domain command inserts; named worker alone changes processing state |
+| `internal.idempotency_keys` | Internal only | No client read | Registered trusted commands/workers only; the foundation exists but no Claim integration/runtime exists |
+| `internal.domain_events` | Internal only | No client read | Domain command inserts; named worker alone changes processing state; the foundation exists but no Claim producer/consumer runtime exists |
 | Future `public.notifications` | No direct client access | Self-readable field-minimized inbox projection only, exact immutable recipient; no Admin/Owner/controller inheritance | One materializer inserts; recipient self command sets only `read_at`; retention service alone archives/purges under approved policy |
 
 All other Supplier base tables remain non-public. The presence of a table in the `public` PostgreSQL schema does not mean public audience access.
@@ -166,7 +202,7 @@ All other Supplier base tables remain non-public. The presence of a table in the
 
 ### 7.1 Allowed claimant projection
 
-**Recommendation:** an eligible current claimant may receive only rows where `claimant_user_profile_id` equals the resolved current principal. The projection is explicit and contains:
+**Owner-approved SEC-001 decision:** an eligible current claimant may receive only rows where `claimant_user_profile_id` equals the resolved current principal. The projection is explicit and contains:
 
 - Claim UUID, Supplier UUID, and an immutable claimant-visible reference if separately approved;
 - current safe status: `submitted`, `under_review`, `approved`, `rejected`, `withdrawn`, `expired`, or `superseded`;
@@ -191,7 +227,7 @@ The claimant cannot receive:
 
 ### 7.3 Claimant-safe result codes
 
-**Recommendation:** the claimant-facing allowlist is exactly:
+**Owner-approved SEC-001 decision:** the claimant-facing allowlist is exactly:
 
 - `approved`;
 - `insufficient_evidence`;
@@ -204,13 +240,13 @@ The claimant cannot receive:
 - `not_approved`; and
 - `result_unavailable`.
 
-Internal fraud/abuse, conflict, quarantine, identity, reviewer, evidence-source, integrity, and system failure codes map to `not_approved` or `result_unavailable` according to the approved disclosure registry. Unknown codes never pass through. A superseded result discloses no approved claimant, owner, competing Claim, or evidence.
+Internal fraud/abuse, conflict, quarantine, identity, reviewer, evidence-source, integrity, and system failure codes may map only to `not_approved` or `result_unavailable` through a future implemented disclosure registry constrained by this allowlist. Unknown codes never pass through. A superseded result discloses no approved claimant, owner, competing Claim, or evidence.
 
 Unauthorized and unknown Claim IDs return the same safe not-found response. List totals/counts are computed only after the self predicate, and pagination cursors cannot encode another claimant's identity.
 
 ## 8. Supplier controller contract
 
-**Recommendation:** after ownership is established, a currently eligible primary controller may receive a controller projection for the Supplier they currently control. It may contain:
+**Owner-approved SEC-001 decision:** after ownership is established, a currently eligible primary controller may receive a controller projection for the Supplier they currently control. It may contain:
 
 - Supplier UUID and the separately approved Supplier presentation/operational fields;
 - the controller's own current ownership UUID, authority type, status, validity start, and safe closure state where applicable; and
@@ -231,14 +267,14 @@ If the controller was also the claimant, they retain claimant access to their ow
 
 **Approved existing contract:** `reviewer` is not a platform role.
 
-**Recommendation:** an actor may use the reviewer projection only if all of these facts are current in the same request and policy version:
+**Owner-approved SEC-001 decision:** an actor may use the reviewer projection only if all of these facts are current in the same request and policy version:
 
 1. the bridge resolves a current verified Firebase identity to one active profile;
 2. the profile has compatible `buyer` platform-administration context;
 3. exactly one active, in-time `owner` or `admin` assignment exists;
 4. current role-backed platform-administration access exists;
 5. no security deny, quarantine, identity conflict, stale mirror, or contradictory evidence exists;
-6. the actor holds the exact current Claim reviewer assignment, including matching Claim ID, reviewer profile, assignment/review version, active state, valid time, and nonterminal status;
+6. the actor is the Claim's exact durable write-once assigned reviewer, with matching Claim ID, reviewer profile, assignment/review version, assignment time/policy, and nonterminal status;
 7. the actor is not the claimant, current/proposed controller, or later active Supplier member/admin/delegate for the target Supplier; and
 8. no recorded conflict/security hold applies.
 
@@ -262,8 +298,8 @@ The assigned-reviewer queue contains only currently assigned, currently reviewab
 - A role row without the complete usable predicate authorizes nothing.
 - A usable but unassigned Admin cannot browse, open, or decide a Claim.
 - A usable but unassigned Owner does not receive global Claim read access.
-- The recommended Claim-v1 assignment/reassignment authority is a usable Owner through an audited trusted command. A future Admin assignment power requires separate explicit approval and self-assignment/conflict controls.
-- An Owner override never bypasses identity, current access, conflict, target-state, evidence, audit, idempotency, or concurrency checks. The override/reassignment command first creates a current accountable assignment/version, then the ordinary assigned-reviewer policy applies.
+- One future audited trusted assignment command may set the reviewer exactly once. The candidate must be a usable Admin or Owner and conflict-free; the assigning actor and queue-ownership rule remain an unresolved delivery decision under the merged Claim structural contract.
+- Claim v1 permits no reviewer reassignment and no Owner override. If the assigned reviewer becomes unusable or conflicted, the next read or decision denies, and a different reviewer cannot be substituted under Claim v1.
 
 ## 10. RLS responsibility versus trusted-command responsibility
 
@@ -278,13 +314,13 @@ Complex workflow transitions must not be encoded only in RLS. No browser role re
 
 ## 11. Trusted mutation boundary
 
-**Recommendation:** the first Claim release treats all authoritative Claim and ownership transitions as registered trusted commands/workers.
+**Owner-approved SEC-001 decision:** the first Claim release treats all authoritative Claim and ownership transitions as registered trusted commands/workers.
 
 | Action | Trusted boundary | Minimum additional checks | Direct client row write |
 |---|---|---|---|
 | Submit Claim | Self-only trusted command | Current verified Firebase/profile/link; Supplier context; unowned eligible Supplier; no active claimant/Supplier Claim; immutable bounded evidence; idempotency | Denied |
 | Withdraw Claim | Self-only trusted command | Exact claimant; active `submitted` or `under_review`; expected version; unexpired/nonterminal state; no operator impersonation | Denied |
-| Assign/reassign reviewer | Usable Owner trusted command in Claim v1 | Candidate usable Admin/Owner; distinct accountable assigner; no claimant/controller/member conflict; assignment version; audit | Denied |
+| Assign reviewer once | Named trusted assignment command; assigning-role policy remains a delivery decision | Candidate usable Admin/Owner; distinct accountable assigner; no claimant/controller/member conflict; write-once assignment/version; audit; no reassignment or override | Denied |
 | Begin review | Assigned reviewer trusted command | Exact current assignment/version; `submitted`; unexpired Claim; conflict recheck; expected version | Denied |
 | Approve | `supplier_ownership.decide_claim` | Complete actor/claimant/Supplier/evidence checks, unowned slot, deterministic competing-Claim locks, audit/idempotency/events | Denied |
 | Reject | `supplier_ownership.decide_claim` | Same actor/Claim integrity checks; bounded reason/disclosure mapping; audit/idempotency/event | Denied |
@@ -298,7 +334,7 @@ Browser input never selects the effective actor, claimant, reviewer authority, S
 
 ## 12. Column privacy and projection strategy
 
-### 12.1 Recommended Claim-first API surface
+### 12.1 Approved Claim-v1 external surface
 
 Use a dedicated exposed API schema containing only explicitly granted Claim RPC endpoints. Keep base relations ungranted. The first read surface should be narrowly named around:
 
@@ -308,13 +344,14 @@ Use a dedicated exposed API schema containing only explicitly granted Claim RPC 
 - current-controller ownership summary; and
 - self Claim-notification list/mark-read when relational notifications exist.
 
-Each endpoint returns a fixed typed field list. It does not accept a caller principal, arbitrary column selector, table name, filter expression, raw SQL fragment, arbitrary URL, unrestricted JSON response shape, or generic “admin mode.”
+Every selected view/RPC must be schema-qualified, narrowly granted, deterministic, and fixed-typed. It does not accept a caller principal, arbitrary column selector, table name, filter expression, raw SQL fragment, arbitrary URL, unrestricted JSON response shape, or generic “admin mode.”
 
 ### 12.2 Routine ownership and RLS behavior
 
-Because security-invoker views require the invoker to hold privileges on underlying relations, they do not by themselves preserve the current zero-base-grant browser boundary. They are therefore not the preferred Claim-private projection for the first slice.
+The exact projection implementation and schema/function names remain a later reviewed implementation selection. Because security-invoker views require the invoker to hold privileges on underlying relations, they do not by themselves preserve the current zero-base-grant browser boundary.
 
-The recommended RPC owner is a dedicated non-login role that:
+If a definer RPC is selected for a Claim-private projection, its owner must be a dedicated non-login role that:
+
 
 - is not a superuser, table owner, `service_role`, or a role with `BYPASSRLS`;
 - has only the exact base column/operation privileges required by the routine;
@@ -340,7 +377,7 @@ RLS is defense in depth behind object grants and explicit RPC responses; it is n
 
 ## 13. Internal schema and grant expectations
 
-**Recommendation:** the implementation must prove all of the following:
+**Future implementation requirement:** the implementation must prove all of the following:
 
 - `internal` is absent from every Data API exposed-schema configuration in local, CI, development, staging, and Production.
 - `PUBLIC`, `anon`, `authenticated`, `service_role`, and every browser/application API role have no schema usage or object privilege on `internal` unless a separately named non-browser role receives a specific object privilege.
@@ -355,7 +392,7 @@ RLS is defense in depth behind object grants and explicit RPC responses; it is n
 
 RLS does not solve Claim concurrency.
 
-**Approved existing contract and recommendation:**
+**Owner-approved SEC-001 decision, consistent with the approved existing Claim contract:**
 
 - Enforce at most one active Claim per claimant/Supplier pair while permitting active Claims from different claimants for one unowned Supplier.
 - Submission locks/rechecks the claimant/Supplier active slot and the Supplier ownership slot before inserting.
@@ -367,7 +404,9 @@ RLS does not solve Claim concurrency.
 - RLS continues to hide competing Claims before, during, and after supersession.
 - A direct standalone supersede write is never permitted.
 
-The final implementation must include race tests with two simultaneous approvals, approval versus withdrawal, approval versus expiry, ownership creation versus approval, reviewer reassignment versus decision, and provider/role/access loss versus decision.
+The final implementation must include race tests with two simultaneous approvals, approval versus withdrawal, approval versus expiry, ownership creation versus approval, initial reviewer assignment versus withdrawal/expiry, and provider/role/access loss versus decision.
+
+The merged REL boundary remains fixed: `internal.idempotency_keys` provides trusted-command replay safety, and `internal.domain_events` provides immutable producer/consumer integration. A domain event is not an audit record or notification, and the Claim aggregate is not reconstructed from event history.
 
 ## 15. Audit and security evidence
 
@@ -377,13 +416,13 @@ Under the approved AUD-001 boundary, durable minimized audit evidence is require
 
 - successful approval and rejection in the authoritative transaction;
 - reviewer-conflict, unauthorized decision, stale-version, existing-owner, identity/eligibility, evidence, quarantine, and integrity failures after an accountable actor/source is resolved;
-- reviewer assignment/reassignment and Owner override because they grant private Claim visibility;
+- the one write-once reviewer assignment because it grants private Claim visibility;
 - ownership transfer, revocation, and security-sensitive correction;
 - role/access/identity mutations that affect reviewer or final-Owner eligibility;
 - service/worker privilege misuse, dead-letter requeue, and privileged repair after accountable source resolution; and
 - migration/reconciliation overrides or authority-manifest changes where applicable.
 
-**Recommendation pending action-registry approval:** accepted Claim submission, withdrawal, and begin-review should receive minimized durable action outcomes because they create private evidence or expand access. Expiry and per-competing-Claim supersession remain authoritative domain/event history; the approval audit records the superseded count without competing identities unless the approved audit registry requires per-Claim records.
+**Unresolved delivery decision pending action-registry approval:** accepted Claim submission, withdrawal, and begin-review should receive minimized durable action outcomes because they create private evidence or expand access. Expiry and per-competing-Claim supersession remain authoritative domain/event history; the approval audit records the superseded count without competing identities unless the approved audit registry requires per-Claim records.
 
 ### 15.2 Denied reads and pre-auth traffic
 
@@ -437,14 +476,14 @@ All matrices assume synthetic local or approved staging fixtures. “Allow” me
 | Assigned Claim reviewer | Deny Claimant search unless independently Supplier-context eligible | Allow only if independently claimant | Deny claimant endpoint for another user | Allow exact assigned/current Claim only | Deny unless independently controller | Allow only exact recipient | Deny |
 | Unusable/unassigned Admin | Deny | Deny/no rows | Deny | Deny | Deny | Deny/no rows | Deny |
 | Usable but unassigned Admin | Deny | Allow only if independently claimant | Deny | Deny target and all unassigned Claims | Deny unless independently controller | Allow only exact recipient | Deny |
-| Usable but unassigned Owner | Deny | Allow only if independently claimant | Deny | Deny until audited assignment/override establishes assignment | Deny unless independently controller | Allow only exact recipient | Deny |
+| Usable but unassigned Owner | Deny | Allow only if independently claimant | Deny | Deny; no override path | Deny unless independently controller | Allow only exact recipient | Deny |
 | Generic `service_role` API identity | Deny | Deny | Deny | Deny | Deny | Deny | Deny |
 | Dedicated expiry/materializer worker | Deny human projections | Deny | Deny | Deny | Deny | Deny inbox read; allow only named worker write/read set | Deny outside registered objects |
 | Migration operator | Deny online projections | Deny | Deny | Deny | Deny | Deny | Deny except separately approved migration objects/runbook |
 
 ### 17.3 Trusted-command matrix
 
-| Actor | Submit own Claim | Withdraw own active Claim | Assign/reassign reviewer | Begin assigned review | Approve/reject | Expire | Standalone supersede | Transfer current ownership | Revoke ownership |
+| Actor | Submit own Claim | Withdraw own active Claim | Assign reviewer once | Begin assigned review | Approve/reject | Expire | Standalone supersede | Transfer current ownership | Revoke ownership |
 |---|---|---|---|---|---|---|---|---|---|
 | Anonymous | Deny | Deny | Deny | Deny | Deny | Deny | Deny | Deny | Deny |
 | Authenticated but unmapped | Deny | Deny | Deny | Deny | Deny | Deny | Deny | Deny | Deny |
@@ -458,8 +497,8 @@ All matrices assume synthetic local or approved staging fixtures. “Allow” me
 | Unrelated Supplier controller | Allow for another eligible unowned Supplier | Allow only own Claim | Deny | Deny | Deny | Deny | Deny | Deny target Supplier | Deny target Supplier |
 | Assigned Claim reviewer | Deny unless independently eligible Supplier-context claimant | Allow only if independently target claimant, never as reviewer | Deny self-assignment | Allow exact assigned Claim | Allow exact assigned Claim with all checks | Deny | Deny; supersession is approval effect | Deny | Deny |
 | Unusable/unassigned Admin | Deny | Deny | Deny | Deny | Deny | Deny | Deny | Deny | Deny |
-| Usable but unassigned Admin | Deny unless independently eligible claimant | Allow only if independently claimant | Deny in Claim v1 | Deny | Deny | Deny | Deny | Deny absent separately approved elevated policy | Deny absent separately approved elevated policy |
-| Usable but unassigned Owner | Deny unless independently eligible claimant | Allow only if independently claimant | Allow through audited Owner command | Deny until assignment/override becomes current | Deny until assignment/override and all checks pass | Deny | Deny | Conditional through separate trusted elevated transfer policy | Conditional through separate trusted revoke policy |
+| Usable but unassigned Admin | Deny unless independently eligible claimant | Allow only if independently claimant | Conditional only if the later assignment-command policy authorizes this actor; never self-assign/reassign | Deny | Deny | Deny | Deny | Deny absent separately approved elevated policy | Deny absent separately approved elevated policy |
+| Usable but unassigned Owner | Deny unless independently eligible claimant | Allow only if independently claimant | Conditional only if the later assignment-command policy authorizes this actor; never override/reassign | Deny while unassigned | Deny while unassigned | Deny | Deny | Conditional through separate trusted elevated transfer policy | Conditional through separate trusted revoke policy |
 | Generic `service_role` API identity | Deny | Deny | Deny | Deny | Deny | Deny | Deny | Deny | Deny |
 | Dedicated expiry worker | Deny | Deny | Deny | Deny | Deny | Allow only due active Claims under worker contract | Deny standalone; may terminalize expiry only | Deny | Deny |
 | Dedicated notification materializer | Deny | Deny | Deny | Deny | Deny | Deny | Deny | Deny | Deny |
@@ -480,7 +519,7 @@ All matrices assume synthetic local or approved staging fixtures. “Allow” me
 | ROW-02 | Competing claimants paginate/filter/count one Supplier | Each sees only own rows; no competing count |
 | ROW-03 | Current, prior, or successor controller queries Claim data | No row unless independently claimant/assigned reviewer |
 | ROW-04 | Usable unassigned Admin/Owner opens reviewer detail | Deny |
-| ROW-05 | Assigned reviewer becomes conflicted, inactive, unverified, revoked, or unassigned | Next read/decision denies |
+| ROW-05 | Assigned reviewer becomes conflicted, inactive, unverified, role/access-revoked, or the assignment integrity check fails | Next read/decision denies; no reassignment or override occurs |
 | COL-01 | Allowed claimant requests reviewer/evidence-verification/provider/audit fields | Endpoint rejects/omits; response contract unchanged |
 | COL-02 | Allowed controller requests establishment/closure evidence or other controllers | Endpoint rejects/omits |
 | COL-03 | Claim lookup searches phone/email/source note/payment/security fields | Fields are absent from search input/result and cannot affect membership |
@@ -494,7 +533,7 @@ All matrices assume synthetic local or approved staging fixtures. “Allow” me
 | MUT-02 | Caller selects actor/status/time/reviewer/owner/audit/event/notification fields in command payload | Rejected/ignored according to typed request; server derives all authority fields |
 | CON-01 | Two claimants submit same Supplier concurrently | Both may succeed only as distinct active claimant/Supplier pairs; no duplicate pair |
 | CON-02 | Two reviewers approve competing Claims concurrently | Exactly one approval/ownership commits; loser returns stable conflict; no partial audit/event/notice |
-| CON-03 | Approval races withdrawal/expiry/reassignment/provider disable/role revoke | At most one valid transition commits after current re-read; other fails safely |
+| CON-03 | Approval races withdrawal/expiry/provider disable/role revoke | At most one valid transition commits after current re-read; other fails safely |
 | CON-04 | Ownership appears after submission before approval | Approval fails `existing_owner`; no auto-link |
 | OWN-01 | Role/profile/link/access changes race on final usable Owner | State with zero usable Owners cannot commit |
 | REP-01 | Identical command replay | Original safe result; no duplicate success effects |
@@ -517,7 +556,7 @@ Any of the following yields deny/no mutation:
 - stale expected version, lock conflict, idempotency conflict, or contradictory ownership/Claim state; or
 - audit/event/idempotency/notification prerequisite failure where the command contract requires it.
 
-No path falls back to Firestore role checks or Claim data after Supabase becomes authoritative for the feature. A rollback freezes and reconciles one authority manifest; it does not dual-authorize or silently resume Firebase writes.
+After a Claim operation becomes authoritative on Supabase, failure to establish the Supabase identity/security path denies that operation. No path falls back to Firestore authorization, Firebase Claim reads or writes, or Firebase notification creation. A rollback freezes and reconciles one authority manifest; it does not dual-authorize or silently resume Firebase writes.
 
 ## 19. Rollout order and dependency boundary
 
@@ -538,9 +577,9 @@ This local security substrate is not a shippable Claim feature and is not author
 
 ### 19.2 Firebase Auth bridge dependency
 
-Before any end-to-end Claim client test, the bridge must implement and prove sections 5 and 18 against Firebase Emulator or another explicitly approved non-Production environment. It must also prove provider disablement/deletion/verification-loss behavior, no browser database credential, transaction-context cleanup, and no Firestore authorization fallback.
+PR #98 satisfies local technical feasibility only. Before any client-facing or hosted end-to-end Claim test, the real bridge must implement and prove sections 5 and 18 in an explicitly approved non-Production environment using real signed Firebase tokens. It must prove current disablement/deletion/not-found/verification-loss behavior, Firebase Admin failure behavior, no browser database credential, transaction-context cleanup, safe errors/logging, and no Firestore authorization fallback.
 
-The exact bridge transport, database connection role, secret custody, recent-auth/step-up rule, abuse protection, outage behavior, and observability require Technical/Security/Operations approval.
+The exact bridge transport, database connection role, secret custody, recent-auth/step-up rule, abuse protection, outage behavior, and observability require Technical/Security/Operations approval. The selected real driver/pool/pooler must pass commit, rollback, exception, timeout, cancellation, retry, connection-return, and reuse isolation before hosted activation.
 
 ### 19.3 Hosted staging dependency
 
@@ -551,46 +590,50 @@ Hosted staging requires:
 - an isolated staging project containing synthetic or separately approved non-Production data only;
 - reviewed Data API exposed schemas, TLS/network controls, secret custody, backups, logs, and no Production Firebase authority change;
 - implemented Claim/identity/role-access/audit/reliability/notification dependencies; and
+- a PASS on the signed-token validation gate, including issuer/audience and certificate/key retrieval and rotation;
+- a PASS on the selected real driver/pool/pooler isolation gate; and
 - independent security review plus the complete matrix under the hosted configuration.
 
 ### 19.4 Production activation dependency
 
 Production activation requires all of the following and a new explicit Owner approval:
 
-- approved SEC-001 policy/grant/projection/bridge design and independently reviewed implementation;
+- the approved SEC-001 bridge/RLS/projection/grant architecture implemented and independently reviewed;
 - Claim structures and all required trusted commands/workers implemented and tested;
 - ID-001 bridge behavior, platform role/access/bootstrap, final-Owner guard, and at least two usable Owners established under approved governance;
 - AUD-001 action registry, audit writers, retention/access/enforcement decisions, and failure tests;
-- the coherent REL-001 idempotency/domain-event foundation plus MSG-003 notification table/materializer/runtime;
+- the existing REL-001 idempotency/domain-event foundations integrated into trusted commands and a reviewed producer/consumer runtime, plus the MSG-003 notification table/materializer/runtime;
 - exact Claim retention/evidence/privacy rules and FILE-001 approval only if managed file evidence is introduced;
 - approved `RES-001` hosted environment and `MIG-002` migration/cutover/reconciliation/rollback plan;
 - bounded real-data mapping evidence, counts/fingerprints, quarantine handling, authority manifest, and rollback rehearsal;
 - no unresolved security-critical negative or race test; and
 - explicit feature activation, monitoring, incident, credential-rotation, break-glass, and rollback approval.
 
-## 20. Unresolved decisions and approvals
+## 20. Architecture resolved; delivery decisions and gates remain
 
-This proposal deliberately leaves these items unresolved:
+The Owner approval resolves the Claim-v1 SEC-001 architecture and Option A bridge direction. It does not resolve these delivery choices or prerequisites:
 
-1. Product/Security/Data Owner approval or revision of this SEC-001 proposal.
-2. Exact Claim structural columns, reviewer-assignment representation, history shape, and retention fields from the separate Claim structural-readiness review.
-3. Exact RLS policy/helper/RPC names, schemas, DDL, function owners, runtime roles, grants, and migration ordering.
-4. Final selection of server-mediated transaction context versus a later direct Data API custom-token design. This proposal recommends the former only for Claim v1.
-5. Bridge credential custody, recent-auth/step-up, anti-replay/abuse controls, availability behavior, and operational revocation targets.
-6. Exact role-backed platform-administration access implementation and security-hold/deny representation needed by the usable reviewer predicate.
-7. Whether any future Admin may assign reviewers; Claim v1 recommends usable Owner-only assignment/reassignment.
-8. Final claimant-safe result-code registry and internal-to-safe disclosure mapping.
-9. Exact audit action registry for submit/withdraw/begin-review and exact audit/security retention, access, legal-hold, privacy, archive, and purge rules.
-10. Exact notification, idempotency, domain-event, worker lease/retry/dead-letter, and operations implementation.
-11. `FILE-001` if Claim evidence moves beyond the approved bounded non-file reference path.
-12. `RES-001` hosted environment and `MIG-002` environment/migration/cutover strategy.
-13. The unrelated Open gates `ORG-001`, `ORG-002`, `MSG-002`, and `BILL-001`, which remain unchanged and do not block the bounded unowned-Supplier Claim v1 unless their concepts are introduced.
+1. exact Claim columns, types, constraints, indexes, comments, retention fields, and pgTAP in the separately authorized one-table implementation;
+2. exact RLS policy/helper/projection/RPC names, schemas, DDL, function owners, runtime roles, grants, and migration ordering;
+3. bridge transport and deployment boundary, Firebase Admin credential custody, recent-auth/step-up, anti-replay/abuse controls, availability behavior, safe errors, observability, and revocation targets;
+4. final PostgreSQL context setting names/shape, hardened transaction wrapper, purpose/environment/policy binding, and current-principal resolver;
+5. trusted provider-link provisioning, reconciliation, correction/quarantine lineage, and protection from semantically wrong mappings;
+6. exact role-backed platform-administration access implementation and security-hold/deny representation needed by the usable reviewer predicate;
+7. the one-time assignment command's allowed assigning actors, queue ownership, conflict checks, and timeout, with no reassignment or Owner override;
+8. final claimant-safe result-code registry and internal-to-safe disclosure mapping;
+9. exact audit action registry for submit/withdraw/begin-review and exact audit/security retention, access, legal-hold, privacy, archive, and purge rules;
+10. exact notification, idempotency, domain-event, materializer, worker lease/retry/dead-letter, recovery, and operations implementation;
+11. the signed-token non-Production validation gate and the selected real driver/pool/pooler isolation gate;
+12. `FILE-001` if Claim evidence moves beyond the approved bounded non-file reference path; and
+13. `RES-001` hosted environment and `MIG-002` environment/migration/cutover strategy.
+
+The seven named Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`. The organization, message-body, and billing gates do not become Claim-v1 authority merely because SEC-001 is approved.
 
 ## 21. Recommended implementation slices
 
 ### 21.1 Smallest safe local security slice
 
-After this contract and the Claim structure are separately approved, implement one local-only, synthetic-data-only security slice containing:
+After the approved one-table Claim foundation is implemented on `main` and a separate task authorizes security DDL, implement one local-only, synthetic-data-only security slice containing:
 
 1. dedicated non-browser Claim runtime and worker roles plus default-privilege tests;
 2. one non-exposed current-principal/eligibility helper boundary fed only by a test transaction context;
@@ -619,18 +662,22 @@ If any one of those dependencies is absent, keep the Supabase Claim feature inac
 
 ## 22. Validation and exact stop point
 
-Required validation for this proposal is documentation-only:
+Required validation for this Owner-approval pass is documentation-only:
 
-- record exact starting SHA `f5ee83096851991de680183c072b16987cb8784f`;
-- confirm only this one Markdown file changed;
+- record exact synchronized `origin/main` SHA `157c1615ec222ee088b97095fe69eb26c3c45064`;
+- prove the merged PR #96 and PR #98 commits are ancestors of that SHA;
+- confirm only this one Markdown file differs from `origin/main` in PR #97;
+- confirm the Claim table remains unimplemented while the REL foundations exist and PR #98 remains local-feasibility evidence only;
 - confirm all repository links are relative and resolve;
-- confirm evidence, approved contract, recommendation, and unresolved statements remain distinct;
-- confirm SEC-001 and all seven Open gates remain unresolved/unchanged;
+- confirm verified evidence, approved contracts, Owner-approved SEC-001 decisions, future implementation requirements, and unresolved delivery decisions remain distinct;
+- confirm SEC-001 is resolved for Claim-v1 architecture and the seven named Open gates remain exactly unchanged;
+- confirm the threat and authorization matrices remain internally consistent with one write-once reviewer and no reassignment or Owner override;
 - scan the document for credentials, tokens, secrets, personal data, raw provider subjects, and executable SQL;
+- scan for stale proposal/pre-POC, absent-REL, reassignment, and Owner-override wording;
 - run `git diff --check`; and
-- confirm no executable, SQL, configuration, generated, Firebase, Supabase runtime, or data file changed.
+- confirm no executable, SQL, pgTAP, configuration, generated, Firebase, Supabase runtime, or data file changed.
 
-Exact stop point: commit and push this single documentation proposal to `codex/claim-first-rls-contract`, open one Draft PR, and stop. Do not mark Ready, merge, implement RLS/SQL/Auth/commands/runtime, start Docker/Supabase, access Firebase or hosted Supabase, inspect or modify Production/TEST data, migrate, deploy, or resolve SEC-001/Open gates.
+Exact stop point: commit and push this one-document Owner-approval pass to the existing `codex/claim-first-rls-contract` branch, update existing Draft PR #97, keep it Draft, and stop. Do not mark Ready, merge, implement RLS/SQL/Auth/Claim commands/runtime, start Docker/Supabase, access Firebase or hosted Supabase, inspect or modify Production/TEST data, migrate, or deploy.
 
 ## 23. References
 
@@ -645,3 +692,6 @@ Exact stop point: commit and push this single documentation proposal to `codex/c
 - [AUD-001 audit evidence contract](35_AUD_001_AUDIT_EVIDENCE_AND_TRUSTED_MUTATION_CONTRACT.md)
 - [SEARCH-001 PostgreSQL search contract](37_SEARCH_001_POSTGRESQL_SEARCH_TECHNOLOGY_CONTRACT_REVIEW.md)
 - [MSG-003 notification contract](39_MSG_003_NOTIFICATION_RETENTION_RENDERING_AND_MATERIALIZATION_CONTRACT.md)
+- [REL-001 two-table foundation implementation evidence](40_REL_001_TWO_TABLE_FOUNDATION_IMPLEMENTATION_EVIDENCE.md)
+- [Claim structural and command readiness review](41_CLAIM_SUPPLIER_PROFILE_STRUCTURAL_AND_COMMAND_READINESS_REVIEW.md)
+- [Firebase-to-PostgreSQL request-scoped Auth bridge POC](43_FIREBASE_SUPABASE_REQUEST_SCOPED_AUTH_BRIDGE_POC.md)
