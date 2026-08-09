@@ -18,6 +18,7 @@
     "test:internal-emulator-accounts": "firebase emulators:exec --project demo-mujahiziq-integration --only auth,firestore \"node --test --test-concurrency=1 tests/internal-emulator-accounts.mjs\"",
     "test:firestore-emulator": "node scripts/run-firestore-emulator-tests.mjs",
     "test:functions-emulator": "npm run build:functions && node scripts/run-functions-emulator-tests.mjs",
+    "test:auth-bridge-poc": "node scripts/run-firebase-supabase-auth-bridge-poc.mjs",
     "supabase:version": "supabase --version",
     "supabase:start": "supabase start",
     "supabase:status": "supabase status",
