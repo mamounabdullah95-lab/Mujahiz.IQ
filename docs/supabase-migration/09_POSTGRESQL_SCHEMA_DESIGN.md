@@ -1,6 +1,6 @@
 # Authoritative PostgreSQL schema design
 
-Status: **Recommended logical design; twelve local SQL slices implemented; remaining concepts unimplemented**
+Status: **Recommended logical design; thirteen local SQL slices implemented; remaining concepts unimplemented**
 Design base: `1a4e5a59a37b2f1eb05d5cf8fa555d8f7dfe84d6`
 Evidence date: 3 August 2026
 Primary task profile: Documentation
@@ -9,8 +9,8 @@ Primary task profile: Documentation
 
 This document is the authoritative logical design for a future Mujahiz IQ PostgreSQL schema. It is documentation only.
 
-- At the design base, no Mujahiz application SQL existed. Current `main` contains twelve tracked local migrations and 18 physical tables across the internal migration-control foundation plus twelve identity/business/application tables.
-- The twelve local slices implement 16 of 36 Core Phase 1 concepts; 20 remain deferred. No verified hosted environment contains these local tables.
+- At the design base, no Mujahiz application SQL existed. Current `main` contains thirteen tracked local migrations and 19 physical tables across the internal migration-control foundation plus thirteen identity/business/application/audit tables.
+- The thirteen local slices implement 17 of 36 Core Phase 1 concepts; 19 remain deferred. No verified hosted environment contains these local tables.
 - The local slices contain no seed, custom database function, trigger, application grant, database role, or RLS policy.
 - No hosted Supabase project was linked, authenticated, queried, or independently verified.
 - The local Supabase runtime was not started for the documentation-only design; the separate SQL slice was later verified in the disposable local runtime.
@@ -58,7 +58,7 @@ The design was derived from the migration documents `00_CURRENT_STATE_AND_INVENT
 | Reference numbers | Store a separate immutable human-readable reference allocated by a trusted transaction; do not expose UUID order as a business sequence. | Reference uniqueness is scoped by type and, where needed, organization plus year. Gaps are acceptable. |
 | Email and identifiers | Store original display value plus a versioned normalized value. Enforce case-insensitive uniqueness only within the correct provider or invitation scope. | Email is PII and a delivery/login attribute, not a permanent relationship. No account merge is based on email alone. |
 | Arabic and English | Store UTF-8 text. Use explicit `*_ar` and `*_en` columns for core bilingual names/snapshots; use translation tables for extensible content and taxonomy. | One language never silently overwrites or backfills the other. Search normalization retains the original text and normalization version. |
-| Search normalization | Keep a versioned normalizer and derived search projection or generated vector; do not treat current `searchKeywords` arrays as authoritative. | Start with relational filters and PostgreSQL full-text/trigram evaluation in TEST. A separate search service is deferred until measured need. |
+| Search normalization | Keep original values plus a versioned normalizer and rebuildable audience-safe projection; do not treat current `searchKeywords` arrays as authoritative. | Owner-approved SEARCH-001 Option A starts with relational filters plus bilingual PostgreSQL FTS. `pg_trgm` is absent initially and requires all four approved evidence gates; an external service is rejected for Phase 1. No search implementation is authorized. |
 | Category hierarchy | Use one `categories` adjacency hierarchy with stable codes and required Arabic/English columns in the initial bounded taxonomy; Supplier assignments point to an approved node and record whether it is primary. | Current category/subcategory strings require a reviewed mapping and exception queue before FKs can be enforced. `category_translations` is merged into `categories`; a separate locale table may return only after evidence shows more locales or independent translation lifecycle are required. |
 | File metadata and custody | Before FILE-001, use only the controlled external/legacy-reference strategy in typed attachment rows or bounded Claim evidence, with no file-object column/FK or Storage assumption. After approval and implementation, use immutable provider-neutral `file_objects`; typed domain relations hold custody/authorization and persist reviewed provider/object, safe name, MIME, size, SHA-256, classification, upload/scan, retention, and creator provenance. | The uploader or creating user is provenance, not continuing authorization. Private files never use permanent public URLs. Future finalization attaches a ready object to one authorized typed parent or quarantines it; an audited migration may replace validated external references with stable file IDs while retaining provenance. |
 | Duplicate detection | Preserve two distinct controls: versioned protected exact fingerprints with active uniqueness, and a trusted rebuildable fuzzy-candidate projection over normalized name variants plus governorate/category/supporting evidence. | Exact contact-derived values use protected keyed digests and atomic pending-to-approved promotion. Fuzzy scoring is bounded and versioned, feeds a review queue, and never automatically merges or deletes a Supplier. Legacy SHA-256 remains migration evidence only. |
@@ -157,9 +157,9 @@ On 8 August 2026, the Product/Data Owner approved the payment-options-only contr
 
 The earlier capability-section deferral remains the historical PR #74 decision. Document 29 is its approved successor contract and proposed-slice selection for payment options only.
 
-### Ninth through twelfth local SQL-slice implementation status
+### Ninth through thirteenth local SQL-slice implementation status
 
-Merged PR #78 implemented exactly the approved empty, revoked, local-only `public.supplier_payment_options` table plus focused synthetic pgTAP as the ninth slice. Merged PR #80 implemented the empty, revoked, local-only `public.supplier_contacts` table plus the narrow supporting `supplier_locations` uniqueness object as the tenth slice. Merged PR #85 implemented exactly the empty, fully revoked, local-only `public.supplier_ownerships` foundation as the eleventh slice, and merged PR #87 implemented exactly the empty, fully revoked, local-only `public.platform_role_assignments` foundation as the twelfth. Current `main` therefore contains 18 physical tables, 16 implemented Core Phase 1 concepts, and 20 deferred concepts. These implementations added no real rows, mapping execution, RLS, API privilege, application integration, hosted operation, Firebase access, or Production/TEST data behavior.
+Merged PR #78 implemented exactly the approved empty, revoked, local-only `public.supplier_payment_options` table plus focused synthetic pgTAP as the ninth slice. Merged PR #80 implemented the empty, revoked, local-only `public.supplier_contacts` table plus the narrow supporting `supplier_locations` uniqueness object as the tenth slice. Merged PR #85 implemented exactly the empty, fully revoked, local-only `public.supplier_ownerships` foundation as the eleventh slice, merged PR #87 implemented exactly the empty, fully revoked, local-only `public.platform_role_assignments` foundation as the twelfth, and merged PR #91 implemented exactly the empty, fully revoked, local-only `internal.audit_logs` foundation as the thirteenth. Current `main` therefore contains 19 physical tables, 17 implemented Core Phase 1 concepts, and 19 deferred concepts. These implementations added no real rows, mapping execution, RLS, API privilege, application integration, hosted operation, Firebase access, or Production/TEST data behavior.
 
 The Product/Data/Security/Privacy Owner-approved endpoint contract remains authoritative for contacts. SUP-005 is Resolved; non-synthetic rows, trusted commands, mapping, RLS/projections, Auth, hosted work, Firebase, and Production/TEST work remain unauthorized.
 
@@ -177,7 +177,11 @@ On 8 August 2026, the Product/Security/Data Owner approved document 33: Firebase
 
 The Product/Security/Data Owner approved document 34 on 8 August 2026: exactly `owner|admin`; no platform `reviewer`; temporal/cardinality/provenance and fail-closed identity boundaries; and future protected bootstrap of at least two usable Owners. Merged PR #87 later implemented exactly its selected empty, fully revoked, local-only `public.platform_role_assignments` foundation; no real rows or runtime are authorized.
 
-The Product/Security/Data Owner approved document 35 on 8 August 2026. AUD-001 is Resolved for the append-only, minimized, trusted-command-only audit boundary, and exactly one empty, fully revoked, local-only `internal.audit_logs` table is selected as the next SQL slice independently of REL-001. No audit SQL, rows, retention job, access path, or runtime is authorized.
+The Product/Security/Data Owner approved document 35 on 8 August 2026. AUD-001 is Resolved for the append-only, minimized, trusted-command-only audit boundary. Merged PR #91 later implemented exactly the selected empty, fully revoked, local-only `internal.audit_logs` foundation; no real audit rows, retention job, access path, or runtime is authorized.
+
+### Approved SEARCH-001 Option A architecture
+
+On 9 August 2026, the Product/Technical/Data Owner approved document 37 Option A: relational filters plus bilingual PostgreSQL FTS first, no initial `pg_trgm`, and no external Phase 1 service. SEARCH-001 is Resolved for architecture only. Audience-safe field boundaries, original-preserving versioned normalization, same-script-first reviewed bilingual aliases, bounded AI intent only, deterministic ranking, query-bound keyset pagination, the four-gate trigram boundary, separate protected Admin exact lookup, payment/credit exclusion, and conditional Claim activation remain mandatory. No search SQL, extension, index, projection, RPC, RLS, frontend, AI, hosted, data, or runtime implementation is authorized.
 
 
 ### Identity and access conclusions
@@ -478,7 +482,7 @@ Candidate indexes must be confirmed with representative data and `EXPLAIN`; they
 
 | Query path | Filter and order contract | Candidate index/strategy | Cardinality and pagination | Privacy/performance note |
 |---|---|---|---|---|
-| Supplier directory browse/search | listed/verified status; optional category, area, capability; normalized query; order rank then UUID | partial status indexes; category/area joins; generated search document with GIN; evaluate `pg_trgm` for names | Hundreds now, designed for large growth; keyset cursor | Server-side projection replaces loading 100 Suppliers and client filtering. Only public columns. |
+| Supplier directory browse/search | listed/verified status; optional category, area, capability; normalized query; order rank then UUID | approved Option A candidate: audience-safe bilingual FTS projection with GIN plus relational indexes; no initial `pg_trgm`; evaluate trigram only after all four SEARCH-001 gates | Hundreds now, designed for large growth; query-bound opaque keyset cursor | Server-side projection replaces loading 100 Suppliers and client filtering. Only approved audience fields. |
 | Supplier exact duplicate check | fingerprint kind + protected digest | unique active btree | one row; no pagination | Trusted-only constant-shape lookup; never expose match details. |
 | Supplier claim search | eligible listed profile + bounded normalized term | public-search index plus exclusion of active owner/claim through joins | cap results; keyset | Rate limited; omit contact/duplicate signals. |
 | Ownership review queue | claim status; created/expiry order; optional Supplier/claimant | status/created and expiry indexes | potentially high; keyset | Reviewer-only; claimant snapshots excluded from list projection. |
@@ -490,7 +494,7 @@ Candidate indexes must be confirmed with representative data and `EXPLAIN`; they
 | Conversation list | active participant user; conversation updated desc | participant user/status/conversation and conversation updated | high; keyset | No body preview needed for authorization; optional trusted last-message summary. |
 | Message history | conversation; created desc + UUID | conversation/created/UUID | very high; keyset | Participant check first; bounded page; no global message search initially. |
 | Audit/resource investigation | time range + actor/action/resource/correlation | separate actor/time, resource/time, action/time, correlation indexes | very high; mandatory bounded time/keyset | Restricted columns; JSONB indexing only for proven keys. |
-| Material dictionary lookup | normalized alias/canonical + locale/category/status | alias normalized btree; optional trigram/FTS for fuzzy | moderate; capped ranked page | Review fuzzy-extension need; do not rely on Supplier `searchKeywords[]`. |
+| Material dictionary lookup | normalized alias/canonical + locale/category/status | exact normalized btree plus approved bilingual FTS; trigram only after all four SEARCH-001 gates | moderate; capped ranked page | Fuzzy similarity is never authority; do not rely on Supplier `searchKeywords[]`. |
 | Term suggestion queue | status; occurrence desc; updated + UUID | status/count/updated | moderate; keyset | Admin-only examples loaded separately. |
 
 ## I. Firestore-to-PostgreSQL migration mapping
@@ -694,7 +698,7 @@ This index is semantically synchronized to the canonical register in `10_SCHEMA_
 | MSG-001 | Conversation party and temporal access | Recommended | Messaging SQL/RLS design |
 | MSG-002 | Message edit/delete | Open | Messaging SQL PR |
 | MSG-003 | Notification retention/rendering | Open | Notification SQL PR |
-| SEARCH-001 | Search technology | Open | Directory query migration |
+| SEARCH-001 | Search technology | Resolved; owner-approved document 37 Option A architecture | Separate gated implementation; no SQL/runtime selected |
 | CONTENT-001 | Bilingual content | Recommended | Content SQL PR |
 | FILE-001 | Object storage provider and custody | Open | Any upload enablement |
 | FILE-002 | Upload launch state | Recommended | Upload feature approval |
