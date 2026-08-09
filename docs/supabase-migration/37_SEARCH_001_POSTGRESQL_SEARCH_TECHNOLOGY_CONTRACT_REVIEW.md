@@ -1,22 +1,22 @@
 # SEARCH-001 PostgreSQL search technology contract review
 
-Status: **Proposal for Product/Technical/Data Owner decision — SEARCH-001 remains Open**
-Verified repository start: `origin/main` `89b8903c140a997a3c65f653c76a7e2d31f8c537`
-Evidence date: 8 August 2026
+Status: **Owner approved on 9 August 2026 - SEARCH-001 Resolved for the Option A architecture contract**
+Verified repository baseline: `origin/main` `1eab9b78b9e9d420ac486138db4c285f24c9fee7` after merged PR #91
+Approval date: 9 August 2026
 Primary task profile: Search
 Decision owners: Product owner, technical owner, and data owner
 
 ## 1. Decision posture and evidence labels
 
-This document is a decision-ready search contract, not an approval record or implementation authorization.
+This document records the owner-approved SEARCH-001 architecture contract. It is not implementation authorization.
 
-- **Verified current fact** means confirmed from the repository at the verified start above.
+- **Verified current fact** means confirmed from the repository at the verified baseline above.
 - **Approved dependency** means an already approved contract that SEARCH-001 must preserve.
-- **Recommendation** means the proposed SEARCH-001 outcome and still requires an explicit owner decision.
+- **Approved decision** means the owner-approved SEARCH-001 architecture boundary recorded here; it does not authorize implementation.
 - **Measurement gate** means a decision that must be based on a representative test corpus or runtime evidence rather than assumption.
 - **Future seam** means compatibility deliberately retained without implementing the future feature now.
 
-**Gate result:** SEARCH-001 remains **Open**. The current recommendation in the decision register is not silently approved or amended by this proposal.
+**Gate result:** SEARCH-001 is **Resolved** for the approved Option A architecture contract. This approval selects no implementation slice and authorizes no runtime or SQL work.
 
 This task creates no SQL, extension, index, generated column, search projection, RLS policy, API, frontend behavior, Firebase change, hosted Supabase resource, data movement, or Production/TEST access.
 
@@ -91,11 +91,11 @@ This task creates no SQL, extension, index, generated column, search projection,
 
 ### 4.1 Required search experiences
 
-The first operational release must support exactly these bounded experiences:
+The approved first-release experience boundary covers exactly these bounded experiences; activation remains subject to each experience's separate delivery gates:
 
 1. **Buyer directory browse/search:** complete-dataset keyword search, explicit facets, locale-correct result presentation, stable keyset pagination, and truthful empty states over the audience-eligible Supplier projection.
 2. **RFQ recipient candidates:** complete-dataset exact category filtering plus database-authoritative RFQ eligibility; optional approved delivery/service-area filters; no AI eligibility decision.
-3. **Claim Supplier lookup:** exact and prefix Supplier-name search over the eligible unowned subset, bounded results, rate limiting, and the existing minimized result shape. Activation still depends on the separately approved Claim delivery gates.
+3. **Claim Supplier lookup:** the targeted first operational search experience for exact and prefix Supplier-name search over the eligible unowned subset, bounded results, rate limiting, and the existing minimized result shape. It remains inactive and seam-only until the separate Claim, Auth, RLS, security, and runtime delivery gates are approved and implemented; SEARCH-001 approval alone does not activate it.
 4. **Admin/Owner support lookup:** a separate restricted endpoint for exact identifiers and exact normalized contact/reference lookup, plus safe name search. It must not reuse the Buyer projection or return a match explanation that reveals the protected value.
 5. **Optional smart-query interpretation:** local dictionary/ontology parsing, with optional AI assistance, may translate a natural-language request into proposed search terms and filter IDs. The same deterministic database search must execute the resulting query.
 
@@ -134,7 +134,7 @@ Payment and credit assertions have no approved client projection in the current 
 
 Every searchable value retains the original authored value. Derived values record `normalizer_version`; a version change rebuilds the projection and produces a collision/recall comparison before activation.
 
-The recommended first version performs only reviewed, deterministic transformations:
+The approved first normalizer version performs only reviewed, deterministic transformations:
 
 - Unicode NFKC; remove control characters; trim and collapse whitespace.
 - English: locale-independent lowercase for matching; preserve letters, numbers, meaningful `+`, `#`, `/`, hyphen, dot, and model/part-number separators in the code channel.
@@ -197,13 +197,13 @@ Publish an audience-safe search document to a dedicated search provider and use 
 | Migration | Derived rebuild from reviewed relational rows; no `searchKeywords[]` import | Same plus extension/index rollout and rollback | Requires dual-write/backfill/reconciliation before cutover |
 | Failure mode | Disable FTS path and retain database browse/filters | Disable trigram branch while retaining FTS | Must fall back to PostgreSQL and reconcile stale/partial external documents |
 
-## 6. Recommended option
+## 6. Approved option
 
-**Recommendation: approve Option A.**
+**Approved: Option A.**
 
-Start the first operational release with PostgreSQL relational filters plus bilingual FTS/exact/phrase/code ranking over a rebuildable, audience-safe search projection. Keep `pg_trgm` out of the initial implementation and introduce it only after measured recall failure under section 8. Reject an external search service for Phase 1; reconsider it only after the database approach fails agreed recall, latency, or operational requirements at representative scale.
+The owner approves PostgreSQL relational filters plus bilingual FTS/exact/phrase/code ranking first over a rebuildable, audience-safe search projection. `pg_trgm` is excluded initially and may be introduced only after all four evidence gates in section 8.4 are satisfied. An external search service is rejected for Phase 1; it may be reconsidered only after the database approach fails reviewed recall, latency, scale, or operational targets at representative scale.
 
-This recommendation matches the existing decision-register direction but does not resolve SEARCH-001. Owner approval or amendment is still required.
+This approval resolves SEARCH-001 for the architecture contract only. It creates no SQL, extension, index, projection, RPC, RLS, frontend, Gemini/AI, hosted Supabase, data-migration, or runtime authority.
 
 ## 7. Proposed SQL/index/projection boundary for a future separate implementation PR
 
@@ -306,7 +306,7 @@ Every query has a locale, audience, filters, expected eligible set, expected exc
 
 ### 8.3 Proposed quality and performance gates
 
-The following are recommendations for owner approval, not measured facts:
+The following owner-approved values are engineering targets for the future implementation evidence report, not measured facts or permanent service-level agreements:
 
 - 100% pass rate for eligibility, authorization, exact identifier, private-canary, locale-display, and pagination invariants.
 - Exact normalized Supplier name/reference success at rank 1.
@@ -315,7 +315,7 @@ The following are recommendations for owner approval, not measured facts:
 - Warm-query p95 at or below 300 ms and p99 at or below 750 ms at the application boundary on a representative dataset at least 10 times the current historical Supplier-count order of magnitude, while recording cold-cache results separately.
 - No query plan may depend on a full eligible-Supplier sequential scan at the representative scale unless evidence proves that PostgreSQL correctly chooses it for a bounded tiny relation.
 
-Owners may amend these numbers before approval. The implementation report must publish corpus size/composition, dataset scale, hardware/environment, query plans, index sizes, build/rebuild time, and per-locale results.
+The targets may be revised when measured evidence justifies a change without reopening the core technology decision, provided the approved security, privacy, audience eligibility, deterministic authority, and result-membership boundaries remain unchanged. The implementation report must publish corpus size/composition, dataset scale, hardware/environment, query plans, index sizes, build/rebuild time, and per-locale results.
 
 ### 8.4 `pg_trgm` decision gate
 
@@ -376,26 +376,28 @@ Preserve these seams without implementing Catalog Lite now:
 
 Do not create product variants, inventory, transactional price search, vector embeddings, Catalog tables, or item-level indexes in the SEARCH-001 implementation merely to satisfy these seams.
 
-## 13. Explicit owner decisions still required
+## 13. Owner approval record
 
-| # | Decision | Recommended owner outcome |
-|---:|---|---|
-| 1 | SEARCH-001 technology | Approve Option A: PostgreSQL filters + bilingual FTS first; evidence-gated `pg_trgm` |
-| 2 | First-release experiences | Approve Buyer directory, RFQ candidates, bounded Claim lookup when its delivery gates permit, restricted Admin/Owner lookup, and optional smart intent only |
-| 3 | Searchable/filter/excluded fields | Approve section 4.2 and the separate public versus support projections |
-| 4 | Normalizer | Approve the versioned, original-preserving boundary in section 4.4 and require collision/replay evidence for changes |
-| 5 | Bilingual rank/display | Approve same-script-first ranking, reviewed cross-language expansion, and active-locale-only UI content |
-| 6 | AI role | Approve optional intent assistance only; prohibit AI authority over facts, eligibility, filters, and result membership |
-| 7 | Ranking | Approve exact/phrase/FTS tiers and prohibit paid/internal-confidence/freshness boosts for Phase 1 |
-| 8 | Pagination | Approve opaque query-bound keyset cursors and the consistency/version boundary |
-| 9 | Quality/performance gates | Approve or amend the proposed Recall/NDCG/latency and scale thresholds |
-| 10 | `pg_trgm` gate | Approve later introduction only under all four evidence conditions in section 8.4 |
-| 11 | External engine gate | Approve PostgreSQL measurement first and reject an external service for Phase 1 |
-| 12 | Payment/credit search | Keep excluded until a separate client projection/access decision approves it |
-| 13 | Admin exact support lookup | Approve protected exact normalized identifiers with no private-field match disclosure |
-| 14 | Claim search inclusion | Confirm whether the first Supabase operational release includes Claim lookup or only preserves its ready seam until Claim runtime gates are implemented |
+On 9 August 2026, the Product/Technical/Data Owner approved all SEARCH-001 decisions below. The approval resolves the architecture gate only and selects no implementation slice.
 
-Until these decisions are explicitly approved or amended, SEARCH-001 remains Open and no implementation slice is selected.
+| # | Approved decision |
+|---:|---|
+| 1 | Option A: relational filters plus bilingual PostgreSQL FTS first; no initial `pg_trgm`; no external Phase 1 search service. |
+| 2 | First-release scope covers Buyer directory, RFQ candidates, restricted Admin/Owner lookup, and optional bounded smart intent. Claim lookup is the targeted first operational search experience but remains inactive and seam-only until its separate Claim/Auth/RLS/security/runtime gates pass. |
+| 3 | The section 4.2 audience field boundary is approved. Protected fields stay excluded from Buyer/RFQ/Claim search; exact Admin support lookup is a separate restricted path. |
+| 4 | Original values are preserved; normalization is deterministic, versioned, rebuildable, and evidence-tested for collisions and recall. |
+| 5 | Same-script evidence ranks first; cross-language retrieval uses reviewed aliases only; the UI renders approved active-locale content only. |
+| 6 | AI is optional bounded intent assistance only and never authority for facts, eligibility, filters, or result membership. |
+| 7 | Deterministic exact/phrase/FTS tiers are approved. Paid, hidden/private, confidence, and freshness signals are prohibited from Phase 1 ranking. |
+| 8 | Pagination uses opaque query-bound keyset cursors, never full client loading; cursor/input mismatches fail closed. |
+| 9 | Recall/NDCG/latency/scale values are engineering targets, not permanent SLAs, and may change on evidence without changing the core technology decision when security and eligibility remain unchanged. |
+| 10 | `pg_trgm` may be proposed later only after all four section 8.4 gates pass; fuzzy similarity is never authority. |
+| 11 | External search is rejected for Phase 1 and requires the PostgreSQL-first measurement evidence in section 9 before reconsideration. |
+| 12 | Payment and credit remain excluded until a separate projection and access decision approves them. |
+| 13 | Protected exact Admin lookup remains a separate restricted constant-shape path and must not disclose which private field matched. |
+| 14 | Claim lookup is intended as the first operational search release, but activation is conditional; SEARCH-001 approval alone authorizes no Claim or search runtime. |
+
+SEARCH-001 is therefore **Resolved** for the approved Option A architecture contract. No search SQL, extension, index, projection, RPC, RLS, application, AI, hosted, data, or runtime implementation is selected or authorized.
 
 ## 14. Out-of-scope future enhancements
 
@@ -407,21 +409,21 @@ Until these decisions are explicitly approved or amended, SEARCH-001 remains Ope
 - paid placement, personalization, behavioral ranking, saved searches, alerts, or search analytics beyond minimized measurement;
 - automatic transliteration/translation, automatic taxonomy mapping, fuzzy Supplier merge, or fuzzy ownership/eligibility decisions;
 - Catalog Lite tables, variants, inventory, pricing, CPQ, or product-media search; and
-- edits to the authoritative baseline, decision register, or schema design, or resolution of SEARCH-001.
+- any search implementation beyond the approved documentation synchronization in this PR.
 
 ## 15. Validation and exact stop point
 
-Validation for this proposal is documentation-only:
+Validation for this approval synchronization is documentation-only:
 
-- exactly one new Markdown proposal file;
-- SEARCH-001 remains Open and recommendations are labeled;
+- the approved contract, decision register, baseline, and directly contradictory schema-design status text agree;
+- SEARCH-001 is Resolved and exactly nine unrelated gates remain Open;
 - relative repository links resolve;
 - current Firebase versus local-only Supabase terminology is preserved;
-- private Supplier/contact/ownership/provenance/security/migration data is excluded from public search projections;
+- private Supplier/contact/ownership/provenance/security/migration data remains excluded from public search projections;
 - sensitive-value scan and `git diff --check` pass; and
 - no executable, SQL, extension, index, application, data, hosted, Production, TEST, merge, or deployment change occurs.
 
-Exact stop point: Draft PR containing this proposal only. Stop before owner approval, decision-register synchronization, SQL/index/projection implementation, `pg_trgm`, external search, data access/movement, Ready-for-review transition, merge, or deployment.
+Exact stop point: update the existing Draft PR #93 with the approved SEARCH-001 documentation synchronization. Stop before Ready-for-review transition, search SQL/index/projection/RPC/RLS/runtime implementation, `pg_trgm`, external search, data access/movement, merge, or deployment.
 
 ## 16. References
 
