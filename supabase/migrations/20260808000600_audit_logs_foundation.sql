@@ -21,6 +21,10 @@ create table internal.audit_logs (
   occurred_at timestamptz not null default pg_catalog.statement_timestamp(),
   recorded_at timestamptz not null default pg_catalog.statement_timestamp(),
   source_occurred_at timestamptz,
+  environment_code text not null,
+  source_system_code text not null,
+  producing_component_code text not null,
+  source_operation_class text not null,
   outcome_class text not null,
   result_code text not null,
   reason_code text not null,
@@ -107,6 +111,18 @@ create table internal.audit_logs (
       related_target_entity_type is not null
       and ((related_target_id is not null) <> (related_target_external_reference is not null))
     )
+  ),
+  constraint audit_logs_environment_code_ck check (
+    environment_code in ('local', 'development', 'staging', 'production')
+  ),
+  constraint audit_logs_source_system_code_ck check (
+    source_system_code ~ '^[a-z][a-z0-9_]{0,62}$'
+  ),
+  constraint audit_logs_producing_component_code_ck check (
+    producing_component_code ~ '^[a-z][a-z0-9_]{0,62}$'
+  ),
+  constraint audit_logs_source_operation_class_ck check (
+    source_operation_class ~ '^[a-z][a-z0-9_]{0,62}$'
   ),
   constraint audit_logs_outcome_class_ck check (
     outcome_class in ('succeeded', 'rejected', 'conflicted', 'failed', 'corrected')
@@ -211,6 +227,14 @@ comment on column internal.audit_logs.actor_user_profile_id is
   'Nullable provider-neutral accountable human profile. It is never a Firebase UID, email, display name, provider subject, session, token, account context, Supplier relationship, organization membership, or direct mutation authority.';
 comment on column internal.audit_logs.actor_source_code is
   'Bounded trusted service, migration, worker, or system source identity. When a service acts for a human, both the human profile and source code may be retained; neither is a browser-supplied authority.';
+comment on column internal.audit_logs.environment_code is
+  'Stable bounded environment identity for the producing audit operation. It is not a hostname, deployment-instance identifier, URL, credential, or browser-supplied authority.';
+comment on column internal.audit_logs.source_system_code is
+  'Bounded code-owned source-system identity for evidence provenance. It is not a hostname, process identity, token, session, credential, or raw URL.';
+comment on column internal.audit_logs.producing_component_code is
+  'Bounded code-owned producing component or command identity. It records no deployment instance, process ID, hostname, token, credential, or free-text operator detail.';
+comment on column internal.audit_logs.source_operation_class is
+  'Bounded source-operation class for audit evidence provenance. It is separate from actor identity, action code, browser input, event delivery, and idempotency semantics.';
 comment on column internal.audit_logs.safe_context is
   'Optional bounded versioned safe context only. Future action contracts must allowlist its shape and exclude request bodies, credentials, tokens, secrets, raw exceptions, full before/after snapshots, and protected evidence content.';
 comment on column internal.audit_logs.idempotency_reference is
