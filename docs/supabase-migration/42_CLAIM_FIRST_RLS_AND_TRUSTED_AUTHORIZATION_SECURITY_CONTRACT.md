@@ -1,6 +1,6 @@
 # Claim-first RLS and trusted authorization security contract
 
-Status: **Product/Security/Data Owner-approved Claim-v1 SEC-001 architecture; no RLS, grant, Auth bridge runtime, trusted command, Claim SQL, hosted, data, or Production implementation is authorized**
+Status: **Product/Security/Data Owner-approved Claim-v1 SEC-001 architecture; Claim foundation implemented locally; no RLS, grant, Auth bridge runtime, trusted command, hosted, data, or Production implementation is authorized**
 
 Date: 2026-08-09
 
@@ -8,7 +8,7 @@ Approval date: 2026-08-09
 
 Original proposal starting point: `origin/main` at `f5ee83096851991de680183c072b16987cb8784f`, the merge of PR #94
 
-Approval synchronization point: `origin/main` at `157c1615ec222ee088b97095fe69eb26c3c45064`, the merge of PR #98
+Post-approval synchronization point: `origin/main` at `f5b34a51576d505b268e6a5e31ca1f6eb8c539b1`, the merge of PR #99
 
 Primary task profile: Documentation
 
@@ -16,7 +16,7 @@ Primary task profile: Documentation
 
 This document records the Owner-approved Claim-v1 SEC-001 architecture required before a Supabase Claim Supplier Profile path may become client-accessible. It fixes the identity assertion that future database authorization may trust, the base-table and column boundary, claimant/controller/reviewer visibility, trusted-command ownership, deterministic positive and negative tests, and rollout prerequisites.
 
-It does not implement or authorize RLS, policies, grants, functions, views, RPCs, an Auth bridge runtime, Firebase configuration, Claim tables, Claim runtime, role/access bootstrap, audit writers, REL command/worker integration, notifications, hosted Supabase, data movement, migration, deployment, or Production/TEST access.
+It does not implement or authorize RLS, policies, grants, functions, views, RPCs, an Auth bridge runtime, Firebase configuration, changes beyond the merged empty Claim-table foundation, Claim runtime, role/access bootstrap, audit writers, REL command/worker integration, notifications, hosted Supabase, data movement, migration, deployment, or Production/TEST access.
 
 Evidence labels used below are:
 
@@ -35,12 +35,12 @@ This approval resolves **SEC-001 for Claim-v1 security architecture only**. It d
 - Firebase remains authoritative for authentication, account existence/disablement, email verification, sessions, recovery, and email actions during the hybrid phase.
 - PostgreSQL domain identity is provider-neutral: durable human relationships use `public.user_profiles.id`; Firebase UID is restricted to `internal.identity_provider_links.provider_subject`.
 - Firebase UID/provider subject is never the Claim claimant FK, ownership-controller FK, notification-recipient domain FK, reviewer domain identity, or public application identity.
-- Current `origin/main` contains 14 tracked local SQL migrations and 21 physical PostgreSQL tables representing 19 implemented Core Phase 1 concepts; 17 remain deferred.
-- Local SQL contains the empty structural foundations for `public.user_profiles`, `internal.identity_provider_links`, `public.platform_role_assignments`, `public.supplier_profiles`, `public.supplier_ownerships`, `internal.audit_logs`, `internal.idempotency_keys`, and `internal.domain_events`.
-- Those eight foundations revoke table privileges from `PUBLIC`, `anon`, `authenticated`, and `service_role`; they have no RLS policies, browser/API grants, Auth bridge runtime, trusted Claim commands, real rows, or real authority.
+- Current `origin/main` contains 15 tracked local SQL migrations and 22 physical PostgreSQL tables representing 20 implemented Core Phase 1 concepts; 16 remain deferred.
+- Local SQL contains the empty structural foundations for `public.user_profiles`, `internal.identity_provider_links`, `public.platform_role_assignments`, `public.supplier_profiles`, `public.supplier_ownerships`, `public.supplier_ownership_claims`, `internal.audit_logs`, `internal.idempotency_keys`, and `internal.domain_events`.
+- Those nine foundations revoke table privileges from `PUBLIC`, `anon`, `authenticated`, and `service_role`; they have no RLS policies, browser/API grants, Auth bridge runtime, trusted Claim commands, real rows, or real authority.
 - The Supplier child foundations — locations, contacts, category assignments, capabilities, and payment options — are also fully revoked from browser/API roles and have no approved direct client access.
 - `internal` is absent from the local Data API exposed-schema list. The local Data API exposes `public` and `graphql_public`; object grants remain a separate required boundary.
-- Merged PR #96 approved exactly one future `public.supplier_ownership_claims` table with one durable write-once assigned reviewer, no reassignment, no Owner override, and no separate evidence, reviewer, Claim-history/event, idempotency, rate-limit, attachment/file, or notification table. The Claim table is not implemented on the synchronized `origin/main`.
+- Merged PR #96 approved exactly one future `public.supplier_ownership_claims` table with one durable write-once assigned reviewer, no reassignment, no Owner override, and no separate evidence, reviewer, Claim-history/event, idempotency, rate-limit, attachment/file, or notification table. Merged PR #99 implemented that table as the empty, fully revoked, local-only fifteenth structural slice; it added no RLS, policy, grant, Claim row, trusted command, Auth bridge, hosted authority, or Production behavior.
 - Merged PR #95 implemented the empty, fully revoked, local-only `internal.idempotency_keys` and `internal.domain_events` foundations. Their trusted-command, producer, consumer, lease/retry, and event-processing runtime does not exist.
 - Future relational `notifications` does not exist, and no notification materializer runtime exists.
 - `public.access_grants`, Claim reviewer assignments, security holds/denies, and the Firebase Auth bridge behavior required by the complete usable Admin/Owner predicate are not implemented.
@@ -54,7 +54,7 @@ This approval resolves **SEC-001 for Claim-v1 security architecture only**. It d
 - [AUD-001](35_AUD_001_AUDIT_EVIDENCE_AND_TRUSTED_MUTATION_CONTRACT.md) requires minimized append-only audit evidence for accountable Claim decisions, privilege/ownership mutations, and post-auth security-sensitive failures.
 - [MSG-003](39_MSG_003_NOTIFICATION_RETENTION_RENDERING_AND_MATERIALIZATION_CONTRACT.md) requires provider-neutral self-only notification recipients, one materializer, immutable bilingual snapshots, and no Firebase fallback after feature cutover.
 - [SEARCH-001](37_SEARCH_001_POSTGRESQL_SEARCH_TECHNOLOGY_CONTRACT_REVIEW.md) approves a bounded Claim Supplier lookup result containing only Supplier ID, bilingual names, governorate, city, up to three categories, and a sanitized website domain; it does not approve base-table access.
-- [Claim structural readiness](41_CLAIM_SUPPLIER_PROFILE_STRUCTURAL_AND_COMMAND_READINESS_REVIEW.md), merged through PR #96, approves one future private Claim aggregate with one write-once reviewer and no reassignment or Owner override; it does not implement the table.
+- [Claim structural readiness](41_CLAIM_SUPPLIER_PROFILE_STRUCTURAL_AND_COMMAND_READINESS_REVIEW.md), merged through PR #96, approves one private Claim aggregate with one write-once reviewer and no reassignment or Owner override. [PR #99 implementation evidence](44_SUPPLIER_OWNERSHIP_CLAIMS_FOUNDATION_IMPLEMENTATION_EVIDENCE.md) records its empty, fully revoked, local-only structural implementation without runtime authority.
 
 ### 2.1 Merged PR #98 local POC evidence
 
@@ -75,6 +75,12 @@ The POC did **not** prove real signed Firebase token certificate/key behavior, T
 2. context-isolation validation with the selected real driver/pool/pooler, covering commit, rollback, thrown exception, timeout, cancellation, retry, connection return, and connection reuse.
 
 Session-global principal state is prohibited. A PASS on the local POC is not Production-readiness evidence.
+
+### 2.3 Merged PR #99 Claim foundation evidence
+
+**Verified current fact:** Merged PR #99 added `public.supplier_ownership_claims` as the fifteenth tracked local migration and its focused pgTAP file. The merged checkpoint contains 15 migrations, 15 pgTAP files, 953 assertions passed, 22 physical PostgreSQL tables, 20 implemented Core Phase 1 concepts, and 16 deferred concepts.
+
+The Claim table is empty, fully revoked from `PUBLIC`, `anon`, `authenticated`, and `service_role`, local-only, client-inaccessible, and non-authoritative. PR #99 added no RLS or policy, application grant, dedicated runtime role, trusted Claim command, reviewer-assignment command, Auth bridge runtime, notification runtime, hosted Supabase operation, Firebase change, Production/TEST data operation, migration execution, or deployment. Its structural foundation does not satisfy any SEC-001 delivery or activation gate.
 
 ## 3. Security objective and invariants
 
@@ -190,7 +196,7 @@ The terms below mean:
 | `public.supplier_capabilities` | No direct client access | Omitted from Claim v1. A later labels-only projection requires its own approved audience | Trusted capability review/lifecycle commands only |
 | `public.supplier_payment_options` | No direct client access | No Claim or Buyer client projection is approved | Trusted review/lifecycle commands only |
 | `public.supplier_ownerships` | No direct client access | Current controller self projection and field-minimized ownership history only. Claimants/reviewers receive ownership facts only as safe eligibility/result fields, never controller identity unless independently authorized | Claim approval, transfer, revoke, correction, and reconciliation commands only |
-| Future `public.supplier_ownership_claims` | No direct client access | Claimant-own, assigned-reviewer, and separately controlled queue projections only; no generic Admin/Owner/Supplier access | Submit, withdraw, assignment, begin review, approve, reject, expire, supersede, and correction commands/workers only |
+| `public.supplier_ownership_claims` | No direct client access; empty local foundation implemented by PR #99 and fully revoked | Claimant-own, assigned-reviewer, and separately controlled queue projections only; no generic Admin/Owner/Supplier access | Submit, withdraw, assignment, begin review, approve, reject, expire, supersede, and correction commands/workers only; none are implemented |
 | `internal.audit_logs` | Internal only | No Claim-v1 client read. Future investigation/export is a separate purpose-limited audited command | Registered trusted commands, migration, and audit maintenance only; append/correct, never ordinary update/delete |
 | `internal.idempotency_keys` | Internal only | No client read | Registered trusted commands/workers only; the foundation exists but no Claim integration/runtime exists |
 | `internal.domain_events` | Internal only | No client read | Domain command inserts; named worker alone changes processing state; the foundation exists but no Claim producer/consumer runtime exists |
@@ -613,7 +619,7 @@ Production activation requires all of the following and a new explicit Owner app
 
 The Owner approval resolves the Claim-v1 SEC-001 architecture and Option A bridge direction. It does not resolve these delivery choices or prerequisites:
 
-1. exact Claim columns, types, constraints, indexes, comments, retention fields, and pgTAP in the separately authorized one-table implementation;
+1. trusted enforcement for write-once fields, permitted transitions, exact 30-calendar-day expiry, descriptor validation, cross-row Claim relationships, and retention/privacy behavior beyond the implemented declarative foundation;
 2. exact RLS policy/helper/projection/RPC names, schemas, DDL, function owners, runtime roles, grants, and migration ordering;
 3. bridge transport and deployment boundary, Firebase Admin credential custody, recent-auth/step-up, anti-replay/abuse controls, availability behavior, safe errors, observability, and revocation targets;
 4. final PostgreSQL context setting names/shape, hardened transaction wrapper, purpose/environment/policy binding, and current-principal resolver;
@@ -633,7 +639,7 @@ The seven named Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE
 
 ### 21.1 Smallest safe local security slice
 
-After the approved one-table Claim foundation is implemented on `main` and a separate task authorizes security DDL, implement one local-only, synthetic-data-only security slice containing:
+With the approved one-table Claim foundation now implemented on `main`, a separate task and approval are still required before implementing any local-only, synthetic-data-only security slice containing:
 
 1. dedicated non-browser Claim runtime and worker roles plus default-privilege tests;
 2. one non-exposed current-principal/eligibility helper boundary fed only by a test transaction context;
@@ -662,22 +668,23 @@ If any one of those dependencies is absent, keep the Supabase Claim feature inac
 
 ## 22. Validation and exact stop point
 
-Required validation for this Owner-approval pass is documentation-only:
+Required validation for this post-PR #99 synchronization is documentation-only:
 
-- record exact synchronized `origin/main` SHA `157c1615ec222ee088b97095fe69eb26c3c45064`;
-- prove the merged PR #96 and PR #98 commits are ancestors of that SHA;
-- confirm only this one Markdown file differs from `origin/main` in PR #97;
-- confirm the Claim table remains unimplemented while the REL foundations exist and PR #98 remains local-feasibility evidence only;
+- record exact synchronized `origin/main` SHA `f5b34a51576d505b268e6a5e31ca1f6eb8c539b1`;
+- prove the merged PR #96, PR #98, and PR #99 commits are ancestors of the synchronized branch;
+- confirm the synchronized repository contains exactly 15 tracked migrations, 15 pgTAP files, 953 planned assertions, 22 physical PostgreSQL tables, 20 implemented Core Phase 1 concepts, and 16 deferred concepts;
+- confirm public.supplier_ownership_claims exists as an empty, fully revoked local foundation with no RLS/policy, application grant, trusted Claim command, Auth bridge runtime, notification runtime, hosted authority, or Production use;
+- confirm only the four authorized Markdown files differ from the post-merge branch state for this synchronization;
 - confirm all repository links are relative and resolve;
 - confirm verified evidence, approved contracts, Owner-approved SEC-001 decisions, future implementation requirements, and unresolved delivery decisions remain distinct;
 - confirm SEC-001 is resolved for Claim-v1 architecture and the seven named Open gates remain exactly unchanged;
 - confirm the threat and authorization matrices remain internally consistent with one write-once reviewer and no reassignment or Owner override;
 - scan the document for credentials, tokens, secrets, personal data, raw provider subjects, and executable SQL;
-- scan for stale proposal/pre-POC, absent-REL, reassignment, and Owner-override wording;
+- scan for stale proposal/pre-POC, absent-REL, absent-Claim, 14-migration, 21-table, reassignment, and Owner-override wording;
 - run `git diff --check`; and
 - confirm no executable, SQL, pgTAP, configuration, generated, Firebase, Supabase runtime, or data file changed.
 
-Exact stop point: commit and push this one-document Owner-approval pass to the existing `codex/claim-first-rls-contract` branch, update existing Draft PR #97, keep it Draft, and stop. Do not mark Ready, merge, implement RLS/SQL/Auth/Claim commands/runtime, start Docker/Supabase, access Firebase or hosted Supabase, inspect or modify Production/TEST data, migrate, or deploy.
+Exact stop point: commit and push this four-document post-PR #99 synchronization to the existing `codex/claim-first-rls-contract` branch, update existing Draft PR #97, keep it Draft, and stop. Do not mark Ready, merge, implement RLS/Auth/Claim commands/runtime, change SQL or pgTAP, start Docker/Supabase, access Firebase or hosted Supabase, inspect or modify Production/TEST data, migrate, or deploy.
 
 ## 23. References
 
@@ -695,3 +702,4 @@ Exact stop point: commit and push this one-document Owner-approval pass to the e
 - [REL-001 two-table foundation implementation evidence](40_REL_001_TWO_TABLE_FOUNDATION_IMPLEMENTATION_EVIDENCE.md)
 - [Claim structural and command readiness review](41_CLAIM_SUPPLIER_PROFILE_STRUCTURAL_AND_COMMAND_READINESS_REVIEW.md)
 - [Firebase-to-PostgreSQL request-scoped Auth bridge POC](43_FIREBASE_SUPABASE_REQUEST_SCOPED_AUTH_BRIDGE_POC.md)
+- [Supplier ownership Claims foundation implementation evidence](44_SUPPLIER_OWNERSHIP_CLAIMS_FOUNDATION_IMPLEMENTATION_EVIDENCE.md)
