@@ -1,10 +1,12 @@
 # Claim v1 trusted-command atomicity, locking, and side-effects contract
 
-Status: **Proposed implementation contract; documentation only; Owner decisions in section 18 remain unresolved; no SQL, runtime, RLS, data, hosted, or Production action is authorized**
+Status: **Owner-approved implementation architecture; documentation only; no trusted command, RLS, data, hosted, or Production action is implemented or authorized by this contract**
 
 Contract date: 2026-08-09
 
-Verified starting point: `origin/main` at `1d1d916ce9a71a85ab8a11a38b23707468347c2e`, the merge of PR #97 after the Claim foundation and SEC-001 synchronization
+Approval date: 2026-08-09
+
+Verified starting point: `origin/main` at `6544b16927b6a404ca4f7c3218993f26067e06c7`, the merge of PR #101 after the local Claim runtime identity-context foundation
 
 Primary task profile: Documentation
 
@@ -16,9 +18,9 @@ Evidence labels used below are:
 
 - **Verified current fact** — proved by the repository at the starting SHA, current migrations/tests, or merged implementation evidence.
 - **Approved existing contract** — fixed by an already Owner-approved predecessor contract, but not necessarily implemented.
-- **Recommendation** — the minimum-safe command design proposed here; it is not Owner approval or runtime authority.
-- **Owner decision required** — a product, security, data, privacy, legal, or operations choice that this task must expose rather than silently resolve.
-- **Future implementation requirement** — a mandatory implementation or validation condition if the recommendation is approved.
+- **Owner-approved contract** — fixed implementation architecture approved on 2026-08-09; it does not by itself authorize runtime or Production work.
+- **Delivery decision required** — a bounded value or operational mechanism that must be fixed in the applicable implementation slice.
+- **Future implementation requirement** — a mandatory implementation or validation condition for an approved later slice.
 
 This document creates no SQL, routine, RPC, role, grant, policy, RLS, Auth bridge, audit/event/notification writer, worker, application code, Firebase change, hosted Supabase resource, Claim row, ownership row, migration, replay, Production/TEST read or write, deployment, or Open-gate resolution.
 
@@ -31,7 +33,8 @@ This document creates no SQL, routine, RPC, role, grant, policy, RLS, Auth bridg
 - `public.supplier_ownership_claims` has one active-Claim-per-claimant/Supplier partial unique index, one Supplier-active-Claim lookup index, one write-once reviewer field group, lifecycle/version fields, a fixed stored `expires_at`, and a unique nullable resulting-ownership reference.
 - The Claim migration enforces only `expires_at > submitted_at`; it deliberately does not define “30 calendar days.”
 - The REL foundation provides one shared idempotency lifecycle and one immutable domain-event/outbox lifecycle. It contains no Claim-local request table or command runtime.
-- No RLS, application grant, dedicated runtime role, Auth bridge runtime, role-backed access implementation, trusted Claim command, notification table/materializer, real role/Claim/ownership row, or hosted authority exists.
+- PR #101 added the sixteenth tracked local migration: dedicated `NOLOGIN NOINHERIT` role `mujahiz_claim_runtime`, non-exposed `claim_security`, and transaction-local invoker setter/accessor routines for the current Claim principal. The focused/full local evidence is 16 migrations, 16 pgTAP files, and 1,005/1,005 passing assertions, with 22 physical tables, 20 implemented and 16 deferred Core Phase 1 concepts, and zero RLS policies.
+- No RLS, application grant to a browser/generic runtime, trusted Claim command, notification table/materializer, real role/Claim/ownership row, or hosted authority exists. The PR #101 role and helper are a local identity-context foundation, not a command runtime or complete Auth bridge.
 - The current Firebase Claim implementation is undeployed evidence only. It proves transactional creation, retry binding, terminal withdrawal/rejection/expiry, one-winner approval, competing-Claim supersession, audit/event/notification side effects, and current-auth checks. Its global claimant lock, 20-conflict cap, direct command-side notification insert, two-sided Firebase ownership backlinks, and millisecond-based TTL are not authoritative relational design.
 
 **Approved existing contracts:**
@@ -44,10 +47,11 @@ This document creates no SQL, routine, RPC, role, grant, policy, RLS, Auth bridg
 - [MSG-003](39_MSG_003_NOTIFICATION_RETENTION_RENDERING_AND_MATERIALIZATION_CONTRACT.md) permits user-visible Claim-v1 notices only for approved, rejected, and superseded outcomes, produced asynchronously by one materializer.
 - [Claim structural readiness](41_CLAIM_SUPPLIER_PROFILE_STRUCTURAL_AND_COMMAND_READINESS_REVIEW.md) and [Claim foundation evidence](44_SUPPLIER_OWNERSHIP_CLAIMS_FOUNDATION_IMPLEMENTATION_EVIDENCE.md) fix one durable write-once reviewer, no reassignment, no Owner override, and one private Claim aggregate.
 - [SEC-001](42_CLAIM_FIRST_RLS_AND_TRUSTED_AUTHORIZATION_SECURITY_CONTRACT.md) fixes the server-mediated Firebase bridge, current-principal context, no direct client writes, RLS-versus-command separation, and required race/security tests.
+- [Claim runtime identity-context evidence](45_CLAIM_RUNTIME_IDENTITY_CONTEXT_FOUNDATION_EVIDENCE.md) records the local-only role/schema/context foundation added by PR #101; it implements no RLS or trusted command.
 
-## 3. Recommended command model
+## 3. Owner-approved command model
 
-**Recommendation:** Claim v1 has exactly six callable mutation commands and one internal approval effect:
+**Owner-approved contract:** Claim v1 has exactly six externally callable trusted mutation commands and one internal approval effect:
 
 | Command/effect | Exposure | Purpose | Why separate |
 |---|---|---|---|
@@ -87,7 +91,7 @@ Every command must preserve all of the following:
 | Command/effect | Trusted actor class | Required identity/authority | Required assignment/role | Explicitly forbidden |
 |---|---|---|---|---|
 | `submit` | Human claimant | Current validated Firebase user; exact active Firebase link; active Supplier-context profile; no security deny/quarantine | No platform role; claimant acts only for self | Anonymous/unmapped/unverified/disabled/inactive actor; operator impersonation; caller-selected claimant |
-| `assign_reviewer` | Human platform operator | Complete usable privileged-human predicate; current role-backed administration access | **Recommendation pending Owner approval:** usable `owner` assigner only; candidate is a distinct usable `owner` or `admin` | Self-assignment; claimant as reviewer; current/proposed controller; Supplier member/delegate; conflicted/held candidate; reassignment; Owner override |
+| `assign_reviewer` | Human platform operator | Complete usable privileged-human predicate; current role-backed administration access | Usable `owner` assigner only; candidate is a distinct usable `owner` or `admin` | Self-assignment; claimant as reviewer; current/proposed controller; Supplier member/delegate; conflicted/held candidate; reassignment; Owner override |
 | `withdraw` | Human claimant | Same current exact claimant identity; current Supplier context as required by SEC-001 withdrawal policy | No platform role | Any operator/reviewer acting for claimant; non-claimant; terminal or due Claim |
 | `approve` | Human assigned reviewer | Complete usable privileged-human predicate plus current Firebase observation | Exact write-once reviewer assignment/version; usable `owner` or `admin`; no conflict | Unassigned Admin/Owner; claimant; current/proposed controller; Supplier member/delegate; Owner override; service/system actor |
 | `reject` | Human assigned reviewer | Same actor and Claim-integrity predicate as approval | Same exact assignment and usable role requirements | Same as approval; ownership ineligibility alone does not prevent a bounded rejection |
@@ -127,7 +131,7 @@ Assignment version starts at 1 and is write-once. The v1 command does not accept
 | Dimension | Contract |
 |---|---|
 | Caller inputs | `idempotency_key`; `claim_id`; `expected_claim_version`; optional opaque `correlation_id` |
-| Server-derived | Exact claimant; fixed reason `claimant_requested`; trusted `withdrawn_at`; new Claim version; audit ID/result token |
+| Server-derived | Exact claimant; bounded server-derived reason/version registered by the withdrawal implementation slice; trusted `withdrawn_at`; new Claim version; conditional audit ID; event ID; result token |
 | Required state | Exact claimant owns the Claim; status is `submitted` or `under_review`; trusted transaction time is strictly before `expires_at`; expected version matches |
 | Transition | `submitted|under_review -> withdrawn` |
 | Forbidden state | Non-claimant; terminal Claim; `now >= expires_at`; operator impersonation; caller-selected reason/time |
@@ -163,7 +167,7 @@ Rejection rechecks actor and Claim integrity but does not require the Supplier t
 | Dimension | Contract |
 |---|---|
 | Trusted worker inputs | Durable `source_operation_identity`; `claim_id`; `expected_claim_version`; `expiry_policy_version`; optional opaque `correlation_id` |
-| Server-derived | Worker/service actor code; Supplier/claimant; trusted database time; reason `review_horizon_elapsed`; trusted `expired_at`; new version; result token |
+| Server-derived | Worker/service actor code; Supplier/claimant; trusted database time; bounded server-derived reason/version registered by the expiry implementation slice; trusted `expired_at`; new version; conditional audit ID; event ID; result token |
 | Required state | `submitted` or `under_review`; one trusted `command_now` captured after lock acquisition satisfies `command_now >= expires_at`; expected version matches; worker purpose/environment/policy valid |
 | Transition | `submitted|under_review -> expired` |
 | Forbidden state | Caller timestamp; human actor; not-yet-due Claim; unsupported policy; migration/replay row; partial/contradictory state |
@@ -175,7 +179,7 @@ Expiry is one Claim per logical source item. A scheduler may select a bounded ba
 | Dimension | Contract |
 |---|---|
 | Inputs | None beyond the locked winning approval and the complete locked active-competitor set |
-| Server-derived | Competitor IDs/claimants; reason `competing_claim_approved`; `superseded_at`; winning Claim reference; new versions; event IDs/ordinals |
+| Server-derived | Competitor IDs/claimants; bounded server-derived reason/version registered by the approval implementation slice; `superseded_at`; winning Claim reference; new versions; event IDs/ordinals |
 | Required state | Each affected Claim is `submitted` or `under_review`, targets the same Supplier, and is not the winning Claim |
 | Transition | `submitted|under_review -> superseded` |
 | Forbidden state | Caller-selected competitors; cap/limit-based subset; terminal Claim rewrite; separate idempotency row; separate public response containing competitor identity |
@@ -195,23 +199,23 @@ Expiry is one Claim per logical source item. A scheduler may select a bounded ba
 
 All terminal states are immutable. A later ownership transfer or revocation never changes an approved Claim. A rejected, withdrawn, expired, or superseded Claim is never reopened.
 
-## 8. Canonical 30-day expiry decision
+## 8. Canonical 720-hour validity rule
 
-**Verified current fact:** predecessor contracts say “30 calendar days,” the current Firebase evidence uses `30 * 86,400,000` milliseconds, and the relational table enforces only `expires_at > submitted_at`. No approved contract unambiguously chooses an Iraq civil-calendar or UTC-elapsed-time interpretation.
+**Verified predecessor evidence:** earlier contracts said “30 calendar days,” the current Firebase evidence uses `30 * 86,400,000` milliseconds, and the relational table enforces only `expires_at > submitted_at`.
 
-**Recommendation:** define Claim v1 as an exact elapsed horizon of **720 hours from the trusted UTC submission instant**:
+**Owner-approved contract:** Claim v1 uses an exact duration of **720 hours from trusted `submitted_at`**:
 
 ```text
 command_now  = one trusted database clock instant captured after all required locks
 submitted_at = command_now
-expires_at   = submitted_at + exactly 720 hours
+expires_at   = submitted_at + interval '720 hours'
 active       = command_now < expires_at
 due          = command_now >= expires_at
 ```
 
 Store both as `timestamptz`; calculate once inside `supplier_claim.submit`; never accept, round, extend, or recompute expiry from a client/session timezone. Each command captures one database `clock_timestamp()`-equivalent value into `command_now` **after** it has acquired the required locks, then uses that value for every time comparison and write. A transaction-start timestamp is insufficient because a command may wait on the Supplier lock across the expiry boundary. UI displays the stored instant in the user's locale, including `Asia/Baghdad`, but presentation does not change authority. This rule matches current Firebase elapsed-time behavior, is independent of database session timezone and future Iraq daylight-saving changes, has an unambiguous boundary instant, and is deterministic in replay/race tests.
 
-**Owner decision required:** Product/Data must explicitly approve this 720-hour meaning or replace it with a Baghdad civil-calendar rule. If civil-calendar semantics are selected, the contract must additionally fix the IANA zone (`Asia/Baghdad`), wall-clock preservation, ambiguous/nonexistent local-time resolution, tzdata version/change behavior, and golden tests before submit runtime. This document does not silently approve either meaning.
+This duration-based rule is the canonical Claim-v1 meaning. It is not a calendar-month, local-midnight, or Baghdad civil-calendar rule. It is UTC/`timestamptz` safe, independent of local timezone and daylight-saving changes, deterministic across environments, and derived only from trusted server/database time.
 
 ## 9. Deterministic lock and re-read order
 
@@ -295,8 +299,8 @@ Reviewer notes and private evidence are never stored in `idempotency_keys`. Wher
 5. A retryable infrastructure/serialization failure marks the fenced record retryable only after the domain transaction rolled back. Retry uses the same key and a new fenced lease/attempt after backoff.
 6. An expired lease may be reclaimed, but a stale worker cannot complete because every terminal update matches the current lease token and attempt.
 7. A crash before the domain commit leaves no aggregate/audit/event/result success. A crash after commit is a completed command even if the response was lost.
-8. Initial recommendation remains at most a 60-second lease, exponential backoff with jitter, and 10 attempts. Technical/Security/Operations approval or revision is required before runtime.
-9. Completed privileged ownership-command replay guards retain at least the approved 30-day response horizon and then a minimized conflict tombstone through cutover/rollback/reconciliation requirements. Exact durations and cleanup remain unresolved.
+8. Initial delivery candidate is at most a 60-second lease, exponential backoff with jitter, and 10 attempts. Technical/Security/Operations approval or revision is required before runtime.
+9. Completed privileged ownership-command replay guards retain the safe-result horizon selected by REL operations and then a minimized conflict tombstone through cutover/rollback/reconciliation requirements. Exact durations and cleanup remain delivery decisions.
 
 ### 10.4 No-op behavior
 
@@ -315,15 +319,15 @@ Reviewer notes and private evidence are never stored in `idempotency_keys`. Wher
 
 | Command/effect | Claim | Ownership | Idempotency | Audit | Domain event | Notification | Other authoritative facts |
 |---|---|---|---|---|---|---|---|
-| Submit | `I submitted` | `L` active slot | `U completed` | `I` success | — | — | `L` claimant/link/Supplier/prior Claim/holds |
-| Assign reviewer | `U under_review` | `L` slot for coherence | `U completed` | `I` success | — | — | `L` assigner/candidate roles, access, links, conflicts |
-| Withdraw | `U withdrawn` | `L` slot for same lock protocol | `U completed` | `I` success | — | — | `L` claimant/link/profile |
-| Approve | `U approved` plus `U` all active competitors to superseded | `I active primary_controller` | `U completed` | `I` one primary success | `I` approved plus one per superseded Claim | — | `L` actor/claimant/link/role/access/Supplier/evidence/holds |
-| Reject | `U rejected` | `L` only | `U completed` | `I` success | `I rejected` | — | `L` actor/link/role/access/assignment/evidence/holds |
-| Expire | `U expired` | `L` only | `U completed` | — on normal success | — | — | `L` worker purpose/policy |
-| Internal supersession | Included in approval | — | Included in approval | Included as approval count | `I superseded` per Claim | — | No separate actor/command row |
+| Submit | `I submitted` | `L` active slot | `U completed` | Per slice AUD-001 classification | `I claim_submitted` | — | `L` claimant/link/Supplier/prior Claim/holds |
+| Assign reviewer | `U under_review` | `L` slot for coherence | `U completed` | `I` required success | `I claim_under_review` | — | `L` assigner/candidate roles, access, links, conflicts |
+| Withdraw | `U withdrawn` | `L` slot for same lock protocol | `U completed` | Per slice AUD-001 classification | `I claim_withdrawn` | — | `L` claimant/link/profile |
+| Approve | `U approved` plus `U` all active competitors to superseded | `I active primary_controller` | `U completed` | `I` required primary success | `I claim_approved` plus one `claim_superseded` per competitor | — | `L` actor/claimant/link/role/access/Supplier/evidence/holds |
+| Reject | `U rejected` | `L` only | `U completed` | `I` required success | `I claim_rejected` | — | `L` actor/link/role/access/assignment/evidence/holds |
+| Expire | `U expired` | `L` only | `U completed` | Per slice AUD-001 classification | `I claim_expired` | — | `L` worker purpose/policy |
+| Internal supersession | Included in approval | — | Included in approval | Included in approval audit count | `I claim_superseded` per Claim | — | No separate actor/command row |
 
-**Recommendation pending audit action-registry approval:** accepted submission, reviewer assignment, claimant withdrawal, approval, and rejection each require one minimized durable success audit. Normal automated expiry needs neither a duplicate success audit nor event because the immutable Claim expiry fields already state the authoritative scheduled transition and no v1 consumer exists. Worker privilege misuse, override, repair, or integrity failure remains auditable under AUD-001. Section 13 explains the event choice.
+**Owner-approved boundary:** reviewer assignment, approval, and rejection require minimized durable AUD-001 success evidence. Security-relevant denied/conflicted privileged attempts are audited where AUD-001 requires it. Submit, withdraw, and expire success evidence follows the existing AUD-001 action classification fixed in each command slice; this contract does not create duplicate audit history. Every committed Claim transition writes its bounded immutable integration fact to `internal.domain_events`; notification remains a separate asynchronous concern.
 
 ## 12. Exact approval transaction
 
@@ -339,7 +343,7 @@ After current ingress validation and idempotency reservation, `supplier_claim.ap
 8. Capture one current trusted database clock instant as `command_now` after all locks and re-reads. Use it for the expiry check and every decision/ownership/supersession/audit/event timestamp. Generate one ownership UUID, one primary audit UUID, one approved-event UUID, and superseded-event UUIDs ordered by competitor Claim UUID.
 9. Insert exactly one `supplier_ownerships` row with Supplier and controller derived from the Claim, `primary_controller`, `active`, trusted `valid_from`, establishment source `claim_approval`, bounded approved reason/policy provenance, and the human decision actor.
 10. Update the selected Claim to `approved`, increment its version once, write the exact decision/evidence/policy fields, and set the unique resulting ownership FK.
-11. Update every other locked active Claim to `superseded` in Claim-UUID order, increment each version once, set trusted time, reason `competing_claim_approved`, and restrictive successor reference to the approved Claim. Do not write decision/reviewer notes onto competing Claims.
+11. Update every other locked active Claim to `superseded` in Claim-UUID order, increment each version once, set trusted time, the bounded supersession reason/version registered by the approval implementation slice, and restrictive successor reference to the approved Claim. Do not write decision/reviewer notes onto competing Claims.
 12. Insert one primary AUD-001 success row for `supplier_claim.approve`, including selected Claim/Supplier/ownership, actor/role/assignment/policy snapshot, prior/result state/version, evidence method/version/outcome/restricted reference, superseded count without competitor identities, correlation, idempotency reference, and primary event reference.
 13. Insert event ordinal 1 as `supplier_ownership.claim_approved` v1 for the selected Claim. Insert ordinals 2..N as `supplier_ownership.claim_superseded` v1 in competitor Claim-UUID order. For each event, `aggregate_sequence` equals that Claim's committed record version; do not calculate `max(sequence)+1` without the locked aggregate.
 14. Complete the idempotency row with outcome `approved`, result resource `supplier_ownership_claim`, selected Claim UUID, and an immutable result-version token from the committed Claim version. Rehydration derives the safe ownership ID, status, and superseded count from the committed rows/event ordinals.
@@ -353,36 +357,33 @@ The transaction must roll back if any ownership insert, Claim update, competitor
 
 | Operation | Durable success audit | Domain event | User-visible Claim-v1 notice | Rationale |
 |---|---|---|---|---|
-| Submitted | **Recommend yes** | No | No | Audit accounts for creation of private evidence; aggregate/history and response are sufficient, with no named async consumer |
-| Reviewer assigned / under review | Yes | No | No | Assignment grants private visibility and requires accountability; reviewer queue reads aggregate state |
-| Withdrawn | **Recommend yes** | No | No | Audit accounts for claimant closure; claimant initiated it and history is sufficient |
+| Submitted | Per the submit slice's AUD-001 classification | `supplier_ownership.claim_submitted` v1 | No | The immutable event records the integration fact; no notification consumer is authorized |
+| Reviewer assigned / under review | Yes, one minimized row | `supplier_ownership.claim_under_review` v1 | No | Assignment grants private visibility and is an accountable privileged action |
+| Withdrawn | Per the withdrawal slice's AUD-001 classification | `supplier_ownership.claim_withdrawn` v1 | No | The immutable event records the transition without inventing duplicate audit history |
 | Approved | Yes, one primary row | `supplier_ownership.claim_approved` v1 | Yes, claimant only | Event drives the approved materializer; audit preserves actor/evidence |
 | Rejected | Yes, one primary row | `supplier_ownership.claim_rejected` v1 | Yes, claimant only | Event drives the rejected materializer; audit preserves actor/reason/evidence |
-| Expired | No normal success row | No | No | Claim expiry provenance is authoritative; no named v1 consumer justifies an event |
+| Expired | Per the expiry slice's AUD-001 classification | `supplier_ownership.claim_expired` v1 | No | The worker transition is an immutable integration fact; ordinary expiry need not duplicate aggregate history in audit |
 | Superseded competitor | No per-competitor audit; approval audit stores count | `supplier_ownership.claim_superseded` v1 per Claim | Yes, each affected claimant only | Supersession is a causal approval effect; event is required for each recipient without leaking competitors |
 
-After an accountable actor/source is resolved, authorization, reviewer-conflict, stale-version, existing-owner, identity/eligibility, evidence, quarantine, idempotency-binding, or integrity denial receives one separate minimized `rejected|conflicted|failed` AUD-001 row according to the approved action registry. It contains safe codes and known opaque targets only. It never contains raw keys/fingerprints, tokens/provider subjects, Claim evidence, reviewer notes, competitor identity, current owner identity, SQL/stack errors, or request bodies.
+After an accountable actor/source is resolved, security-relevant authorization, reviewer-conflict, identity/eligibility, evidence, quarantine, idempotency-binding, or integrity denials receive one separate minimized `rejected|conflicted|failed` AUD-001 row when the approved action classification requires it. Stale-version or ordinary business conflicts are not duplicated automatically. Audit evidence contains safe codes and known opaque targets only; it never contains raw keys/fingerprints, tokens/provider subjects, private evidence blobs, reviewer notes, notification copy, competitor or current-owner identity, SQL/stack errors, or unrestricted request bodies.
 
-Pre-auth malformed, expired-token, unmapped, or anonymous traffic uses bounded security telemetry, not one durable business-audit row per request. Failure to persist a required success audit rolls back the mutation. Failure to persist a denial audit never changes denial into permission; it returns `audit_unavailable`/`result_unavailable` and emits restricted operational alerting.
+Pre-auth malformed, expired-token, unmapped, or anonymous traffic uses bounded security telemetry, not one durable business-audit row per request. Failure to persist a required success audit rolls back the mutation. Failure to persist a required denial audit never changes denial into permission; it returns `audit_unavailable`/`result_unavailable` and emits restricted operational alerting.
 
-### 13.2 Minimum v1 event registry
+### 13.2 Bounded Claim-v1 event registry
 
-**Recommendation:** the minimum live registry remains exactly the three already approved event types:
+**Owner-approved contract:** `internal.domain_events` is the only immutable post-command integration-fact store. The bounded, explicitly versioned Claim-v1 vocabulary covers these seven transitions:
 
-| Event | Aggregate/payload | Producer/ordinal | Consumer |
+| Event | Aggregate/payload boundary | Producer | Claimant notification consumer |
 |---|---|---|---|
-| `supplier_ownership.claim_approved` v1 | Selected Claim; Claim ID, Supplier ID, claimant profile ID, ownership ID, committed Claim version | `supplier_claim.approve`, ordinal 1 | `supplier_claim_decision_notification_materializer` |
-| `supplier_ownership.claim_rejected` v1 | Rejected Claim; Claim ID, Supplier ID, claimant profile ID, committed version, bounded internal decision reason | `supplier_claim.reject`, ordinal 1 | Same materializer |
-| `supplier_ownership.claim_superseded` v1 | Each superseded Claim; Claim ID, Supplier ID, claimant profile ID, approved Claim ID, committed version | `supplier_claim.approve`, ordinals 2..N in Claim-UUID order | Same materializer |
+| `supplier_ownership.claim_submitted` v1 (`claim_submitted`) | Submitted Claim ID, Supplier ID, claimant profile ID, committed version | `supplier_claim.submit` | None |
+| `supplier_ownership.claim_under_review` v1 (`claim_under_review`) | Assigned Claim ID, Supplier ID, claimant profile ID, committed version; no reviewer identity | `supplier_claim.assign_reviewer` | None |
+| `supplier_ownership.claim_withdrawn` v1 (`claim_withdrawn`) | Withdrawn Claim ID, Supplier ID, claimant profile ID, committed version | `supplier_claim.withdraw` | None |
+| `supplier_ownership.claim_approved` v1 (`claim_approved`) | Approved Claim ID, Supplier ID, claimant profile ID, ownership ID, committed version | `supplier_claim.approve`, ordinal 1 | `supplier_claim_decision_notification_materializer` |
+| `supplier_ownership.claim_rejected` v1 (`claim_rejected`) | Rejected Claim ID, Supplier ID, claimant profile ID, committed version, bounded internal reason code/version | `supplier_claim.reject`, ordinal 1 | Same materializer |
+| `supplier_ownership.claim_expired` v1 (`claim_expired`) | Expired Claim ID, Supplier ID, claimant profile ID, committed version | `supplier_claim.expire` | None |
+| `supplier_ownership.claim_superseded` v1 (`claim_superseded`) | Superseded Claim ID, Supplier ID, claimant profile ID, approved Claim ID, committed version | `supplier_claim.approve`, ordinals 2..N in Claim-UUID order | Same materializer |
 
-The following candidate facts are explicitly evaluated and **not emitted in Claim v1**:
-
-- `claim_submitted` — no asynchronous consumer; claimant response/history is sufficient.
-- `claim_under_review` — reviewer queue is a current-state projection; no broadcast or integration consumer is approved.
-- `claim_withdrawn` — claimant initiated it and Claim history is sufficient.
-- `claim_expired` — no v1 notification or named consumer; aggregate expiry provenance is sufficient.
-
-Adding one later requires a named consumer or durable integration use, schema/payload, replay/retention classification, and Owner approval. Domain events are not added merely to duplicate Claim history.
+Each command slice activates only its named, reviewed version and exact minimized payload. Unknown type/version/payload fails closed. Adding fields, a version, or another event requires a named integration purpose, schema, replay/retention classification, and slice review. Domain events are not a substitute for aggregate history or audit.
 
 Event payloads contain no names, contact data, submitted reason/evidence, reviewer identity/notes, provider subject, raw audit/idempotency data, notification copy, locale, arbitrary URL, security hold, or unrestricted metadata.
 
@@ -393,9 +394,9 @@ Event payloads contain no names, contact data, submitted reason/evidence, review
 | Approved | One protected immutable bilingual `in_app` snapshot for exact claimant | None; event remains pending/retryable after command commit |
 | Rejected | One protected immutable bilingual `in_app` snapshot for exact claimant; safe reason mapping only | None |
 | Superseded | One protected immutable bilingual `in_app` snapshot for that superseded Claim's claimant; no winner/owner/competitor identity | None |
-| No event for submit/assign/withdraw/expire | No notification | Not applicable |
+| Submitted / under review / withdrawn / expired | No notification | None |
 
-The separate materializer transaction inserts at most one row per `(domain_event_id, recipient_user_profile_id, channel)` and marks the event processed. A binding mismatch fails closed; an exact duplicate is a no-op. Notification or worker failure never rolls back an already committed Claim/ownership/audit/event transaction and never falls back to Firebase.
+No Claim command inserts a notification row. The separate materializer transaction inserts at most one row per `(domain_event_id, recipient_user_profile_id, channel)` and marks the event processed. A binding mismatch fails closed; an exact duplicate is a no-op. Notification or worker failure never rolls back an already committed Claim/ownership/audit/event transaction and never falls back to Firebase.
 
 ## 14. Safe result envelopes
 
@@ -456,21 +457,19 @@ Business/precondition errors are terminal for that key unless the registry expli
 
 ## 16. Reason, evidence, and policy registry boundary
 
-Keep code/documentation-owned registries small; do not add generic SQL registry tables.
+Do not create a broad business taxonomy or generic SQL registry tables. Every live command/version has a small documentation/code-owned allowlist containing only the codes and shapes required by that implementation slice. Unknown code, shape, or version fails closed.
 
-| Registry | Minimum v1 boundary | Approval status |
+| Slice/registry | Owner-approved boundary | Delivery status |
 |---|---|---|
-| Submission reason | Bounded private `submitted_reason` text plus schema version; `prior_claim_id` structurally distinguishes resubmission. No broad business reason-code taxonomy is needed | Technical bounds/schema plus Product/Privacy approval still required |
-| Evidence descriptor kinds | Candidate existing set: `company_domain_email`, `company_website`, `commercial_registration`, `authorization_letter`, `other`; at most three; each kind has exact shape/reference policy | Owner/Product/Security approval of exact shapes and pre-FILE allowlist required |
-| Evidence verification methods | Candidate high-assurance set mirrors document 32: `official_registry_and_authority`, `authorized_officer_confirmation`, `company_domain_challenge_with_corroboration` | Owner/Product/Security approval required |
-| Evidence outcomes | `verified`, `not_verified`, `inconclusive`; approval accepts only `verified` | Owner/Product/Security approval required |
-| Approval reason | Server-derived `verified_control` only in ordinary Claim v1 | Owner approval required as part of decision registry |
-| Rejection reasons | Small candidate set already evidenced by document 32: `insufficient_evidence`, `claimant_ineligible`, `supplier_mismatch`, `existing_owner`, `fraud_or_abuse`; unknown/other unrestricted text prohibited | Owner/Product/Security approval and claimant-safe mapping required |
-| Withdrawal reason | Server-derived `claimant_requested`; no caller narrative in v1 | Owner/Product approval required |
-| Expiry reason | Server-derived `review_horizon_elapsed` | Depends on approval of the exact expiry rule |
-| Supersession reason | Server-derived `competing_claim_approved` only | Covered by approval transaction recommendation; Owner approval required |
+| Submit reason/evidence | The first command slice may define only the minimum bounded codes, schema versions, shapes, and disclosure rules needed to validate submission and evidence | Exact minimum selected and tested in the submit implementation slice |
+| Evidence descriptors | Zero to three bounded non-file descriptors under an explicit schema/version/allowlist; no uploaded file, `file_objects` FK, attachment table, arbitrary URL, or unvalidated external reference while FILE-001 is Open | Exact descriptor kinds/shapes selected in the submit slice |
+| Evidence verification | Exact bounded method/version/outcome values required by the applicable decision command; approval accepts only its registered affirmative outcome | Selected separately with that decision-command slice |
+| Reject reason/disclosure | Small versioned internal allowlist plus independent claimant-safe mapping; unrestricted text and unknown codes prohibited | Approved in the reject implementation slice before live use |
+| Withdraw reason | Small server-derived versioned allowlist; no caller narrative | Approved in the withdrawal implementation slice before live use |
+| Expiry reason | Small server-derived versioned allowlist tied to the canonical 720-hour policy | Approved in the expiry implementation slice before live use |
+| Supersession reason | Small server-derived versioned allowlist owned by the approval transaction; no caller-selected reason | Approved in the approve implementation slice before live use |
 
-`fraud_or_abuse`, conflict, quarantine, evidence-source, and investigation codes are never automatically claimant-visible. The claimant-safe disclosure registry remains independent of the internal decision registry and defaults unknown/restricted codes to `not_approved` or `result_unavailable`.
+Conflict, quarantine, evidence-source, abuse/investigation, and restricted decision codes are never automatically claimant-visible. The claimant-safe disclosure registry remains independent of the internal decision registry and defaults unknown/restricted codes to `not_approved` or `result_unavailable`.
 
 ## 17. RLS, rollback, migration, and reconciliation boundary
 
@@ -492,12 +491,12 @@ RLS does not replace command authorization. Every command independently rechecks
 
 | Command | Effects that must roll back together |
 |---|---|
-| Submit | Claim insert, success audit, and idempotency completion |
-| Assign | Reviewer fields, `under_review` transition/version, success audit, and idempotency completion |
-| Withdraw | `withdrawn` transition/version/provenance, success audit, and idempotency completion |
+| Submit | Claim insert, `claim_submitted` event, idempotency completion, and any audit required by the slice AUD-001 classification |
+| Assign | Reviewer fields, `under_review` transition/version, required success audit, `claim_under_review` event, and idempotency completion |
+| Withdraw | `withdrawn` transition/version/provenance, `claim_withdrawn` event, idempotency completion, and any audit required by the slice AUD-001 classification |
 | Approve | Selected approval, ownership insert, resulting ownership provenance, every competitor supersession, primary audit, all events, and idempotency completion |
-| Reject | Rejection transition/version/provenance, primary audit, rejection event, and idempotency completion |
-| Expire | Expiry transition/version/provenance and idempotency completion |
+| Reject | Rejection transition/version/provenance, required primary audit, `claim_rejected` event, and idempotency completion |
+| Expire | Expiry transition/version/provenance, `claim_expired` event, idempotency completion, and any audit required by the slice AUD-001 classification |
 
 Prohibited partial states include: approved Claim without ownership; ownership without approved Claim/provenance; some but not all competitors superseded; event without its aggregate transition; successful accountable decision without audit; completed idempotency result without its committed state; state committed with a still-processing idempotency result; or notification used as proof of a decision.
 
@@ -512,34 +511,48 @@ Prohibited partial states include: approved Claim without ownership; ownership w
 
 Rollback changes one authority manifest under a separately approved freeze/reconciliation runbook. It does not delete or rewrite completed Claims, ownerships, audits, idempotency bindings, events, or notifications and never silently resumes Firebase writes for a Supabase-authoritative operation.
 
-## 18. Unresolved Owner and delivery decisions
+### 17.4 Retention and deletion boundary
 
-No Open gate is resolved by this document. Before the relevant runtime slice, explicit decisions remain:
+Claim v1 never deletes Claim rows. This contract authorizes no Claim purge, erasure, hard-delete, or destructive retention job. Exact privacy retention, legal-hold, backup, archive, and destructive-erasure behavior remains a separate Privacy/Legal/Operations decision. That later decision does not block a bounded local trusted-command implementation using synthetic data.
 
-1. **30-day meaning:** approve the recommended exact 720-hour UTC horizon or fully specify Baghdad civil-calendar semantics.
-2. **Reviewer assignment authority:** approve or replace the recommendation that only a currently usable Owner, distinct from the candidate, may assign one usable Admin/Owner exactly once; also approve queue ownership and any assignment timeout.
-3. **Reason/evidence registries:** approve exact evidence descriptor shapes/reference allowlist, verification methods/outcomes, approval/rejection/withdrawal/expiry/supersession codes, and claimant-safe disclosure mappings.
-4. **Audit action registry:** approve the recommended submit/assign/withdraw/approve/reject success rows, denial classes, expiry treatment, evidence schemas, access, exact retention, legal holds, privacy/archive/purge, and failure operations.
-5. **REL operations:** approve or revise lease length, attempt cap, retry classes, alert ownership, dead-letter/requeue, idempotency/event retention, tombstones, and reconciliation runbook.
-6. **Identity/runtime boundary:** implement role-backed administration access/security holds and approve bridge transport, recent-auth/step-up, credential custody, abuse controls, safe errors, observability, provider outage behavior, and selected driver/pool/pooler isolation.
-7. **Lock implementation:** approve the exact versioned principal/Supplier advisory-key function and require every identity/role/access/ownership/Claim mutation path to share the applicable locks.
-8. **Claim/evidence retention:** approve Claim snapshot/evidence/reviewer-note retention, access, holds, minimization, archive/purge, backup, and privacy behavior before real rows.
-9. **Hosted/data gates:** `RES-001` and `MIG-002` plus explicit hosted/Production approval remain required. `FILE-001` remains Open and becomes a runtime blocker if evidence uses managed files.
+## 18. Owner-approved decisions and remaining delivery decisions
 
-The seven named Open gates remain `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+The Product/Security/Data/Operations Owner approved this implementation architecture on 2026-08-09:
 
-## 19. Recommended first implementation order
+1. Exactly six externally callable commands: `supplier_claim.submit`, `supplier_claim.assign_reviewer`, `supplier_claim.withdraw`, `supplier_claim.approve`, `supplier_claim.reject`, and `supplier_claim.expire`.
+2. No external supersede or separate `begin_review`; assignment atomically performs `submitted -> under_review`, and successful approval internally supersedes every active competitor.
+3. Exact 720-hour duration from trusted `submitted_at`, calculated as `expires_at = submitted_at + interval '720 hours'` with trusted database time and `timestamptz` semantics.
+4. Only a currently usable Owner may assign exactly one distinct usable Owner/Admin reviewer; self-assignment, claimant review, Supplier controller/member/delegate conflict, reassignment, override, multiple reviewers, delegation, and escalation queues are prohibited.
+5. `internal.idempotency_keys` is the exclusive Claim replay foundation; same scoped key/fingerprint replays or reports bounded in-progress state, while a different fingerprint fails closed.
+6. `internal.domain_events` stores bounded versioned transition facts; only approved, rejected, and superseded events are notification-producing under MSG-003.
+7. Assignment, approval, rejection, and qualifying privileged/security denials require AUD-001 evidence; submit, withdraw, and expiry follow their slice classification without duplicate history.
+8. Reason/evidence allowlists are minimal, bounded, versioned, fail closed, and introduced only by the command slice that needs them. Evidence remains bounded and non-file while FILE-001 is Open.
+9. Approval's idempotency, authority/reviewer validation, Supplier serialization, ownership/complete active-Claim re-read, one ownership insert, winning approval, all competitor supersessions, audit, events, and idempotency completion commit or roll back together. Notifications remain asynchronous.
+10. One deterministic shared lock protocol applies across Claim/ownership mutations; routing reads never authorize, and only post-lock re-reads are trusted. All authoritative timestamps are server/database-derived.
+11. Claim rows are not deleted or purged; commands return only minimal safe results; historical migration/replay never invokes live commands or notifications.
+12. `supplier_claim.submit` is the first command slice only after the required claimant RLS/read substrate exists. Implementing all six commands together is not approved.
 
-**Recommendation:** after the separately approved identity context, dedicated runtime role, forced RLS, default-deny grants, and claimant-safe projections exist, implement commands incrementally:
+No Open gate is resolved by this approval. Remaining delivery decisions before their applicable slice are:
 
-1. **First command slice: `supplier_claim.submit` only.** Include its exact input/schema registry, 30-day decision, shared Supplier/principal locking helpers, REL idempotency integration, required success/denial audit writer, immutable Claim insert, safe response, and focused synthetic authorization/race/replay/rollback tests. It emits no event and has no notification dependency.
-2. `supplier_claim.withdraw`, reusing the same locks/idempotency/audit/result conventions and proving withdrawal-versus-expiry/version races.
-3. `supplier_claim.assign_reviewer` only after assignment authority/queue/conflict decisions and usable role-backed access/security data exist.
-4. `supplier_claim.reject`, proving assigned-reviewer authorization, reason/evidence/disclosure registries, audit/event atomicity, and notification materializer retry separately.
-5. `supplier_claim.expire`, with one-item worker idempotency, trusted-time boundary, bounded batch selection, and worker-role/lease/recovery tests.
-6. `supplier_claim.approve` last, because it composes every identity, role, assignment, evidence, Supplier, ownership, Claim-set, audit, idempotency, event, materializer, and concurrency invariant.
+- exact minimum submit/evidence codes, shapes, bounds, versions, safe disclosures, and AUD-001 submit classification;
+- command-specific later reason registries and submit/withdraw/expiry audit classifications;
+- REL lease/attempt/retry/dead-letter/retention/reconciliation operations;
+- role-backed administration/security data, complete bridge transport and runtime isolation, abuse controls, safe errors, and provider-outage behavior;
+- exact versioned principal/Supplier advisory-key function shared by every applicable identity/role/access/ownership/Claim mutation path;
+- Privacy/Legal/Operations retention, legal-hold, backup, archive, and destructive-erasure behavior, without blocking bounded local synthetic implementation; and
+- `RES-001`, `MIG-002`, explicit hosted/Production approval, and FILE-001 before any managed-file evidence.
 
-Do not implement every command in one PR. The smallest first runtime command slice is submit, not approve/reject and not the complete shippable feature. It remains local-only and synthetic-data-only until the separately approved end-to-end release gates are satisfied.
+The seven named Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+
+## 19. Approved first implementation slice
+
+**Owner-approved sequencing:** after the required claimant RLS/read substrate, default-deny grants, field-minimized claimant projection, PR #101 identity-context foundation, and applicable trusted helpers exist, implement `supplier_claim.submit` only as the first Claim mutation slice.
+
+That slice contains only its minimum reviewed input/evidence registry, canonical 720-hour rule, shared Supplier/principal locking, `internal.idempotency_keys` integration, AUD-001-classified success/denial evidence, immutable Claim insert, `claim_submitted` domain event, minimal safe response, and focused synthetic authorization/race/replay/rollback tests. It has no notification write or notification-materializer dependency.
+
+Withdrawal, reviewer assignment, rejection, expiry, and approval remain separate later slices. Each must fix its own bounded registry and tests before becoming live; approval remains last in dependency complexity because it composes identity, role, assignment, evidence, Supplier, ownership, complete Claim-set, audit, idempotency, event, materializer, and concurrency invariants.
+
+Do not implement every command in one PR. The smallest first runtime slice is submit, not the complete shippable feature. It remains local-only and synthetic-data-only until the separately approved end-to-end release gates are satisfied.
 
 ## 20. Required implementation tests
 
@@ -547,12 +560,12 @@ Each later implementation slice must add only its applicable focused tests, with
 
 - same key/same payload replay; same key/different payload/actor/environment conflict; in-progress lease; stale lease fencing; completed replay after lost response;
 - same-pair concurrent submit and different-claimant same-Supplier concurrent submit;
-- exact 30-day boundary immediately before/at/after expiry across database session timezones and the approved timezone rule;
+- exact 720-hour boundary immediately before/at/after expiry across database session timezones and DST/calendar presentation changes;
 - assignment versus assignment/withdrawal/expiry and unusable/conflicted candidate cases;
 - withdrawal versus approval/expiry and terminal/new-key behavior;
 - two competing approvals; duplicate approvals; approval versus other ownership creation; approval with zero/many competitors; no conflict cap;
 - provider/profile/link/role/access loss versus decision, including shared principal-lock behavior;
-- required audit failure rolls back mutation; event failure rolls back approval/rejection; notification failure does not roll back a committed command;
+- required audit failure rolls back its mutation; event failure rolls back every transition; notification failure does not roll back a committed command;
 - deterministic event ordinal/aggregate sequence and notification tuple deduplication;
 - exact safe response fields and forbidden-value scan for competitor identity, reviewer notes, provider subjects, audit/idempotency/event payloads, secrets, SQL errors, and unrestricted metadata;
 - historical/fan-out-suppressed fixtures never invoke commands or notify; and
@@ -560,9 +573,9 @@ Each later implementation slice must add only its applicable focused tests, with
 
 ## 21. Validation and exact stop point
 
-This contract must validate as exactly one documentation file with relative repository links, internally consistent command/state/write-set/audit/event/notification matrices, clear evidence-versus-recommendation labels, no sensitive values, and a clean `git diff --check`. The diff must contain no SQL, executable, configuration, baseline, schema-design, decision-register, test, or generated-file change.
+This approved synchronization must contain exactly the four requested Markdown files, preserve valid relative repository links, keep the command/state/write-set/audit/event/notification matrices consistent, contain no stale proposal/unapproved wording or sensitive values, and pass `git diff --check`. The diff must contain no SQL, executable, application, configuration, test, or generated-file change.
 
-Exact stop point: commit and push this one Markdown contract to `codex/claim-v1-trusted-command-contract`, open one Draft PR, keep it Draft, and stop. Do not mark Ready, merge, resolve an Owner decision or Open gate, implement SQL/RPC/RLS/Auth/Claim/audit/REL/notification runtime, start Docker, access Firebase or hosted Supabase, inspect or change Production/TEST data, migrate, deploy, or enable Claim Supplier Profile.
+Exact stop point: commit and push the four-document synchronization to the existing `codex/claim-v1-trusted-command-contract` branch, update existing Draft PR #100, keep it Draft, and stop. Do not mark Ready, merge, resolve an Open gate, implement `supplier_claim.submit` or any SQL/RPC/RLS/Auth/Claim/audit/REL/notification runtime, access Firebase or hosted Supabase, inspect or change Production/TEST data, migrate, deploy, or enable Claim Supplier Profile.
 
 ## 22. References
 
@@ -575,4 +588,5 @@ Exact stop point: commit and push this one Markdown contract to `codex/claim-v1-
 - [`41_CLAIM_SUPPLIER_PROFILE_STRUCTURAL_AND_COMMAND_READINESS_REVIEW.md`](41_CLAIM_SUPPLIER_PROFILE_STRUCTURAL_AND_COMMAND_READINESS_REVIEW.md)
 - [`42_CLAIM_FIRST_RLS_AND_TRUSTED_AUTHORIZATION_SECURITY_CONTRACT.md`](42_CLAIM_FIRST_RLS_AND_TRUSTED_AUTHORIZATION_SECURITY_CONTRACT.md)
 - [`44_SUPPLIER_OWNERSHIP_CLAIMS_FOUNDATION_IMPLEMENTATION_EVIDENCE.md`](44_SUPPLIER_OWNERSHIP_CLAIMS_FOUNDATION_IMPLEMENTATION_EVIDENCE.md)
+- [`45_CLAIM_RUNTIME_IDENTITY_CONTEXT_FOUNDATION_EVIDENCE.md`](45_CLAIM_RUNTIME_IDENTITY_CONTEXT_FOUNDATION_EVIDENCE.md)
 - [`../ai-context/01_CURRENT_BASELINE.md`](../ai-context/01_CURRENT_BASELINE.md)
