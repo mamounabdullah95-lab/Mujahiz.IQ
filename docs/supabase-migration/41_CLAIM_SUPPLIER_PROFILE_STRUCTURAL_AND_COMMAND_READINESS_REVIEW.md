@@ -4,6 +4,8 @@ Status: **Owner-approved structural selection; no SQL, runtime, data, gate resol
 
 Review date: 2026-08-09
 
+Approval date: 2026-08-09
+
 Original review starting point: `origin/main` at `f5ee83096851991de680183c072b16987cb8784f`, the merge of PR #94
 
 Approval synchronization point: `origin/main` at `8dcf556aea1460dd4ed9510854a644225ee0ad3a`, the merge of PR #95
