@@ -1,10 +1,12 @@
 # Claim Supplier Profile structural and trusted-command readiness review
 
-Status: **Recommendation only; no Owner selection, gate resolution, SQL, runtime, data, or Production action is authorized**
+Status: **Owner-approved structural selection; no SQL, runtime, data, gate resolution, or Production action is authorized**
 
 Review date: 2026-08-09
 
-Verified starting point: `origin/main` at `f5ee83096851991de680183c072b16987cb8784f`, the merge of PR #94
+Original review starting point: `origin/main` at `f5ee83096851991de680183c072b16987cb8784f`, the merge of PR #94
+
+Approval synchronization point: `origin/main` at `8dcf556aea1460dd4ed9510854a644225ee0ad3a`, the merge of PR #95
 
 Primary task profile: Supplier
 
@@ -16,20 +18,20 @@ The evidence labels used below are:
 
 - **Verified current fact** — proved by the repository at the starting SHA or its focused Claim tests.
 - **Approved existing contract** — fixed by an already Owner-approved predecessor contract, but not necessarily implemented.
-- **Recommendation — not approved** — this review's proposed next boundary; it is not an Owner selection or implementation authorization.
-- **Open delivery decision** — a named choice still required before real rows, runtime, hosted work, or data movement.
+- **Owner-approved structural decision** — selected for a later implementation task, without authorizing SQL or runtime.
+- **Remaining delivery decision** — a named choice still required before real rows, runtime, hosted work, or data movement.
 
-This is one standalone documentation artifact. It does not resolve any Open gate, select SQL on behalf of the Owner, change the shared baseline or decision register, or authorize SQL, pgTAP, RLS, an Auth bridge, Firebase work, Production reads, hosted Supabase, migration, notifications, files/uploads, deployment, Ready status, or merge.
+This document now records the Owner's structural selection and synchronizes the shared baseline and decision register. It does not resolve any Open gate or authorize SQL, pgTAP, RLS, an Auth bridge, Firebase work, Production reads, hosted Supabase, migration, notifications, files/uploads, deployment, Ready status, or merge.
 
 ## 2. Root finding
 
 **Verified current fact:** The Firebase Claim implementation is present on GitHub but undeployed. It persists one private Claim document containing claimant, Supplier, status, claimant snapshot, reason, one evidence type/summary, up to three HTTPS references, submission/expiry times, and later terminal fields. Separate Firebase guard/event/request collections provide current concurrency, event, and idempotency behavior, but their document shapes are not authoritative relational boundaries.
 
-**Approved existing contract:** The authoritative design already classifies `supplier_ownership_claim_evidence` and `supplier_ownership_events` as Remove/Merge concepts, keeps `supplier_claim_rate_limits` Deferred, keeps files Future-Compatible behind FILE-001, and defines `supplier_ownership_claims` as the one private Claim aggregate. Document 32 approves the lifecycle, evidence maximum, ordinary unowned-Supplier boundary, reviewer conflict rules, and design-only `supplier_ownership.decide_claim` contract. Document 39 resolves MSG-003 and makes the coherent REL foundation structurally eligible without making Claim runtime ready.
+**Approved existing contract:** The authoritative design already classifies `supplier_ownership_claim_evidence` and `supplier_ownership_events` as Remove/Merge concepts, keeps `supplier_claim_rate_limits` Deferred, keeps files Future-Compatible behind FILE-001, and defines `supplier_ownership_claims` as the one private Claim aggregate. Document 32 approves the lifecycle, evidence maximum, ordinary unowned-Supplier boundary, reviewer conflict rules, and design-only `supplier_ownership.decide_claim` contract. Document 39 resolved MSG-003. PR #95 then implemented the empty, fully revoked, local-only `internal.idempotency_keys` and `internal.domain_events` REL foundation without making Claim runtime ready.
 
-**Recommendation — not approved:** After the separately selected/implemented REL foundation, the next Claim-specific structural slice should create exactly one new empty, fully revoked, local-only table: `public.supplier_ownership_claims`. One table is sufficient for Claim v1's structural foundation. It should contain the Claim's bounded immutable submission/evidence snapshot, lifecycle, current write-once reviewer-assignment seam, decision result/provenance fields, resubmission/supersession links, and a nullable unique resulting-ownership reference. It should not create evidence, reviewer-assignment, Claim-event/history, rate-limit, attachment, file, notification, or generic metadata tables.
+**Owner-approved structural decision:** After the implemented REL foundation, the next Claim-specific structural slice is exactly one new empty, fully revoked, local-only table: `public.supplier_ownership_claims`. If implemented next, it will be the fifteenth tracked local SQL migration. One table is sufficient for Claim v1's structural foundation. It will contain the Claim's bounded immutable submission/evidence snapshot, lifecycle, one write-once reviewer assignment, decision result/provenance fields, resubmission/supersession links, and a nullable unique resulting-ownership reference. It will not create evidence, reviewer-assignment, Claim-event/history, rate-limit, attachment, file, notification, or generic metadata tables. PR #96 records this selection only; it does not implement the table.
 
-The recommendation is dependency-safe because the local structural roots already exist: `public.user_profiles`, `internal.identity_provider_links`, `public.supplier_profiles`, `public.supplier_ownerships`, `public.platform_role_assignments`, and `internal.audit_logs`. It is not runtime-ready: identity/Auth bridge behavior, role-backed access/bootstrap, reviewer assignment, Claim trusted commands, REL processing, audit runtime, notification storage/materialization, security delivery, exact retention/registry decisions, and hosted approvals remain unimplemented.
+The selection is dependency-safe because the local structural roots already exist: `public.user_profiles`, `internal.identity_provider_links`, `public.supplier_profiles`, `public.supplier_ownerships`, `public.platform_role_assignments`, `internal.audit_logs`, `internal.idempotency_keys`, and `internal.domain_events`. It is not runtime-ready: identity/Auth bridge behavior, role-backed access/bootstrap, trusted reviewer assignment, Claim trusted commands, REL processing, audit runtime, notification storage/materialization, security delivery, exact retention/registry decisions, and hosted approvals remain unimplemented.
 
 ## 3. Current Firebase Claim fields to authoritative relational concepts
 
@@ -60,7 +62,7 @@ The mapping below is a design mapping only. It performs no migration and does no
 
 ### 3.1 Minimum logical Claim record
 
-**Recommendation — not approved:** The one-table foundation needs these logical field groups; exact names, types, lengths, checks, indexes, comments, and pgTAP remain a later technical selection:
+**Owner-approved structural decision:** The one-table foundation needs these logical field groups; exact names, types, lengths, checks, indexes, comments, and pgTAP remain a later technical selection:
 
 1. **Identity and parties:** Claim UUID, optional legacy source identity, claimant user-profile FK, Supplier-profile FK, and record version.
 2. **Immutable submission:** submitted time, fixed expiry, bounded reason, versioned minimized claimant snapshot, immutable submission fingerprint, and up to three bounded evidence descriptors.
@@ -82,7 +84,7 @@ The resulting ownership FK is provenance, not a second authority. Current contro
 
 **Cost/risk:** Reviewer reassignment cannot grow into a multi-reviewer work-management system without later design. Evidence-descriptor checks require a strict versioned schema and trusted validation.
 
-**Disposition:** **Recommend, not approved.** This is the smallest sufficient Claim v1 structural foundation.
+**Disposition:** **Approved.** This is the selected smallest sufficient Claim v1 structural foundation. It remains unimplemented.
 
 ### Option B — Claim plus normalized evidence child table
 
@@ -112,7 +114,7 @@ The resulting ownership FK is provenance, not a second authority. Current contro
 
 **Cost/risk:** Those dependencies govern real rows and access, not the FK/lifecycle shape of an empty revoked aggregate. Deferral prevents the next trusted-command design from binding to an exact relational Claim root even though all structural parents already exist.
 
-**Disposition:** Viable conservative alternative, but not preferred. It is safer only if the Owner does not want to advance Claim from Core Later now.
+**Disposition:** Not selected. The Owner selected Option A while leaving implementation for a later task.
 
 ## 5. Exact Claim lifecycle
 
@@ -120,8 +122,8 @@ The resulting ownership FK is provenance, not a second authority. Current contro
 |---|---|---|---|---|
 | `submitted` | Accepted immutable Claim awaiting durable assignment | `under_review`, `withdrawn`, `expired`, `superseded` | Claimant submits; trusted service validates | `submitted_at`, fixed `expires_at`, claimant/source, submission fingerprint |
 | `under_review` | One current eligible reviewer was durably assigned | `approved`, `rejected`, `withdrawn`, `expired`, `superseded` | Trusted assignment command; assigned usable Admin/Owner | assignment actor/source, reviewer, assignment version/policy, `assigned_at` |
-| `approved` | Terminal decision created exactly one active primary-controller ownership row | None | Assigned usable Admin/Owner; separately approved Owner override only | `decided_at`, decision actor/role assignment, reason, evidence-verification result, resulting ownership |
-| `rejected` | Terminal reviewed decision created no ownership | None | Same assigned/override decision boundary | `decided_at`, decision actor, rejection reason, evidence-verification result where applicable |
+| `approved` | Terminal decision created exactly one active primary-controller ownership row | None | The one durably assigned usable Admin/Owner only | `decided_at`, decision actor/role assignment, reason, evidence-verification result, resulting ownership |
+| `rejected` | Terminal reviewed decision created no ownership | None | The one durably assigned usable Admin/Owner only | `decided_at`, decision actor, rejection reason, evidence-verification result where applicable |
 | `withdrawn` | Terminal claimant closure before decision | None | Same claimant through trusted command | `withdrawn_at`, claimant actor, bounded reason if the future policy requires one |
 | `expired` | Terminal close when the fixed horizon ends | None | Trusted scheduled/ingress expiry command; never a fabricated human | `expired_at`, system/service source and policy version |
 | `superseded` | Terminal close because another Claim was approved or a reviewed replacement became authoritative | None | `decide_claim` for competing Claims or separately approved replacement command | `superseded_at`, bounded reason, restrictive successor Claim reference |
@@ -135,7 +137,7 @@ The only active statuses are `submitted` and `under_review`. All terminal status
 - Rejection requires a decision reason. Approval records a bounded approval reason/result code. Claimant-safe notice disclosure is a separate allowlist from the internal reason.
 - Claim ID, parties, target Supplier, submitted reason/snapshot/evidence, submission time/fingerprint, fixed expiry, and prior-Claim link are immutable.
 - Assignment fields are write-once in the minimum v1 structure. Decision and terminal fields are write-once. Status moves only through the table above.
-- **Open delivery decision:** If v1 must support reviewer reassignment or Owner override before decision, the Owner must approve its authority and history model. Until then, no in-place reassignment is implied.
+- Claim v1 has exactly one durable write-once assigned reviewer. It has no reassignment and no Owner override. A later need for either requires a new reviewed contract rather than an in-place extension.
 
 ## 6. Ordinary Claim eligibility predicates
 
@@ -154,7 +156,7 @@ Submission performs no ownership mutation. Approval repeats all mutable eligibil
 
 **Approved existing contract:** Claim v1 may use at most three bounded immutable evidence descriptors. Each descriptor has a controlled kind, claimant summary, source/provider class, bounded source reference, submission provenance, and optional approved digest/identifier. The kind is classification, not proof. Approval requires a reviewed high-assurance method under document 32.
 
-**Recommendation — not approved:** Keep the descriptors on the Claim in a versioned bounded aggregate value. Permit only:
+**Owner-approved structural decision:** Keep the descriptors on the Claim in a versioned bounded aggregate value. Permit only:
 
 - controlled evidence kinds;
 - bounded structured summaries and source classes;
@@ -170,18 +172,18 @@ Evidence content, summaries, URLs, digests, reviewer notes, contact snapshots, a
 
 ## 8. Reviewer model
 
-**Approved existing contract:** `reviewer` is not a platform role. The decision actor must be a currently usable `admin` or `owner`, hold the current Claim assignment unless a separately approved Owner override applies, and have no claimant, owner, membership/delegation, or security conflict.
+**Owner-approved structural decision:** `reviewer` is not a platform role. Claim v1 has exactly one durable write-once assigned reviewer, with no reassignment and no Owner override. The decision actor must be that assigned reviewer, be a currently usable `admin` or `owner`, and have no claimant, owner, membership/delegation, or security conflict.
 
-**Recommendation — not approved:** Use nullable assignment fields on the Claim row for one write-once v1 assignment. Moving `submitted` to `under_review` requires a trusted assignment command to set the reviewer, assignment version, assigning actor/source, policy version, and time atomically. The assigned reviewer queue queries this durable Claim state. Assignment never grants authority without the independent active platform role, Firebase/link/profile/access/security predicates, and command policy.
+Use nullable assignment fields on the Claim row for the one write-once v1 assignment. Moving `submitted` to `under_review` requires a later trusted assignment command to set the reviewer, assignment version, assigning actor/source, policy version, and time atomically. The assigned reviewer queue queries this durable Claim state. Assignment never grants authority without the independent active platform role, Firebase/link/profile/access/security predicates, and command policy. The browser cannot assign work.
 
 The alternatives are rejected as follows:
 
 - A single `reviewer_user_profile_id` without version/provenance is insufficient.
 - Runtime-only or in-memory assignment is insufficient because `decide_claim` must re-read durable assignment/version under lock and fail closed after restart or retry.
 - A separate work-assignment table is not required for one write-once reviewer and would be premature.
-- A browser update cannot assign or reassign work.
+- A browser update cannot assign work.
 
-**Open delivery decision:** Before reviewer-assignment runtime, approve the assignment command's allowed assigning roles, queue ownership, conflict checks, assignment timeout if any, and whether v1 supports reassignment or Owner override. A need for multiple reviewers, reassignment history, delegation, shifts, SLA/escalation, or assignment acceptance should trigger a separate work-assignment contract/table review rather than mutating the minimal Claim row opportunistically.
+**Remaining delivery decision:** Before reviewer-assignment runtime, approve the trusted assignment command's allowed assigning roles, queue ownership, conflict checks, and assignment timeout if any. A later need for multiple reviewers, reassignment history, delegation, shifts, SLA/escalation, assignment acceptance, or Owner override requires a separate work-assignment contract/table review.
 
 ## 9. Concurrency and retry behavior
 
@@ -239,7 +241,7 @@ Actor, role, claimant, Supplier, ownership, timestamps, event/audit/notification
 
 ### 11.3 Checks
 
-Both decisions require a current usable human Admin/Owner, current assignment or approved Owner override, no conflict, `under_review`, unexpired and unchanged Claim, coherent immutable data, and supported evidence-verification input. Approval additionally requires an eligible claimant/Supplier, verified evidence outcome, no current owner, and no unresolved ownership/identity/source conflict. Rejection does not require ownership eligibility to remain true.
+Both decisions require the current durable assigned reviewer, a current usable human Admin/Owner role for that reviewer, no conflict, `under_review`, an unexpired and unchanged Claim, coherent immutable data, and supported evidence-verification input. Approval additionally requires an eligible claimant/Supplier, verified evidence outcome, no current owner, and no unresolved ownership/identity/source conflict. Rejection does not require ownership eligibility to remain true.
 
 ### 11.4 Atomic writes
 
@@ -292,7 +294,7 @@ The verification must be minimum-field, count/fingerprint first, read-budgeted, 
 
 | Dependency | Empty local Claim structure | Trusted Claim runtime | Hosted deployment/data movement | Classification and conclusion |
 |---|---|---|---|---|
-| REL foundation | Does not structurally block the inert Claim table; requested sequencing places Claim after REL | **Blocks** idempotent decision, events, materializer input, replay, and recovery until implemented | Not sufficient for hosted work | Runtime blocker; the coherent two-table foundation is separately eligible after MSG-003. |
+| REL foundation | Implemented locally by PR #95 as empty, fully revoked structure | Structural tables exist, but processing, leases/retries, events, materializer input, replay, recovery, and trusted-command integration remain unimplemented | Not sufficient for hosted work | Structural predecessor satisfied; runtime delivery remains a blocker. |
 | RLS / SEC-001 | Does not block a fully revoked empty table | **Blocks** any client-visible Claim path and requires trusted commands, minimized projections, grants, and negative tests | Required before hosted client access | Trusted-runtime/security-delivery blocker. |
 | Firebase Auth bridge / approved ID-001 implementation | Does not block provider-neutral FKs | **Blocks** current claimant/reviewer identity, verification, disablement, and actor authorization | Required during hybrid hosted runtime | Trusted-runtime blocker. |
 | FILE-001 | Does not block bounded non-file descriptors | Does not block the selected reference-only Claim v1 path; **does block** any managed-file evidence path | Blocks upload/file custody enablement | Conditional alternative-path blocker; remains Open. |
@@ -305,11 +307,11 @@ The verification must be minimum-field, count/fingerprint first, read-budgeted, 
 
 The remaining Open gates stay unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 
-## 15. Exact recommendation and decisions still required
+## 15. Exact approved selection and decisions still required
 
-### 15.1 Recommended next Claim-specific slice — not approved
+### 15.1 Selected next Claim-specific slice — not implemented
 
-After the separate REL foundation, select one empty, fully revoked, local-only `public.supplier_ownership_claims` table as the next Claim-specific structural SQL slice, with structural constraints/indexes/comments and focused synthetic pgTAP in a later authorized implementation task.
+After the implemented REL foundation, the Owner selected one empty, fully revoked, local-only `public.supplier_ownership_claims` table as the next Claim-specific structural SQL slice, with structural constraints/indexes/comments and focused synthetic pgTAP in a later authorized implementation task. If it is implemented next, it will be the fifteenth tracked local migration. No Claim table or migration is created by PR #96.
 
 The slice should include exactly one new table and no rows, RLS, policy, view, RPC, routine, trigger, browser/API grant, Auth bridge, worker, trusted command, notification, event, audit behavior, migration execution, Firebase access, hosted access, or Production/TEST operation.
 
@@ -327,35 +329,34 @@ Do not create:
 - another audit, idempotency, domain-event, registry, lock, request, or generic metadata table; or
 - Supplier memberships, organizations, organization memberships, billing, or messaging tables for Claim v1.
 
-### 15.3 Owner/runtime decisions still required
+### 15.3 Runtime and delivery decisions still required
 
-The recommendation must not be treated as selected until the Owner explicitly decides:
+The structural selection and single-reviewer/no-override model are approved. The following decisions still remain before runtime or real rows:
 
-1. whether to advance `supplier_ownership_claims` from Core Later and approve the exact one-table empty local slice after REL;
-2. whether v1 uses exactly one write-once reviewer assignment, or instead requires an approved reassignment/Owner-override history model before runtime;
-3. the exact Claim/evidence/private-snapshot retention periods, legal holds, privacy/erasure/minimization, archive/purge, backup, and investigation access before real rows;
-4. the code-owned decision, withdrawal, expiry, supersession, resubmission, claimant-safe disclosure, cooldown, and security-hold reason registries;
-5. the exact evidence-verification method registry and pre-FILE HTTPS/provider allowlist before submission/decision runtime;
-6. technical/security/operations ownership for Claim assignment, expiry, REL leases/retries/dead letters, alerting, and recovery; and
-7. later hosted environment, migration/cutover, RLS/projection, authority-manifest, and Production execution approvals.
+1. the exact Claim/evidence/private-snapshot retention periods, legal holds, privacy/erasure/minimization, archive/purge, backup, and investigation access;
+2. the small code-owned decision, withdrawal, expiry, supersession, resubmission, claimant-safe disclosure, cooldown, and security-hold reason registries required by the implemented commands;
+3. the exact evidence-verification method registry and pre-FILE HTTPS/provider allowlist before submission/decision runtime;
+4. the trusted assignment command's allowed assigning roles, queue ownership, conflict checks, and assignment timeout if any;
+5. technical/security/operations ownership for Claim assignment, expiry, REL leases/retries/dead letters, alerting, and recovery; and
+6. later hosted environment, migration/cutover, RLS/projection, authority-manifest, and Production execution approvals.
 
 Exact logical columns, constraints, partial uniqueness, conditional field coherence, indexes, comments, and pgTAP assertion count are technical implementation selections after item 1; they do not authorize real rows or runtime.
 
 ## 16. Risks, validation, and exact stop point
 
-Primary risks are copying Firebase's global claimant lock or conflict cap; treating a listed/verified Supplier, email/domain match, role row, reviewer assignment, Claim approval, backlink, event, audit, or notification as ownership authority; creating premature evidence/file/reviewer/history tables; storing arbitrary URLs or sensitive evidence outside the Claim; broadcasting reviewer work; using audit as an outbox; and treating an inert local table as a deployed feature. The recommendation fails closed on each risk.
+Primary risks are copying Firebase's global claimant lock or conflict cap; treating a listed/verified Supplier, email/domain match, role row, reviewer assignment, Claim approval, backlink, event, audit, or notification as ownership authority; creating premature evidence/file/reviewer/history tables; storing arbitrary URLs or sensitive evidence outside the Claim; broadcasting reviewer work; using audit as an outbox; and treating a selected but unimplemented local table as a deployed feature. The approved boundary fails closed on each risk.
 
 Validation for this review is documentation-only:
 
-- exact starting SHA recorded;
-- one new Markdown document only;
-- evidence, approved-contract, recommendation, and Open-decision labels preserved;
+- exact original review and approval-synchronization SHAs recorded;
+- exactly four governance Markdown documents synchronized;
+- verified-fact, existing-contract, approved-structural-decision, and remaining-delivery-decision labels preserved;
 - relative repository links;
 - sensitive-value scan;
 - `git diff --check`; and
-- no executable, SQL, configuration, shared baseline, or decision-register changes.
+- no executable, SQL, configuration, migration, or application changes.
 
-Exact stop point: commit and push this one-document review to `codex/claim-structural-readiness`, open one Draft PR, and stop. Do not mark Ready, merge, resolve a gate, select SQL on behalf of the Owner, implement SQL/pgTAP/RLS/Auth/Claim/REL/audit/notification/file runtime, access Firebase or hosted Supabase, read or change Production/TEST data, migrate, or deploy.
+Exact stop point: commit and push the four-document approval synchronization to the existing Draft PR #96 on `codex/claim-structural-readiness`, keep it Draft, and stop. Do not mark Ready, merge, resolve a gate, implement Claim SQL/pgTAP/RLS/Auth/Claim/REL/audit/notification/file runtime, access Firebase or hosted Supabase, read or change Production/TEST data, migrate, or deploy.
 
 ## 17. References
 
