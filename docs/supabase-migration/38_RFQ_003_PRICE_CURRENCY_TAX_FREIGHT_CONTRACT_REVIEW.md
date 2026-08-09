@@ -1,23 +1,23 @@
 # RFQ-003 price, currency, tax, and freight contract review
 
-Status: **Decision-ready proposal only; RFQ-003 remains Open; no SQL, runtime, data transformation, or Production action is authorized**
+Status: **Owner-approved Option B Product/Finance/Data contract; RFQ-003 Resolved; no SQL, runtime, data transformation, or Production action is authorized**
 
-Date: 2026-08-08
+Approval date: 2026-08-09
 
-Verified starting point: `origin/main` at `89b8903c140a997a3c65f653c76a7e2d31f8c537`, the merge of PR #90
+Verified approval/synchronization base: `origin/main` at `877317a7871e72925dcc5278f3d364d3e6994aa5`, after merged PR #93
 
 ## 1. Scope and decision boundary
 
-This review determines what the current repository proves about RFQ quotation `price`, quantity, currency, tax, freight, discounts, revisions, and Buyer comparison. It then proposes a safe future PostgreSQL commercial-amount contract without assigning unproved meaning to legacy values.
+This review determines what the current repository proves about RFQ quotation `price`, quantity, currency, tax, freight, discounts, revisions, and Buyer comparison. It records the Owner-approved Option B future PostgreSQL commercial-amount contract without assigning unproved meaning to legacy values.
 
-This document does not resolve RFQ-003. A Product/Finance Owner decision is still required before authoritative response-price transformation, normalized quotation comparison, or amount-bearing RFQ SQL. This review creates no SQL, changes no RFQ code or Firestore behavior, reads no Production or TEST data, and does not modify the authoritative baseline, schema design, or decision register.
+The Product/Finance Owner approved all fourteen decisions in section 10 on 9 August 2026, resolving RFQ-003 for architecture/product/finance/data semantics only. This approval selects no RFQ or quotation SQL slice and authorizes no SQL, trusted command, RLS, runtime, frontend, amount transformation, Firebase read/write, Production/TEST access, hosted Supabase operation, data movement, award logic, FX, billing, or deployment. The authoritative baseline, schema design, and decision register are synchronized by the same documentation-only approval task.
 
 Evidence labels used below are:
 
 - **Proved fact**: directly established by current code, tests, or repository history.
 - **Historical repository fact**: established by an earlier committed repository state; it does not prove which client created any particular stored document.
 - **Inference**: a bounded conclusion from proved facts, explicitly not a stored-data guarantee.
-- **Proposal**: a future contract requiring approval and implementation.
+- **Approved contract**: an Owner-approved future relational semantic boundary that still requires separately authorized implementation.
 - **Unknown**: not safely resolvable from repository evidence alone.
 
 ## 2. Executive finding
@@ -37,7 +37,7 @@ Accordingly:
 - **Persisted field meaning:** one response-level numeric value named `price`, without an enforced unit/line/total semantic tag.
 - **Legacy migration meaning:** ambiguous. Code alone cannot safely transform it into `unit_price`, `line_subtotal`, or `quotation_total`.
 
-The recommended approach is **Option B**: use an explicit normalized commercial contract for new relational quotations, while quarantining ambiguous legacy commercial values and preserving their source evidence. No legacy `price` is converted by division, magnitude, locale, location, currency guess, or assumed tax/freight treatment.
+The Owner-approved approach is **Option B**: use an explicit normalized commercial contract for new relational quotations, while quarantining ambiguous legacy commercial values and preserving their source evidence. No legacy `price` is converted by current UI wording, timestamps, division by RFQ quantity, number magnitude, Iraq/locale/language, Supplier location, preferred currency, delivery terms, or assumed tax/freight treatment.
 
 ## 3. Evidence inspected
 
@@ -52,7 +52,7 @@ The recommended approach is **Option B**: use an explicit normalized commercial 
 - [Authoritative PostgreSQL schema design](./09_POSTGRESQL_SCHEMA_DESIGN.md)
 - [Schema decision register](./10_SCHEMA_DECISION_REGISTER.md)
 
-The current design recommends exact numerics, explicit ISO currency per revision, immutable revision items, scale-4 half-even canonicalization, and a canonical quotation no-op hash. It also explicitly leaves legacy `price` meaning, tax, freight, and currency transformation Open under RFQ-003.
+The current design recommends exact numerics, explicit ISO currency per revision, immutable revision items, scale-4 half-even canonicalization, and a canonical quotation no-op hash. Before this approval it explicitly left legacy `price` meaning, tax, freight, and currency transformation Open under RFQ-003; the approved contract below closes that semantic gate without implementing it.
 
 ### 3.2 Current implementation and tests
 
@@ -178,7 +178,7 @@ No. The focused tests prove access scope, atomic V1/event/notification creation,
 
 ## 6. Contract principles for a future relational quotation
 
-The following principles are **Proposal**, not current behavior:
+The following principles are the **Owner-approved future relational contract**, not current Firebase behavior or implemented PostgreSQL behavior:
 
 1. Every amount has one named business meaning. Generic `price` is not a relational column name.
 2. New quotation commands use exact decimals only. Browser or JavaScript floating point is never authoritative for persisted money, totals, or hashes.
@@ -191,7 +191,7 @@ The following principles are **Proposal**, not current behavior:
 9. Every change to a commercial input creates a new immutable revision unless the canonical payload hash is identical.
 10. Ambiguous legacy commercial values remain source evidence, not authoritative relational money.
 
-## 7. Recommended Option B contract
+## 7. Owner-approved Option B contract
 
 ### 7.1 Aggregate placement
 
@@ -208,18 +208,18 @@ The following principles are **Proposal**, not current behavior:
 |---|---|---:|---|
 | `offered_quantity` | Exact positive decimal quantity priced by this line; initially must equal the published RFQ item quantity | Yes | Required to distinguish amount basis and calculate the line subtotal. Equality preserves current no-partial-bid behavior. |
 | `offered_unit_code` / bounded `offered_unit_other` | Immutable unit snapshot; initially must equal the RFQ item unit | Yes | Prevents a unit-price amount from becoming detached from its unit while keeping alternate units out of first release. |
-| `unit_price` | Net amount per offered unit, after any discount, before only separately added tax/freight | Yes | Removes the current unit/total ambiguity and permits deterministic line calculation. |
+| `unit_price` | Strictly positive net amount per offered unit, after any discount, before only separately added tax/freight | Yes | Removes the current unit/total ambiguity and permits deterministic line calculation; zero-price lines require a separate future contract. |
 | `line_subtotal` | Trusted `offered_quantity × unit_price`, canonicalized to scale 4 | Derived | Enables validation, audit, comparison, and stable hashing; browser input is ignored. |
 | `currency_code` | One uppercase quotation currency inherited by every line | Yes, revision level | Current product requires IQD/USD selection and future comparison needs explicit currency. |
 | `tax_mode` | `not_applicable`, `included_in_prices`, or `added_separately` | Yes | Absence currently creates unsafe ambiguity. Three modes cover comparison without a tax engine. |
-| `tax_amount` | Exact quote-level tax amount; required for `added_separately`, optional informational disclosure for `included_in_prices`, absent for `not_applicable` | Conditional | Supports correct payable total without adding rates, jurisdictions, or line allocations not evidenced by the product. |
+| `tax_amount` | Exact quotation-level amount; required for `added_separately`, absent for `not_applicable`, and retained for `included_in_prices` only when explicitly supported as informational disclosure | Conditional | Supports correct payable total without adding rates, jurisdictions, multiple tax types, a tax engine, or line allocations; an included disclosure is never added again. |
 | `freight_mode` | `included_in_prices`, `added_separately`, or `buyer_arranged` | Yes | Separates commercial inclusion from current mixed delivery/logistics terms. |
 | `freight_amount` | Exact quote-level amount; required only for `added_separately`, absent otherwise | Conditional | Makes separate freight payable and comparable without inventing allocation. |
 | `quotation_subtotal` | Sum of trusted line subtotals | Derived | Needed for reconciliation and comparison. |
 | `quotation_total` | Subtotal plus only separately added tax and freight | Derived | Replaces ambiguous generic `price` for new quotations. |
 | `normalizer_version` / `no_op_hash` | Versioned canonicalization contract and server-computed digest | Yes | Preserves current true-no-op behavior under exact decimal semantics. |
 
-No explicit discount field is recommended for the first release. `unit_price` is the actual net offered unit price after any discount. A Supplier may describe a promotion in notes, but it does not create a structured discount, list price, savings claim, or comparison adjustment. A later discount field requires evidence for amount versus rate, line versus quotation scope, allocation, rounding, disclosure, and award-value treatment.
+No explicit discount field is included in the approved first-release contract. `unit_price` is the actual net offered unit price after any discount. A Supplier may describe a promotion in notes, but it does not create a structured discount, list price, savings claim, or comparison adjustment. A later discount field requires evidence for amount versus rate, line versus quotation scope, allocation, rounding, disclosure, and award-value treatment.
 
 ### 7.3 Arithmetic contract
 
@@ -239,17 +239,17 @@ For each revision:
 
 The trusted command recomputes all derived values and rejects any conflicting browser-supplied total. Included tax or freight is already inside line prices and is not added again. An optional disclosed included-tax amount is informational and must never be double-counted.
 
-Negative quantities or amounts, NaN/infinity, exponent text, binary floating-point persistence, and implicit negative “discount” lines are prohibited. Zero unit price is allowed only if Product/Finance explicitly approves free lines; otherwise it must be positive. That zero-price policy is an owner decision listed below.
+Negative quantities or amounts, NaN/infinity, exponent text, binary floating-point persistence, and implicit negative discount lines are prohibited. `unit_price` must be greater than zero. Free, sample, or no-charge lines require a separately approved Product/Finance contract rather than overloading ordinary quotation pricing.
 
 ### 7.4 Precision, scale, and rounding
 
-The recommended storage and canonical hash representation is exact `numeric(20,4)` for quantities, unit prices, component amounts, subtotals, and totals. Every canonical number is serialized with exactly four fractional digits and rounded half-even only at the defined boundary.
+The approved storage and canonical hash representation is exact `numeric(20,4)` for quantities, unit prices, component amounts, subtotals, and totals. Every canonical number is serialized with exactly four fractional digits and rounded half-even only at the approved canonical arithmetic boundary.
 
-Scale 4 is justified by the existing authoritative design and future fractional units such as meter, liter, kilogram, ton, and work time. It is not permission to display four decimals to every user. Finance must approve accepted input precision and display/settlement rounding for IQD and USD. No legacy float is rounded into this contract until RFQ-003 and the transformation rule are approved.
+Scale 4 is justified by the existing authoritative design and future fractional units such as meter, liter, kilogram, ton, and work time. Display formatting may later show fewer decimals according to approved currency/UI conventions, but stored and canonical values remain exact at scale 4. No legacy float is rounded into this contract without a separately approved record-specific transformation rule.
 
 ### 7.5 Currency and mixed-currency behavior
 
-The recommended first-release command allowlist is exactly IQD and USD because those are the currencies evidenced by the current product. The stored field remains an explicit uppercase ISO-style code so a later approved currency can be added without changing amount semantics.
+The approved first-release command allowlist is exactly IQD and USD because those are the currencies evidenced by the current product. The stored field remains an explicit uppercase ISO-style code so a later approved currency can be added without changing amount semantics.
 
 - An RFQ requesting IQD accepts only an IQD quotation.
 - An RFQ requesting USD accepts only a USD quotation.
@@ -260,11 +260,11 @@ The recommended first-release command allowlist is exactly IQD and USD because t
 - No exchange rate, automatic conversion, price ranking, or “lowest” badge is permitted across currencies.
 - Missing, `either`, unsupported, malformed, or conflicting legacy currencies quarantine the commercial source unit.
 
-If the Owner prefers allowing a Supplier to override a specific RFQ currency, that must be an explicit exception state and still cannot participate in direct comparison without an approved conversion contract.
+A Supplier cannot override a specific IQD or USD RFQ currency in the first release. Any future override or FX behavior requires a separate explicit contract.
 
 ### 7.6 Tax and freight behavior
 
-Tax and freight modes are mandatory for new relational quotations so absence never silently means zero.
+The approved tax and freight modes are mandatory for new relational quotations so absence never silently means zero.
 
 | Mode | Amount rule | Total behavior | Comparison display |
 |---|---|---|---|
@@ -295,16 +295,19 @@ The hash is separate from the raw-source fingerprint. Equal hash returns the cur
 
 A Buyer comparison may use only current, complete, normalized revisions. It displays requested and offered quantity/unit, unit price, line subtotal, tax mode/amount, freight mode/amount, quotation total, currency, lead time, payment/delivery terms, and revision number.
 
-Direct numeric comparison or lowest-price highlighting requires:
+Automatic price comparison or ranking requires:
 
-1. the same RFQ and comparable line scope;
-2. identical currency;
-3. complete tax and freight modes;
-4. valid derived totals;
-5. supported quantity/unit equality in first release; and
-6. no unresolved migration or commercial exception.
+1. the same RFQ scope;
+2. the same first-release quantity/unit contract;
+3. a complete normalized quotation with valid derived totals;
+4. the same currency; and
+5. valid tax and freight treatment.
 
-Mixed currency, missing tax/freight treatment, alternate quantity/unit, incomplete lines, or legacy-unresolved semantics must display a clear non-comparable state. They may be reviewed manually but never ranked by the system. Future award/value measurement references the immutable accepted revision and its normalized `quotation_total`; it never derives award value from the mutable quotation pointer or raw legacy `price`.
+The UI may identify the lowest normalized `quotation_total` among fully comparable quotations in the same currency. That indication is informational only: it is not an award recommendation, does not select a winner, and does not hide non-price factors.
+
+A quotation that fails any gate displays a clear non-comparable state and is never automatically price-ranked. There is no automatic cross-currency comparison, FX conversion, or lowest-price indication across currencies.
+
+Any future award or value record references only the immutable accepted normalized revision and its trusted calculated amount. It never uses the mutable quotation pointer or raw ambiguous legacy `price` for award amount, savings, lowest-price determination, or procurement value measurement.
 
 ### 7.9 Immutable revision semantics
 
@@ -316,7 +319,15 @@ The current pointer is only a convenience reference to the latest accepted revis
 
 ### 8.1 Default disposition
 
-Every legacy `rfqResponses` source document and each `rfqResponseRevisions` source document is evaluated as one bounded commercial source unit. If price basis, currency, tax, freight, numeric representation, or revision integrity is not proven under an approved transformation version, the unit receives a `quarantined` or `pending` source disposition with no fabricated amount-bearing target graph.
+Every legacy `rfqResponses` source document and each `rfqResponseRevisions` source document is evaluated as one bounded commercial source unit. It must not produce authoritative normalized monetary rows when:
+
+- price basis is unknown;
+- currency is missing, invalid, or unsupported;
+- quantity/unit mapping is unresolved;
+- tax or freight interpretation would require inference; or
+- revision integrity is unresolved.
+
+Such a unit receives a `quarantined` or `pending` source disposition with no fabricated amount-bearing target graph until bounded evidence and an approved transformation version prove every required semantic.
 
 The migration preserves, in restricted evidence:
 
@@ -342,11 +353,11 @@ It does not create fake zeros, fake currencies, fake unit prices, fake totals, o
 - `LEGACY_REVISION_GAP_OR_CONTENT_MISMATCH`
 - `LEGACY_SOURCE_PROVENANCE_INSUFFICIENT`
 
-No exception is cleared from number magnitude, Iraq/locale/language, Supplier location, Buyer preferred currency, free-text parsing, or current UI wording alone. A reviewed correction appends a successor disposition/mapping and retains the original evidence.
+No exception is cleared from current UI wording, timestamps, number magnitude, RFQ quantity, Iraq/locale/language, Supplier location, Buyer preferred currency, delivery terms, free-text parsing, or any other inference alone. A reviewed correction appends a successor disposition/mapping and retains the original evidence.
 
 ### 8.3 Manual review boundary
 
-Manual review may approve a specific source unit only with explicit evidence of price basis, currency, tax treatment, freight treatment, quantity/unit basis, numeric value, and revision relationship. The review records who decided, when, under which policy/transformation version, and the resulting normalized values. A reviewer must not merely relabel the same ambiguous number.
+Manual review may approve a specific source unit only with bounded explicit evidence of price basis, currency, tax treatment, freight treatment, quantity/unit basis, numeric value, and revision relationship, under reviewer authority defined by the migration/reconciliation contract. The review records who decided, when, under which policy/transformation version, and the resulting normalized values. No reviewer may merely relabel the same ambiguous number or infer semantics solely to make migration counts reconcile.
 
 Historical events and notifications remain already materialized/fan-out suppressed. Migration review never emits a new quotation event or Buyer notification.
 
@@ -363,56 +374,56 @@ Historical events and notifications remain already materialized/fan-out suppress
 | Future award/value measurement | Weak: payable amount may not be comparable and unit basis is unavailable | **Strongest**: immutable normalized total can be referenced without mutating quotation history | Strong for new data; legacy remains unsuitable without later adjudication |
 | Immutable revision compatibility | Good | **Good and explicit** | Good, but two revision payload classes must never be confused |
 
-### Recommendation
+### Owner decision
 
-Choose **Option B**.
+The Product/Finance Owner approved **Option B** on 9 August 2026.
 
 Option A is the smallest current-UI continuation but does not satisfy the stated need for deterministic unit/line/total, tax, and freight semantics. Option C is viable when legacy in-product display after cutover is a hard requirement, but the repository provides no evidence that a permanent second commercial model is necessary; it creates a durable risk that an “unknown” legacy amount is accidentally compared or awarded.
 
 Option B adds only fields required for current quotation comparability or an explicit, bounded future-compatibility reason. It deliberately excludes tax rates/jurisdictions, line tax allocation, freight allocation, discount rates, list prices, alternates, partial bids, FX conversion, arbitrary currencies, incoterm automation, and award implementation.
 
-## 10. Exact owner decisions required to resolve RFQ-003 later
+## 10. Owner approval record resolving RFQ-003
 
-RFQ-003 must remain Open until the Product/Finance Owner records all of the following:
+On 9 August 2026, the Product/Finance Owner approved Option B and all of the following decisions. RFQ-003 is Resolved for this architecture/product/finance/data contract.
 
-1. **Legacy price basis:** approve either no automatic legacy amount transformation (recommended), or name an auditable source class that proves quotation-total meaning. Current wording or timestamps alone are insufficient.
-2. **New amount basis:** approve `unit_price` as net per offered unit and approve the line/quotation equations above.
-3. **Quantity/unit:** approve that first-release offered quantity/unit must equal the published RFQ item and that partial/alternate offers are unsupported.
-4. **Currency allowlist:** approve IQD/USD only for first release, the behavior of `preferredCurrency`, and whether a specific requested currency is mandatory (recommended) or overridable.
-5. **Mixed currency:** approve one currency per revision, no line mixing, no automatic FX, and no cross-currency ranking.
-6. **Precision/rounding:** approve exact `numeric(20,4)`, scale-4 canonical serialization, half-even rounding, accepted input precision, and IQD/USD display/settlement rules.
-7. **Tax:** approve the three tax modes, when `tax_amount` is required or optional, and confirm that no rate/jurisdiction/line allocation is in first release.
-8. **Freight:** approve the three freight modes, separate-charge amount rule, and separation of freight charge from delivery logistics.
-9. **Discounts:** approve omission of a structured first-release discount and the rule that unit price is net after any discount.
-10. **Zero-price policy:** decide whether a zero unit price/free line is valid or must fail.
-11. **Comparison:** approve the completeness gates, same-currency requirement, non-comparable states, and whether any automatic lowest-price indication is allowed.
-12. **Legacy exceptions:** approve quarantine codes, manual-review evidence, reviewer authority, and the rule that unresolved units create no amount-bearing canonical target graph.
-13. **Revision/no-op:** approve the proposed commercial field set and `quotation-normalizer-v1` hash boundary, including currency/tax/freight changes as new revisions.
-14. **Future award seam:** approve that a later award/value record references an immutable normalized revision/total and that raw legacy `price` cannot be used for award or savings measurement.
+1. **Legacy price basis:** no automatic authoritative transformation of legacy Firebase `price`; it remains source evidence unless a separately approved, auditable record-specific provenance class proves its meaning. Current UI wording, timestamps, magnitude, RFQ quantity, Iraq/locale/language, Supplier location, preferred currency, and delivery terms cannot supply that meaning; ambiguous values remain quarantined and non-comparable.
+2. **New amount basis:** `unit_price` is the authoritative net amount per offered unit; line subtotal, quotation subtotal, and quotation total use the approved equations above; separately added tax/freight are added once; browser totals and generic persisted `price` are never authoritative.
+3. **Quantity/unit:** first-release offered quantity and unit equal the published RFQ item; partial quantities, alternate units, and substitute quantity/unit logic are unsupported pending a separate future contract.
+4. **Currency allowlist:** first release supports IQD/USD only; a specific Buyer currency is mandatory, while `either` permits the Supplier to choose IQD or USD for the revision.
+5. **Mixed currency:** one currency applies to the revision and every line; no mixed lines, automatic FX, cross-currency comparison, or cross-currency ranking is permitted.
+6. **Precision/rounding:** quantity and monetary canonical values use exact PostgreSQL `numeric(20,4)`, exactly four fractional digits in canonical serialization, half-even rounding at the approved boundary, and no authoritative binary floating-point persistence.
+7. **Tax:** modes are `not_applicable`, `included_in_prices`, and `added_separately`; no amount exists for not-applicable, a separately added quotation-level amount is required and added once, and included tax is never added again. An explicitly supported included-tax disclosure remains informational. No rates, jurisdictions, tax engine, line allocation, or multiple tax types are included.
+8. **Freight:** modes are `included_in_prices`, `added_separately`, and `buyer_arranged`; only separately added freight requires and adds a quotation-level amount. Buyer-arranged freight has no Supplier amount. Freight treatment remains separate from delivery/logistics, with no allocation engine or Incoterm automation.
+9. **Discounts:** no structured first-release discount model; `unit_price` is net after any Supplier discount, and notes create no discount amount/rate, list price, savings claim, or comparison adjustment.
+10. **Zero price:** `unit_price` must be greater than zero; free/sample/no-charge lines require a separate Product/Finance contract.
+11. **Comparison:** automatic price comparison requires the same RFQ scope, first-release quantity/unit contract, complete valid normalized data, same currency, and valid tax/freight treatment. The UI may identify the lowest same-currency normalized total only as information, never as an award recommendation, winner selection, or substitute for non-price factors.
+12. **Legacy exceptions:** unknown price basis, missing/invalid/unsupported currency, unresolved quantity/unit mapping, inferred tax/freight, or unresolved revision integrity prevents authoritative monetary rows. Manual review uses bounded evidence and contract-defined authority; no reviewer invents semantics to reconcile migration counts.
+13. **Revision/no-op:** every material commercial change creates an immutable revision. A versioned canonical hash covers the approved quantity, unit, unit price, currency, tax, freight, commercial terms, and other approved fields after server recomputation of totals; an identical payload is a no-op. Current JavaScript floating-point equality is not copied.
+14. **Future award seam:** a future award/value record references only an immutable normalized revision and trusted calculated amount; raw ambiguous legacy `price` cannot determine awards, savings, lowest price, or procurement value. Award implementation remains out of scope.
 
-After approval, a separate documentation synchronization task must update RFQ-003 in the decision register and every dependent schema section. Separate later tasks are still required for SQL, trusted commands, RLS, migration tooling, tests, hosted environment work, data movement, and cutover. Approval of this proposal alone authorizes none of them.
+This approval selects no RFQ/quotation or amount-bearing SQL slice. Separate later authorization remains required for SQL, trusted commands, RLS, migration tooling or transformation, tests, hosted environment work, data movement, cutover, frontend behavior, awards, FX, and deployment.
 
-## 11. Risks and unresolved items
+## 11. Risks and remaining implementation items
 
 - The current “Total price” UI label is strong product intent but is not record-level provenance.
 - Historic permissive Rules mean TypeScript/UI constraints cannot be assumed for every stored legacy document.
-- Current `step="0.01"` browser input does not establish an approved IQD/USD precision or rounding policy.
+- Current `step="0.01"` browser input is not the approved canonical decimal boundary; exact input parsing, validation, and display formatting remain future implementation work.
 - The current `deliveryTerms` field mixes logistical and freight-inclusion concepts; exact terms can be preserved but not converted into amounts.
 - Current no-op equality is not the future canonical decimal hash and may treat some representations differently.
-- A manually reviewed legacy amount remains unsafe unless tax, freight, currency, quantity/unit, and revision context are decided together.
+- A manually reviewed legacy amount remains unsafe unless bounded record-specific evidence proves price basis, tax, freight, currency, quantity/unit, and revision context together.
 - No Production sampling was performed, so this review makes no claim about actual field presence, value distributions, or exception counts.
 
 ## 12. Validation and exact stop point
 
 Validation for this document is limited to repository evidence and documentation safety:
 
-- exactly one new Markdown proposal file;
-- no executable, SQL, schema, baseline, decision-register, Firebase, or Production-data change;
+- exactly the four requested Markdown documents change relative to the synchronized `origin/main` base;
+- no executable, SQL migration, application, Firebase, RLS, hosted, or Production-data file changes;
 - all repository references resolve;
-- proved facts, historical facts, inference, proposal, and Unknown states remain distinguishable;
-- no locale, location, language, magnitude, tax, freight, or currency inference is used;
-- no secrets, credentials, personal data, or complete Production records are included;
-- Markdown/diff whitespace checks pass; and
-- RFQ-003 remains Open.
+- proved facts, historical facts, inference, approved contract, and Unknown states remain distinguishable;
+- no locale, location, language, magnitude, tax, freight, currency, or migration-count inference is used;
+- RFQ-003 and SEARCH-001 are Resolved, with exactly eight other Open gates;
+- structural state remains 13 migrations, 19 physical tables, and 17 implemented / 19 deferred Core Phase 1 concepts; and
+- relative-link, sensitive-value, scope, stale-wording, and Markdown/diff whitespace checks pass.
 
-**Exact stop point:** Draft PR containing this standalone proposal only. Do not mark Ready, merge, resolve RFQ-003, edit shared authoritative design/register files, implement SQL/runtime/RLS, access Firebase Production, start Docker/Supabase, or migrate any data.
+**Exact stop point:** Commit and push the four documentation updates to existing Draft PR #92 and update its description. Keep it Draft; do not mark Ready, merge, deploy, start Docker/Supabase, implement RFQ/quotation SQL or runtime/RLS/frontend/award/FX work, access Firebase Production/TEST, or migrate any data.

@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-09-search-001-contract-approved`
+Baseline ID: `baseline-2026-08-09-rfq-003-contract-approved`
 Updated: 2026-08-09
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `1eab9b78b9e9d420ac486138db4c285f24c9fee7`.
+- **Verified current fact:** Current GitHub `main`: `877317a7871e72925dcc5278f3d364d3e6994aa5`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -65,7 +65,8 @@ Evidence labels used below:
 - **Verified current fact:** PR #88 was merged as current `main` commit `7ca5145eaba2859e5d6b1bb30e4b595ac688dfbd`; its reviewed head `ccba2463beab11276be651ba14253e34e272a403` ignores repository-local `.worktrees/` and made no SQL, runtime, Firebase, hosted Supabase, Production/TEST, data, or deployment change.
 - **Verified current fact:** PR #89 was merged as commit `703092761de57e51c35d63ee6d80742c51c4721d`; its approved head `e32da8b3f4ba600ee25d7e40a494e02d78a937b8` added the AUD-001 audit-evidence and trusted-mutation contract only, resolved AUD-001, selected exactly one empty, fully revoked, local-only `internal.audit_logs` table as the separate thirteenth SQL slice, and made no SQL, runtime, Firebase, hosted Supabase, Production/TEST, data, or deployment change.
 - **Verified current fact:** PR #90 was merged before current `main` and synchronized the AUD-001 approval for the separately selected thirteenth local SQL slice; it made no runtime, Firebase, hosted Supabase, Production/TEST, data, or deployment change.
-- **Verified current fact:** PR #91 is merged as current `main` commit `1eab9b78b9e9d420ac486138db4c285f24c9fee7`; its approved implementation added exactly the empty, fully revoked, local-only `internal.audit_logs` foundation plus focused synthetic pgTAP as the thirteenth local SQL slice. It added no real audit rows, trusted-command runtime, retention job, RLS/client access, hosted operation, Firebase access, Production/TEST data behavior, or deployment.
+- **Verified current fact:** PR #91 is merged as commit `1eab9b78b9e9d420ac486138db4c285f24c9fee7`; its approved implementation added exactly the empty, fully revoked, local-only `internal.audit_logs` foundation plus focused synthetic pgTAP as the thirteenth local SQL slice. It added no real audit rows, trusted-command runtime, retention job, RLS/client access, hosted operation, Firebase access, Production/TEST data behavior, or deployment.
+- **Verified current fact:** PR #93 is merged as current `main` commit `877317a7871e72925dcc5278f3d364d3e6994aa5`; it resolves SEARCH-001 for owner-approved Option A architecture only and selects no search implementation slice. It made no SQL, extension, index, projection, RPC, RLS, frontend, AI, hosted, data, runtime, Firebase, Production/TEST, or deployment change.
 - **Verified current fact:** The fourth through thirteenth SQL slices remain local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase operation, Firebase access, Production/TEST data operation, data migration, seed, backfill, deployment, or remote SQL occurred.
 - The third SQL slice remains local-only and synthetic-data-only; no RLS, Auth bridge, hosted Supabase, deployment, Production data, migration, seed, or backfill occurred.
 - The second SQL slice remains local-only and synthetic-data-only; no RLS, policies, grants, Auth bridge, role assignments, data migration, seed, backfill, hosted Supabase operation, Firebase change, Production/TEST data change, or deployment occurred.
@@ -182,7 +183,7 @@ Do not combine results from different commits or PRs into a new automated-test t
 - **Verified current fact:** GitHub `main` contains the first local migration-control SQL slice: migration `supabase/migrations/20260804000136_migration_control_foundation.sql` creates six governance tables in the non-exposed `internal` schema, and `supabase/tests/migration_control_foundation.sql` supplies repository-tracked synthetic pgTAP coverage.
 - **Verified current fact:** GitHub `main` contains thirteen local identity/business/application/audit tables: `public.user_profiles`, `public.platform_role_assignments`, `public.supplier_profiles`, `public.categories`, `public.administrative_areas`, `public.supplier_locations`, `public.supplier_category_assignments`, `public.supplier_capabilities`, `public.supplier_payment_options`, `public.supplier_contacts`, `public.supplier_ownerships`, non-exposed `internal.identity_provider_links`, and non-exposed `internal.audit_logs`. No real platform-role or audit rows, RLS, Auth bridge, Supabase Auth users, Storage buckets, Edge Functions, `supabase-js` frontend integration, or Migration Engine runtime exists.
 - **Verified current fact:** No browser integration, API policy, application grant, hosted Supabase project link, or remote migration application exists.
-- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, PR #62, PR #64, PR #65, PR #66, PR #67, PR #68, PR #69, PR #70, PR #71, PR #72, PR #73, PR #74, PR #75, PR #76, PR #77, PR #78, PR #79, PR #80, PR #81, PR #82, PR #83, PR #85, PR #86, PR #87, PR #88, PR #89, PR #90, or PR #91.
+- **Verified current fact:** Firebase Production remains unchanged and authoritative for the live application. No Firebase or Production data was migrated, exported, seeded, backfilled, or changed by PR #47, PR #48, PR #49, PR #51, PR #54, PR #59, PR #61, PR #62, PR #64, PR #65, PR #66, PR #67, PR #68, PR #69, PR #70, PR #71, PR #72, PR #73, PR #74, PR #75, PR #76, PR #77, PR #78, PR #79, PR #80, PR #81, PR #82, PR #83, PR #85, PR #86, PR #87, PR #88, PR #89, PR #90, PR #91, or PR #93.
 
 The merged local infrastructure and migration-governance SQL, a future business/application schema, any hosted Supabase project, and Firebase Production are separate states. Supabase is not currently a Production authority.
 
@@ -195,7 +196,7 @@ The merged local infrastructure and migration-governance SQL, a future business/
 - **Verified current fact:** Core Phase 1 remains a maximum candidate set, not approval to create all 36 concepts in one PR. PR #51 implemented the approved two-table identity boundary, PR #54 implemented only the separately bounded `supplier_profiles` local root, PR #59 implemented only `categories`, PR #62 implemented only `administrative_areas`, and PR #68 implemented only `supplier_locations`.
 - **Verified current fact:** The design maps all 35 verified Firestore collections, registers 36 synchronized decisions, and provides a 119-item schema review checklist. DB-001 is resolved for the local first slice to database-generated UUIDv4 through `pg_catalog.gen_random_uuid()`; hosted compatibility remains a later validation gate.
 - **Verified current fact:** MIG-001 is partially implemented only at the declarative schema-contract level. Migration Engine locking, replay lookup, transformation, reconciliation, graph supersession, and rollback execution remain unimplemented.
-- **Verified current fact:** ID-001 is Resolved for the approved hybrid identity-authority and privileged-actor contract, AUD-001 is Resolved for the approved audit-evidence and trusted-mutation contract, and SEARCH-001 is Resolved for the owner-approved PostgreSQL Option A technology contract. Search approval authorizes no SQL, extension, index, projection, RPC, RLS, application, AI, hosted, data, or runtime implementation. Exactly 9 approval gates remain Open.
+- **Verified current fact:** ID-001 is Resolved for the approved hybrid identity-authority and privileged-actor contract, AUD-001 is Resolved for the approved audit-evidence and trusted-mutation contract, SEARCH-001 is Resolved for the owner-approved PostgreSQL Option A technology contract, and RFQ-003 is Resolved for the owner-approved Option B commercial semantics contract. These approvals authorize no search or RFQ/quotation SQL, extension, table, index, projection, RPC, RLS, application, AI/FX/award, hosted, data, migration, or runtime implementation. Exactly 8 approval gates remain Open.
 
 #### Merged second-slice boundary
 
@@ -208,11 +209,10 @@ The merged second slice remains local-only and synthetic-data-only, without RLS,
 
 #### Open approval gates
 
-The 9 remaining Open approval gates are:
+The 8 remaining Open approval gates are:
 
 - `ORG-001`
 - `ORG-002`
-- `RFQ-003`
 - `MSG-002`
 - `MSG-003`
 - `FILE-001`
@@ -235,9 +235,11 @@ Migration sequencing and product priorities are separate.
 
 ### Current architecture checkpoint
 
-**SEARCH-001 Option A is approved for architecture only; no search implementation slice is selected**
+**SEARCH-001 Option A and RFQ-003 Option B are approved contracts only; no search or RFQ/quotation implementation slice is selected**
 
 Merged PR #91 implemented exactly the approved empty, fully revoked, local-only `internal.audit_logs` thirteenth slice plus focused synthetic pgTAP. Current `main` therefore contains 13 tracked local SQL migrations and 19 physical tables representing 17 implemented Core Phase 1 concepts; 19 remain deferred. On 9 August 2026, the Technical/Data Owner approved [`37_SEARCH_001_POSTGRESQL_SEARCH_TECHNOLOGY_CONTRACT_REVIEW.md`](../supabase-migration/37_SEARCH_001_POSTGRESQL_SEARCH_TECHNOLOGY_CONTRACT_REVIEW.md) Option A: relational filters plus bilingual PostgreSQL FTS first, with no initial `pg_trgm` and no external Phase 1 search service. SEARCH-001 is Resolved for architecture only; no search SQL, extension, index, projection, RPC, RLS, frontend, AI, hosted, data, or runtime work is selected or authorized.
+
+On 9 August 2026, the Product/Finance Owner approved [`38_RFQ_003_PRICE_CURRENCY_TAX_FREIGHT_CONTRACT_REVIEW.md`](../supabase-migration/38_RFQ_003_PRICE_CURRENCY_TAX_FREIGHT_CONTRACT_REVIEW.md) Option B. RFQ-003 is Resolved for explicit normalized new-quotation semantics and legacy ambiguity quarantine. No RFQ or quotation PostgreSQL table, amount-bearing SQL slice, trusted command, RLS, frontend, migration/data transformation, award, FX, hosted, Firebase, Production/TEST, or runtime work has been selected, implemented, or authorized by this approval.
 
 The owner approved Option D in [`31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md`](../supabase-migration/31_REL_001_IDEMPOTENCY_AND_DOMAIN_EVENTS_FOUNDATION_CONTRACT.md): create neither `internal.idempotency_keys` nor `internal.domain_events` now and select no REL-001 SQL slice. The first future producer path is `supplier_ownership.decide_claim`; the first concrete consumer is one claim-decision notification materializer; and both reliability tables may be introduced later only as one coherent foundation when that path and its delivery dependencies are approved. REL-001 remains Resolved for Option D and is unchanged by the separately resolved AUD-001 contract. MSG-003 and all other unrelated Open gates remain unchanged, and no SQL, worker, audit, notification, RLS/Auth, Firebase, hosted, Production/TEST, migration, or deployment work is authorized.
 
