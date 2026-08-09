@@ -1,8 +1,8 @@
 # MSG-003 Claim-first notification retention, rendering, and materialization contract
 
-Status: **Proposal for explicit Product/Security/Data/Privacy Owner approval; MSG-003 remains Open; no SQL, runtime, data, or Production action is authorized**
+Status: **Owner-approved Option C contract; MSG-003 Resolved; no SQL, runtime, data, or Production action is authorized**
 
-Proposal date: 2026-08-09
+Approval date: 2026-08-09
 
 Verified starting point: `origin/main` at `b76888f0d2d8a769ba67bbaa70199ca458f13f87`, after merged PR #92
 
@@ -10,7 +10,7 @@ Primary task profile: Documentation
 
 ## 1. Scope and decision boundary
 
-This proposal defines the minimum notification contract needed for the first real Claim Supplier Profile workflow. It evaluates current Firebase notification behavior, fixes the future Supabase authority boundary, defines Claim-decision rendering and retention, and leaves a narrow seam for later RFQ notifications.
+This owner-approved contract defines the minimum notification contract needed for the first real Claim Supplier Profile workflow. It evaluates current Firebase notification behavior, fixes the future Supabase authority boundary, defines Claim-decision rendering and retention, and leaves a narrow seam for later RFQ notifications.
 
 It does not implement or authorize a `notifications` table, SQL migration, `internal.domain_events`, `internal.idempotency_keys`, worker, trusted command, Claim runtime, RLS, Auth bridge, Firebase change, hosted Supabase access, Production/TEST data operation, migration, email provider, push/SMS/WhatsApp channel, deployment, or billing action.
 
@@ -18,12 +18,12 @@ Evidence labels used below are:
 
 - **Verified current fact** — proved by the current repository, its focused tests, or the approved documents linked in section 20.
 - **Approved existing contract** — already approved in a predecessor contract, but not necessarily implemented.
-- **Proposal** — the recommended MSG-003 decision; it remains unapproved until the Owner explicitly accepts section 18.
+- **Approved MSG-003 contract** — the Product/Security/Data/Privacy Owner-approved Option C decision recorded in section 18.
 - **Unknown** — cannot be proved without separately authorized evidence, including Production data inspection.
 
 Firebase remains the live Production backend. Supabase remains local-only, unhosted, non-authoritative, and empty/synthetic-data-only. The GitHub Claim Supplier implementation remains undeployed.
 
-## 2. Executive finding and recommendation
+## 2. Executive finding and approved decision
 
 The current Firebase notification system already proves three useful product behaviors:
 
@@ -33,7 +33,7 @@ The current Firebase notification system already proves three useful product beh
 
 It does not provide one coherent creation or lifecycle contract. Current producers write notifications directly from trusted Functions or browser-authorized RFQ transactions. Claim decisions and quotation submissions/revisions commit their notification with the related Firebase records, while RFQ publication commits the RFQ/event first and then attempts notification writes with `Promise.allSettled`, so notification failure is not returned or retried. An exported generic notification creator uses a random Firestore document ID and has no current call site or deterministic deduplication. There is no notification expiry, archival, retention job, or user deletion workflow; Admin clients may delete non-Claim notifications, while Claim ownership notifications are protected from client deletion.
 
-**Proposal: approve Option C in section 5.** A trusted domain command commits the aggregate, idempotency result, audit outcome, and immutable domain event. Exactly one trusted notification materializer owns live notification creation. For each eligible event it stores one immutable, safe bilingual `in_app` delivery snapshot, identified uniquely by `(domain_event_id, recipient_user_profile_id, channel)`, and then marks the event processed in the same database transaction. Domain commands never also insert notification rows after the Supabase outbox path becomes authoritative for that feature.
+**Approved: Option C in section 5.** A trusted domain command commits the aggregate, idempotency result, audit outcome, and immutable domain event. Exactly one trusted notification materializer owns live notification creation. For each eligible event it stores one immutable, safe bilingual `in_app` delivery snapshot, identified uniquely by `(domain_event_id, recipient_user_profile_id, channel)`, and then marks the event processed in the same database transaction. Domain commands never also insert notification rows after the Supabase outbox path becomes authoritative for that feature.
 
 For Claim v1, only `approved`, `rejected`, and `superseded` require user-visible in-app notifications. Submission is acknowledged in the command result and Claim history; withdrawal is claimant-initiated; expiry remains visible in Claim state/history; and reviewer work is a queue/assignment concern, not a broadcast notification. This is the smallest useful notification set and avoids notifying users about actions they just performed or broadcasting private Claim workload.
 
@@ -134,9 +134,9 @@ These findings describe current Firebase behavior. They do not authorize modifyi
 
 Option C is a bounded hybrid, not a generic enterprise notification platform. Template key/version prove how the snapshot was made; the snapshot, not live domain state or retained parameters, is the user-visible delivery content.
 
-## 6. Proposed authority and materialization boundary
+## 6. Approved authority and materialization boundary
 
-The proposed live path is:
+The approved future live path is:
 
 ```text
 trusted domain command
@@ -272,9 +272,9 @@ Payloads contain no notification copy, locale, read state, evidence, notes, cont
 
 ### 10.3 Is REL-001 ready after MSG-003 approval?
 
-**Proposal: yes for a separate empty local-only structural foundation; no for runtime.** If the Owner approves section 18, the first producer, three event registry entries, one consumer, recipient derivation, snapshot renderer, dedupe identity, replay suppression, and failure boundary are concrete enough to authorize a later exact SQL/pgTAP task for the coherent `internal.idempotency_keys` plus `internal.domain_events` foundation selected conditionally by REL-001 Option D.
+**Approved conclusion: yes for eligibility for a separate empty local-only structural foundation; no for runtime.** This approval makes the first producer, three event registry entries, one consumer, recipient derivation, snapshot renderer, dedupe identity, replay suppression, and failure boundary concrete enough to authorize a later exact SQL-selection/pgTAP task for the coherent `internal.idempotency_keys` plus `internal.domain_events` foundation contemplated by REL-001 Option D.
 
-That conclusion does not authorize those tables in this proposal and does not add `notifications` to the REL foundation. Before a live Claim runtime, the following still remain:
+That conclusion does not select or authorize either table in this contract and does not add `notifications` to the REL foundation. Before a live Claim runtime, the following still remain:
 
 1. exact REL SQL/constraints/indexes and focused synthetic pgTAP in a separately approved task;
 2. Technical/Security/Operations approval or revision of the REL-001 lease, attempt cap, retry classes, alert ownership, and audited dead-letter requeue runbook;
@@ -283,7 +283,7 @@ That conclusion does not authorize those tables in this proposal and does not ad
 5. reviewed RLS, field-minimized projections/commands, grants, negative tests, and authority-manifest cutover/rollback behavior; and
 6. `RES-001`, `MIG-002`, and explicit hosted/Production approvals before hosted execution or data movement.
 
-These are delivery prerequisites, not missing producer/consumer semantics. MSG-003 approval would satisfy the notification-specific dependency that currently holds REL-001 at Option D's no-go point.
+These are delivery prerequisites, not missing producer/consumer semantics. MSG-003 approval satisfies REL-001 Option D's notification-specific revisit condition; REL-001 remains historically Resolved for Option D and still requires a separate exact SQL-selection and implementation task.
 
 ## 11. Notification lifecycle, retention, and read state
 
@@ -328,7 +328,7 @@ Archive removes a row from the normal inbox but does not mark it unread, rewrite
 
 ## 13. Existing Firebase notification migration
 
-The proposed default is **selective migration as already-materialized inbox history**, not blind migration and not event replay.
+The approved default is **selective migration as already-materialized inbox history**, not blind migration and not event replay.
 
 Before choosing any per-record transformation, a separately approved bounded read must establish:
 
@@ -361,15 +361,15 @@ The same single materializer may later add registered templates for:
 - `rfq.closed`; and
 - `rfq.cancelled`.
 
-This proposal does not approve those events, recipients, templates, or retention durations. A future RFQ contract must preserve the event-time recipient authorization anchor and cannot derive historical visibility from whoever owns a Supplier later. It must also preserve no-op behavior: an unchanged quotation creates no revision, event, or notification.
+This contract does not approve those events, recipients, templates, or retention durations. A future RFQ contract must preserve the event-time recipient authorization anchor and cannot derive historical visibility from whoever owns a Supplier later. It must also preserve no-op behavior: an unchanged quotation creates no revision, event, or notification.
 
-Future RFQ commands follow the same rule as Claim: domain commands emit events and never insert notifications after the Supabase outbox becomes authoritative. The current Firebase RFQ paths remain evidence and are not redesigned or changed by this proposal.
+Future RFQ commands follow the same rule as Claim: domain commands emit events and never insert notifications after the Supabase outbox becomes authoritative. The current Firebase RFQ paths remain evidence and are not redesigned or changed by this contract.
 
 ## 15. Conceptual future `notifications` table boundary
 
 The minimum logical field groups are:
 
-| Field group | Proposed content |
+| Field group | Approved conceptual content |
 |---|---|
 | Stable identity | Database-generated opaque notification UUID |
 | Recipient | Non-null restrictive `recipient_user_profile_id` |
@@ -388,7 +388,7 @@ The table must not store any value prohibited by section 8.3. It is a delivery/r
 
 ## 16. Failure, recovery, replay, and rollback
 
-| Scenario | Proposed behavior |
+| Scenario | Approved behavior |
 |---|---|
 | Worker crash after event commit but before materialization transaction | Event remains/reverts to eligible processing after fenced lease expiry. Retry uses the same event and unique tuple. |
 | Crash during notification insert/event completion | Both changes roll back because they share one database transaction. |
@@ -406,9 +406,9 @@ The table must not store any value prohibited by section 8.3. It is a delivery/r
 
 Operational telemetry may record bounded attempt counts, latency, outcome codes, and alerts. It must not copy event payloads, notification bodies, Claim evidence, contact data, or unrestricted exceptions.
 
-## 17. Relationship to remaining Open gates
+## 17. Relationship to the seven remaining Open gates
 
-| Open gate | Blocks this proposal or local structural design? | Blocks hosted Claim notification delivery or data movement? | Conclusion |
+| Open gate | Blocks this contract or local structural design? | Blocks hosted Claim notification delivery or data movement? | Conclusion |
 |---|---|---|---|
 | `ORG-001` | No. Approved Claim v1 uses one human claimant/controller and no organization authority. | Only if a later design makes organizations recipients/owners/tenants. | Unrelated to the approved unowned-Supplier Claim v1 boundary. |
 | `ORG-002` | No. No organization membership/bootstrap is needed for the Claimant inbox. | Only if organization-derived authority is introduced. | Unrelated to Claim v1. |
@@ -420,35 +420,45 @@ Operational telemetry may record bounded attempt counts, latency, outcome codes,
 
 Therefore none of the other seven Open gates blocks this MSG-003 contract or a later empty local structural notification/reliability task. `FILE-001` becomes a runtime blocker only if the selected Claim evidence path changes to stored files. `RES-001` and `MIG-002` block hosted operation/data movement, not local structural design. `ORG-001`, `ORG-002`, `MSG-002`, and `BILL-001` are unrelated to Claim-first notification delivery.
 
-Separate non-gate runtime blockers remain exactly those listed in section 10.3. This proposal resolves none of them.
+Separate non-gate runtime blockers remain exactly those listed in section 10.3. This approval resolves none of them.
 
-## 18. Explicit Owner decisions required to resolve MSG-003
+## 18. Product/Security/Data/Privacy Owner approval record
 
-The Owner may resolve MSG-003 with one coherent approval of these three combined decisions:
+On 2026-08-09, the Product/Security/Data/Privacy Owner approved MSG-003 Option C and resolved MSG-003 with all of the following decisions:
 
-1. **Authority and rendering:** approve Option C — trusted command to domain event to exactly one live materializer; immutable safe bilingual `in_app` snapshot with template/version provenance; no command-side insert, live rendering, arbitrary parameters, or mixed-language fallback.
-2. **Claim-first behavior:** approve mandatory claimant-only notifications for `approved|rejected|superseded`; no submitted/withdrawn/expired/reviewer-work notification in Claim v1; provider-neutral recipient, controlled Claim target, sensitive-data exclusions, and no external channel or user suppression.
-3. **Lifecycle and reliability:** approve event/recipient/channel uniqueness, self-only nullable `read_at`, protected class-based archive/purge boundaries, no browser deletion, selective already-materialized Firebase import with fan-out suppression, the failure/rollback rules, and the conclusion that this approval makes the separate empty local REL-001 two-table foundation contractually ready while leaving runtime and exact calendar retention/operations approvals gated.
-
-If any item is not approved, MSG-003 remains Open and the exact disagreement should be recorded without implementing SQL or runtime.
+1. **Notification authority:** a trusted domain command commits an immutable domain event; exactly one notification materializer creates the immutable safe bilingual in-app snapshot. Once Supabase is authoritative for a feature, commands do not also insert notifications, Firebase is not a fallback, and audit evidence remains separate.
+2. **Claim v1 matrix:** only `claim_approved`, `claim_rejected`, and `claim_superseded` create user-visible notices, each for the exact claimant. Submitted, withdrawn, expired, and reviewer work/assignment do not create Claim v1 notices; future types require separate Product justification.
+3. **Phase-1 channel:** Claim v1 requires only `in_app`; email, push, SMS, and WhatsApp are excluded.
+4. **Rendering:** persist immutable bounded Arabic and English title/body snapshots plus controlled type/template/version provenance. Arabic UI renders Arabic only and English UI renders English only; no mixed-language or live mutable-domain rendering, and later domain changes do not rewrite history.
+5. **Target/navigation:** persist only a controlled target kind/type and target UUID/reference. Browser-supplied arbitrary URLs are not notification authority; the application resolves navigation.
+6. **Sensitive-data boundary:** exclude Claim evidence/files, unapproved private reasons, full contacts, provider/Firebase subjects, reviewer identity/notes, secrets/tokens, request bodies, audit records, unrestricted errors, migration metadata, security signals, and protected provenance. Retain only the minimum safe comprehension and navigation context.
+7. **Recipient/privacy:** use provider-neutral `user_profiles` identity and self-only ordinary-user visibility. Ownership, membership, controller, or appointed-owner changes never transfer historical notification visibility; any future Admin/Owner investigation path needs a separate protected-access contract.
+8. **Read state:** nullable `read_at` is authoritative (`NULL` unread; timestamp read). Mark-one/read-all are idempotent self-state mutations and never modify immutable delivery content; no redundant authoritative read boolean is stored.
+9. **Deduplication:** enforce deterministic uniqueness equivalent to `(domain_event_id, recipient_user_profile_id, channel)`, with Claim v1 channel `in_app`. Retries, replay, crash/restart, and repeated invocation fail closed or converge to a deterministic no-op.
+10. **Domain-event relationship:** every live Supabase notification references its authoritative domain event. Notifications remain distinct from domain events, audit evidence, domain history, retry queues, analytics, and the separate REL-001 idempotency/event infrastructure.
+11. **Failure/recovery:** an already valid domain command is not rolled back by notification delivery failure; the event remains retryable for the one materializer. Recipient ineligibility has a bounded terminal/review outcome, rendering failures are observable/retryable without unsafe raw errors, duplicates remain prevented, and Firebase fallback is forbidden. Exact worker scheduling and operational retry ownership remain separate runtime decisions.
+12. **Migration/replay:** historical Firebase migration never emits new user notifications or feeds old events through the live materializer. A separate approved transformation must first classify records, recipient mapping, type, safe content, and product value; unknown/unsafe records may be quarantined or excluded with migration evidence.
+13. **Retention/lifecycle:** use class-based lifecycle for security/privilege, Claim ownership decision, procurement transactional, and informational/transient notices. This contract invents no calendar or legal-hold duration and implements no purge job; immutable Claim delivery content is protected from ordinary client deletion, `read_at` remains mutable self-state, and trusted archive/expiry/purge behavior is future gated runtime work.
+14. **Claim-first REL readiness:** the concrete first path is `supplier_ownership.decide_claim` to an immutable domain event to one Claim-decision notification materializer, with approved/rejected/superseded registry coverage. This satisfies REL-001 Option D's revisit condition and makes both `internal.idempotency_keys` and `internal.domain_events` eligible together for a future empty, fully revoked, local-only structural SQL/pgTAP selection. It does not authorize either table, real rows, Claim/event/materializer runtime, `notifications`, RLS, Auth, hosted Supabase, data, or deployment.
+15. **Remaining gates:** `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, and `BILL-001` do not block this Claim-first local foundation; `RES-001` and `MIG-002` block hosted environment/data work rather than local structural SQL. All seven remain Open and unchanged.
 
 ## 19. Risks, validation, and exact stop point
 
-The principal risks are retaining dual notification creators; allowing RFQ-style best-effort loss; storing sensitive template parameters; exposing both languages; deriving recipients from mutable ownership; leaking reviewer/conflict evidence; treating read state as audit proof; indefinite ungoverned retention; deleting protected notices through an Admin client; replaying historical events; and silently falling back to Firebase after Supabase authority. The proposed contract fails closed on each risk.
+The principal risks are retaining dual notification creators; allowing RFQ-style best-effort loss; storing sensitive template parameters; exposing both languages; deriving recipients from mutable ownership; leaking reviewer/conflict evidence; treating read state as audit proof; indefinite ungoverned retention; deleting protected notices through an Admin client; replaying historical events; and silently falling back to Firebase after Supabase authority. The approved contract fails closed on each risk.
 
-Required validation for this proposal is documentation-only:
+Required validation for this approval synchronization is documentation-only:
 
 - exact starting SHA `b76888f0d2d8a769ba67bbaa70199ca458f13f87` recorded;
 - current 13 tracked local SQL migrations, 19 physical PostgreSQL tables, and 17 implemented / 19 deferred Core Phase 1 concepts preserved;
-- exactly eight Open gates preserved, including MSG-003;
+- MSG-003 is Resolved and exactly seven Open gates remain: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`;
 - repository evidence links resolve;
-- verified evidence is distinguished from proposals;
+- verified evidence is distinguished from approved contract decisions and future implementation work;
 - Firebase Production versus local-only Supabase terminology is preserved;
 - sensitive-value and stale-terminology scans pass;
 - `git diff --check` passes; and
-- diff contains no executable, SQL, configuration, baseline, or Decision Register change.
+- diff contains no executable, SQL, or configuration change.
 
-Exact stop point: commit and push this one standalone proposal and open a Draft PR. Stop before Owner approval, MSG-003 resolution, baseline/Decision Register synchronization, Ready-for-review transition, merge, SQL/pgTAP, notification/event/idempotency/Claim/RLS/Auth runtime, Firebase or hosted Supabase access, Production/TEST data operation, migration, deployment, or external-channel work.
+Exact stop point: commit and push the owner-approval synchronization to the existing branch, update existing Draft PR #94, and stop. Do not mark Ready, merge, implement SQL/pgTAP, add notification/event/idempotency/Claim/RLS/Auth runtime, access Firebase or hosted Supabase, operate on Production/TEST data, migrate, deploy, or add external-channel work.
 
 ## 20. References
 
