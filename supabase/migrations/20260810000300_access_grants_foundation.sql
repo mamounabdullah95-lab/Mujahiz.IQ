@@ -1,4 +1,4 @@
--- Sixteenth local SQL slice: empty, fully revoked administration-access foundation only.
+-- Twenty-first tracked local SQL migration: empty, fully revoked administration-access foundation only.
 -- This migration creates no access rows, resolver, RLS, policy, RPC, trigger, trusted
 -- command, Firebase integration, bootstrap runtime, hosted operation, or Claim authority.
 
