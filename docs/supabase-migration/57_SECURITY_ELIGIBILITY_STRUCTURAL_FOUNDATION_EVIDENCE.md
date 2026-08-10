@@ -1,4 +1,4 @@
-# Security eligibility structural foundation â€” implementation evidence
+# Security eligibility structural foundation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â implementation evidence
 
 Status: **implemented locally as an empty, fully revoked structural foundation; no resolver, runtime, or data authority**
 
@@ -26,7 +26,7 @@ The exact result and condition compatibility matrix is:
 | `deny` | `explicit_deny`, `security_hold`, `identity_quarantine` |
 | `unknown` | `reconciliation_required` |
 
-The migration declaratively enforces `active|resolved|expired|superseded` lifecycle shape, terminal provenance, successor only for `superseded`, `record_version >= 1`, bounded values, and a `btree_gist` half-open exclusion over subject, scope, security-policy version, and required-coverage version. This permits non-overlapping assessment history and blocks overlapping effective assessments at an identical supported policy/coverage boundary.
+The migration declaratively enforces `active|resolved|expired|superseded` lifecycle shape, terminal provenance, successor only for `superseded`, `record_version >= 1`, bounded values, and a `btree_gist` half-open exclusion over subject, scope, security-policy version, and required-coverage version. Active assessments may be indefinite or finite; their validity is half-open and has no default duration. A future resolver must evaluate trusted current time: a row reaching `valid_until` is non-current for authorization even before a maintenance process persists `expired`. This foundation implements no resolver or automatic status transition. The exclusion permits non-overlapping assessment history and blocks overlapping effective assessments at an identical supported policy/coverage boundary.
 
 The bounded source model is `bootstrap_manifest`, `security_administration`, `trusted_security_system`, `legacy_reconciliation`, and `correction`. Bootstrap can represent a complete clear without fabricated human actors. A trusted security system may represent only restrictive `deny` or `unknown` outcomes; it cannot clear. Human clear requires distinct accountable actor and reviewer, neither the assessment subject. This shape records the future dual-control seam but does not prove current Owner usability or implement any command.
 
@@ -38,12 +38,12 @@ The future final-Owner behavior remains outside this table: genuine authoritativ
 
 ## Validation
 
-Focused synthetic pgTAP `security_eligibility_assessments_foundation.sql` passed **55/55** assertions. It covers catalog shape, generated UUID, scope/result/condition constraints, lifecycle, overlap, provenance, minimization, ACL/RLS/trigger absence, Claim-policy regression, access-grant regression, and cleanup.
+Focused synthetic pgTAP `security_eligibility_assessments_foundation.sql` passed **59/59** assertions. It covers catalog shape, generated UUID, scope/result/condition constraints, lifecycle, overlap, provenance, minimization, ACL/RLS/trigger absence, Claim-policy regression, access-grant regression, and cleanup.
 
 The repository validator completed successfully:
 
 ```text
-Local SQL validation passed: 22 migrations applied; 22 test files run; 1454 assertions passed, 0 failed.
+Local SQL validation passed: 22 migrations applied; 22 test files run; 1458 assertions passed, 0 failed.
 ```
 
 ## Structural counts and production/data impact

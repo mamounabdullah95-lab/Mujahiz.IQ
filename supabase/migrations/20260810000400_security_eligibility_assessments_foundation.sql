@@ -142,7 +142,6 @@ create table internal.security_eligibility_assessments (
   constraint security_eligibility_assessments_lifecycle_shape_ck check (
     (
       assessment_status = 'active'
-      and valid_until is null
       and terminal_reason_code is null
       and terminated_by_user_profile_id is null
       and terminal_system_source is null
