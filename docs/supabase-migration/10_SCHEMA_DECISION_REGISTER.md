@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Decision Register
 
 Status: Design register with local SQL-slice evidence
-Baseline: `origin/main` at `52b2043775d74374595c4cfbb12e16aaef465d10` after merged PR #105, including merged PR #103 and PR #104
+Baseline: `origin/main` at `37243fe43f0cd26008c93a5ebf4da2963270123d` after merged PR #109, including merged PR #108
 Companion design: `09_POSTGRESQL_SCHEMA_DESIGN.md`
 
 ## 1. Use of this register
@@ -38,7 +38,7 @@ The same owner decision selects one future empty, revoked, local-only `public.su
 
 ### Post-PR #102 structural, identity-context, and claimant-read implementation state
 
-PR #103 implements the eighteenth local-only `supplier_claim.submit` slice after the prior structural, identity-context, and Claimant self-read foundations. Current `main` contains 22 physical tables, 20 implemented Core Phase 1 concepts, and 16 deferred across 18 tracked local migrations and 18 pgTAP files; 1,181/1,181 exact-head assertions passed. Claim self-read RLS remains one policy, no mutation RLS policy exists, and the five other Claim commands remain unimplemented. PR #104 and PR #105 are documentation/design only.
+PR #109 implements the nineteenth local-only Claim submit hotfix slice after the prior structural, identity-context, Claimant self-read, and submit foundations. Current `main` contains 22 physical tables, 20 implemented Core Phase 1 concepts, and 16 deferred across 19 tracked local migrations and 19 pgTAP files; 1,248/1,248 exact-head assertions passed, with 67/67 focused hotfix assertions and 34/34 true multi-session concurrency assertions. Claim self-read RLS remains one policy, no mutation RLS policy exists, and the five other Claim business commands remain unimplemented. PR #108 identified M-1, M-2, and M-3; PR #109 corrects them locally. `supplier_claim.reserve_submit` is private Phase-1 support for logical `supplier_claim.submit`, not a seventh business command.
 
 On 8 August 2026, the Product/Data Owner approved `29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md` for payment options only: indicative Supplier-profile assertions; methods `cash|bank_transfer|cheque|letter_of_credit`; currencies `IQD|USD`; explicit `credit_not_offered` with absence-as-unknown; 1-365 calendar-day credit using only exact `invoice_date|delivery_acceptance_date` starts; separate reviewed 1-100 advance percentage; internal-only notes/provenance/review/ambiguous values; no client projection; and no invented freshness or reviewer authority. Transaction documents remain independently authoritative.
 
@@ -102,13 +102,13 @@ This approval satisfied REL-001 Option D's producer/consumer revisit condition. 
 
 On 9 August 2026, the Product/Security/Data Owner approved [document 42](42_CLAIM_FIRST_RLS_AND_TRUSTED_AUTHORIZATION_SECURITY_CONTRACT.md). SEC-001 is Resolved for Claim-v1 security architecture only: a server-mediated Firebase bridge, provider-neutral PostgreSQL principal, default-deny base relations, field-minimized projections, forced RLS, dedicated no-`BYPASSRLS` runtime identities, registered trusted commands/workers, and deterministic positive/negative/race/replay proof before client access.
 
-PR #98 proves local Auth feasibility only; PR #99 implements the empty Claim table; PR #101 identity context; PR #102 Claimant self-read FORCE RLS and one policy; and PR #103 only local `supplier_claim.submit`. Reviewer and gateway/HMAC/pool readiness remain documentation/design only; the 7 Open gates remain unchanged.
+PR #98 proves local Auth feasibility only; PR #99 implements the empty Claim table; PR #101 identity context; PR #102 Claimant self-read FORCE RLS and one policy; PR #103 submit; PR #108 the merged review identifying M-1/M-2/M-3; and PR #109 their local correction. Reviewer and gateway/HMAC/pool readiness remain documentation/design only; the 7 Open gates remain unchanged.
 
 ### Owner-approved Claim-v1 trusted-command architecture
 
 On 9 August 2026, the Product/Security/Data/Operations Owner approved [document 46](46_CLAIM_V1_TRUSTED_COMMAND_ATOMICITY_AND_LOCKING_CONTRACT.md). CLAIM-CMD-001 is Resolved for implementation architecture: exactly six external commands; no external supersede or separate begin-review; exact 720-hour trusted-time validity; Owner-only write-once reviewer assignment to a distinct usable Owner/Admin; exclusive `internal.idempotency_keys` replay protection; bounded `internal.domain_events` transition facts; AUD-001-classified evidence; one deterministic Supplier lock/re-read protocol; atomic approval/ownership/competitor supersession; asynchronous notification materialization; minimal safe responses; no live historical replay; and no Claim deletion.
 
-Only `supplier_claim.submit` is approved as the first later command slice. PR #103 implements submit locally; `assign_reviewer`, `withdraw`, `approve`, `reject`, and `expire` remain unimplemented. The 7 Open gates remain exactly unchanged.
+Only `supplier_claim.submit` is approved as the first later command slice. PR #109 implements the corrected local two-phase submit protocol. `supplier_claim.reserve_submit` is private trusted Phase-1 support, not a seventh Claim business command. `assign_reviewer`, `withdraw`, `approve`, `reject`, and `expire` remain unimplemented. The 7 Open gates remain exactly unchanged.
 
 ## 2. Decisions
 
@@ -155,9 +155,9 @@ Only `supplier_claim.submit` is approved as the first later command slice. PR #1
 ## 3. Documentation synchronization
 
 - PR #46 synchronized the normalized zero-to-many wording in `06_CUTOVER_AND_ROLLBACK_PRINCIPLES.md` before this SQL slice began.
-- PR #103 is merged at current verified `origin/main` `52b2043775d74374595c4cfbb12e16aaef465d10`, with 18 migrations, 18 pgTAP files, 22 physical tables, 20 implemented / 16 deferred concepts, and 1,181/1,181 passing assertions. PR #104 and PR #105 are readiness documentation only.
+- PR #109 is merged at current verified `origin/main` `37243fe43f0cd26008c93a5ebf4da2963270123d` after PR #108, with 19 migrations, 19 pgTAP files, 22 physical tables, 20 implemented / 16 deferred concepts, 1,248/1,248 exact-head assertions, 67/67 focused hotfix assertions, and 34/34 true concurrency assertions.
 
-Document 32 records the Owner-approved SUP-001 and design-only `supplier_ownership.decide_claim` contract; PR #85 implements only its empty ownership foundation. Documents 33 and 34 record the approved identity/platform-role boundary; PR #87 implements only its empty role foundation. Owner-approved document 35 resolves AUD-001, and PR #91 implements only its empty `internal.audit_logs` foundation. Owner-approved document 37 keeps SEARCH-001 Resolved for Option A architecture only. Owner-approved document 38 resolves RFQ-003 for Option B semantics only and selects no RFQ/quotation or amount-bearing SQL slice. Owner-approved document 39 resolves MSG-003 for Option C; PR #95 implements the resulting coherent empty REL foundation. Owner-approved document 41 selects exactly one empty local Claim table with a single write-once reviewer and no override; PR #96 records that approval and PR #99 implements only its empty, fully revoked structural foundation. Owner-approved document 42 resolves SEC-001 for Claim-v1 architecture only; document 45 records the local PR #101 identity-context foundation; Owner-approved document 46 resolves CLAIM-CMD-001 for the six-command atomicity/locking/side-effects architecture and submit-first sequence; document 47 records PR #102 Claimant self-read FORCE-RLS/projection evidence, while `supplier_claim.submit` is implemented locally; the five other external Claim commands remain unimplemented. The 7 Open gates are `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+Document 32 records the approved Claim boundary; document 47 records Claimant self-read evidence; document 48 records PR #103 submit; document 49 records PR #108's merged red-team review; document 53 records PR #109's local correction. The 7 Open gates are `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 
 ## 4. Approval record
 
