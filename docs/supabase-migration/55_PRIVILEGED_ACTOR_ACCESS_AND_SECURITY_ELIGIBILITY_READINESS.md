@@ -1,6 +1,6 @@
-# Privileged actor access and security eligibility readiness
+# Privileged actor access and security eligibility contract
 
-Status: **Architecture/Security readiness finding only; material access and security-state choices still require Owner approval; not implementation-ready; no SQL, RLS, runtime, data, hosted, Firebase, or Production change**
+Status: **Owner-approved Product/Security/Data contract; implementation-ready only for two separate empty, fully revoked, local-only structural SQL slices; no SQL, pgTAP, RLS, runtime, data, hosted, Firebase, or Production change in this document**
 
 Date: 2026-08-10
 
@@ -12,9 +12,16 @@ Verified starting `origin/main`: `6ea8342a502b4ee38b01ff49785e56c70a00e6b4`, the
 
 Branch: `codex/privileged-access-security-readiness`
 
-## 1. Finding and readiness verdict
+## 1. Owner approval and implementation-readiness verdict
 
-The repository does **not** yet contain enough Owner-approved detail to implement the missing privileged access and security-eligibility foundations safely.
+The first PR #112 revision at reviewed head `17cd1913b01a4397b9ac8b6188cff53ab705d0ad` identified the missing privileged-access and security-eligibility decisions and recommended the smallest bounded package. On 10 August 2026, the Product/Security/Data Owner explicitly approved that complete recommended package.
+
+This document is now the authoritative implementation-prerequisite contract for exactly two future structural slices:
+
+1. one empty, fully revoked, local-only `public.access_grants` table restricted to `platform_administration`; and
+2. one separate empty, fully revoked, local-only `internal.security_eligibility_assessments` table.
+
+Approval makes those two structural slices implementation-ready for separate later SQL PRs. It does **not** implement either table, authorize rows or runtime, prove Firebase authentication, create hosted authority, or change Production.
 
 Existing contracts already fix the security outcome that later implementation must preserve:
 
@@ -27,9 +34,7 @@ Existing contracts already fix the security outcome that later implementation mu
 - the Claim assignment and target-Supplier conflict predicates remain separate from global platform eligibility; and
 - no local relational fact is real authentication or hosted/Production readiness.
 
-What remains materially undecided is the exact durable representation and lifecycle of the separate administration-access fact and the explicit security-clear/deny/unknown fact. The approved contracts deliberately call both prerequisites but leave their schema, exact state vocabulary, uniqueness, mutation authority, dual-control boundary, clear/release rules, and final-usable-Owner interaction for a successor approval.
-
-This document therefore recommends the smallest bounded architecture but does **not** label it implementation-ready. Before SQL, the Product/Security/Data Owner must approve the decisions in section 15. That approval can be recorded as a successor implementation prerequisite under the existing ID-001, ID-003, and SEC-001 boundaries. It need not create or resolve a new named gate, and this document creates none.
+The Owner approval fixes the durable representations, lifecycle vocabularies, uniqueness, mutation authority, dual-control boundary, clear/release rules, final-usable-Owner security behavior, bootstrap composition, audit classification, two-slice selection, and dependency-safe sequence. It is a successor implementation prerequisite under the existing ID-001, ID-003, AUD-001, and SEC-001 boundaries. It creates no new named gate and changes none of the seven existing Open gates.
 
 ## 2. Verified base and authoritative evidence
 
@@ -40,7 +45,7 @@ The task fetched `origin/main` before analysis and recorded exact commit `6ea834
 - PR #110 merge commit `c1aa40683d2e24790402b7c00d9fc980f0ecf9ed` is an ancestor of that commit.
 - PR #111 merge commit is the starting commit itself, so it is also an ancestor.
 - The relevant delta after the older `31ef92d...` document-header checkpoint contains the merged Claim withdrawal implementation and its baseline/design/register synchronization. It adds no access relation, security-eligibility relation, privileged-actor resolver, administration-access resolver, or Reviewer-specific RLS/read routine.
-- Some shared-document header SHAs still describe an earlier synchronization point. Their relevant content already records PR #110, and this task was explicitly required to start after PR #111. Those files are not modified here.
+- The first PR #112 revision identified the unresolved contract at reviewed head `17cd1913b01a4397b9ac8b6188cff53ab705d0ad`. The 10 August 2026 Owner approval is recorded by the successor revision of the same Draft PR; the base remains unchanged and compatible.
 
 ### 2.2 Authoritative contracts
 
@@ -85,9 +90,9 @@ The focused tests confirm the boundaries above:
 - [`claim_rls_self_read_foundation.sql`](../../supabase/tests/claim_rls_self_read_foundation.sql) proves exactly one claimant policy and no reviewer-field access; and
 - [`audit_logs_foundation.sql`](../../supabase/tests/audit_logs_foundation.sql) proves the inert minimized audit structure and revocation, not an audit writer.
 
-## 3. Owner-approved facts already fixed
+## 3. Preserved Owner-approved facts
 
-The successor access/security contract must preserve these approved facts without reopening them:
+This approved successor access/security contract preserves these facts without reopening them:
 
 1. Firebase Auth is the sole hybrid authentication, current-account, disablement, session, and email-verification authority.
 2. `user_profiles.id`, not Firebase UID, email, provider-link ID, or role text, is the durable human domain principal.
@@ -152,34 +157,25 @@ Only `eligible` authorizes. Both `denied` and `unknown` produce the same externa
 
 ## 5. Role-backed platform-administration access
 
-### 5.1 Status of `public.access_grants`
+### 5.1 Approved `public.access_grants` boundary
 
-`access_grants` is present in the authoritative logical catalog and the schema design recommends that it eventually hold both finite product access and role-backed platform-administration access. Production Firestore also has two historical `accessGrants` records mapped conceptually to that future relation.
+The Owner approved Option A and the exact relation name `public.access_grants` for the first bounded access contract. Its initial and only approved purpose is `platform_administration`. Product subscription access, trial access, billing entitlement, arbitrary capability vocabulary, and general RBAC/ABAC are excluded.
 
-That evidence does **not** make `public.access_grants` an approved exact SQL contract:
-
-- no migration creates it;
-- no focused pgTAP file tests it;
-- the role migration explicitly creates no access grant;
-- ID-001 says the exact access-grant/role-backed administration contract remains required;
-- the platform-role contract says the exact access-grant schema remains a separate approval; and
-- SEC-001 and the Reviewer contract name the representation as an unresolved delivery prerequisite.
-
-The name is therefore a cataloged future candidate, not an implementation-ready schema or authority.
+The relation remains absent: no migration creates it, no focused pgTAP file tests it, and no access row or mutation runtime exists. The approval selects only a later empty structural slice. A platform role assignment alone never grants authority; every access row is bound to the exact `platform_role_assignment` it backs, while operation capability remains separately determined by explicit command policy and role code.
 
 ### 5.2 Bounded options
 
 | Option | Model | Assessment |
 |---|---|---|
-| A | Approve one `public.access_grants` first contract restricted to the single purpose `platform_administration`, with one row bound to the exact role assignment. Defer finite product/trial grants and any additional purpose vocabulary. | **Recommended.** Reuses the cataloged concept, creates one separate authority seam, meets Claim v1 and future role administration, and avoids premature capability design. |
-| B | Implement a general access-grant relation now with multiple product and administration capabilities, sources, limits, and finite/non-finite lifecycle variants. | Not recommended for this slice. It pulls legacy trial/product semantics and future entitlement design into a security prerequisite and increases contradiction risk. |
-| C | Treat the role assignment itself as administration access or add an access flag to the role row. | Reject. It violates the approved separation, makes role rows sufficient, removes an independent revoke/hold seam, and weakens final-Owner proof. |
+| A | One `public.access_grants` first contract restricted to the single purpose `platform_administration`, with each row bound to the exact role assignment. Finite product/trial grants and additional purpose vocabulary remain outside this contract. | **Approved.** Reuses the cataloged concept, creates one separate authority seam, meets Claim v1 and future role administration, and avoids premature capability design. |
+| B | A general access-grant relation with multiple product and administration capabilities, sources, limits, and finite/non-finite lifecycle variants. | **Deferred / not selected.** It would pull legacy trial/product semantics and future entitlement design into this security prerequisite. |
+| C | Treat the role assignment itself as administration access or add an access flag to the role row. | **Rejected.** It violates the approved separation, makes role rows sufficient, removes an independent revoke/hold seam, and weakens final-Owner proof. |
 
 Option A does not mean one grant confers every platform capability. It means one current fact proves entry into the bounded platform-administration security domain. Each operation still explicitly evaluates `owner`, `admin`, both, or neither and then its own Claim/target predicates. No generic RBAC/ABAC engine or free-form capability code is needed.
 
-### 5.3 Recommended minimum logical shape
+### 5.3 Owner-approved minimum logical shape
 
-The exact SQL names and types require the Owner-approved successor contract and a later technical slice. The minimum semantic fields are:
+Exact SQL types and constraint mechanics belong to the later structural SQL slice. The approved minimum semantic fields are:
 
 - database-generated opaque grant ID;
 - subject `user_profile_id`;
@@ -203,7 +199,9 @@ The subject and role assignment must agree structurally, preferably through a re
 - An active access row referencing an inactive, future, expired-by-time, revoked, expired, or superseded role assignment is contradictory and denies.
 - An active role with no matching access is missing evidence and denies.
 - Multiple rows, partial lifecycle provenance, unsupported policy/source/reason, or subject/role mismatch is `unknown`/reconciliation-required and denies.
-- An Owner's administration access is non-expiring while the bound Owner assignment remains usable, as already approved. The exact Admin grant horizon remains an Owner decision in section 15.
+- An Owner's `platform_administration` access is non-expiring while the bound Owner assignment remains usable. It never receives a product/trial expiration.
+- An Admin's `platform_administration` access is finite and may not exceed exactly 180 calendar days from trusted `valid_from`.
+- Admin access has no automatic renewal. Renewal is a new reviewed authorization action, may not overlap, and before the previous horizon uses the approved supersede/history model rather than silently extending an existing row.
 
 ## 6. Security deny, hold, quarantine, and reconciliation eligibility
 
@@ -211,14 +209,14 @@ The subject and role assignment must agree structurally, preferably through a re
 
 | Option | Model | Assessment |
 |---|---|---|
-| A | One separate non-exposed restricted security-eligibility relation with immutable assessment history and one effective current assessment per subject/scope/policy. | **Recommended.** It can prove explicit complete clear, durable blockers, and unknown/reconciliation without mixing access, events, or evidence. |
-| B | Separate tables for security denies, holds, identity quarantine, authority conflicts, and reconciliation cases. | Defer. Specialized lifecycles may become justified later, but they multiply joins, precedence, overlap, and clear-coverage rules before evidence requires them. |
-| C | Encode deny/hold/quarantine/reconciliation in access-grant lifecycle. | Reject. Access authority and security assessment have different sources, reviewers, evidence, and resolution semantics. Closing a grant does not preserve why security became unknown, and a grant cannot prove complete clear coverage. |
-| D | Use the deferred `security_events` concept or `user_profiles.security_eligibility_reference` as current eligibility. | Reject. An event/history feed is not authoritative current state, and the scalar reference has no approved vocabulary, coverage, currentness, or lifecycle. |
+| A | One separate non-exposed restricted `internal.security_eligibility_assessments` relation with immutable assessment history and one effective current assessment per subject/scope/policy. | **Approved.** It proves explicit complete clear, durable blockers, and unknown/reconciliation without mixing access, events, or evidence. |
+| B | Separate tables for security denies, holds, identity quarantine, authority conflicts, and reconciliation cases. | **Deferred.** Specialized lifecycles may become justified later, but are not selected now. |
+| C | Encode deny/hold/quarantine/reconciliation in access-grant lifecycle. | **Rejected.** Access authority and security assessment have different sources, reviewers, evidence, and resolution semantics. |
+| D | Use the deferred `security_events` concept or `user_profiles.security_eligibility_reference` as current eligibility. | **Rejected.** An event/history feed is not authoritative current state, and the scalar reference has no approved vocabulary, coverage, currentness, or lifecycle. |
 
-### 6.2 Recommended minimum model
+### 6.2 Owner-approved minimum model
 
-Use one new relation in a non-exposed restricted schema. Its exact schema-qualified name is an Owner/technical approval item; this document does not register an implemented name. It records explicit current eligibility for the bounded `platform_administration` scope and immutable prior assessments.
+Use exactly `internal.security_eligibility_assessments`, one new relation in the non-exposed restricted `internal` schema. It records explicit current eligibility for the bounded `platform_administration` scope and immutable prior assessments. It is not access, authentication, audit, an event table, raw investigation evidence, or target-Supplier conflict evidence. It must remain outside browser/API exposure and fully revoked from `PUBLIC`, `anon`, `authenticated`, generic `service_role`, and every unlisted role.
 
 Minimum semantic fields:
 
@@ -268,15 +266,15 @@ No table is directly mutable by a browser, Admin session, Owner session, generic
 
 | Action | Minimum authority | Dual control / final-Owner behavior | Audit and event boundary |
 |---|---|---|---|
-| Create Admin role-backed access | Current usable Owner; subject and role assignment must already be coherent or be created in the same approved role transaction | Subject cannot self-approve. Whether every Admin grant needs a distinct Owner reviewer is an Owner decision; recommend distinct review for any privilege creation | Atomic AUD-001 success; minimized post-auth denials. No domain event until a named consumer exists |
+| Create or renew Admin role-backed access | One currently usable Owner authorizes; subject and role assignment must already be coherent or be created in the same approved role transaction | Every new or renewed Admin grant requires one distinct currently usable Owner reviewer. The subject cannot approve their own access; authorizer and reviewer are distinct | Atomic AUD-001 success; minimized post-auth denials. No domain event until a named consumer exists |
 | Create Owner role-backed access | Current usable Owner through the approved role command | Distinct current usable Owner reviewer required; cannot create the subject's own authority through one-person approval | Same transaction as role mutation and audit; no generic event |
-| Revoke/expire/supersede access | Current usable Owner; scheduled expiry only when the original policy already authorized a finite Admin horizon | Every Owner-affecting closure locks/re-reads the complete usable-Owner set and cannot perform an ordinary discretionary transition to zero usable Owners | Atomic audit; no event without consumer |
-| Apply deny/hold/quarantine/reconciliation-required | Approved trusted security system or usable Owner security command under a bounded source policy | System may only become more restrictive, never clear itself. The exact zero-Owner emergency rule needs Owner approval; the recommendation is that authoritative security loss always makes the actor unusable while the guard serializes and enters governed recovery rather than preserving unsafe authority | Atomic audit for persisted authoritative change; bounded telemetry before accountable actor/source resolution |
-| Establish or restore `clear` | Reviewed trusted security/reconciliation command after complete current coverage is proved | Recommend two distinct usable Owners, neither the subject, for a human release/clear. No Admin direct clear, no self-clear, no automatic clear from elapsed time | Atomic privilege/security audit; correction appends history |
+| Revoke/expire/supersede access | Current usable Owner; scheduled expiry only when the original policy already authorized a finite Admin horizon | Every final-usable-Owner-affecting authority change retains distinct usable-Owner review, locks/re-reads the complete usable-Owner set, and cannot perform an ordinary discretionary transition to zero usable Owners | Atomic audit; no event without consumer |
+| Apply deny/hold/quarantine/reconciliation-required | Approved trusted security systems may impose more restrictive states only under a later bounded trusted-command/source registry; a usable Owner may later impose a restriction through an approved trusted security command | A system never self-clears or broadens authority. Genuine authoritative security loss makes the affected Owner unusable even if they are the final usable Owner and triggers separately governed emergency recovery | Atomic audit for persisted authoritative change; bounded telemetry before accountable actor/source resolution |
+| Establish or restore `clear` | Reviewed trusted security/reconciliation command after complete current coverage is proved | Human clear, release, or authority-broadening correction requires two distinct currently usable Owners, neither the subject. No Admin clear, self-clear, system self-clear, or automatic clear from elapsed time | Atomic privilege/security audit; correction appends history |
 | Correct/supersede access or security history | Reviewed trusted correction command | Preserve prior row; never reopen or edit effective meaning in place. Distinct review for authority-broadening correction | Atomic correction audit linked to predecessor evidence |
 | First-Owner bootstrap | Existing protected, checksummed, environment-bound manifest and independent external approver/operator evidence | Atomically establish at least two distinct Owner role assignments, their administration access, and the explicit current complete security-clear assessments required to make them relationally eligible; then irreversibly disable the exception | Atomic bootstrap audit; no fabricated human grantor; exact execution remains separately gated |
 
-An Admin may never directly create, grant, clear, revoke, expire, supersede, or correct platform role, administration-access, or security-eligibility authority. An Admin can later review a Claim only after another usable Owner assigns the exact Claim and every current predicate passes.
+An Admin may never directly create, grant, renew, clear, revoke, expire, supersede, or correct platform role, administration-access, or security-eligibility authority. No browser/API role or generic `service_role` may mutate either relation directly. An Admin can later review a Claim only after another usable Owner assigns the exact Claim and every current predicate passes.
 
 The audit classification is `privilege_security_authority` under AUD-001. Success audit must commit atomically with the authoritative access/security mutation. A post-auth denied attempt receives minimized denial evidence under the approved AUD-001 boundary; audit failure never changes denial to permission. There is no present named consumer for access/security lifecycle facts, so this foundation should not invent domain events or notification fan-out. A later consumer requires its own event vocabulary, payload minimization, replay, and operations approval.
 
@@ -409,12 +407,21 @@ All future tests use disposable local PostgreSQL and synthetic identities/rows. 
 | Access | Access subject/role-assignment disagreement | `unknown`/deny |
 | Access | Duplicate or overlapping access | `unknown`/deny |
 | Access | Valid access tied to an inactive role | deny |
+| Access horizon | Usable Owner access carries a product/trial expiry | deny; Owner administration access must remain non-expiring while the role is usable |
+| Access horizon | Admin `valid_until` exceeds exactly 180 calendar days from `valid_from` | deny |
+| Access renewal | Automatic, overlapping, or in-place Admin renewal/extension | deny; require a new dual-reviewed action and approved supersession when replacing early |
+| Access authority | New/renewed Admin grant lacks two distinct currently usable Owner authorizer/reviewer or the subject self-approves | deny |
 | Security | Explicit deny | deny |
 | Security | Active hold | deny |
 | Security | Identity quarantine | deny |
 | Security | Reconciliation required / result unknown | deny |
 | Security | Missing assessment, missing coverage version, stale clear, or unsupported policy | `unknown`/deny |
 | Security | Duplicate/contradictory current assessment | `unknown`/deny |
+| Security authority | Trusted system attempts `clear`, release, or another authority-broadening correction | deny; systems may impose restrictions only |
+| Security authority | Human clear/release lacks two distinct currently usable Owners or either Owner is the subject | deny |
+| Owner safety | Genuine authoritative security loss affects the final usable Owner | affected Owner becomes unusable; enter governed emergency recovery |
+| Owner safety | Ordinary discretionary role/access closure would leave zero usable Owners | deny and roll back |
+| Bootstrap | Fewer than two Owners, or missing matching access, explicit complete clear, AUD-001 evidence, or external governance/manifest evidence | fail atomically; bootstrap exception remains enabled |
 | Cross-domain | Role valid, access invalid | deny |
 | Cross-domain | Access valid, role invalid | deny |
 | Cross-domain | Role/access valid, security denied | deny |
@@ -433,7 +440,7 @@ All future tests use disposable local PostgreSQL and synthetic identities/rows. 
 
 Concurrency tests must also prove shared principal-authority locking for role/access/security changes, assignment versus eligibility loss, deterministic subject/row lock order, access/security supersession, final-usable-Owner behavior, and no stale pre-lock authorization.
 
-## 12. Dependency-safe implementation sequence after Owner approval
+## 12. Owner-approved dependency-safe implementation sequence
 
 Do not combine access and security into one relation or one implementation slice merely to reduce PR count.
 
@@ -445,11 +452,15 @@ Do not combine access and security into one relation or one implementation slice
 | 4. Target-Supplier conflict resolver | Separate bounded `clear|conflict|unknown` helper over implemented ownership/Claim evidence and explicit coverage manifest | no change | unchanged at 1 | No new membership/organization concept; hosted missing coverage stays unknown | Stop after claimant/controller/competing-Claim/integrity/unknown tests |
 | 5. Reviewer private-read substrate | Dedicated Owner/reviewer projection roles, Owner queue/candidates, reviewer queue/detail, exact output minimization, grants/catalog tests; depends on slices 3-4 | no change | expected +2 SELECT policies, from 1 to 3; zero mutation policies | Synthetic assigned rows only; no assignment command or real data | Stop after read/security tests pass |
 | 6. `supplier_claim.assign_reviewer` | Existing approved command contract using the same resolvers, locks, REL, audit, event, safe-result, race/replay/rollback tests; depends on slice 5 | no change | unchanged from slice 5 | Trusted execute only; no browser base mutation, notification, real row, hosted, Firebase, or Production access | Stop after local synthetic command proof; approve/reject/expire remain separate |
-| 7. Access/security administration and bootstrap runtime | Separately reviewed trusted grant/revoke/hold/clear/correct commands, dual control, final-Owner guard, audit, bootstrap integration; depends on resolver semantics and approved operational registries | no change | no browser policy required | Required before any non-synthetic role/access/security row; still no hosted/Production execution without release gates | Stop before real bootstrap/population or hosted use |
+| 7. Access/security administration and bootstrap runtime | Separately reviewed trusted grant/revoke/hold/clear/correct commands, dual control, ordinary final-Owner guard, security-emergency recovery state, audit, and bootstrap integration; depends on resolver semantics and approved operational registries | no change | no browser policy required | Required before any non-synthetic role/access/security row; still no hosted/Production execution without release gates | Stop before real bootstrap/population or hosted use |
+| 8. `supplier_claim.approve` and `supplier_claim.reject` | Separate later Claim command slices after assignment; each reuses the same current resolvers, locks, REL, audit, and safe-result boundaries | no change | unchanged | Local synthetic proof only until separately released | Keep approve and reject out of the access/security structural PRs |
+| 9. `supplier_claim.expire` | Separate later worker-command slice with its own authority, time, replay, audit/event, and race proof | no change | unchanged | Local synthetic proof only until separately released | Keep expiry independent of approval/rejection |
 
-If Option A uses the cataloged `public.access_grants` concept, slice 1 implements one currently deferred Core Phase 1 concept. The new security-eligibility relation is not currently a separate item in the 79-concept catalog; after Owner approval and before SQL, the authoritative design/count reconciliation must decide whether it replaces/refines a deferred concept or adds one. This task does not change the schema design, register, or counts.
+The Owner selected the cataloged `public.access_grants` concept for slice 1 and selected a distinct durable assessment authority for slice 2. Repository convention requires every durable logical relation to appear exactly once in the authoritative catalog. `internal.security_eligibility_assessments` cannot refine or replace deferred `security_events`: the former is authoritative current assessment state, while the latter remains a distinct authentication/authorization/abuse event-history concept. It is also not a physical decomposition of another logical concept.
 
-The real gateway, provider resolver/reconciler, environment-specific login and role-assumption path, HMAC rotation, exact driver/pool/pooler proof, hosted authority, migration/cutover, and Production activation remain separate release work. They do not belong in slices 1-6.
+The reconciled catalog therefore increases from 79 to **80 logical concepts** and Core Phase 1 from 36 to **37**. Implementation remains exactly **20 implemented** concepts, so **17 Core Phase 1 concepts remain unimplemented**. Current physical state is unchanged at **22 tables, 20 migrations, and 20 pgTAP files**. Approval and selection do not create either table.
+
+The real gateway, provider resolver/reconciler, environment-specific login and role-assumption path, HMAC rotation, exact driver/pool/pooler proof, hosted authority, migration/cutover, and Production activation remain separate release work. They do not belong in slices 1-9.
 
 ## 13. Product, Security, and Data implications
 
@@ -466,7 +477,7 @@ The real gateway, provider resolver/reconciler, environment-specific login and r
 - Role/access/security/conflict are separate inputs, reducing confused-deputy and stale-role failure modes.
 - The system can fail closed without exposing why an actor is held, quarantined, or under reconciliation.
 - Dedicated non-login helper/projection owners avoid raw base grants and generic `service_role` authority.
-- Final-Owner and security-emergency precedence needs explicit Owner approval rather than a silent implementation choice.
+- Genuine authoritative security loss overrides final-Owner availability and triggers governed emergency recovery; ordinary discretionary role/access closures remain prohibited from intentionally leaving zero usable Owners.
 
 ### Data
 
@@ -487,7 +498,7 @@ The seven Open gates remain exactly:
 - `RES-001`
 - `MIG-002`
 
-The access/security choices in this document are **implementation prerequisites that may be Owner-approved without changing the seven-gate register**. They are not already fully decided, and this document does not create a new named approval gate.
+The access/security choices in this document are **Owner-approved implementation prerequisites that do not change the seven-gate register**. The approval creates no new named gate and closes none of the seven existing gates.
 
 - `ORG-001` and `ORG-002` remain unchanged. They do not block bounded local synthetic proof, but any later organization/Supplier membership authority must enter target-conflict coverage before hosted use.
 - `MSG-002` remains unrelated to Claim v1 Reviewer notes/evidence.
@@ -498,27 +509,28 @@ The access/security choices in this document are **implementation prerequisites 
 
 No existing gate is resolved or closed, and no new decision ID is registered.
 
-## 15. Exact Owner decisions required before SQL
+## 15. Owner approval record and selected contract
 
-The architecture becomes implementation-ready only after the Product/Security/Data Owner approves all of the following as one bounded successor contract:
+On 10 August 2026, the Product/Security/Data Owner approved the complete recommended package from the first PR #112 revision. The approval records all of the following:
 
-1. **Access model:** Option A, B, or C; recommendation is Option A.
-2. **Access physical concept:** whether Option A uses the cataloged exact name `public.access_grants` for an initially single-purpose contract. If another table name/concept is chosen, the schema catalog and counts must be reconciled before SQL.
-3. **Access purpose:** one grant represents only `platform_administration`; operation capabilities remain explicit role/command policy, not grant rows.
-4. **Access role binding and uniqueness:** exact subject/role-assignment relationship, one effective row, non-overlap, contradiction behavior, and no access surviving its role.
-5. **Admin access horizon:** whether Admin administration access may be finite, and its maximum/renewal/expiry policy. Owner access remains non-expiring while the Owner assignment is usable.
-6. **Access grant/review authority:** whether every Admin grant requires a distinct usable Owner reviewer; Owner grants and final-Owner-affecting actions already require distinct review.
-7. **Security model:** Option A, B, C, or D; recommendation is Option A.
-8. **Security physical relation:** exact restricted schema-qualified name and its relationship to the deferred `security_events` concept and the non-authoritative profile reference.
-9. **Security vocabulary and coverage:** exact `clear|deny|unknown` result, bounded condition types, required-coverage version, one-current-row rule, and missing/stale/contradictory behavior.
-10. **Security mutation authority:** which trusted system sources may impose restrictions; which human actors may apply them; and confirmation that systems may never self-clear.
-11. **Clear/release dual control:** recommendation is two distinct usable Owners, neither the subject, for a human authority-broadening clear/release/correction.
-12. **Final-Owner security emergency rule:** recommendation is that authoritative security loss always denies the affected Owner and triggers governed emergency recovery, while ordinary discretionary access/role closures remain blocked from leaving zero usable Owners.
-13. **Bootstrap composition:** confirmation that the protected first-Owner bootstrap atomically establishes at least two role assignments, their administration access, explicit current complete security-clear assessments, and AUD-001 evidence before disabling itself.
-14. **Audit/event boundary:** access/security changes use `privilege_security_authority` audit classification; no domain event exists until a named consumer is approved.
-15. **Structural slice selection:** authorization for exactly one empty fully revoked access table as the first later slice and exactly one empty fully revoked security table as a separate second slice, with focused synthetic pgTAP only.
+1. **Access Option A is Approved.** Use `public.access_grants`, initially and only for `platform_administration`, bound to the exact role assignment. Access Option B is Deferred / Not selected; Access Option C is Rejected.
+2. **Access history and lifecycle are fixed.** Use `active|revoked|expired|superseded`, append-and-terminalize history, exact subject/role binding, trusted validity, source/reason/policy/evidence/provenance, terminal provenance, version/correlation/timestamps, non-overlap, and fail-closed contradiction handling. Never hard-delete, reopen, or silently rewrite authority.
+3. **Owner horizon is non-expiring** while the bound Owner role remains usable; no product/trial expiry may shorten it.
+4. **Admin horizon is finite:** at most exactly **180 calendar days** from `valid_from`, no automatic renewal, no overlap, and early replacement uses supersession rather than extension.
+5. **Admin dual control is mandatory.** Every new or renewed Admin grant requires one currently usable Owner authorizer and a distinct currently usable Owner reviewer; the subject cannot self-approve. Admin has no access-administration authority.
+6. **Security Option A is Approved.** Use exactly `internal.security_eligibility_assessments`. Security Option B is Deferred; Security Options C and D are Rejected.
+7. **Security scope/result are fixed.** Scope is `platform_administration`; result is exactly `clear|deny|unknown`; initial condition types are exactly `complete_clear|explicit_deny|security_hold|identity_quarantine|reconciliation_required`. Only one current, supported, coverage-complete `clear` plus `complete_clear` permits.
+8. **Security history and lifecycle are fixed.** Use `active|resolved|expired|superseded`, immutable history, at most one effective assessment per subject/scope/current policy/coverage boundary, and successor terminalization under the shared principal-authority lock. Missing, stale, duplicate, overlapping, contradictory, unsupported, or unreadable coverage is `unknown` and denies.
+9. **Security data is minimized.** Only bounded authority metadata, versions, provenance, opaque references/digests, lifecycle, validity, and trusted timestamps are permitted; raw tokens, provider subjects, PII, complete Firebase records, investigation/Claim evidence, dumps, arbitrary JSON, and raw exceptions are prohibited.
+10. **Restriction authority cannot broaden authority.** Approved trusted systems may impose more restrictive states only under a later bounded registry; systems never self-clear. A usable Owner may later impose a restriction through an approved trusted security command. Admin and direct browser/API/`service_role` mutation are prohibited.
+11. **Human clear/release requires dual control.** Two distinct currently usable Owners, neither the assessment subject, complete current coverage proof, and atomic AUD-001 evidence are mandatory. There is no self-clear, Admin clear, system self-clear, or time-based auto-clear.
+12. **Security loss overrides final-Owner availability.** A genuine authoritative security loss makes the affected Owner unusable even if they are the final usable Owner and triggers a separately governed emergency-recovery state/path. Ordinary discretionary role/access changes still may not intentionally leave zero usable Owners.
+13. **Bootstrap composition is fixed.** The future protected bootstrap atomically creates at least two distinct Owner role assignments, matching `platform_administration` access, explicit current complete-clear assessments, AUD-001 evidence, and external governance/manifest evidence before irreversibly disabling the exception.
+14. **Audit boundary is fixed.** Classification is exactly `privilege_security_authority`; successful authoritative access/security mutations and required accountable post-auth denials follow AUD-001. No access/security domain event is created because no named consumer is approved.
+15. **Exactly two separate structural slices are selected.** Slice A is one empty, fully revoked, local-only `public.access_grants` table plus focused synthetic pgTAP. Slice B is a later separate PR containing one empty, fully revoked, local-only `internal.security_eligibility_assessments` table plus focused synthetic pgTAP. Neither is implemented here.
+16. **The dependency sequence in section 12 is approved.** Gateway, signed-token staging, driver/pool/pooler proof, hosted Supabase, migration/cutover, and Production activation remain separate release work.
 
-Until those decisions are explicitly approved, do not create SQL, register the architecture as implementation-ready, create real role/access/security rows, or implement a positive privileged-actor resolver.
+Approval is not implementation. The two selected structural slices remain separate future SQL PRs, and every real row, resolver, command, bootstrap, hosted, migration, and release action remains separately gated.
 
 ## 16. Validation and exact stop point
 
@@ -537,4 +549,4 @@ Required validation for this document:
 
 No SQL, pgTAP, script, application code, Docker, Firebase, hosted Supabase, Production/TEST data, migration, seed, backfill, deployment, gate resolution, Ready-for-review transition, or merge is authorized.
 
-**Exact stop point:** this one readiness document committed and pushed on `codex/privileged-access-security-readiness`, one Draft PR open, and no merge. Stop before Owner approval is inferred, the design/register/baseline is changed, SQL or tests are added, any real role/access/security fact is created, Reviewer RLS/projections or `supplier_claim.assign_reviewer` are implemented, or any hosted/Production action occurs.
+**Exact stop point:** the Owner-approved contract and narrowly required baseline/design/register synchronization committed and pushed on the existing `codex/privileged-access-security-readiness` branch, existing PR #112 updated but kept Draft, and the new PR gate triggered on the new head. Stop before either SQL slice, any real role/access/security fact, Reviewer RLS/projections, `supplier_claim.assign_reviewer`, hosted/Production action, Ready transition, or merge.
