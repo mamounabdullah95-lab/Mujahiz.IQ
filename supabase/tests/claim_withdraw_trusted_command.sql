@@ -3,7 +3,7 @@
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions, pg_catalog;
 
-select plan(89);
+select plan(101);
 
 select has_function(
   'supplier_claim',
@@ -580,6 +580,7 @@ select is((
   where aggregate_id = 'e1000000-0000-4000-8000-000000000001'
     and event_type = 'supplier_ownership.claim_withdrawn'
 ), 1::bigint, 'replay creates no duplicate event');
+select is((select pg_catalog.count(*) from internal.audit_logs), 0::bigint, 'completed same-request replay writes no audit row');
 
 set role mujahiz_claim_runtime;
 begin;
@@ -610,6 +611,117 @@ select ok((
   from internal.audit_logs
   where action_code = 'supplier_claim.withdraw'
 ), 'conflict audit contains no request, fingerprint, evidence, or prior-result detail');
+set role mujahiz_claim_runtime;
+begin;
+select claim_security.establish_claim_runtime_context('da100000-0000-4000-8000-000000000001');
+select pg_catalog.set_config('mujahiz.claim.hmac_key', repeat('k', 32), true) \gset
+select pg_catalog.row_to_json(reservation_row)::text as result
+from supplier_claim.reserve_withdraw(
+  'claim-f0000000-0000-4000-8000-000000000001',
+  'e2000000-0000-4000-8000-000000000002', 2
+) as reservation_row \gset target_conflict_
+commit;
+reset role;
+
+select is((:'target_conflict_result'::jsonb)->>'reservation_outcome', 'idempotency_key_conflict', 'same key with a different target conflicts only after completed self-integrity passes');
+select ok(
+  (:'target_conflict_result'::jsonb)->>'claim_id' = 'e2000000-0000-4000-8000-000000000002'
+  and (:'target_conflict_result'::jsonb)->'claim_status' = 'null'::jsonb
+  and (:'target_conflict_result'::jsonb)->'claim_version' = 'null'::jsonb
+  and (:'target_conflict_result'::jsonb)->'supplier_profile_id' = 'null'::jsonb
+  and (:'target_conflict_result'::jsonb)->'withdrawn_at' = 'null'::jsonb
+  and not ((:'target_conflict_result'::jsonb)->>'idempotent_replay')::boolean,
+  'different-target conflict discloses no original target or result'
+);
+select is((
+  select pg_catalog.count(*)
+  from internal.audit_logs
+  where action_code = 'supplier_claim.withdraw'
+    and outcome_class = 'conflicted'
+    and result_code = 'idempotency_key_conflict'
+    and actor_user_profile_id = 'da100000-0000-4000-8000-000000000001'
+    and target_id = 'e2000000-0000-4000-8000-000000000002'
+), 1::bigint, 'different-target conflict writes one minimized audit against only the current opaque target');
+select is((
+  select pg_catalog.count(*)
+  from internal.domain_events
+  where event_type = 'supplier_ownership.claim_withdrawn'
+), 2::bigint, 'genuine completed-row conflicts create no Claim event or version mutation');
+
+create function pg_temp.reject_withdraw_conflict_audit()
+returns trigger language plpgsql as $trigger$
+begin
+  if new.action_code = 'supplier_claim.withdraw'
+     and new.outcome_class = 'conflicted'
+     and new.result_code = 'idempotency_key_conflict'
+  then
+    raise exception 'synthetic required conflict audit failure';
+  end if;
+  return new;
+end
+$trigger$;
+create trigger withdraw_conflict_audit_failure_test
+before insert on internal.audit_logs
+for each row execute function pg_temp.reject_withdraw_conflict_audit();
+
+set role mujahiz_claim_runtime;
+begin;
+select claim_security.establish_claim_runtime_context('da100000-0000-4000-8000-000000000001');
+select pg_catalog.set_config('mujahiz.claim.hmac_key', repeat('k', 32), true) \gset
+select throws_ok(
+  $$select * from supplier_claim.reserve_withdraw(
+    'claim-f0000000-0000-4000-8000-000000000001',
+    'e2000000-0000-4000-8000-000000000002', 2
+  )$$,
+  'P5116', 'audit_unavailable',
+  'required genuine-conflict audit failure returns P5116 and no conflict result'
+);
+rollback;
+reset role;
+
+drop trigger withdraw_conflict_audit_failure_test on internal.audit_logs;
+drop function pg_temp.reject_withdraw_conflict_audit();
+
+select is((
+  select pg_catalog.count(*)
+  from internal.audit_logs
+  where action_code = 'supplier_claim.withdraw'
+    and outcome_class = 'conflicted'
+), 2::bigint, 'failed required-audit insertion creates no false conflict audit');
+select ok((
+  select status = 'withdrawn' and record_version = 2
+  from public.supplier_ownership_claims
+  where id = 'e1000000-0000-4000-8000-000000000001'
+) and (
+  select status = 'withdrawn' and record_version = 3
+  from public.supplier_ownership_claims
+  where id = 'e2000000-0000-4000-8000-000000000002'
+), 'audit fail-closed path creates no Claim mutation');
+select is((
+  select pg_catalog.count(*)
+  from internal.domain_events
+  where event_type = 'supplier_ownership.claim_withdrawn'
+), 2::bigint, 'audit fail-closed path creates no domain event');
+
+
+begin;
+update internal.idempotency_keys
+set result_resource_id = 'e2000000-0000-4000-8000-000000000002'
+where command_name = 'supplier_claim.withdraw'
+  and target_aggregate_id = 'e1000000-0000-4000-8000-000000000001';
+set role mujahiz_claim_runtime;
+select claim_security.establish_claim_runtime_context('da100000-0000-4000-8000-000000000001');
+select pg_catalog.set_config('mujahiz.claim.hmac_key', repeat('k', 32), true) \gset
+select throws_ok(
+  $$select * from supplier_claim.reserve_withdraw(
+    'claim-f0000000-0000-4000-8000-000000000001',
+    'e1000000-0000-4000-8000-000000000001', 1
+  )$$,
+  'P5199', 'integrity_reconciliation_required',
+  'corrupt completed result target fails closed before caller comparison'
+);
+reset role;
+rollback;
 
 begin;
 update internal.idempotency_keys
@@ -638,13 +750,22 @@ where command_name = 'supplier_claim.withdraw'
 set role mujahiz_claim_runtime;
 select claim_security.establish_claim_runtime_context('da100000-0000-4000-8000-000000000001');
 select pg_catalog.set_config('mujahiz.claim.hmac_key', repeat('k', 32), true) \gset
-select * from supplier_claim.reserve_withdraw(
-  'claim-f0000000-0000-4000-8000-000000000001',
-  'e1000000-0000-4000-8000-000000000001', 1
-) \gset corrupt_fingerprint_
+select throws_ok(
+  $$select * from supplier_claim.reserve_withdraw(
+    'claim-f0000000-0000-4000-8000-000000000001',
+    'e1000000-0000-4000-8000-000000000001', 1
+  )$$,
+  'P5199', 'integrity_reconciliation_required',
+  'corrupt completed request fingerprint is reconciliation failure, not caller conflict'
+);
 reset role;
+select is((
+  select pg_catalog.count(*)
+  from internal.audit_logs
+  where action_code = 'supplier_claim.withdraw'
+    and outcome_class = 'conflicted'
+), 2::bigint, 'completed fingerprint corruption creates no conflict audit');
 rollback;
-select is(:'corrupt_fingerprint_reservation_outcome'::text, 'idempotency_key_conflict', 'fingerprint mismatch never re-executes a completed command');
 
 select id::text as id
 from internal.idempotency_keys
@@ -686,6 +807,40 @@ select throws_ok(
 );
 reset role;
 rollback;
+begin;
+insert into internal.domain_events (
+  id, event_type, event_schema_version, aggregate_type, aggregate_id,
+  aggregate_sequence, producer_command_name, producer_command_contract_version,
+  producer_idempotency_key_id, source_system_code, event_ordinal,
+  actor_kind, actor_user_profile_id, environment_code,
+  producing_component_code, correlation_id, occurred_at, persisted_at,
+  payload, processing_status, available_at
+)
+select
+  pg_catalog.gen_random_uuid(), event_type, event_schema_version, aggregate_type,
+  'e3000000-0000-4000-8000-000000000003'::uuid, 999,
+  producer_command_name, producer_command_contract_version,
+  producer_idempotency_key_id, source_system_code, 2,
+  actor_kind, actor_user_profile_id, environment_code,
+  producing_component_code, correlation_id, occurred_at, persisted_at,
+  payload, processing_status, available_at
+from internal.domain_events
+where producer_idempotency_key_id = :'submitted_idempotency_id'::uuid
+  and event_ordinal = 1;
+set role mujahiz_claim_runtime;
+select claim_security.establish_claim_runtime_context('da100000-0000-4000-8000-000000000001');
+select pg_catalog.set_config('mujahiz.claim.hmac_key', repeat('k', 32), true) \gset
+select throws_ok(
+  $$select * from supplier_claim.reserve_withdraw(
+    'claim-f0000000-0000-4000-8000-000000000001',
+    'e1000000-0000-4000-8000-000000000001', 1
+  )$$,
+  'P5199', 'integrity_reconciliation_required',
+  'contradictory duplicate producer event fails closed'
+);
+reset role;
+rollback;
+
 
 -- Wrong claimant and unknown Claim use the same safe Phase-B result.
 set role mujahiz_claim_runtime;

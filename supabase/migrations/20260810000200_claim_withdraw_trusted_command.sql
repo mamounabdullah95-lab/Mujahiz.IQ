@@ -131,6 +131,9 @@ declare
   v_event_count integer := 0;
   v_withdraw_event_count integer := 0;
   v_result_version integer;
+  v_original_expected_version integer;
+  v_original_canonical_request jsonb;
+  v_original_request_fingerprint bytea;
 begin
   select canonical.*
   into v_request
@@ -227,6 +230,168 @@ begin
         message = 'integrity_reconciliation_required';
     end if;
 
+    -- A completed row is an authoritative stored fact. Prove that fact from
+    -- its own principal/target/result/Claim/event bindings before comparing it
+    -- with the current caller request and classifying any genuine key reuse.
+    if v_idempotency.status = 'completed' then
+      if v_idempotency.environment_code <> 'local'
+         or v_idempotency.command_name <> 'supplier_claim.withdraw'
+         or v_idempotency.command_contract_version <> 1
+         or v_idempotency.principal_kind <> 'human_user'
+         or v_idempotency.principal_user_profile_id is null
+         or v_idempotency.principal_source_code is not null
+         or v_idempotency.target_aggregate_type <> 'supplier_ownership_claim'
+         or v_idempotency.target_aggregate_id is null
+         or v_idempotency.upstream_source_system_code is not null
+         or v_idempotency.upstream_request_identity is not null
+         or v_idempotency.key_digest is null
+         or pg_catalog.octet_length(v_idempotency.key_digest) <> 32
+         or v_idempotency.key_digest_key_version <> 'local_v1'
+         or v_idempotency.request_fingerprint is null
+         or pg_catalog.octet_length(v_idempotency.request_fingerprint) <> 32
+         or v_idempotency.request_fingerprint_key_version <> 'local_v1'
+         or v_idempotency.outcome_code <> 'withdrawn'
+         or v_idempotency.result_resource_type <> 'supplier_ownership_claim'
+         or v_idempotency.result_resource_id is null
+         or v_idempotency.result_resource_id is distinct from v_idempotency.target_aggregate_id
+         or v_idempotency.result_version_token is null
+         or v_idempotency.result_version_token !~ '^[1-9][0-9]{0,9}$'
+         or v_idempotency.completed_at is null
+         or v_idempotency.lease_token_digest is not null
+         or v_idempotency.lease_digest_key_version is not null
+         or v_idempotency.lease_expires_at is not null
+         or v_idempotency.failure_code is not null
+         or v_idempotency.retry_disposition is not null
+         or v_idempotency.next_attempt_at is not null
+         or v_idempotency.failed_at is not null
+         or v_idempotency.expires_at <= v_idempotency.completed_at
+      then
+        raise exception using
+          errcode = 'P5199',
+          message = 'integrity_reconciliation_required';
+      end if;
+
+      v_result_version := v_idempotency.result_version_token::integer;
+      if v_result_version < 2 then
+        raise exception using
+          errcode = 'P5199',
+          message = 'integrity_reconciliation_required';
+      end if;
+
+      v_original_expected_version := v_result_version - 1;
+      v_original_canonical_request := pg_catalog.jsonb_build_object(
+        'claim_id', v_idempotency.target_aggregate_id,
+        'command_precondition_version', 'claim_withdraw_preconditions_v1',
+        'expected_claim_version', v_original_expected_version,
+        'withdrawal_policy_version', 'claim_withdrawal_v1'
+      );
+      v_original_request_fingerprint := extensions.hmac(
+        pg_catalog.convert_to(
+          'claim-request-fingerprint-v1|' || v_original_canonical_request::text,
+          'UTF8'
+        ),
+        pg_catalog.convert_to(v_hmac_key, 'UTF8'),
+        'sha256'
+      );
+
+      if v_idempotency.request_fingerprint is distinct from v_original_request_fingerprint then
+        raise exception using
+          errcode = 'P5199',
+          message = 'integrity_reconciliation_required';
+      end if;
+
+      select claim_row.*
+      into v_replay_claim
+      from public.supplier_ownership_claims as claim_row
+      where claim_row.id = v_idempotency.result_resource_id;
+
+      if not found
+         or v_replay_claim.id <> v_idempotency.target_aggregate_id
+         or v_replay_claim.claimant_user_profile_id <> v_idempotency.principal_user_profile_id
+         or v_replay_claim.status <> 'withdrawn'
+         or v_replay_claim.record_version <> v_result_version
+         or v_replay_claim.expires_at <> v_replay_claim.submitted_at + interval '720 hours'
+         or v_replay_claim.withdrawn_at is null
+         or v_replay_claim.withdrawn_at <> v_idempotency.completed_at
+         or v_replay_claim.withdrawn_by_user_profile_id <> v_idempotency.principal_user_profile_id
+         or v_replay_claim.withdrawal_reason_code <> 'claimant_withdrawal'
+         or v_replay_claim.updated_at <> v_replay_claim.withdrawn_at
+         or v_replay_claim.withdrawn_at >= v_replay_claim.expires_at
+      then
+        raise exception using
+          errcode = 'P5199',
+          message = 'integrity_reconciliation_required';
+      end if;
+
+      select pg_catalog.count(*)
+      into v_event_count
+      from internal.domain_events as event_row
+      where event_row.producer_idempotency_key_id = v_idempotency.id;
+
+      if v_event_count <> 1 then
+        raise exception using
+          errcode = 'P5199',
+          message = 'integrity_reconciliation_required';
+      end if;
+
+      select event_row.*
+      into v_withdraw_event
+      from internal.domain_events as event_row
+      where event_row.producer_idempotency_key_id = v_idempotency.id
+        and event_row.event_ordinal = 1;
+
+      if not found
+         or v_withdraw_event.event_type <> 'supplier_ownership.claim_withdrawn'
+         or v_withdraw_event.event_schema_version <> 1
+         or v_withdraw_event.aggregate_type <> 'supplier_ownership_claim'
+         or v_withdraw_event.aggregate_id <> v_replay_claim.id
+         or v_withdraw_event.aggregate_sequence <> v_result_version
+         or v_withdraw_event.producer_command_name <> 'supplier_claim.withdraw'
+         or v_withdraw_event.producer_command_contract_version <> 1
+         or v_withdraw_event.source_operation_identity is not null
+         or v_withdraw_event.source_system_code <> 'mujahiz'
+         or v_withdraw_event.source_stream_code is not null
+         or v_withdraw_event.source_event_id is not null
+         or v_withdraw_event.actor_kind <> 'human_user'
+         or v_withdraw_event.actor_user_profile_id <> v_idempotency.principal_user_profile_id
+         or v_withdraw_event.actor_source_code is not null
+         or v_withdraw_event.environment_code <> 'local'
+         or v_withdraw_event.producing_component_code <> 'supplier_claim_command'
+         or v_withdraw_event.causation_event_id is not null
+         or v_withdraw_event.occurred_at <> v_replay_claim.withdrawn_at
+         or v_withdraw_event.persisted_at <> v_replay_claim.withdrawn_at
+         or v_withdraw_event.available_at <> v_replay_claim.withdrawn_at
+         or v_withdraw_event.processing_status <> 'pending'
+         or v_withdraw_event.is_historical
+         or v_withdraw_event.fanout_suppressed
+         or v_withdraw_event.migration_classification_code is not null
+         or v_withdraw_event.payload <> pg_catalog.jsonb_build_object(
+           'claim_id', v_replay_claim.id,
+           'supplier_profile_id', v_replay_claim.supplier_profile_id,
+           'claimant_user_profile_id', v_idempotency.principal_user_profile_id,
+           'claim_version', v_result_version
+         )
+      then
+        raise exception using
+          errcode = 'P5199',
+          message = 'integrity_reconciliation_required';
+      end if;
+
+      select pg_catalog.count(*)
+      into v_withdraw_event_count
+      from internal.domain_events as event_row
+      where event_row.aggregate_type = 'supplier_ownership_claim'
+        and event_row.aggregate_id = v_replay_claim.id
+        and event_row.aggregate_sequence = v_result_version
+        and event_row.event_type = 'supplier_ownership.claim_withdrawn';
+
+      if v_withdraw_event_count <> 1 then
+        raise exception using
+          errcode = 'P5199',
+          message = 'integrity_reconciliation_required';
+      end if;
+    end if;
+
     if v_idempotency.principal_kind <> 'human_user'
        or v_idempotency.principal_user_profile_id is distinct from v_request.claimant_user_profile_id
        or v_idempotency.principal_source_code is not null
@@ -312,115 +477,6 @@ begin
     end if;
 
     if v_idempotency.status = 'completed' then
-      if v_idempotency.outcome_code <> 'withdrawn'
-         or v_idempotency.result_resource_type <> 'supplier_ownership_claim'
-         or v_idempotency.result_resource_id is distinct from p_claim_id
-         or v_idempotency.result_version_token is null
-         or v_idempotency.result_version_token !~ '^[1-9][0-9]*$'
-         or v_idempotency.completed_at is null
-      then
-        raise exception using
-          errcode = 'P5199',
-          message = 'integrity_reconciliation_required';
-      end if;
-
-      v_result_version := v_idempotency.result_version_token::integer;
-      if v_result_version <> p_expected_claim_version + 1 then
-        raise exception using
-          errcode = 'P5199',
-          message = 'integrity_reconciliation_required';
-      end if;
-
-      select claim_row.*
-      into v_replay_claim
-      from public.supplier_ownership_claims as claim_row
-      where claim_row.id = v_idempotency.result_resource_id;
-
-      if not found
-         or v_replay_claim.id <> p_claim_id
-         or v_replay_claim.claimant_user_profile_id <> v_request.claimant_user_profile_id
-         or v_replay_claim.status <> 'withdrawn'
-         or v_replay_claim.record_version <> v_result_version
-         or v_replay_claim.withdrawn_at is null
-         or v_replay_claim.withdrawn_at <> v_idempotency.completed_at
-         or v_replay_claim.withdrawn_by_user_profile_id <> v_request.claimant_user_profile_id
-         or v_replay_claim.withdrawal_reason_code <> 'claimant_withdrawal'
-         or v_replay_claim.updated_at <> v_replay_claim.withdrawn_at
-         or v_replay_claim.withdrawn_at >= v_replay_claim.expires_at
-      then
-        raise exception using
-          errcode = 'P5199',
-          message = 'integrity_reconciliation_required';
-      end if;
-
-      select pg_catalog.count(*)
-      into v_event_count
-      from internal.domain_events as event_row
-      where event_row.producer_idempotency_key_id = v_idempotency.id;
-
-      if v_event_count <> 1 then
-        raise exception using
-          errcode = 'P5199',
-          message = 'integrity_reconciliation_required';
-      end if;
-
-      select event_row.*
-      into v_withdraw_event
-      from internal.domain_events as event_row
-      where event_row.producer_idempotency_key_id = v_idempotency.id
-        and event_row.event_ordinal = 1;
-
-      if not found
-         or v_withdraw_event.event_type <> 'supplier_ownership.claim_withdrawn'
-         or v_withdraw_event.event_schema_version <> 1
-         or v_withdraw_event.aggregate_type <> 'supplier_ownership_claim'
-         or v_withdraw_event.aggregate_id <> v_replay_claim.id
-         or v_withdraw_event.aggregate_sequence <> v_result_version
-         or v_withdraw_event.producer_command_name <> 'supplier_claim.withdraw'
-         or v_withdraw_event.producer_command_contract_version <> 1
-         or v_withdraw_event.source_operation_identity is not null
-         or v_withdraw_event.source_system_code <> 'mujahiz'
-         or v_withdraw_event.source_stream_code is not null
-         or v_withdraw_event.source_event_id is not null
-         or v_withdraw_event.actor_kind <> 'human_user'
-         or v_withdraw_event.actor_user_profile_id <> v_request.claimant_user_profile_id
-         or v_withdraw_event.actor_source_code is not null
-         or v_withdraw_event.environment_code <> 'local'
-         or v_withdraw_event.producing_component_code <> 'supplier_claim_command'
-         or v_withdraw_event.causation_event_id is not null
-         or v_withdraw_event.occurred_at <> v_replay_claim.withdrawn_at
-         or v_withdraw_event.persisted_at <> v_replay_claim.withdrawn_at
-         or v_withdraw_event.available_at <> v_replay_claim.withdrawn_at
-         or v_withdraw_event.processing_status <> 'pending'
-         or v_withdraw_event.is_historical
-         or v_withdraw_event.fanout_suppressed
-         or v_withdraw_event.migration_classification_code is not null
-         or v_withdraw_event.payload <> pg_catalog.jsonb_build_object(
-           'claim_id', v_replay_claim.id,
-           'supplier_profile_id', v_replay_claim.supplier_profile_id,
-           'claimant_user_profile_id', v_request.claimant_user_profile_id,
-           'claim_version', v_result_version
-         )
-      then
-        raise exception using
-          errcode = 'P5199',
-          message = 'integrity_reconciliation_required';
-      end if;
-
-      select pg_catalog.count(*)
-      into v_withdraw_event_count
-      from internal.domain_events as event_row
-      where event_row.aggregate_type = 'supplier_ownership_claim'
-        and event_row.aggregate_id = v_replay_claim.id
-        and event_row.aggregate_sequence = v_result_version
-        and event_row.event_type = 'supplier_ownership.claim_withdrawn';
-
-      if v_withdraw_event_count <> 1 then
-        raise exception using
-          errcode = 'P5199',
-          message = 'integrity_reconciliation_required';
-      end if;
-
       return query
       select
         'replay'::text,

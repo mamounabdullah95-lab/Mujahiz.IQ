@@ -6,6 +6,8 @@ Date: 2026-08-10
 
 Starting `origin/main`: `022f086be4f2c9ddcc73a0cae6c44838ccba051b`
 
+PR #110 reviewed head before completed-binding correction: `6ede1cf2ff7173ab763a579af73d657f47e3846b`
+
 Primary task profile: Supplier domain
 
 ## 1. Result and exact boundary
@@ -13,6 +15,8 @@ Primary task profile: Supplier domain
 The approved withdrawal contract in `50_CLAIM_WITHDRAW_IMPLEMENTATION_READINESS.md` was implementable without redesign. This slice adds exactly one logical Claim business mutation, `supplier_claim.withdraw`, using the corrected two-phase REL-001 protocol established for submit.
 
 The implementation adds one migration, one focused pgTAP file, one real multi-session harness, and this evidence note. It adds no table, other Claim command, mutation RLS policy, notification, hosted Supabase capability, Firebase integration, real row, seed, backfill, remote migration, or deployment. Shared Baseline, Register, and Schema Design documents are unchanged.
+
+Direct review of the first PR #110 head found one contract-level ordering defect: Phase A compared the current caller fingerprint with the stored row before branching on `status = 'completed'`. A privileged corruption of an otherwise completed stored fingerprint was therefore classified as an ordinary caller conflict and attempted a conflict audit. The corrected implementation proves a completed row's stored authoritative fact first, returns reconciliation-required for corruption without an audit, and only then compares a coherent original binding with the current request.
 
 ## 2. Routines and two-phase protocol
 
@@ -40,6 +44,16 @@ It provides:
 - matching expired lease: durable reclaim, incremented attempt, and a new fence;
 - expired attempt 10: durable `failed / terminal / attempt_limit_exceeded` plus stable `reconciliation_required` on later calls; and
 - corrupt completed result, fingerprint, Claim, or event binding: `P5199 / integrity_reconciliation_required`, never re-execution.
+
+For a completed row, Phase A now uses this decision order:
+
+1. validate the stored command/environment/principal/target/digest/result/lifecycle shape independently;
+2. derive the original expected source version as stored result version minus one;
+3. reconstruct the original semantic request from the stored target and derived source version, then recompute its HMAC fingerprint;
+4. require the stored fingerprint, referenced withdrawn Claim, actor/provenance/timestamps, and exact single producer/aggregate event to match that authoritative result;
+5. return `P5199` immediately for any corruption, with no conflict audit or inline repair;
+6. only after self-integrity passes, compare the current principal/target/fingerprint with the proven original binding; and
+7. emit the minimized conflict audit and safe `idempotency_key_conflict` result only for genuine current-request key reuse, otherwise replay the immutable result.
 
 PostgreSQL generates the raw execution-fence UUID, while the idempotency row stores only its HMAC-SHA-256 digest. The 60-second lease, 10-attempt cap, and 720-hour replay retention are explicitly labeled provisional local protocol parameters, not final hosted operations policy.
 
@@ -82,11 +96,15 @@ A completed same-key/same-request replay returns the original Claim UUID, Suppli
 
 Replay never derives a new envelope from a later mutable Claim state and never re-executes a corrupt completed result.
 
+The original expected Claim version is not trusted from the current request during self-integrity verification. It is deterministically reconstructed as `result_version_token - 1`; the stored target plus that source version and the two approved policy-version constants reproduce the exact original canonical JSON and HMAC framing. A stored fingerprint mismatch is therefore completed-state corruption even when the caller repeats the original request. Once that stored fact passes, a changed current expected version or target is a genuine caller conflict.
+
 ## 5. Event, audit, notification, and read behavior
 
 Each successful transition inserts exactly one `supplier_ownership.claim_withdrawn` event with schema version 1. Its payload contains only Claim UUID, Supplier UUID, claimant UUID, and resulting Claim version. It contains no evidence, provider identity, reviewer notes, raw idempotency material, or fence.
 
 Ordinary success and replay create zero audit rows. Only a same-key binding conflict creates the approved minimized durable audit row, and audit unavailability fails closed. No notification table or write was added.
+
+Focused fault injection proves that a genuine coherent-row conflict whose required `internal.audit_logs` insert fails returns `P5116 / audit_unavailable`, returns no false conflict result, creates no Claim version/event mutation, and persists no partial audit row. Completed binding corruption follows the separate reconciliation path and never attempts this conflict audit.
 
 The existing claimant safe projection returns the withdrawn state to the exact claimant and remains invisible to another claimant. The existing single claimant self-select RLS policy remains read-only. No Claim UPDATE policy exists, and the runtime still cannot directly update the Claim table.
 
@@ -112,9 +130,9 @@ Future approve and reject commands must use the same versioned Claim lock bounda
 
 The focused disposable run applied all migrations and then ran only `claim_withdraw_trusted_command.sql`.
 
-Result: **89/89 assertions passed**, 0 failed; 10.5 seconds.
+Result: **101/101 assertions passed**, 0 failed; 15.8 seconds.
 
-Coverage includes routine catalog shape, grants, definer safety, both success states, retained assignment provenance, exact actor/timestamps/version/event, self-read visibility, no ordinary audit/notification, missing/wrong/unknown authorization, API/direct-update denial, version/due/terminal behavior, durable reclaim/fencing, event and completion rollback, replay corruption variants, conflict audit, sensitive persistence, and cleanup.
+Coverage includes routine catalog shape, grants, definer safety, both success states, retained assignment provenance, exact actor/timestamps/version/event, self-read visibility, no ordinary audit/notification, missing/wrong/unknown authorization, API/direct-update denial, version/due/terminal behavior, durable reclaim/fencing, event and completion rollback, genuine changed-version and changed-target conflict audits, audit fail-closed injection, completed fingerprint/result-target/result-version/missing-event/mismatched-event/duplicate-event corruption, sensitive persistence, and cleanup.
 
 ### 7.2 Real multi-session withdrawal harness
 
@@ -124,7 +142,7 @@ Command:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-claim-withdraw-concurrency.ps1
 ```
 
-Result: **41/41 checks passed**; 34.5 seconds.
+Result: **41/41 checks passed**; 31.8 seconds.
 
 ### 7.3 Submit concurrency regression
 
@@ -134,7 +152,7 @@ Command:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-claim-submit-hotfix-concurrency.ps1
 ```
 
-Result: **34/34 checks passed**; 30.7 seconds.
+Result: **34/34 checks passed**; 24.1 seconds.
 
 ### 7.4 Complete repository SQL validator
 
@@ -144,7 +162,7 @@ Command:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-local-supabase-sql.ps1
 ```
 
-Result: **passed** - 20 migrations applied; 20 pgTAP files; **1,337/1,337 assertions passed**, 0 failed; 52.4 seconds.
+Result: **passed** - 20 migrations applied; 20 pgTAP files; **1,349/1,349 assertions passed**, 0 failed; 51.0 seconds.
 
 ### 7.5 Exact structural and security result
 
