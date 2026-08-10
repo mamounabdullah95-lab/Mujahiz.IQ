@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Decision Register
 
 Status: Design register with local SQL-slice evidence
-Baseline: `origin/main` at `37243fe43f0cd26008c93a5ebf4da2963270123d` after merged PR #109, including merged PR #108
+Baseline: `origin/main` at `31ef92dc2e9809698d7d5091848b392996adabf0` after merged PR #109, including merged PR #108
 Companion design: `09_POSTGRESQL_SCHEMA_DESIGN.md`
 
 ## 1. Use of this register
@@ -38,7 +38,7 @@ The same owner decision selects one future empty, revoked, local-only `public.su
 
 ### Post-PR #102 structural, identity-context, and claimant-read implementation state
 
-PR #109 implements the nineteenth local-only Claim submit hotfix slice after the prior structural, identity-context, Claimant self-read, and submit foundations. Current `main` contains 22 physical tables, 20 implemented Core Phase 1 concepts, and 16 deferred across 19 tracked local migrations and 19 pgTAP files; 1,248/1,248 exact-head assertions passed, with 67/67 focused hotfix assertions and 34/34 true multi-session concurrency assertions. Claim self-read RLS remains one policy, no mutation RLS policy exists, and the five other Claim business commands remain unimplemented. PR #108 identified M-1, M-2, and M-3; PR #109 corrects them locally. `supplier_claim.reserve_submit` is private Phase-1 support for logical `supplier_claim.submit`, not a seventh business command.
+PR #109 implements the nineteenth local-only Claim submit hotfix slice after the prior structural, identity-context, Claimant self-read, and submit foundations. Current `main` contains 22 physical tables, 20 implemented Core Phase 1 concepts, and 16 deferred across 19 tracked local migrations and 19 pgTAP files; 1,248/1,248 exact-head assertions passed, with 67/67 focused hotfix assertions and 34/34 true multi-session concurrency assertions. Claim self-read RLS remains one policy, no mutation RLS policy exists, and the five other Claim business commands remain unimplemented. PR #108 identified M-1, M-2, and M-3; PR #109 corrects them locally. PR #107 is merged documentation-only and records `supplier_claim.withdraw` as implementation-ready from the local contract/locking/two-phase idempotency perspective only; it is not implemented, and no `reserve_withdraw` or `supplier_claim.withdraw` SQL routine exists. This does not imply gateway, hosted Supabase, Firebase signed-token, Production, or deployment readiness. `supplier_claim.reserve_submit` is private Phase-1 support for logical `supplier_claim.submit`, not a seventh business command.
 
 On 8 August 2026, the Product/Data Owner approved `29_SUPPLIER_PAYMENT_OPTIONS_PRODUCT_AND_DATA_CONTRACT.md` for payment options only: indicative Supplier-profile assertions; methods `cash|bank_transfer|cheque|letter_of_credit`; currencies `IQD|USD`; explicit `credit_not_offered` with absence-as-unknown; 1-365 calendar-day credit using only exact `invoice_date|delivery_acceptance_date` starts; separate reviewed 1-100 advance percentage; internal-only notes/provenance/review/ambiguous values; no client projection; and no invented freshness or reviewer authority. Transaction documents remain independently authoritative.
 
@@ -155,9 +155,9 @@ Only `supplier_claim.submit` is approved as the first later command slice. PR #1
 ## 3. Documentation synchronization
 
 - PR #46 synchronized the normalized zero-to-many wording in `06_CUTOVER_AND_ROLLBACK_PRINCIPLES.md` before this SQL slice began.
-- PR #109 is merged at current verified `origin/main` `37243fe43f0cd26008c93a5ebf4da2963270123d` after PR #108, with 19 migrations, 19 pgTAP files, 22 physical tables, 20 implemented / 16 deferred concepts, 1,248/1,248 exact-head assertions, 67/67 focused hotfix assertions, and 34/34 true concurrency assertions.
+- PR #109 is merged at current verified `origin/main` `31ef92dc2e9809698d7d5091848b392996adabf0` after PR #108, with 19 migrations, 19 pgTAP files, 22 physical tables, 20 implemented / 16 deferred concepts, 1,248/1,248 exact-head assertions, 67/67 focused hotfix assertions, and 34/34 true concurrency assertions.
 
-Document 32 records the approved Claim boundary; document 47 records Claimant self-read evidence; document 48 records PR #103 submit; document 49 records PR #108's merged red-team review; document 53 records PR #109's local correction. The 7 Open gates are `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+Document 32 records the approved Claim boundary; document 47 records Claimant self-read evidence; document 48 records PR #103 submit; document 49 records PR #108's merged red-team review; document 50 records PR #107's merged withdraw implementation-readiness recommendation; document 53 records PR #109's local correction. The 7 Open gates are `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 
 ## 4. Approval record
 
