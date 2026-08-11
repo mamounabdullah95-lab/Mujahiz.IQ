@@ -1,6 +1,6 @@
 # Relational privileged-actor resolver implementation readiness
 
-Status: **Blocked before SQL by one unresolved Product/Security/Data policy-version binding decision; documentation-only readiness result**
+Status: **Owner-approved for bounded local implementation; the original documentation-only blocker was resolved on 2026-08-11**
 
 Date: 2026-08-11
 
@@ -13,6 +13,42 @@ Verified starting `origin/main`: `d606d4fca8a90c9ffe3444982ead48757245aeec`, the
 Branch: `codex/privileged-actor-resolver`
 
 ## 1. Readiness verdict and hard boundary
+
+### 2026-08-11 Owner decision resolving the original blocker
+
+The first PR #116 revision correctly stopped before SQL at reviewed head
+`5ec4075d44e4f9dffa54060a9100aa66e2240fc6`. On 11 August 2026, the
+Product/Security/Data Owner approved Option A for this bounded LOCAL Claim-v1
+resolver. The fixed, code-owned compatibility binding is now exactly:
+
+| Namespace | Exact supported runtime value |
+|---|---|
+| Claim context | `sec-001-claim-v1` |
+| Provider state | `firebase-provider-state-v1` |
+| Platform role authorization | `platform-role-policy-v1` |
+| Platform access authorization | `platform-access-policy-v1` |
+| Security policy | `platform-admin-security-v1` |
+| Required coverage | `platform-admin-coverage-v1` |
+| Evidence minimization | `platform-admin-minimization-v1` |
+
+The six relational values use exact equality only. `provider_state_version`
+`NULL` is unsupported. Role and access versions are deliberately distinct; no
+namespace is interchangeable with another. Callers select no policy or version,
+and v1 has no runtime registry or fallback. Any missing, mismatched, unsupported,
+ambiguous, or additional-current contradictory required authority state is
+`unknown` and takes precedence over a conclusive `denied` blocker. Only the exact
+all-positive tuple can return `eligible`.
+
+This approval resolves the readiness blocker and makes the resolver locally
+implementation-ready. It does not close an Open gate, activate hosted Supabase,
+prove Firebase authentication, authorize Production, create real authority rows,
+approve Reviewer assignment, or approve target-Supplier conflict handling.
+
+### Historical readiness finding at the reviewed head
+
+The remaining sections preserve the original readiness snapshot and stop point
+at `5ec4075d44e4f9dffa54060a9100aa66e2240fc6`. Document 59 records the
+subsequent bounded implementation and validation after Owner approval.
 
 The relational privileged-actor predicate is structurally ready but **not policy-version ready**.
 
