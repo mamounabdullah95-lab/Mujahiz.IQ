@@ -1,6 +1,6 @@
 # Authoritative PostgreSQL schema design
 
-Status: **Owner-approved logical design; twenty-four local SQL slices implemented; privileged-access and security-eligibility structural slices implemented as inert foundations**
+Status: **Owner-approved logical design; twenty-five local SQL slices implemented; privileged-access and security-eligibility structural slices implemented as inert foundations**
 Design base: `1a4e5a59a37b2f1eb05d5cf8fa555d8f7dfe84d6`
 Evidence date: 3 August 2026
 Primary task profile: Documentation
@@ -13,7 +13,7 @@ This document is the authoritative logical design for a future Mujahiz IQ Postgr
 - The twenty-five local slices implement 22 of 37 Core Phase 1 concepts; 15 remain unimplemented. No verified hosted environment contains these local tables.
 - Owner-approved document 41 selected exactly one empty, fully revoked, local-only `public.supplier_ownership_claims` table as the Claim-specific slice after REL. Merged PR #99 implemented that structural foundation as the fifteenth tracked local migration without RLS, policy, grant, row, trusted command, Auth bridge runtime, hosted authority, or Production behavior.
 - Owner-approved document 38 resolves RFQ-003 for future normalized commercial semantics only. No RFQ/quotation PostgreSQL table or amount-bearing SQL slice has been selected or implemented.
-- Owner-approved document 55 selects Access Option A (`public.access_grants`, purpose exactly `platform_administration`) and Security Option A (`internal.security_eligibility_assessments`) as two separate local-only structural slices. PRs #113/#114 implemented both as empty, fully revoked foundations; PR #116 implemented only `claim_security.current_privileged_actor_v1()` and PR #118 implemented only `claim_security.target_supplier_conflict_v1(uuid, uuid, uuid)`; no row, administration runtime, bootstrap, or Reviewer substrate exists.
+- Owner-approved document 55 selects Access Option A (`public.access_grants`, purpose exactly `platform_administration`) and Security Option A (`internal.security_eligibility_assessments`) as two separate local-only structural slices. PRs #113/#114 implemented both as empty, fully revoked foundations. Implemented locally: `claim_security.current_privileged_actor_v1()`, private `claim_security.privileged_actor_for_profile_v1(uuid)`, `claim_security.target_supplier_conflict_v1(uuid, uuid, uuid)`, Reviewer Private-Read Substrate, Owner assignment queue, Reviewer candidate projection, assigned-reviewer queue/detail, and three Claim SELECT policies. Still absent: real access/security authority population, access/security administration runtime, bootstrap, `supplier_claim.assign_reviewer`, approve/reject/expire, real Firebase gateway, and hosted/Production authority.
 - The local slices contain no seed, trigger, browser/application grant beyond the dedicated Claimant read path, and no Claim mutation policy. PR #101 adds the identity context; PR #102 adds exactly one Claim FORCE-RLS self-select policy and one minimized `SECURITY INVOKER` claimant projection, with no trusted command, row, or hosted authority.
 - No hosted Supabase project was linked, authenticated, queried, or independently verified.
 - The local Supabase runtime was not started for the documentation-only design; the separate SQL slice was later verified in the disposable local runtime.
