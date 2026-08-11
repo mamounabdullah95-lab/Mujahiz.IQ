@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-11-target-supplier-conflict-resolver-merged`
+Baseline ID: `baseline-2026-08-11-reviewer-private-read-substrate-merged`
 Updated: 2026-08-11
 Canonical Production URL: `https://mujahiz.com`
 
