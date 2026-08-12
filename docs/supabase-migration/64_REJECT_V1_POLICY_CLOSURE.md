@@ -1,14 +1,16 @@
 # `supplier_claim.reject` v1 policy closure
 
-Status: **Owner direction recorded; the literal registry proposal below still requires the explicit Owner approval in section 12 before SQL implementation. This document authorizes no SQL, migration, runtime, RLS, grant, Firebase, hosted Supabase, data, or Production action.**
+Status: **Owner-approved — implementation-ready for a separately scoped LOCAL reject-v1 SQL implementation; no SQL, hosted, Firebase, Production, or deployment action is authorized by this approval.**
 
 Date: 2026-08-12
+
+Approval date: 2026-08-12
 
 Primary task profile: Documentation
 
 ## 1. Scope and verified starting point
 
-This documentation-only closure applies the Owner's already selected minimal Option A direction from [reject trusted-command readiness](63_REJECT_TRUSTED_COMMAND_READINESS.md): one minimal rejection registry, evidence verification for every successful rejection, no reject-v1 reviewer notes, and generic claimant-safe disclosure. It fixes a proposed literal set so a later, separately approved local-only implementation can be deterministic and reviewable. It does not reopen those four direction choices.
+This documentation-only closure records the Owner-approved minimal Option A direction from [reject trusted-command readiness](63_REJECT_TRUSTED_COMMAND_READINESS.md): one minimal rejection registry, evidence verification for every successful rejection, no reject-v1 reviewer notes, and generic claimant-safe disclosure. It fixes the immutable v1 literal set for a later, separately scoped local-only implementation. It does not reopen those four direction choices.
 
 The exact starting `origin/main` SHA is:
 
@@ -25,9 +27,9 @@ It is the merge of PR #124. PR #124's reviewed implementation commit `d44242c` i
 - The Claimant projection already maps every rejected Claim to `not_approved` without reading restricted decision fields. This is compatible with the proposed disclosure mapping. MSG-003 independently requires the rejected event to carry only a bounded internal reason code/version and gives the later materializer the claimant-safe mapping boundary.
 - AUD-001 permits a restricted evidence descriptor/reference and digest while excluding copied Claim evidence and reviewer notes. FILE-001 remains open: this proposal has no managed-file, upload, attachment, Storage, signed-URL, or custody dependency.
 
-## 3. Exact internal reason registry proposal
+## 3. Exact internal reason registry
 
-**Recommendation requiring Owner approval:** the sole reject-v1 reason-registry identifier is:
+The sole reject-v1 reason-registry identifier is:
 
 ```text
 claim_rejection_reason_v1
@@ -44,7 +46,7 @@ existing_owner
 
 No other reason is accepted. An unknown, unsupported, corrupt, or version-mismatched reason/registry fails closed and cannot terminalize a Claim.
 
-`claim_rejection_reason_v1` is a new recommended literal: the repository establishes the versioned `claim_*_v1` convention but does not already approve a reject-reason registry name.
+`claim_rejection_reason_v1` is the approved v1 literal. The repository establishes the versioned `claim_*_v1` convention.
 
 ## 4. Exact resubmission mapping
 
@@ -57,7 +59,7 @@ No other reason is accepted. An unknown, unsupported, corrupt, or version-mismat
 
 The later reject implementation must not silently add `existing_owner` to the existing submit/prior-context allowlists. If a later Owner-approved workflow allows a resubmission after the ownership condition is independently resolved, that is a separate versioned policy and implementation decision.
 
-## 5. Evidence-verification registry proposal
+## 5. Evidence-verification registry
 
 Every successful reject requires exactly one registered tuple. The smallest proposal reuses existing evidence vocabulary where it exists:
 
@@ -68,9 +70,9 @@ Every successful reject requires exactly one registered tuple. The smallest prop
 | `supplier_mismatch` | `manual_review` | `claim_evidence_review_v1` | `verified` |
 | `existing_owner` | `manual_review` | `claim_evidence_review_v1` | `verified` |
 
-The method, method/version, and two outcome values are already present in Claim fixtures and the structural seam. Their use as this exhaustive reject-v1 tuple registry is nevertheless subject to the Owner approval box.
+The method, method/version, and two outcome values are already present in Claim fixtures and the structural seam. Their use as this exhaustive reject-v1 tuple registry is Owner-approved.
 
-**Recommendation requiring Owner approval:** the evidence-policy version is exactly:
+The evidence-policy version is exactly:
 
 ```text
 claim_reject_evidence_policy_v1
@@ -89,7 +91,7 @@ evidence_digest_version: claim_reject_evidence_digest_v1
 evidence_digest: exactly 64 lowercase hexadecimal characters, computed server-side from the canonical restricted-reference projection
 ```
 
-`claim_reject_evidence_digest_v1` is a new recommended literal requiring Owner approval. The exact shape reuses the existing audit restricted-reference (1–256 byte) and digest triplet seam, plus the repository's existing lowercase SHA-256 digest convention. No raw reference, digest input, Claim evidence content, or reviewer note is emitted to a claimant, event payload, or idempotency row. The request fingerprint contains only the server-derived keyed digest of the canonical restricted-reference/digest projection.
+`claim_reject_evidence_digest_v1` is the approved v1 digest-version literal. The exact shape remains as specified above and is immutable for v1.
 
 ## 6. Claimant-safe disclosure
 
@@ -106,9 +108,9 @@ No claimant result, Claimant projection, notification, or error exposes an inter
 
 Reject v1 accepts no reviewer-note parameter. On every successful reject, `reviewer_notes` remains `NULL`; no note digest, null marker, normalization rule, or note policy is included in the request fingerprint. This is compatible with the existing nullable structural column and its decision-shape constraint. A later notes capability requires a separately approved versioned policy and command change.
 
-## 8. Recommended future business-call signature
+## 8. Approved future business-call signature
 
-**Recommendation requiring Owner approval; not an implemented SQL signature:**
+**Owner-approved policy record; not an implemented SQL signature:**
 
 ```text
 supplier_claim.reject(
@@ -151,7 +153,7 @@ claimant disclosure mapping version: claim_reject_disclosure_v1
 decision authorization policy version
 ```
 
-`claim_reject_disclosure_v1` is a new recommended literal requiring Owner approval. The raw key, correlation ID, authentication headers/tokens, retry count, server time, actor/role facts, generated IDs, audit/event IDs, notification values, raw restricted reference, raw evidence, and reviewer notes are excluded.
+`claim_reject_disclosure_v1` is the approved v1 disclosure-mapping literal. The raw key, correlation ID, authentication headers/tokens, retry count, server time, actor/role facts, generated IDs, audit/event IDs, notification values, raw restricted reference, raw evidence, and reviewer notes are excluded.
 
 ## 10. Audit and event implications
 
@@ -175,9 +177,9 @@ MIG-002
 
 Production/data impact: **none**. This policy closure used local repository and Git ancestry evidence only. It performed no Firebase or hosted Supabase access; no Production/TEST data action; and no SQL, migration, RLS/grant, runtime, gateway, notification, Auth/configuration, deployment, seed, backfill, DNS, billing, or file action.
 
-## 12. Owner Approval Box — literal values required before SQL implementation
+## 12. Owner-approved immutable v1 policy record
 
-> **Explicit Owner approval required.** The following recommendations are not approved merely by appearing in this document. A later SQL implementation must not begin until the Owner explicitly approves this complete box.
+> **Owner approval recorded on 2026-08-12.** The Product/Data/Security Owner explicitly approved the complete Reject v1 Policy Closure package documented in PR #125. The following values are the immutable approved v1 policy record. A later SQL implementation must preserve them exactly.
 >
 > - Reason registry/version: `claim_rejection_reason_v1`.
 > - Exact reasons: `insufficient_evidence`, `claimant_ineligible`, `supplier_mismatch`, `existing_owner` — and no others.
@@ -191,7 +193,7 @@ Production/data impact: **none**. This policy closure used local repository and 
 
 ## 13. Exact stop point
 
-Stop after this literal policy proposal and Owner-approval checkpoint. Do not mark reject implementation-ready, implement SQL, create a migration, alter RLS/grants/runtime, access hosted systems, write data, merge, deploy, or resolve any Open gate. After explicit Owner approval, the next action is one separately scoped local-only reject implementation task.
+Stop after recording this Owner approval. Do not implement SQL, create a migration, alter RLS/grants/runtime, access hosted systems, write data, merge, deploy, or resolve any Open gate. The next action is one separately scoped local-only reject implementation task that preserves this immutable approved v1 policy record.
 
 ## References
 
