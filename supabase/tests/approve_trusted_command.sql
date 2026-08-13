@@ -332,7 +332,7 @@ select pg_temp.approve_id(6001),'supplier_claim.approve',1,'local',
   extensions.digest(pg_catalog.convert_to('historical-approve-request','UTF8'),'sha256'),
   'local_v1','completed',1,'approved','supplier_ownership_claim',
   pg_temp.approve_id(1108),'3',decided_at-interval '1 minute',decided_at,
-  decided_at+interval '30 days'
+  decided_at-interval '1 minute'+interval '720 hours'
 from public.supplier_ownership_claims where id=pg_temp.approve_id(1108);
 
 insert into internal.domain_events(
@@ -415,6 +415,63 @@ select pg_temp.approve_id(6003),'supplier_claim.approve',1,'claim_ownership',
 from public.supplier_ownership_claims claim_row
 where claim_row.id=pg_temp.approve_id(1108);
 
+update internal.idempotency_keys as approval_idempotency
+set request_fingerprint = extensions.hmac(
+  pg_catalog.convert_to(
+    'claim-request-fingerprint-v1|'
+      || pg_catalog.jsonb_build_object(
+        'claim_id', approved_claim.id,
+        'expected_claim_version', approved_claim.record_version - 1,
+        'expected_reviewer_assignment_version',
+          approved_claim.reviewer_assignment_version,
+        'evidence_verification_method_code',
+          approved_claim.evidence_verification_method_code,
+        'evidence_verification_version',
+          approved_claim.evidence_verification_version,
+        'evidence_verification_outcome_code',
+          approved_claim.evidence_verification_outcome_code,
+        'checked_source_classes',
+          approval_audit.safe_context -> 'checked_source_classes',
+        'approval_evidence_policy_version',
+          'claim_approval_evidence_policy_v1',
+        'reason_registry_version', 'claim_approval_reason_registry_v1',
+        'restricted_evidence_binding',
+          pg_catalog.encode(
+            extensions.hmac(
+              pg_catalog.convert_to(
+                'claim-approve-evidence-reference-v1|'
+                  || pg_catalog.jsonb_build_object(
+                    'restricted_evidence_reference',
+                      approval_audit.restricted_evidence_reference,
+                    'evidence_digest', approval_audit.evidence_digest,
+                    'evidence_digest_version',
+                      'claim_approve_evidence_digest_v1'
+                  )::text,
+                'UTF8'
+              ),
+              pg_catalog.convert_to(pg_catalog.repeat('k',32), 'UTF8'),
+              'sha256'
+            ),
+            'hex'
+          ),
+        'evidence_digest_version', 'claim_approve_evidence_digest_v1',
+        'disclosure_policy_version', 'claim_approve_disclosure_v1',
+        'decision_authorization_policy_version', 'sec-001-claim-v1',
+        'supersession_policy_version',
+          'claim_approval_reason_registry_v1',
+        'reviewer_notes_marker', 'null'
+      )::text,
+    'UTF8'
+  ),
+  pg_catalog.convert_to(pg_catalog.repeat('k',32), 'UTF8'),
+  'sha256'
+)
+from public.supplier_ownership_claims as approved_claim,
+     internal.audit_logs as approval_audit
+where approval_idempotency.id = pg_temp.approve_id(6001)
+  and approved_claim.id = pg_temp.approve_id(1108)
+  and approval_audit.id = pg_temp.approve_id(6003);
+
 select ok((select decided_at >= submitted_at and decided_at < expires_at
   from public.supplier_ownership_claims where id=pg_temp.approve_id(1108)),
   'coherent historical approved fixture is internally time-valid');
@@ -477,6 +534,105 @@ begin
         update public.supplier_ownerships
         set establishment_reason_code='synthetic_wrong_reason'
         where id=pg_temp.approve_id(5001);
+      when 'event_environment' then
+        update internal.domain_events set environment_code='production'
+        where id=pg_temp.approve_id(6002);
+      when 'event_source_system' then
+        update internal.domain_events set source_system_code='synthetic_source'
+        where id=pg_temp.approve_id(6002);
+      when 'event_component' then
+        update internal.domain_events
+        set producing_component_code='synthetic_component'
+        where id=pg_temp.approve_id(6002);
+      when 'event_schema_version' then
+        update internal.domain_events set event_schema_version=2
+        where id=pg_temp.approve_id(6002);
+      when 'event_aggregate_sequence' then
+        update internal.domain_events set aggregate_sequence=4
+        where id=pg_temp.approve_id(6002);
+      when 'event_correlation' then
+        update internal.domain_events
+        set correlation_id=pg_temp.approve_id(6997)
+        where id=pg_temp.approve_id(6002);
+      when 'event_available_at' then
+        update internal.domain_events
+        set available_at=available_at+interval '1 microsecond'
+        where id=pg_temp.approve_id(6002);
+      when 'event_processing_status' then
+        update internal.domain_events
+        set processing_status='processed',processed_at=persisted_at
+        where id=pg_temp.approve_id(6002);
+      when 'event_historical' then
+        update internal.domain_events
+        set processing_status='processed',processed_at=persisted_at,
+            is_historical=true,fanout_suppressed=true,
+            migration_classification_code='synthetic_history'
+        where id=pg_temp.approve_id(6002);
+      when 'event_fanout_suppressed' then
+        execute 'alter table internal.domain_events drop constraint domain_events_migration_suppression_ck';
+        update internal.domain_events set fanout_suppressed=true
+        where id=pg_temp.approve_id(6002);
+      when 'event_missing' then
+        delete from internal.domain_events where id=pg_temp.approve_id(6002);
+      when 'event_duplicate_primary' then
+        execute 'alter table internal.domain_events drop constraint domain_events_aggregate_sequence_uk';
+        insert into internal.domain_events
+        select (pg_catalog.jsonb_populate_record(
+          null::internal.domain_events,
+          pg_catalog.to_jsonb(event_row)||pg_catalog.jsonb_build_object(
+            'id',pg_temp.approve_id(6998),
+            'producer_idempotency_key_id',null,
+            'source_operation_identity','synthetic_duplicate_primary'
+          )
+        )).*
+        from internal.domain_events event_row
+        where event_row.id=pg_temp.approve_id(6002);
+      when 'event_orphan_link' then
+        update internal.audit_logs
+        set domain_event_reference=pg_temp.approve_id(6999)
+        where id=pg_temp.approve_id(6003);
+      when 'idempotency_contract_version' then
+        update internal.idempotency_keys set command_contract_version=2
+        where id=pg_temp.approve_id(6001);
+      when 'idempotency_fingerprint_version' then
+        update internal.idempotency_keys
+        set request_fingerprint_key_version='unsupported_v1'
+        where id=pg_temp.approve_id(6001);
+      when 'idempotency_fingerprint_missing' then
+        execute 'alter table internal.idempotency_keys alter column request_fingerprint drop not null';
+        update internal.idempotency_keys set request_fingerprint=null
+        where id=pg_temp.approve_id(6001);
+      when 'idempotency_key_digest_missing' then
+        execute 'alter table internal.idempotency_keys alter column key_digest drop not null';
+        update internal.idempotency_keys set key_digest=null
+        where id=pg_temp.approve_id(6001);
+      when 'idempotency_fingerprint_mismatch' then
+        update internal.idempotency_keys
+        set request_fingerprint=extensions.digest(
+          pg_catalog.convert_to('synthetic_wrong_fingerprint','UTF8'),'sha256')
+        where id=pg_temp.approve_id(6001);
+      when 'idempotency_target_claim' then
+        update internal.idempotency_keys
+        set target_aggregate_id=pg_temp.approve_id(1107)
+        where id=pg_temp.approve_id(6001);
+      when 'idempotency_result_claim' then
+        update internal.idempotency_keys
+        set result_resource_id=pg_temp.approve_id(1107)
+        where id=pg_temp.approve_id(6001);
+      when 'idempotency_result_version' then
+        update internal.idempotency_keys set result_version_token='4'
+        where id=pg_temp.approve_id(6001);
+      when 'idempotency_outcome' then
+        update internal.idempotency_keys set outcome_code='not_approved'
+        where id=pg_temp.approve_id(6001);
+      when 'idempotency_status' then
+        execute 'alter table internal.idempotency_keys drop constraint idempotency_keys_lifecycle_shape_ck';
+        update internal.idempotency_keys set status='processing'
+        where id=pg_temp.approve_id(6001);
+      when 'idempotency_missing' then
+        update internal.audit_logs
+        set idempotency_reference=pg_temp.approve_id(6999)
+        where id=pg_temp.approve_id(6003);
       else
         raise exception 'unknown historical corruption probe';
     end case;
@@ -538,6 +694,78 @@ select is(pg_temp.probe_historical_approval_corruption('approval_source_classes'
 select is(pg_temp.probe_historical_approval_corruption('ownership_provenance'),
   'integrity_reconciliation_required',
   'M3: mismatched historical ownership provenance fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_environment'),
+  'integrity_reconciliation_required',
+  'M3 event: historical approval environment mismatch fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_source_system'),
+  'integrity_reconciliation_required',
+  'M3 event: historical approval source-system mismatch fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_component'),
+  'integrity_reconciliation_required',
+  'M3 event: historical approval component mismatch fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_schema_version'),
+  'integrity_reconciliation_required',
+  'M3 event: historical approval schema-version mismatch fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_aggregate_sequence'),
+  'integrity_reconciliation_required',
+  'M3 event: historical approval aggregate sequence mismatch fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_correlation'),
+  'integrity_reconciliation_required',
+  'M3 event: historical approval correlation mismatch fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_available_at'),
+  'integrity_reconciliation_required',
+  'M3 event: historical approval availability mismatch fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_processing_status'),
+  'integrity_reconciliation_required',
+  'M3 event: historical approval processing-state mismatch fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_historical'),
+  'integrity_reconciliation_required',
+  'M3 event: historical/backfill event flags fail reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_fanout_suppressed'),
+  'integrity_reconciliation_required',
+  'M3 event: fanout-suppressed approval event fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_missing'),
+  'integrity_reconciliation_required',
+  'M3 event: missing primary historical approval event fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_duplicate_primary'),
+  'integrity_reconciliation_required',
+  'M3 event: duplicate primary historical approval event fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('event_orphan_link'),
+  'integrity_reconciliation_required',
+  'M3 event: orphaned historical audit-event link fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_contract_version'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: wrong command contract version fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_fingerprint_version'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: unsupported fingerprint version fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_fingerprint_missing'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: missing request fingerprint fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_key_digest_missing'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: missing key digest fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_fingerprint_mismatch'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: mismatched retained request fingerprint fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_target_claim'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: mismatched target Claim fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_result_claim'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: mismatched result Claim fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_result_version'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: mismatched result version fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_outcome'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: incorrect completed outcome fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_status'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: incorrect completion status fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('idempotency_missing'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: orphaned historical audit-idempotency link fails reconciliation');
 
 grant mujahiz_claim_runtime to postgres with set true;
 grant usage on schema extensions to mujahiz_claim_runtime;
@@ -1225,6 +1453,84 @@ begin
         set safe_context=safe_context||'{"unexpected_key":"unexpected"}'::jsonb
         where idempotency_reference=v_idempotency_id
           and source_operation_class='trusted_command';
+      when 'audit_sql_null_actor_profile' then
+        execute 'alter table internal.audit_logs drop constraint audit_logs_actor_shape_ck';
+        update internal.audit_logs set actor_user_profile_id=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_actor_authorization' then
+        update internal.audit_logs set actor_authorization_snapshot=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_target_id' then
+        execute 'alter table internal.audit_logs drop constraint audit_logs_target_shape_ck';
+        update internal.audit_logs set target_id=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_related_type' then
+        execute 'alter table internal.audit_logs drop constraint audit_logs_related_target_shape_ck';
+        update internal.audit_logs set related_target_entity_type=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_related_id' then
+        execute 'alter table internal.audit_logs drop constraint audit_logs_related_target_shape_ck';
+        update internal.audit_logs set related_target_id=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_context_schema' then
+        update internal.audit_logs set safe_context_schema_version=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_context' then
+        update internal.audit_logs set safe_context=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_idempotency_reference' then
+        update internal.audit_logs set idempotency_reference=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_domain_event_reference' then
+        update internal.audit_logs set domain_event_reference=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_prior_state' then
+        update internal.audit_logs set prior_state_code=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_result_state' then
+        update internal.audit_logs set result_state_code=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_prior_version' then
+        update internal.audit_logs set prior_record_version=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_result_version' then
+        update internal.audit_logs set result_record_version=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_evidence_digest' then
+        update internal.audit_logs set evidence_digest=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_evidence_algorithm' then
+        update internal.audit_logs set evidence_digest_algorithm=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_evidence_version' then
+        update internal.audit_logs set evidence_digest_version=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_sql_null_restricted_reference' then
+        update internal.audit_logs set restricted_evidence_reference=null
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_outer_wrong_values' then
+        update internal.audit_logs
+        set prior_state_code='submitted',result_state_code='rejected',
+            prior_record_version=1,result_record_version=4
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
       when 'idempotency_mismatch' then
         update internal.idempotency_keys set result_version_token='4'
         where id=v_idempotency_id;
@@ -1283,6 +1589,60 @@ select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('audit_mismat
   'P5199','M2: missing required audit context key fails reconciliation');
 select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('audit_extra_key'),':',1),
   'P5199','M2: unexpected audit context key fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_actor_profile'),':',1),
+  'P5199','M2 outer audit: SQL-NULL actor profile fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_actor_authorization'),':',1),
+  'P5199','M2 outer audit: SQL-NULL authorization snapshot fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_target_id'),':',1),
+  'P5199','M2 outer audit: SQL-NULL target ID fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_related_type'),':',1),
+  'P5199','M2 outer audit: SQL-NULL related target type fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_related_id'),':',1),
+  'P5199','M2 outer audit: SQL-NULL related target ID fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_context_schema'),':',1),
+  'P5199','M2 outer audit: SQL-NULL context schema fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_context'),':',1),
+  'P5199','M2 outer audit: SQL-NULL safe context fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_idempotency_reference'),':',1),
+  'P5199','M2 outer audit: SQL-NULL idempotency link fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_domain_event_reference'),':',1),
+  'P5199','M2 outer audit: SQL-NULL event link fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_prior_state'),':',1),
+  'P5199','M2 outer audit: SQL-NULL prior state fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_result_state'),':',1),
+  'P5199','M2 outer audit: SQL-NULL result state fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_prior_version'),':',1),
+  'P5199','M2 outer audit: SQL-NULL prior version fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_result_version'),':',1),
+  'P5199','M2 outer audit: SQL-NULL result version fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_evidence_digest'),':',1),
+  'P5199','M2 outer audit: SQL-NULL evidence digest fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_evidence_algorithm'),':',1),
+  'P5199','M2 outer audit: SQL-NULL digest algorithm fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_evidence_version'),':',1),
+  'P5199','M2 outer audit: SQL-NULL digest version fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_sql_null_restricted_reference'),':',1),
+  'P5199','M2 outer audit: SQL-NULL restricted reference fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption(
+    'audit_outer_wrong_values'),':',1),
+  'P5199','M2 outer audit: wrong valid-looking state/version values fail reconciliation');
 select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('idempotency_mismatch'),':',1),
   'P5199','mismatched completed idempotency result binding fails closed');
 select ok((select status='approved' and record_version=3
@@ -1297,7 +1657,15 @@ select ok((select status='approved' and record_version=3
     where idempotency_reference=(select id from internal.idempotency_keys
       where target_aggregate_id=pg_temp.approve_id(1002)
         and command_name='supplier_claim.approve')
-      and source_operation_class='trusted_command')=1,
+      and source_operation_class='trusted_command')=1
+  and (select status='completed'
+      and outcome_code='approved'
+      and result_resource_id=pg_temp.approve_id(1002)
+      and result_version_token='3'
+      and request_fingerprint is not null
+    from internal.idempotency_keys
+    where target_aggregate_id=pg_temp.approve_id(1002)
+      and command_name='supplier_claim.approve'),
   'all corruption probes roll back and preserve the authoritative completed aggregate');
 
 -- Accountable terminal denial replay is durable and read-only.

@@ -688,34 +688,34 @@ begin
          or not found
          or v_superseded_count is null
          or v_superseded_count < 0
-         or v_approve_audit.action_code <> 'supplier_claim.approve'
-         or v_approve_audit.action_contract_version <> 1
-         or v_approve_audit.action_class <> 'claim_ownership'
-         or v_approve_audit.actor_kind <> 'human_user'
+         or v_approve_audit.action_code is distinct from 'supplier_claim.approve'
+         or v_approve_audit.action_contract_version is distinct from 1
+         or v_approve_audit.action_class is distinct from 'claim_ownership'
+         or v_approve_audit.actor_kind is distinct from 'human_user'
          or v_approve_audit.actor_user_profile_id is distinct from v_idempotency.principal_user_profile_id
          or v_approve_audit.actor_source_code is not null
          or v_approve_audit.actor_authorization_snapshot is null
          or v_approve_audit.actor_authorization_snapshot not in ('owner', 'admin')
-         or v_approve_audit.target_entity_type <> 'supplier_ownership_claim'
+         or v_approve_audit.target_entity_type is distinct from 'supplier_ownership_claim'
          or v_approve_audit.target_id is distinct from v_replay_claim.id
-         or v_approve_audit.related_target_entity_type <> 'supplier_profile'
+         or v_approve_audit.related_target_entity_type is distinct from 'supplier_profile'
          or v_approve_audit.related_target_id is distinct from v_replay_claim.supplier_profile_id
          or v_approve_audit.occurred_at is distinct from v_replay_claim.decided_at
          or v_approve_audit.recorded_at is distinct from v_replay_claim.decided_at
-         or v_approve_audit.environment_code <> 'local'
-         or v_approve_audit.source_system_code <> 'mujahiz'
-         or v_approve_audit.producing_component_code <> 'supplier_claim_command'
-         or v_approve_audit.source_operation_class <> 'trusted_command'
-         or v_approve_audit.outcome_class <> 'succeeded'
-         or v_approve_audit.result_code <> 'approved'
-         or v_approve_audit.reason_code <> 'verified_claim_approved'
-         or v_approve_audit.safe_context_schema_version <> 'claim_approve_context_v1'
+         or v_approve_audit.environment_code is distinct from 'local'
+         or v_approve_audit.source_system_code is distinct from 'mujahiz'
+         or v_approve_audit.producing_component_code is distinct from 'supplier_claim_command'
+         or v_approve_audit.source_operation_class is distinct from 'trusted_command'
+         or v_approve_audit.outcome_class is distinct from 'succeeded'
+         or v_approve_audit.result_code is distinct from 'approved'
+         or v_approve_audit.reason_code is distinct from 'verified_claim_approved'
+         or v_approve_audit.safe_context_schema_version is distinct from 'claim_approve_context_v1'
          or v_approve_audit.safe_context is distinct from v_expected_audit_context
          or v_approve_audit.idempotency_reference is distinct from v_idempotency.id
-         or v_approve_audit.prior_state_code <> 'under_review'
-         or v_approve_audit.result_state_code <> 'approved'
-         or v_approve_audit.prior_record_version <> v_result_version - 1
-         or v_approve_audit.result_record_version <> v_result_version
+         or v_approve_audit.prior_state_code is distinct from 'under_review'
+         or v_approve_audit.result_state_code is distinct from 'approved'
+         or v_approve_audit.prior_record_version is distinct from v_result_version - 1
+         or v_approve_audit.result_record_version is distinct from v_result_version
          or v_approve_audit.changed_field_codes is distinct from array[
            'status', 'record_version', 'decided_by_user_profile_id', 'decided_at',
            'decision_reason_code', 'evidence_verification_method_code',
@@ -724,16 +724,16 @@ begin
          ]::text[]
          or v_approve_audit.evidence_digest is distinct from v_expected_evidence_digest
          or v_approve_audit.evidence_digest !~ '^[0-9a-f]{64}$'
-         or v_approve_audit.evidence_digest_algorithm <> 'sha256'
-         or v_approve_audit.evidence_digest_version <> 'claim_approve_evidence_digest_v1'
+         or v_approve_audit.evidence_digest_algorithm is distinct from 'sha256'
+         or v_approve_audit.evidence_digest_version is distinct from 'claim_approve_evidence_digest_v1'
          or v_approve_audit.restricted_evidence_reference is null
          or pg_catalog.octet_length(v_approve_audit.restricted_evidence_reference) not between 1 and 256
-         or v_approve_audit.audit_schema_version <> 'audit_log_v1'
-         or v_approve_audit.action_evidence_schema_version <> 'claim_approve_success_v1'
-         or v_approve_audit.authorization_policy_version <> 'sec-001-claim-v1'
-         or v_approve_audit.producer_contract_version <> 'supplier_claim.approve.v1'
-         or v_approve_audit.minimization_policy_version <> 'aud-001-minimized-v1'
-         or v_approve_audit.retention_class <> 'claim_ownership_decision'
+         or v_approve_audit.audit_schema_version is distinct from 'audit_log_v1'
+         or v_approve_audit.action_evidence_schema_version is distinct from 'claim_approve_success_v1'
+         or v_approve_audit.authorization_policy_version is distinct from 'sec-001-claim-v1'
+         or v_approve_audit.producer_contract_version is distinct from 'supplier_claim.approve.v1'
+         or v_approve_audit.minimization_policy_version is distinct from 'aud-001-minimized-v1'
+         or v_approve_audit.retention_class is distinct from 'claim_ownership_decision'
          or v_approve_audit.legal_hold_classification is not null
          or v_approve_audit.predecessor_audit_log_id is not null
          or v_approve_audit.correction_reason_code is not null
@@ -1727,7 +1727,87 @@ begin
             and approval_idempotency.result_resource_id = approved_claim.id
             and approval_idempotency.result_version_token =
               approved_claim.record_version::text
-            and approval_idempotency.completed_at = approved_claim.decided_at
+            and approval_idempotency.completed_at is not distinct from
+              approved_claim.decided_at
+            and approval_idempotency.principal_source_code is null
+            and approval_idempotency.upstream_source_system_code is null
+            and approval_idempotency.upstream_request_identity is null
+            and pg_catalog.octet_length(approval_idempotency.key_digest) = 32
+            and approval_idempotency.key_digest_key_version = 'local_v1'
+            and pg_catalog.octet_length(
+              approval_idempotency.request_fingerprint
+            ) = 32
+            and approval_idempotency.request_fingerprint_key_version =
+              'local_v1'
+            and approval_idempotency.request_fingerprint is not distinct from
+              extensions.hmac(
+                pg_catalog.convert_to(
+                  'claim-request-fingerprint-v1|'
+                    || pg_catalog.jsonb_build_object(
+                      'claim_id', approved_claim.id,
+                      'expected_claim_version',
+                        approved_claim.record_version - 1,
+                      'expected_reviewer_assignment_version',
+                        approved_claim.reviewer_assignment_version,
+                      'evidence_verification_method_code',
+                        approved_claim.evidence_verification_method_code,
+                      'evidence_verification_version',
+                        approved_claim.evidence_verification_version,
+                      'evidence_verification_outcome_code',
+                        approved_claim.evidence_verification_outcome_code,
+                      'checked_source_classes',
+                        approval_audit.safe_context ->
+                          'checked_source_classes',
+                      'approval_evidence_policy_version',
+                        'claim_approval_evidence_policy_v1',
+                      'reason_registry_version',
+                        'claim_approval_reason_registry_v1',
+                      'restricted_evidence_binding',
+                        pg_catalog.encode(
+                          extensions.hmac(
+                            pg_catalog.convert_to(
+                              'claim-approve-evidence-reference-v1|'
+                                || pg_catalog.jsonb_build_object(
+                                  'restricted_evidence_reference',
+                                    approval_audit.restricted_evidence_reference,
+                                  'evidence_digest',
+                                    approval_audit.evidence_digest,
+                                  'evidence_digest_version',
+                                    'claim_approve_evidence_digest_v1'
+                                )::text,
+                              'UTF8'
+                            ),
+                            pg_catalog.convert_to(v_hmac_key, 'UTF8'),
+                            'sha256'
+                          ),
+                          'hex'
+                        ),
+                      'evidence_digest_version',
+                        'claim_approve_evidence_digest_v1',
+                      'disclosure_policy_version',
+                        'claim_approve_disclosure_v1',
+                      'decision_authorization_policy_version',
+                        'sec-001-claim-v1',
+                      'supersession_policy_version',
+                        'claim_approval_reason_registry_v1',
+                      'reviewer_notes_marker', 'null'
+                    )::text,
+                  'UTF8'
+                ),
+                pg_catalog.convert_to(v_hmac_key, 'UTF8'),
+                'sha256'
+              )
+            and approval_idempotency.lease_token_digest is null
+            and approval_idempotency.lease_digest_key_version is null
+            and approval_idempotency.lease_expires_at is null
+            and approval_idempotency.attempt_count >= 1
+            and approval_idempotency.failure_code is null
+            and approval_idempotency.retry_disposition is null
+            and approval_idempotency.next_attempt_at is null
+            and approval_idempotency.failed_at is null
+            and approval_idempotency.created_at <= approved_claim.decided_at
+            and approval_idempotency.expires_at is not distinct from
+              approval_idempotency.created_at + interval '720 hours'
             and approval_event.event_type =
               'supplier_ownership.claim_approved'
             and approval_event.event_schema_version = 1
@@ -1747,6 +1827,31 @@ begin
               approved_claim.reviewer_user_profile_id
             and approval_event.occurred_at = approved_claim.decided_at
             and approval_event.persisted_at = approved_claim.decided_at
+            and approval_event.source_operation_identity is null
+            and approval_event.source_system_code = 'mujahiz'
+            and approval_event.source_stream_code is null
+            and approval_event.source_event_id is null
+            and approval_event.actor_source_code is null
+            and approval_event.environment_code = 'local'
+            and approval_event.producing_component_code =
+              'supplier_claim_command'
+            and approval_event.correlation_id is not distinct from
+              approval_audit.correlation_id
+            and approval_event.causation_event_id is null
+            and approval_event.available_at = approved_claim.decided_at
+            and approval_event.processing_status = 'pending'
+            and approval_event.lease_token_digest is null
+            and approval_event.lease_digest_key_version is null
+            and approval_event.lease_expires_at is null
+            and approval_event.attempt_count = 0
+            and approval_event.next_attempt_at is null
+            and approval_event.last_error_class is null
+            and approval_event.last_error_code is null
+            and approval_event.processed_at is null
+            and approval_event.dead_lettered_at is null
+            and not approval_event.is_historical
+            and not approval_event.fanout_suppressed
+            and approval_event.migration_classification_code is null
             and approval_event.payload is not distinct from
               pg_catalog.jsonb_build_object(
                 'claim_id', approved_claim.id,
@@ -1756,6 +1861,163 @@ begin
                 'ownership_id', ownership_row.id,
                 'claim_version', approved_claim.record_version
               )
+            and (
+              select pg_catalog.count(*)::numeric
+              from internal.domain_events as produced_event
+              where produced_event.producer_idempotency_key_id =
+                approval_idempotency.id
+            ) = (
+              approval_audit.safe_context ->> 'superseded_claim_count'
+            )::numeric + 1
+            and (
+              select pg_catalog.min(produced_event.event_ordinal)
+              from internal.domain_events as produced_event
+              where produced_event.producer_idempotency_key_id =
+                approval_idempotency.id
+            ) = 1
+            and (
+              select pg_catalog.max(produced_event.event_ordinal)::numeric
+              from internal.domain_events as produced_event
+              where produced_event.producer_idempotency_key_id =
+                approval_idempotency.id
+            ) = (
+              approval_audit.safe_context ->> 'superseded_claim_count'
+            )::numeric + 1
+            and (
+              select pg_catalog.count(
+                distinct produced_event.event_ordinal
+              )::numeric
+              from internal.domain_events as produced_event
+              where produced_event.producer_idempotency_key_id =
+                approval_idempotency.id
+            ) = (
+              approval_audit.safe_context ->> 'superseded_claim_count'
+            )::numeric + 1
+            and (
+              select pg_catalog.count(*)
+              from internal.domain_events as primary_event
+              where primary_event.event_type =
+                  'supplier_ownership.claim_approved'
+                and primary_event.aggregate_type =
+                  'supplier_ownership_claim'
+                and primary_event.aggregate_id = approved_claim.id
+            ) = 1
+            and coalesce(
+              (
+                select pg_catalog.array_agg(
+                  produced_event.aggregate_id
+                  order by produced_event.event_ordinal
+                )
+                from internal.domain_events as produced_event
+                where produced_event.producer_idempotency_key_id =
+                    approval_idempotency.id
+                  and produced_event.event_ordinal >= 2
+              ),
+              '{}'::uuid[]
+            ) is not distinct from coalesce(
+              (
+                select pg_catalog.array_agg(
+                  superseded_claim.id order by superseded_claim.id
+                )
+                from public.supplier_ownership_claims as superseded_claim
+                where superseded_claim.supplier_profile_id =
+                    approved_claim.supplier_profile_id
+                  and superseded_claim.status = 'superseded'
+                  and superseded_claim.superseded_by_claim_id =
+                    approved_claim.id
+                  and superseded_claim.supersession_reason_code =
+                    'competing_claim_superseded_by_approval'
+                  and superseded_claim.superseded_at =
+                    approved_claim.decided_at
+              ),
+              '{}'::uuid[]
+            )
+            and not exists (
+              select 1
+              from internal.domain_events as produced_event
+              left join public.supplier_ownership_claims as superseded_claim
+                on superseded_claim.id = produced_event.aggregate_id
+              where produced_event.producer_idempotency_key_id =
+                  approval_idempotency.id
+                and (
+                  produced_event.event_ordinal < 1
+                  or (
+                    produced_event.event_ordinal = 1
+                    and produced_event.id is distinct from approval_event.id
+                  )
+                  or (
+                    produced_event.event_ordinal >= 2
+                    and (
+                      produced_event.event_type is distinct from
+                        'supplier_ownership.claim_superseded'
+                      or produced_event.event_schema_version is distinct from 1
+                      or produced_event.aggregate_type is distinct from
+                        'supplier_ownership_claim'
+                      or superseded_claim.id is null
+                      or superseded_claim.supplier_profile_id is distinct from
+                        approved_claim.supplier_profile_id
+                      or superseded_claim.status is distinct from 'superseded'
+                      or superseded_claim.superseded_by_claim_id is distinct from
+                        approved_claim.id
+                      or superseded_claim.supersession_reason_code is distinct from
+                        'competing_claim_superseded_by_approval'
+                      or superseded_claim.superseded_at is distinct from
+                        approved_claim.decided_at
+                      or produced_event.aggregate_sequence is distinct from
+                        superseded_claim.record_version
+                      or produced_event.producer_command_name is distinct from
+                        'supplier_claim.approve'
+                      or produced_event.producer_command_contract_version is
+                        distinct from 1
+                      or produced_event.source_operation_identity is not null
+                      or produced_event.source_system_code is distinct from
+                        'mujahiz'
+                      or produced_event.source_stream_code is not null
+                      or produced_event.source_event_id is not null
+                      or produced_event.actor_kind is distinct from 'human_user'
+                      or produced_event.actor_user_profile_id is distinct from
+                        approved_claim.reviewer_user_profile_id
+                      or produced_event.actor_source_code is not null
+                      or produced_event.environment_code is distinct from 'local'
+                      or produced_event.producing_component_code is distinct from
+                        'supplier_claim_command'
+                      or produced_event.correlation_id is distinct from
+                        approval_audit.correlation_id
+                      or produced_event.causation_event_id is not null
+                      or produced_event.occurred_at is distinct from
+                        approved_claim.decided_at
+                      or produced_event.persisted_at is distinct from
+                        approved_claim.decided_at
+                      or produced_event.available_at is distinct from
+                        approved_claim.decided_at
+                      or produced_event.processing_status is distinct from
+                        'pending'
+                      or produced_event.lease_token_digest is not null
+                      or produced_event.lease_digest_key_version is not null
+                      or produced_event.lease_expires_at is not null
+                      or produced_event.attempt_count is distinct from 0
+                      or produced_event.next_attempt_at is not null
+                      or produced_event.last_error_class is not null
+                      or produced_event.last_error_code is not null
+                      or produced_event.processed_at is not null
+                      or produced_event.dead_lettered_at is not null
+                      or produced_event.is_historical
+                      or produced_event.fanout_suppressed
+                      or produced_event.migration_classification_code is not null
+                      or produced_event.payload is distinct from
+                        pg_catalog.jsonb_build_object(
+                          'claim_id', superseded_claim.id,
+                          'supplier_profile_id',
+                            superseded_claim.supplier_profile_id,
+                          'claimant_user_profile_id',
+                            superseded_claim.claimant_user_profile_id,
+                          'approved_claim_id', approved_claim.id,
+                          'claim_version', superseded_claim.record_version
+                        )
+                    )
+                  )
+                )
+            )
         )
       );
 

@@ -43,11 +43,47 @@ seconds**. Reject was not rerun because no Reject migration, shared resolver,
 or shared behavior changed. All tests used disposable local PostgreSQL and
 synthetic data only.
 
+## Second independent-review closure for PR #130
+
+The second independent read-only review of head
+`14c516efc6ee428cdde525117703f8c8539c27bb` confirmed M1 closed and
+reported two remaining MEDIUM findings:
+
+- **M2 outer-audit SQL NULL:** the exact 19-key `safe_context` comparison was
+  null-safe, but required nullable scalar columns in the primary success-audit
+  envelope still used ordinary `<>`. SQL NULL therefore produced UNKNOWN and
+  could bypass the replay corruption predicate. Completed replay now uses
+  `IS DISTINCT FROM` consistently for every exact required audit scalar,
+  while existing explicit required/non-null and exact JSONB checks remain.
+  Focused coverage sets every required nullable outer field to SQL NULL,
+  supplies wrong valid-looking state/version values, proves each attempt fails
+  with `P5199 / integrity_reconciliation_required`, and confirms the exact
+  valid envelope still replays without writes.
+- **M3 historical event/idempotency reconciliation:** historical approval proof
+  joined one event and idempotency row without validating the complete writer
+  contract, exact produced-event set, or retained request fingerprint. The
+  read-only check now validates the fixed v1 primary and supersession event
+  metadata, correlation, timestamps, availability/processing state,
+  historical/fanout flags, exact payloads, unique primary event, contiguous
+  cardinality, and exact ordered competitor set. It also validates the complete
+  completed-idempotency lifecycle, structural key digest, fixed versions and
+  bindings, and reconstructs the authoritative request fingerprint only from
+  retained Claim/audit evidence. It does not reconstruct the raw idempotency
+  key or any caller input that durable state does not retain.
+
+Current validation is: M1 **6/6**, M2 **24/24** (the retained 6 plus 18 new
+outer-audit cases), and M3 **37/37** (13 historical Claim/ownership cases,
+13 event/cardinality cases, and 11 idempotency/fingerprint cases). Complete
+focused Approve is **183/183**; true multi-session concurrency remains
+**24/24 across ten races**; the full local SQL validator is **2,166/2,166
+across 28 migrations and 28 test files, 0 failures, 211.9 seconds**. All
+execution used disposable local PostgreSQL and synthetic data only.
+
 ## Baseline and reconciliation
 
 Verified origin/main is 6155a08a8ba05bdbc5cf46aa4ee14d18d2764e66, which includes the merged PR #129 Reject pgTAP bookkeeping-only fix. The existing Approve migration was preserved byte-for-byte while the branch was switched back from the prerequisite hotfix branch, then the Approve branch was fast-forwarded from 883dd9e to the verified origin/main.
 
-The preserved migration's pre-reconciliation SHA-256 was 565E414154D26E281F425DE87A5AFF2C811AB5A1A3A24057C55AF679237351E5. Its final SHA-256 after completing the approved implementation is 1191FED156CE031A70CF2A42B3519B3B4AC30AABD078F2E07B161274D0CF703B.
+The preserved migration's pre-reconciliation SHA-256 was 565E414154D26E281F425DE87A5AFF2C811AB5A1A3A24057C55AF679237351E5. Its post-first-review SHA-256 was 1191FED156CE031A70CF2A42B3519B3B4AC30AABD078F2E07B161274D0CF703B. After closing the second-review M2/M3 findings, the final SHA-256 is 2936D671E110C638FE609275ACFD2CB964F892486D79045C2FC2BE783822BF3B.
 
 The prerequisite complete validator passed after reconciliation with **28 migrations, 27 test files, 1,983/1,983 assertions, 0 failures**. The corrected Reject suite passed **108/108**, proving the pre-existing bookkeeping blocker was gone before Approve work resumed.
 
@@ -115,16 +151,19 @@ All **24/24 checks passed**. Every race produced one compatible winner or accoun
 
 ## Validation evidence
 
-- Focused Approve pgTAP: **141/141 passed, 0 failures**, including M1 **6/6**, M2 **6/6**, and M3 **13/13**.
-- Completed replay/corruption coverage: current role/access/security/conflict loss, winner, missing/mismatched/inactive/duplicate ownership, missing/mismatched/extra competitor set, missing/duplicate/reordered/sequence/payload event, JSON-null/type/value/shape audit corruption, idempotency mismatch, and rollback preservation all passed.
-- True multi-session concurrency: **10 race scenarios, 24/24 checks passed**.
-- Full local SQL validator: **28 migrations, 28 test files, 2,124/2,124 assertions passed, 0 failures; 196.4 seconds**.
+- Focused Approve pgTAP: **183/183 passed, 0 failures**, including M1 **6/6**, M2 **24/24**, and M3 **37/37**.
+- M2 outer-audit regressions: **18/18 passed** for SQL-NULL required fields, wrong valid-looking state/version values, exact valid replay, and zero-write rollback preservation; the retained JSON-null/type/value/missing/extra cases also passed.
+- M3 event/cardinality regressions: **13/13 passed** for fixed metadata, schema/sequence/correlation, availability/processing state, historical/fanout flags, missing/duplicate/orphan primary events, and the exact produced-event set.
+- M3 idempotency/fingerprint regressions: **11/11 passed** for command version, fingerprint version/presence/exact value, key-digest presence, target/result/version/outcome/status, and orphan linkage.
+- Completed replay/corruption coverage: current role/access/security/conflict loss, winner, ownership, competitor set, event ordering/payload, audit JSON and SQL NULL, historical event/idempotency, completed result binding, and rollback preservation all passed within the focused **183/183** suite.
+- True multi-session concurrency: **10 race scenarios, 24/24 checks passed; 114.2 seconds**.
+- Full local SQL validator: **28 migrations, 28 test files, 2,166/2,166 assertions passed, 0 failures; 211.9 seconds**.
 - git diff --check: passed.
 - Catalog assertions: **24 physical tables; 15 supplier_claim routines; 10 SECURITY DEFINER boundaries; 15 fixed search_path routines; exactly 3 Claim SELECT policies and 0 Claim mutation policies**.
 - Approve grants: exactly the Phase-A business boundary and private-named Phase-B executor are executable by mujahiz_claim_runtime; the digest-returning canonicalizer is not. PUBLIC, anon, authenticated, and service_role have 0 Approve routine grants, while runtime and API roles have 0 direct Claim UPDATE and 0 direct ownership INSERT privileges.
 - Static closure found no notification write, new table, mutation RLS policy, dynamic SQL in Approve routines, raw idempotency-key storage, caller-selected privileged fact, or private event-payload leak.
 
-No implementation SQL, pgTAP, or concurrency-harness content changed after the recorded final validator result; only this evidence document was added afterward.
+No implementation SQL, pgTAP, or concurrency-harness content changed after the current 2,166-assertion validator and 24-check concurrency results; only this evidence document was updated afterward.
 
 ## Structure, remaining commands, gates, and impact
 
