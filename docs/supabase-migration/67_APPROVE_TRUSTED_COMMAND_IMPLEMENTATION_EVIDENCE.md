@@ -4,6 +4,45 @@ Date: 2026-08-13
 Branch: codex/approve-trusted-command
 Scope: local PostgreSQL and synthetic data only
 
+## Independent-review follow-up for PR #130
+
+The independent read-only review of head `2eb9160d0c0bc053cdbf17a5f988f301d317e673`
+returned `CHANGES REQUIRED` with three MEDIUM findings, M1-M3. The
+initial write path, lock architecture, one-winner and competitor handling,
+atomic effects, event ordering, and RLS/grant/SECURITY DEFINER boundaries
+were accepted and were not reopened beyond direct dependencies of these
+corrections.
+
+- **M1 root cause:** completed success replay proved the stored principal and
+  assignment but did not reapply current response authorization. Exact replay
+  now acquires the Phase-B principal/Supplier/authorization/ownership/Claim
+  locks, re-runs the privileged-actor decision, independently counts current
+  role-backed administration access and complete-clear security eligibility,
+  and evaluates an approved-status-capable target-Supplier conflict path.
+  Loss of disclosure authorization raises the established
+  `P5100 / claim_context_invalid` response error without changing the
+  historical approval.
+- **M2 root cause:** field-by-field `<>` checks could evaluate to SQL UNKNOWN
+  for JSON null. Replay now builds the exact bounded 19-key expected JSONB
+  object and rejects it with `IS DISTINCT FROM`; the derived count and role
+  snapshot are also explicitly non-null. JSON null, SQL null, wrong type,
+  wrong value, missing key, and extra key therefore fail reconciliation.
+- **M3 root cause:** same-Supplier historical approval reconciliation checked
+  only a narrow Claim/ownership subset. Approve now locks every same-Supplier
+  Claim and validates immutable submission, assignment, decision chronology,
+  evidence tuple/source-path/reason registry, resulting ownership
+  establishment and closed lifecycle, and the corroborating primary
+  audit/idempotency/approved event. A coherent revoked approval remains valid
+  history; malformed or orphaned history fails closed before a new ownership.
+
+Final follow-up validation was: **M1 6/6**, **M2 6/6**, **M3 13/13**,
+complete focused Approve **141/141**, true multi-session concurrency
+**24/24 across ten races**, and the full local SQL validator
+**2,124/2,124 across 28 migrations and 28 test files, 0 failures, 196.4
+seconds**. Reject was not rerun because no Reject migration, shared resolver,
+or shared behavior changed. All tests used disposable local PostgreSQL and
+synthetic data only.
+
 ## Baseline and reconciliation
 
 Verified origin/main is 6155a08a8ba05bdbc5cf46aa4ee14d18d2764e66, which includes the merged PR #129 Reject pgTAP bookkeeping-only fix. The existing Approve migration was preserved byte-for-byte while the branch was switched back from the prerequisite hotfix branch, then the Approve branch was fast-forwarded from 883dd9e to the verified origin/main.
@@ -76,10 +115,10 @@ All **24/24 checks passed**. Every race produced one compatible winner or accoun
 
 ## Validation evidence
 
-- Focused Approve pgTAP: **118/118 passed, 0 failures**.
-- Completed replay/corruption subset: winner, missing/mismatched/inactive/duplicate ownership, missing/mismatched/extra competitor set, missing/duplicate/reordered/sequence/payload event, missing/duplicate/mismatched audit, idempotency mismatch, and rollback preservation all passed.
+- Focused Approve pgTAP: **141/141 passed, 0 failures**, including M1 **6/6**, M2 **6/6**, and M3 **13/13**.
+- Completed replay/corruption coverage: current role/access/security/conflict loss, winner, missing/mismatched/inactive/duplicate ownership, missing/mismatched/extra competitor set, missing/duplicate/reordered/sequence/payload event, JSON-null/type/value/shape audit corruption, idempotency mismatch, and rollback preservation all passed.
 - True multi-session concurrency: **10 race scenarios, 24/24 checks passed**.
-- Full local SQL validator: **28 migrations, 28 test files, 2,101/2,101 assertions passed, 0 failures; 188.5 seconds**.
+- Full local SQL validator: **28 migrations, 28 test files, 2,124/2,124 assertions passed, 0 failures; 196.4 seconds**.
 - git diff --check: passed.
 - Catalog assertions: **24 physical tables; 15 supplier_claim routines; 10 SECURITY DEFINER boundaries; 15 fixed search_path routines; exactly 3 Claim SELECT policies and 0 Claim mutation policies**.
 - Approve grants: exactly the Phase-A business boundary and private-named Phase-B executor are executable by mujahiz_claim_runtime; the digest-returning canonicalizer is not. PUBLIC, anon, authenticated, and service_role have 0 Approve routine grants, while runtime and API roles have 0 direct Claim UPDATE and 0 direct ownership INSERT privileges.

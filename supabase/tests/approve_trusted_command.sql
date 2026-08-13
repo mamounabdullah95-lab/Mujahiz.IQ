@@ -317,9 +317,227 @@ set status='approved',record_version=3,
     updated_at=(select valid_from from public.supplier_ownerships where id=pg_temp.approve_id(5001))
 where id=pg_temp.approve_id(1108);
 
+insert into internal.idempotency_keys(
+  id,command_name,command_contract_version,environment_code,
+  principal_kind,principal_user_profile_id,target_aggregate_type,
+  target_aggregate_id,key_digest,key_digest_key_version,
+  request_fingerprint,request_fingerprint_key_version,status,attempt_count,
+  outcome_code,result_resource_type,result_resource_id,result_version_token,
+  created_at,completed_at,expires_at)
+select pg_temp.approve_id(6001),'supplier_claim.approve',1,'local',
+  'human_user',pg_temp.approve_id(1),'supplier_ownership_claim',
+  pg_temp.approve_id(1108),
+  extensions.digest(pg_catalog.convert_to('historical-approve-key','UTF8'),'sha256'),
+  'local_v1',
+  extensions.digest(pg_catalog.convert_to('historical-approve-request','UTF8'),'sha256'),
+  'local_v1','completed',1,'approved','supplier_ownership_claim',
+  pg_temp.approve_id(1108),'3',decided_at-interval '1 minute',decided_at,
+  decided_at+interval '30 days'
+from public.supplier_ownership_claims where id=pg_temp.approve_id(1108);
+
+insert into internal.domain_events(
+  id,event_type,event_schema_version,aggregate_type,aggregate_id,
+  aggregate_sequence,producer_command_name,producer_command_contract_version,
+  producer_idempotency_key_id,source_system_code,event_ordinal,
+  actor_kind,actor_user_profile_id,environment_code,
+  producing_component_code,correlation_id,occurred_at,persisted_at,
+  payload,processing_status,available_at)
+select pg_temp.approve_id(6002),'supplier_ownership.claim_approved',1,
+  'supplier_ownership_claim',claim_row.id,claim_row.record_version,
+  'supplier_claim.approve',1,pg_temp.approve_id(6001),'mujahiz',1,
+  'human_user',claim_row.reviewer_user_profile_id,'local',
+  'supplier_claim_command',pg_temp.approve_id(6004),
+  claim_row.decided_at,claim_row.decided_at,
+  pg_catalog.jsonb_build_object(
+    'claim_id',claim_row.id,
+    'supplier_profile_id',claim_row.supplier_profile_id,
+    'claimant_user_profile_id',claim_row.claimant_user_profile_id,
+    'ownership_id',claim_row.resulting_supplier_ownership_id,
+    'claim_version',claim_row.record_version),
+  'pending',claim_row.decided_at
+from public.supplier_ownership_claims claim_row
+where claim_row.id=pg_temp.approve_id(1108);
+
+insert into internal.audit_logs(
+  id,action_code,action_contract_version,action_class,
+  actor_kind,actor_user_profile_id,actor_authorization_snapshot,
+  target_entity_type,target_id,related_target_entity_type,related_target_id,
+  occurred_at,recorded_at,environment_code,source_system_code,
+  producing_component_code,source_operation_class,outcome_class,result_code,
+  reason_code,safe_context_schema_version,safe_context,correlation_id,
+  idempotency_reference,domain_event_reference,prior_state_code,
+  result_state_code,prior_record_version,result_record_version,
+  changed_field_codes,evidence_digest,evidence_digest_algorithm,
+  evidence_digest_version,restricted_evidence_reference,audit_schema_version,
+  action_evidence_schema_version,authorization_policy_version,
+  producer_contract_version,minimization_policy_version,retention_class)
+select pg_temp.approve_id(6003),'supplier_claim.approve',1,'claim_ownership',
+  'human_user',claim_row.reviewer_user_profile_id,'owner',
+  'supplier_ownership_claim',claim_row.id,'supplier_profile',
+  claim_row.supplier_profile_id,claim_row.decided_at,claim_row.decided_at,
+  'local','mujahiz','supplier_claim_command','trusted_command',
+  'succeeded','approved','verified_claim_approved','claim_approve_context_v1',
+  pg_catalog.jsonb_build_object(
+    'reason_registry_version','claim_approval_reason_registry_v1',
+    'approval_evidence_policy_version','claim_approval_evidence_policy_v1',
+    'evidence_verification_method_code','manual_review',
+    'evidence_verification_version','claim_evidence_review_v1',
+    'evidence_verification_outcome_code','verified',
+    'checked_source_classes',
+      '["authorized_officer_confirmation"]'::jsonb,
+    'evidence_digest_version','claim_approve_evidence_digest_v1',
+    'disclosure_policy_version','claim_approve_disclosure_v1',
+    'decision_authorization_policy_version','sec-001-claim-v1',
+    'reviewer_role_code','owner','reviewer_conflict_result','clear',
+    'provider_state_version','firebase-provider-state-v1',
+    'role_policy_version','platform-role-policy-v1',
+    'access_policy_version','platform-access-policy-v1',
+    'security_policy_version','platform-admin-security-v1',
+    'security_coverage_version','platform-admin-coverage-v1',
+    'evidence_minimization_version','platform-admin-minimization-v1',
+    'resulting_supplier_ownership_id',claim_row.resulting_supplier_ownership_id,
+    'superseded_claim_count',0),
+  pg_temp.approve_id(6004),pg_temp.approve_id(6001),pg_temp.approve_id(6002),
+  'under_review','approved',2,claim_row.record_version,
+  array['status','record_version','decided_by_user_profile_id','decided_at',
+    'decision_reason_code','evidence_verification_method_code',
+    'evidence_verification_version','evidence_verification_outcome_code',
+    'decision_authorization_policy_version',
+    'resulting_supplier_ownership_id']::text[],
+  pg_catalog.encode(extensions.digest(pg_catalog.convert_to(
+    'claim-approve-evidence-digest-v1|'
+      ||pg_catalog.octet_length('historical-approve-ref')::text
+      ||':historical-approve-ref','UTF8'),'sha256'),'hex'),
+  'sha256','claim_approve_evidence_digest_v1','historical-approve-ref',
+  'audit_log_v1','claim_approve_success_v1','sec-001-claim-v1',
+  'supplier_claim.approve.v1','aud-001-minimized-v1',
+  'claim_ownership_decision'
+from public.supplier_ownership_claims claim_row
+where claim_row.id=pg_temp.approve_id(1108);
+
 select ok((select decided_at >= submitted_at and decided_at < expires_at
   from public.supplier_ownership_claims where id=pg_temp.approve_id(1108)),
   'coherent historical approved fixture is internally time-valid');
+
+-- M3: each synthetic contradiction and its denial execute in a subtransaction
+-- that is deliberately rolled back before the probe returns.
+create function pg_temp.probe_historical_approval_corruption(p_kind text)
+returns text language plpgsql volatile security invoker set search_path=pg_catalog as $$
+declare v_result jsonb;
+begin
+  begin
+    case p_kind
+      when 'assignment_version' then
+        update public.supplier_ownership_claims
+        set reviewer_assignment_version=2
+        where id=pg_temp.approve_id(1108);
+      when 'assignment_policy' then
+        update public.supplier_ownership_claims
+        set reviewer_assignment_policy_version='unsupported_assignment_v1'
+        where id=pg_temp.approve_id(1108);
+      when 'assignment_before_submission' then
+        update public.supplier_ownership_claims
+        set reviewer_assigned_at=submitted_at-interval '1 microsecond'
+        where id=pg_temp.approve_id(1108);
+      when 'assignment_at_expiry' then
+        update public.supplier_ownership_claims
+        set reviewer_assigned_at=expires_at
+        where id=pg_temp.approve_id(1108);
+      when 'decision_before_assignment' then
+        update public.supplier_ownership_claims
+        set decided_at=reviewer_assigned_at-interval '1 microsecond'
+        where id=pg_temp.approve_id(1108);
+      when 'decision_at_expiry' then
+        update public.supplier_ownership_claims
+        set decided_at=expires_at
+        where id=pg_temp.approve_id(1108);
+      when 'immutable_submission' then
+        update public.supplier_ownership_claims
+        set claimant_snapshot_schema_version='unsupported_snapshot_v1'
+        where id=pg_temp.approve_id(1108);
+      when 'submission_fingerprint' then
+        update public.supplier_ownership_claims
+        set submission_fingerprint=pg_catalog.repeat('G',64)
+        where id=pg_temp.approve_id(1108);
+      when 'submission_evidence_schema' then
+        update public.supplier_ownership_claims
+        set evidence_schema_version='unsupported_evidence_v1'
+        where id=pg_temp.approve_id(1108);
+      when 'approval_evidence_tuple' then
+        update public.supplier_ownership_claims
+        set evidence_verification_method_code='automated_review'
+        where id=pg_temp.approve_id(1108);
+      when 'approval_source_classes' then
+        update internal.audit_logs
+        set safe_context=pg_catalog.jsonb_set(
+          safe_context,'{checked_source_classes}',
+          '["official_registry"]'::jsonb,false)
+        where id=pg_temp.approve_id(6003);
+      when 'ownership_provenance' then
+        update public.supplier_ownerships
+        set establishment_reason_code='synthetic_wrong_reason'
+        where id=pg_temp.approve_id(5001);
+      else
+        raise exception 'unknown historical corruption probe';
+    end case;
+
+    v_result := pg_temp.run_approve(
+      pg_temp.approve_id(2),pg_temp.approve_key(70),
+      pg_temp.approve_id(1002),2,1,
+      array['authorized_officer_confirmation'],'m3-probe-reference');
+    if exists (
+      select 1 from public.supplier_ownerships
+      where supplier_profile_id=pg_temp.approve_id(202)
+        and ownership_status='active'
+    ) then
+      raise exception using errcode='P0001',message='unexpected_active_ownership';
+    end if;
+    raise exception using errcode='P0001',
+      message=coalesce(v_result->>'outcome_code','no_outcome');
+  exception when others then
+    if sqlstate='P0001' then
+      return sqlerrm;
+    end if;
+    return sqlstate||':'||sqlerrm;
+  end;
+end $$;
+
+select is(pg_temp.probe_historical_approval_corruption('assignment_version'),
+  'integrity_reconciliation_required',
+  'M3: historical assignment version other than one fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('assignment_policy'),
+  'integrity_reconciliation_required',
+  'M3: unsupported historical assignment policy fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('assignment_before_submission'),
+  'integrity_reconciliation_required',
+  'M3: historical assignment before submission fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('assignment_at_expiry'),
+  'integrity_reconciliation_required',
+  'M3: historical assignment at expiry fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('decision_before_assignment'),
+  'integrity_reconciliation_required',
+  'M3: historical decision before assignment fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('decision_at_expiry'),
+  'integrity_reconciliation_required',
+  'M3: historical decision at expiry fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('immutable_submission'),
+  'integrity_reconciliation_required',
+  'M3: malformed historical immutable submission fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('submission_fingerprint'),
+  'integrity_reconciliation_required',
+  'M3: malformed historical submission fingerprint fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('submission_evidence_schema'),
+  'integrity_reconciliation_required',
+  'M3: unsupported historical submission evidence schema fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('approval_evidence_tuple'),
+  'integrity_reconciliation_required',
+  'M3: unsupported historical approval evidence tuple fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('approval_source_classes'),
+  'integrity_reconciliation_required',
+  'M3: unsupported historical approval source path fails reconciliation');
+select is(pg_temp.probe_historical_approval_corruption('ownership_provenance'),
+  'integrity_reconciliation_required',
+  'M3: mismatched historical ownership provenance fails reconciliation');
 
 grant mujahiz_claim_runtime to postgres with set true;
 grant usage on schema extensions to mujahiz_claim_runtime;
@@ -341,6 +559,10 @@ select is((:'approved_one_result'::jsonb)->>'outcome_code','approved',
   'official_registry plus claimant_authority path approves');
 select is((:'approved_two_result'::jsonb)->>'outcome_code','approved',
   'authorized_officer_confirmation path approves');
+select ok((:'approved_two_result'::jsonb)->>'outcome_code'='approved'
+  and (select ownership_status='revoked'
+    from public.supplier_ownerships where id=pg_temp.approve_id(5001)),
+  'M3: a coherent revoked historical approval permits the later approval');
 select is((:'approved_three_result'::jsonb)->>'outcome_code','approved',
   'company-domain challenge plus independent corroboration path approves');
 select is((:'approved_one_result'::jsonb)->>'superseded_claim_count','0',
@@ -458,7 +680,7 @@ select is((select pg_catalog.count(*) from internal.domain_events
   'approve emits no separate ownership-established event');
 
 select is((select pg_catalog.count(*) from internal.audit_logs
-  where action_code='supplier_claim.approve' and outcome_class='succeeded'),3::bigint,
+  where action_code='supplier_claim.approve' and outcome_class='succeeded'),4::bigint,
   'each successful approval writes exactly one primary success audit');
 select ok((select action_class='claim_ownership' and result_code='approved'
   and reason_code='verified_claim_approved'
@@ -517,12 +739,93 @@ select ok((:'replay_two_result'::jsonb)->>'reservation_outcome'='replay'
   and ((:'replay_two_result'::jsonb)->>'idempotent_replay')::boolean
   and (:'replay_two_result'::jsonb)->>'ownership_id'=(:'approved_two_result'::jsonb)->>'ownership_id'
   and (:'replay_two_result'::jsonb)->>'superseded_claim_count'='4',
-  'identical normalized completed request returns the exact read-only replay envelope');
+  'M2: valid exact audit context returns the read-only replay envelope');
 select ok((select pg_catalog.count(*) from public.supplier_ownerships)=:'before_replay_ownership_count'::bigint
   and (select pg_catalog.count(*) from internal.domain_events where producer_command_name='supplier_claim.approve')=:'before_replay_event_count'::bigint
   and (select pg_catalog.count(*) from internal.audit_logs where action_code='supplier_claim.approve')=:'before_replay_audit_count'::bigint
   and (select pg_catalog.sum(record_version) from public.supplier_ownership_claims)=:'before_replay_version_sum'::bigint,
   'completed replay creates no ownership, mutation, event, audit, or version increment');
+
+-- M1: completed replay is a currently authorized response. Every mutation and
+-- attempted replay below is rolled back by the inner exception subtransaction.
+select (select pg_catalog.count(*) from public.supplier_ownership_claims) claim_count,
+  (select pg_catalog.sum(record_version) from public.supplier_ownership_claims) claim_version_sum,
+  (select pg_catalog.count(*) from public.supplier_ownerships) ownership_count,
+  (select pg_catalog.count(*) from internal.audit_logs) audit_count,
+  (select pg_catalog.count(*) from internal.domain_events) event_count,
+  (select pg_catalog.count(*) from internal.idempotency_keys) idempotency_count
+  \gset before_m1_
+
+create function pg_temp.probe_completed_replay_authorization(p_kind text)
+returns text language plpgsql volatile security invoker set search_path=pg_catalog as $$
+begin
+  begin
+    case p_kind
+      when 'role_unusable' then
+        update public.platform_role_assignments
+        set valid_until=pg_catalog.statement_timestamp()-interval '1 second'
+        where user_profile_id=pg_temp.approve_id(2);
+      when 'access_unusable' then
+        update public.access_grants
+        set valid_until=pg_catalog.statement_timestamp()-interval '1 second'
+        where user_profile_id=pg_temp.approve_id(2);
+      when 'security_deny' then
+        update internal.security_eligibility_assessments
+        set assessment_result='deny',condition_type='security_hold',
+          assessment_source_type='trusted_security_system'
+        where user_profile_id=pg_temp.approve_id(2);
+      when 'security_unknown' then
+        update internal.security_eligibility_assessments
+        set assessment_result='unknown',
+          condition_type='reconciliation_required',
+          assessment_source_type='trusted_security_system'
+        where user_profile_id=pg_temp.approve_id(2);
+      when 'supplier_conflict' then
+        perform pg_temp.seed_claim(9905,2,202,'submitted',1,3,false);
+      else
+        raise exception 'unknown replay authorization probe';
+    end case;
+
+    perform pg_temp.run_approve(
+      pg_temp.approve_id(2),pg_temp.approve_key(2),
+      pg_temp.approve_id(1002),2,1,
+      array['authorized_officer_confirmation'],'approve-ref-officer');
+    return 'no_error';
+  exception when others then
+    return sqlstate||':'||sqlerrm;
+  end;
+end $$;
+
+select is(pg_catalog.split_part(
+    pg_temp.probe_completed_replay_authorization('role_unusable'),':',1),
+  'P5100','M1: unusable reviewer role suppresses completed replay');
+select is(pg_catalog.split_part(
+    pg_temp.probe_completed_replay_authorization('access_unusable'),':',1),
+  'P5100','M1: unusable reviewer access suppresses completed replay');
+select is(pg_catalog.split_part(
+    pg_temp.probe_completed_replay_authorization('security_deny'),':',1),
+  'P5100','M1: current reviewer security deny suppresses completed replay');
+select is(pg_catalog.split_part(
+    pg_temp.probe_completed_replay_authorization('security_unknown'),':',1),
+  'P5100','M1: incomplete reviewer security suppresses completed replay');
+select is(pg_catalog.split_part(
+    pg_temp.probe_completed_replay_authorization('supplier_conflict'),':',1),
+  'P5100','M1: current target-Supplier conflict suppresses completed replay');
+select ok(
+  (select pg_catalog.count(*) from public.supplier_ownership_claims)=
+    :'before_m1_claim_count'::bigint
+  and (select pg_catalog.sum(record_version) from public.supplier_ownership_claims)=
+    :'before_m1_claim_version_sum'::bigint
+  and (select pg_catalog.count(*) from public.supplier_ownerships)=
+    :'before_m1_ownership_count'::bigint
+  and (select pg_catalog.count(*) from internal.audit_logs)=
+    :'before_m1_audit_count'::bigint
+  and (select pg_catalog.count(*) from internal.domain_events)=
+    :'before_m1_event_count'::bigint
+  and (select pg_catalog.count(*) from internal.idempotency_keys)=
+    :'before_m1_idempotency_count'::bigint,
+  'M1: denied replay probes mutate no Claim, ownership, audit, event, or idempotency state');
+
 set role mujahiz_claim_runtime;
 select pg_temp.run_approve(pg_temp.approve_id(2),pg_temp.approve_key(2),
   pg_temp.approve_id(1002),2,1,array['official_registry','claimant_authority'],
@@ -892,9 +1195,34 @@ begin
         from internal.audit_logs audit_row
         where audit_row.idempotency_reference=v_idempotency_id
           and audit_row.source_operation_class='trusted_command';
+      when 'audit_json_null' then
+        update internal.audit_logs
+        set safe_context=pg_catalog.jsonb_set(
+          safe_context,'{reason_registry_version}','null'::jsonb,false)
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_wrong_string' then
+        update internal.audit_logs
+        set safe_context=pg_catalog.jsonb_set(
+          safe_context,'{reason_registry_version}',
+          '"unsupported_registry_v1"'::jsonb,false)
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_wrong_type' then
+        update internal.audit_logs
+        set safe_context=pg_catalog.jsonb_set(
+          safe_context,'{reason_registry_version}',
+          '{"unexpected":"object"}'::jsonb,false)
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
       when 'audit_mismatch' then
         update internal.audit_logs
         set safe_context=safe_context-'checked_source_classes'
+        where idempotency_reference=v_idempotency_id
+          and source_operation_class='trusted_command';
+      when 'audit_extra_key' then
+        update internal.audit_logs
+        set safe_context=safe_context||'{"unexpected_key":"unexpected"}'::jsonb
         where idempotency_reference=v_idempotency_id
           and source_operation_class='trusted_command';
       when 'idempotency_mismatch' then
@@ -945,8 +1273,16 @@ select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('audit_missin
   'P5199','missing primary approval audit fails closed');
 select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('audit_duplicate'),':',1),
   'P5199','duplicate primary approval audit fails closed');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('audit_json_null'),':',1),
+  'P5199','M2: required audit context JSON null fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('audit_wrong_string'),':',1),
+  'P5199','M2: wrong audit context string fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('audit_wrong_type'),':',1),
+  'P5199','M2: wrong audit context JSON type fails reconciliation');
 select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('audit_mismatch'),':',1),
-  'P5199','mismatched primary approval audit fails closed');
+  'P5199','M2: missing required audit context key fails reconciliation');
+select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('audit_extra_key'),':',1),
+  'P5199','M2: unexpected audit context key fails reconciliation');
 select is(pg_catalog.split_part(pg_temp.probe_completed_corruption('idempotency_mismatch'),':',1),
   'P5199','mismatched completed idempotency result binding fails closed');
 select ok((select status='approved' and record_version=3

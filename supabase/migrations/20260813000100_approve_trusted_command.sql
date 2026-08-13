@@ -225,6 +225,7 @@ declare
   v_replay_ownership public.supplier_ownerships%rowtype;
   v_approved_event internal.domain_events%rowtype;
   v_approve_audit internal.audit_logs%rowtype;
+  v_expected_audit_context jsonb;
   v_original_request jsonb;
   v_original_fingerprint bytea;
   v_reference_binding text;
@@ -237,6 +238,17 @@ declare
   v_audit_count integer;
   v_active_ownership_count integer;
   v_superseded_count integer;
+  v_replay_claimant_id uuid;
+  v_replay_supplier_id uuid;
+  v_replay_lock_principal_id uuid;
+  v_replay_authorization_now timestamptz;
+  v_replay_reviewer_decision text;
+  v_replay_reviewer_role text;
+  v_replay_reviewer_conflict text;
+  v_replay_current_role_count integer;
+  v_replay_current_access_count integer;
+  v_replay_current_security_count integer;
+  v_completed_request_matches boolean := false;
   v_new_reservation boolean := false;
   v_expected_denial_outcome text;
 begin
@@ -340,6 +352,100 @@ begin
       end if;
 
       v_result_version := v_idempotency.result_version_token::integer;
+      v_completed_request_matches :=
+        v_idempotency.principal_user_profile_id is not distinct from
+          v_request.reviewer_user_profile_id
+        and v_idempotency.target_aggregate_id is not distinct from p_claim_id
+        and v_idempotency.request_fingerprint is not distinct from
+          v_request.request_fingerprint;
+
+      select claim_row.claimant_user_profile_id, claim_row.supplier_profile_id
+      into v_replay_claimant_id, v_replay_supplier_id
+      from public.supplier_ownership_claims as claim_row
+      where claim_row.id = v_idempotency.result_resource_id;
+
+      if not found then
+        raise exception using errcode = 'P5199', message = 'integrity_reconciliation_required';
+      end if;
+
+      -- An exact completed replay is a currently authorized read, not an
+      -- unconditional response cache. Use the same lock hierarchy as Phase B
+      -- before re-reading the immutable result and all mutable authorization
+      -- facts. A mismatched request is still classified only after the stored
+      -- completed result has passed its integrity proof below.
+      if v_completed_request_matches then
+        for v_replay_lock_principal_id in
+          select lock_principal.principal_id
+          from (
+            values (v_request.reviewer_user_profile_id), (v_replay_claimant_id)
+          ) as lock_principal(principal_id)
+          where lock_principal.principal_id is not null
+          group by lock_principal.principal_id
+          order by lock_principal.principal_id
+        loop
+          perform pg_catalog.pg_advisory_xact_lock(
+            claim_security.claim_principal_lock_key_v1(v_replay_lock_principal_id)
+          );
+        end loop;
+
+        perform pg_catalog.pg_advisory_xact_lock(
+          claim_security.claim_supplier_lock_key_v1(v_replay_supplier_id)
+        );
+
+        perform 1
+        from public.user_profiles as row_value
+        where row_value.id in (
+          v_request.reviewer_user_profile_id, v_replay_claimant_id
+        )
+        order by row_value.id
+        for update;
+
+        perform 1
+        from internal.identity_provider_links as row_value
+        where row_value.user_profile_id in (
+          v_request.reviewer_user_profile_id, v_replay_claimant_id
+        )
+        order by row_value.id
+        for update;
+
+        perform 1
+        from public.platform_role_assignments as row_value
+        where row_value.user_profile_id = v_request.reviewer_user_profile_id
+        order by row_value.id
+        for update;
+
+        perform 1
+        from public.access_grants as row_value
+        where row_value.user_profile_id = v_request.reviewer_user_profile_id
+        order by row_value.id
+        for update;
+
+        perform 1
+        from internal.security_eligibility_assessments as row_value
+        where row_value.user_profile_id = v_request.reviewer_user_profile_id
+        order by row_value.id
+        for update;
+
+        perform 1
+        from public.supplier_profiles as supplier_row
+        where supplier_row.id = v_replay_supplier_id
+        for update;
+
+        perform 1
+        from public.supplier_ownerships as ownership_row
+        where ownership_row.supplier_profile_id = v_replay_supplier_id
+        order by ownership_row.id
+        for update;
+
+        perform 1
+        from public.supplier_ownership_claims as claim_row
+        where claim_row.supplier_profile_id = v_replay_supplier_id
+        order by claim_row.id
+        for update;
+
+        v_replay_authorization_now := pg_catalog.clock_timestamp();
+      end if;
+
       select claim_row.* into v_replay_claim
       from public.supplier_ownership_claims as claim_row
       where claim_row.id = v_idempotency.result_resource_id;
@@ -414,6 +520,115 @@ begin
         raise exception using errcode = 'P5199', message = 'integrity_reconciliation_required';
       end if;
 
+      if v_completed_request_matches then
+        -- The current response boundary is evaluated only after the completed
+        -- Claim and ownership have been re-read under the Phase-B lock order.
+        -- Loss of authorization suppresses disclosure without changing history.
+        select evaluator.decision, evaluator.role_code
+        into v_replay_reviewer_decision, v_replay_reviewer_role
+        from claim_security.current_privileged_actor_v1() as evaluator;
+
+        select pg_catalog.count(*) into v_replay_current_role_count
+        from public.platform_role_assignments as role_row
+        where role_row.user_profile_id = v_request.reviewer_user_profile_id
+          and role_row.assignment_status = 'active'
+          and role_row.authorization_policy_version = 'platform-role-policy-v1'
+          and role_row.valid_from <= v_replay_authorization_now
+          and (
+            role_row.valid_until is null
+            or v_replay_authorization_now < role_row.valid_until
+          );
+
+        select pg_catalog.count(*) into v_replay_current_access_count
+        from public.access_grants as access_row
+        join public.platform_role_assignments as role_row
+          on role_row.id = access_row.platform_role_assignment_id
+         and role_row.user_profile_id = access_row.user_profile_id
+         and role_row.role_code = access_row.role_code
+        where access_row.user_profile_id = v_request.reviewer_user_profile_id
+          and access_row.access_status = 'active'
+          and access_row.access_purpose = 'platform_administration'
+          and access_row.authorization_policy_version = 'platform-access-policy-v1'
+          and access_row.valid_from <= v_replay_authorization_now
+          and (
+            access_row.valid_until is null
+            or v_replay_authorization_now < access_row.valid_until
+          )
+          and role_row.assignment_status = 'active'
+          and role_row.authorization_policy_version = 'platform-role-policy-v1'
+          and role_row.valid_from <= v_replay_authorization_now
+          and (
+            role_row.valid_until is null
+            or v_replay_authorization_now < role_row.valid_until
+          );
+
+        select pg_catalog.count(*) into v_replay_current_security_count
+        from internal.security_eligibility_assessments as security_row
+        where security_row.user_profile_id = v_request.reviewer_user_profile_id
+          and security_row.assessment_scope = 'platform_administration'
+          and security_row.assessment_status = 'active'
+          and security_row.assessment_result = 'clear'
+          and security_row.condition_type = 'complete_clear'
+          and security_row.security_policy_version = 'platform-admin-security-v1'
+          and security_row.required_coverage_version = 'platform-admin-coverage-v1'
+          and security_row.evidence_minimization_version = 'platform-admin-minimization-v1'
+          and security_row.valid_from <= v_replay_authorization_now
+          and (
+            security_row.valid_until is null
+            or v_replay_authorization_now < security_row.valid_until
+          );
+
+        -- target_supplier_conflict_v1 deliberately rejects terminal Claims.
+        -- This approved-status response check uses the same currently approved
+        -- relational conflict sources while the Supplier rows remain locked.
+        v_replay_reviewer_conflict := case
+          when pg_catalog.to_regclass('public.supplier_memberships') is not null
+            or pg_catalog.to_regclass('public.organizations') is not null
+            or pg_catalog.to_regclass('public.organization_memberships') is not null
+            then 'unknown'
+          when v_request.reviewer_user_profile_id = v_replay_claim.claimant_user_profile_id
+            or v_request.reviewer_user_profile_id =
+              v_replay_claim.reviewer_assigned_by_user_profile_id
+            then 'conflict'
+          when exists (
+            select 1
+            from public.supplier_ownerships as ownership_row
+            where ownership_row.supplier_profile_id = v_replay_claim.supplier_profile_id
+              and ownership_row.controller_user_profile_id =
+                v_request.reviewer_user_profile_id
+              and ownership_row.authority_type = 'primary_controller'
+              and ownership_row.ownership_status = 'active'
+              and ownership_row.valid_from <= v_replay_authorization_now
+              and (
+                ownership_row.valid_until is null
+                or v_replay_authorization_now < ownership_row.valid_until
+              )
+          ) then 'conflict'
+          when exists (
+            select 1
+            from public.supplier_ownership_claims as claim_row
+            where claim_row.supplier_profile_id = v_replay_claim.supplier_profile_id
+              and claim_row.claimant_user_profile_id =
+                v_request.reviewer_user_profile_id
+              and claim_row.status in ('submitted', 'under_review')
+              and claim_row.id <> v_replay_claim.id
+          ) then 'conflict'
+          else 'clear'
+        end;
+
+        if v_replay_reviewer_decision is distinct from 'eligible'
+           or v_replay_reviewer_role not in ('owner', 'admin')
+           or v_replay_current_role_count <> 1
+           or v_replay_current_access_count <> 1
+           or v_replay_current_security_count <> 1
+           or v_replay_claim.reviewer_user_profile_id is distinct from
+             v_request.reviewer_user_profile_id
+           or v_replay_reviewer_conflict is distinct from 'clear'
+        then
+          raise exception using errcode = 'P5100', message = 'claim_context_invalid';
+        end if;
+      end if;
+
       select pg_catalog.count(*) into v_audit_count
       from internal.audit_logs as audit_row
       where audit_row.idempotency_reference = v_idempotency.id
@@ -434,6 +649,28 @@ begin
         raise exception using errcode = 'P5199', message = 'integrity_reconciliation_required';
       end;
 
+      v_expected_audit_context := pg_catalog.jsonb_build_object(
+        'reason_registry_version', 'claim_approval_reason_registry_v1',
+        'approval_evidence_policy_version', 'claim_approval_evidence_policy_v1',
+        'evidence_verification_method_code', v_replay_claim.evidence_verification_method_code,
+        'evidence_verification_version', v_replay_claim.evidence_verification_version,
+        'evidence_verification_outcome_code', v_replay_claim.evidence_verification_outcome_code,
+        'checked_source_classes', pg_catalog.to_jsonb(v_audit_source_classes),
+        'evidence_digest_version', 'claim_approve_evidence_digest_v1',
+        'disclosure_policy_version', 'claim_approve_disclosure_v1',
+        'decision_authorization_policy_version', 'sec-001-claim-v1',
+        'reviewer_role_code', v_approve_audit.actor_authorization_snapshot,
+        'reviewer_conflict_result', 'clear',
+        'provider_state_version', 'firebase-provider-state-v1',
+        'role_policy_version', 'platform-role-policy-v1',
+        'access_policy_version', 'platform-access-policy-v1',
+        'security_policy_version', 'platform-admin-security-v1',
+        'security_coverage_version', 'platform-admin-coverage-v1',
+        'evidence_minimization_version', 'platform-admin-minimization-v1',
+        'resulting_supplier_ownership_id', v_replay_ownership.id,
+        'superseded_claim_count', v_superseded_count
+      );
+
       v_expected_evidence_digest := pg_catalog.encode(
         extensions.digest(
           pg_catalog.convert_to(
@@ -449,6 +686,7 @@ begin
 
       if v_audit_count <> 1
          or not found
+         or v_superseded_count is null
          or v_superseded_count < 0
          or v_approve_audit.action_code <> 'supplier_claim.approve'
          or v_approve_audit.action_contract_version <> 1
@@ -456,6 +694,7 @@ begin
          or v_approve_audit.actor_kind <> 'human_user'
          or v_approve_audit.actor_user_profile_id is distinct from v_idempotency.principal_user_profile_id
          or v_approve_audit.actor_source_code is not null
+         or v_approve_audit.actor_authorization_snapshot is null
          or v_approve_audit.actor_authorization_snapshot not in ('owner', 'admin')
          or v_approve_audit.target_entity_type <> 'supplier_ownership_claim'
          or v_approve_audit.target_id is distinct from v_replay_claim.id
@@ -471,24 +710,7 @@ begin
          or v_approve_audit.result_code <> 'approved'
          or v_approve_audit.reason_code <> 'verified_claim_approved'
          or v_approve_audit.safe_context_schema_version <> 'claim_approve_context_v1'
-         or (select pg_catalog.count(*) from pg_catalog.jsonb_object_keys(v_approve_audit.safe_context)) <> 19
-         or v_approve_audit.safe_context ->> 'reason_registry_version' <> 'claim_approval_reason_registry_v1'
-         or v_approve_audit.safe_context ->> 'approval_evidence_policy_version' <> 'claim_approval_evidence_policy_v1'
-         or v_approve_audit.safe_context ->> 'evidence_verification_method_code' <> v_replay_claim.evidence_verification_method_code
-         or v_approve_audit.safe_context ->> 'evidence_verification_version' <> v_replay_claim.evidence_verification_version
-         or v_approve_audit.safe_context ->> 'evidence_verification_outcome_code' <> v_replay_claim.evidence_verification_outcome_code
-         or v_approve_audit.safe_context ->> 'evidence_digest_version' <> 'claim_approve_evidence_digest_v1'
-         or v_approve_audit.safe_context ->> 'disclosure_policy_version' <> 'claim_approve_disclosure_v1'
-         or v_approve_audit.safe_context ->> 'decision_authorization_policy_version' <> 'sec-001-claim-v1'
-         or v_approve_audit.safe_context ->> 'reviewer_role_code' is distinct from v_approve_audit.actor_authorization_snapshot
-         or v_approve_audit.safe_context ->> 'reviewer_conflict_result' <> 'clear'
-         or v_approve_audit.safe_context ->> 'provider_state_version' <> 'firebase-provider-state-v1'
-         or v_approve_audit.safe_context ->> 'role_policy_version' <> 'platform-role-policy-v1'
-         or v_approve_audit.safe_context ->> 'access_policy_version' <> 'platform-access-policy-v1'
-         or v_approve_audit.safe_context ->> 'security_policy_version' <> 'platform-admin-security-v1'
-         or v_approve_audit.safe_context ->> 'security_coverage_version' <> 'platform-admin-coverage-v1'
-         or v_approve_audit.safe_context ->> 'evidence_minimization_version' <> 'platform-admin-minimization-v1'
-         or v_approve_audit.safe_context ->> 'resulting_supplier_ownership_id' <> v_replay_ownership.id::text
+         or v_approve_audit.safe_context is distinct from v_expected_audit_context
          or v_approve_audit.idempotency_reference is distinct from v_idempotency.id
          or v_approve_audit.prior_state_code <> 'under_review'
          or v_approve_audit.result_state_code <> 'approved'
@@ -1121,12 +1343,12 @@ begin
   order by ownership_row.id
   for update;
 
-  -- The Supplier lock is acquired first; then the winner and the complete
-  -- stored active-status competing set are locked in deterministic UUID order.
+  -- The Supplier lock is acquired first; then every Claim for that Supplier is
+  -- locked in deterministic UUID order. This covers both the complete active
+  -- competing set and every historical approved Claim reconciled below.
   perform 1
   from public.supplier_ownership_claims as claim_row
   where claim_row.supplier_profile_id = v_routed_supplier_id
-    and (claim_row.id = p_claim_id or claim_row.status in ('submitted', 'under_review'))
   order by claim_row.id
   for update;
 
@@ -1214,26 +1436,327 @@ begin
     where approved_claim.supplier_profile_id = v_routed_supplier_id
       and approved_claim.status = 'approved'
       and (
-        approved_claim.resulting_supplier_ownership_id is null
-        or approved_claim.decision_reason_code <> 'verified_claim_approved'
-        or approved_claim.evidence_verification_method_code <> 'manual_review'
-        or approved_claim.evidence_verification_version <> 'claim_evidence_review_v1'
-        or approved_claim.evidence_verification_outcome_code <> 'verified'
-        or approved_claim.decision_authorization_policy_version <> 'claim_approval_reason_registry_v1'
+        -- Immutable submission and terminal-state coherence.
+        approved_claim.record_version <> 3
+        or approved_claim.expires_at is distinct from
+          approved_claim.submitted_at + interval '720 hours'
+        or approved_claim.created_at is distinct from approved_claim.submitted_at
+        or approved_claim.claimant_snapshot_schema_version is distinct from
+          'claimant_snapshot_v1'
+        or approved_claim.submission_fingerprint_version is distinct from
+          'claim_submit_v1'
+        or approved_claim.submission_fingerprint is null
+        or approved_claim.submission_fingerprint !~ '^[0-9a-f]{64}$'
+        or approved_claim.evidence_schema_version is distinct from
+          'claim_evidence_v1'
+        or approved_claim.withdrawn_at is not null
+        or approved_claim.withdrawn_by_user_profile_id is not null
+        or approved_claim.withdrawal_reason_code is not null
+        or approved_claim.expired_at is not null
+        or approved_claim.expiry_system_source_code is not null
+        or approved_claim.expiry_policy_version is not null
+        or approved_claim.superseded_at is not null
+        or approved_claim.supersession_reason_code is not null
+        or approved_claim.superseded_by_claim_id is not null
         or approved_claim.reviewer_notes is not null
+
+        -- Write-once reviewer assignment coherence.
+        or approved_claim.reviewer_user_profile_id is null
+        or approved_claim.reviewer_assignment_version is distinct from 1
+        or approved_claim.reviewer_assigned_at is null
+        or approved_claim.reviewer_assigned_by_user_profile_id is null
+        or approved_claim.reviewer_assignment_source_code is distinct from
+          'owner_assignment'
+        or approved_claim.reviewer_assignment_policy_version is distinct from
+          'claim_reviewer_assignment_v1'
+        or approved_claim.reviewer_user_profile_id =
+          approved_claim.claimant_user_profile_id
+        or approved_claim.reviewer_user_profile_id =
+          approved_claim.reviewer_assigned_by_user_profile_id
+        or approved_claim.reviewer_assigned_at < approved_claim.submitted_at
+        or approved_claim.reviewer_assigned_at >= approved_claim.expires_at
+
+        -- Approval decision and supported evidence tuple.
+        or approved_claim.decided_at is null
         or approved_claim.decided_by_user_profile_id is distinct from approved_claim.reviewer_user_profile_id
+        or approved_claim.decided_at < approved_claim.reviewer_assigned_at
+        or approved_claim.decided_at >= approved_claim.expires_at
+        or approved_claim.updated_at is distinct from approved_claim.decided_at
+        or approved_claim.decision_reason_code is distinct from
+          'verified_claim_approved'
+        or approved_claim.evidence_verification_method_code is distinct from
+          'manual_review'
+        or approved_claim.evidence_verification_version is distinct from
+          'claim_evidence_review_v1'
+        or approved_claim.evidence_verification_outcome_code is distinct from
+          'verified'
+        or approved_claim.decision_authorization_policy_version is distinct from
+          'claim_approval_reason_registry_v1'
+        or approved_claim.resulting_supplier_ownership_id is null
+
+        -- Resulting ownership establishment and closed-history lifecycle.
         or ownership_row.id is null
         or ownership_row.supplier_profile_id is distinct from approved_claim.supplier_profile_id
         or ownership_row.controller_user_profile_id is distinct from approved_claim.claimant_user_profile_id
-        or ownership_row.authority_type <> 'primary_controller'
-        or ownership_row.establishment_source_type <> 'claim_approval'
-        or ownership_row.establishment_reason_code <> 'verified_claim_approved'
+        or ownership_row.authority_type is distinct from 'primary_controller'
+        or ownership_row.ownership_status not in (
+          'active', 'transferred', 'revoked', 'superseded'
+        )
+        or ownership_row.establishment_source_type is distinct from
+          'claim_approval'
+        or ownership_row.establishment_reason_code is distinct from
+          'verified_claim_approved'
         or ownership_row.established_by_user_profile_id is distinct from approved_claim.reviewer_user_profile_id
         or ownership_row.establishment_system_source is not null
         or ownership_row.valid_from is distinct from approved_claim.decided_at
         or ownership_row.established_at is distinct from approved_claim.decided_at
         or ownership_row.created_at is distinct from approved_claim.decided_at
         or ownership_row.created_by_user_profile_id is distinct from approved_claim.reviewer_user_profile_id
+        or ownership_row.updated_at < ownership_row.created_at
+        or (
+          ownership_row.ownership_status = 'active'
+          and not (
+            ownership_row.record_version = 1
+            and ownership_row.valid_until is null
+            and ownership_row.closure_reason_code is null
+            and ownership_row.closed_by_user_profile_id is null
+            and ownership_row.closure_system_source is null
+            and ownership_row.closed_at is null
+            and ownership_row.transfer_successor_ownership_id is null
+            and ownership_row.updated_at = ownership_row.created_at
+            and ownership_row.updated_by_user_profile_id is not distinct from
+              approved_claim.reviewer_user_profile_id
+          )
+        )
+        or (
+          ownership_row.ownership_status in ('transferred', 'revoked', 'superseded')
+          and not (
+            ownership_row.record_version >= 2
+            and ownership_row.valid_until is not null
+            and ownership_row.valid_until > ownership_row.valid_from
+            and ownership_row.closure_reason_code is not null
+            and ownership_row.closed_at is not null
+            and ownership_row.closed_at >= ownership_row.valid_from
+            and ownership_row.updated_at >= ownership_row.closed_at
+            and (
+              ownership_row.closed_by_user_profile_id is not null
+            ) <> (
+              ownership_row.closure_system_source is not null
+            )
+            and (
+              ownership_row.ownership_status = 'transferred'
+            ) = (
+              ownership_row.transfer_successor_ownership_id is not null
+            )
+          )
+        )
+        or (
+          ownership_row.ownership_status = 'transferred'
+          and not exists (
+            select 1
+            from public.supplier_ownerships as successor_ownership
+            where successor_ownership.id =
+                ownership_row.transfer_successor_ownership_id
+              and successor_ownership.supplier_profile_id =
+                ownership_row.supplier_profile_id
+              and successor_ownership.valid_from = ownership_row.valid_until
+          )
+        )
+
+        -- A current v1 approval is corroborated by exactly one bounded primary
+        -- audit carrying an allowlisted source path and the approved reason
+        -- registry. Historical source classes are private audit evidence.
+        or (
+          select pg_catalog.count(*)
+          from internal.audit_logs as approval_audit
+          where approval_audit.action_code = 'supplier_claim.approve'
+            and approval_audit.source_operation_class = 'trusted_command'
+            and approval_audit.target_entity_type =
+              'supplier_ownership_claim'
+            and approval_audit.target_id = approved_claim.id
+        ) <> 1
+        or not exists (
+          select 1
+          from internal.audit_logs as approval_audit
+          join internal.idempotency_keys as approval_idempotency
+            on approval_idempotency.id =
+              approval_audit.idempotency_reference
+          join internal.domain_events as approval_event
+            on approval_event.id = approval_audit.domain_event_reference
+          where approval_audit.action_code = 'supplier_claim.approve'
+            and approval_audit.action_contract_version = 1
+            and approval_audit.action_class = 'claim_ownership'
+            and approval_audit.actor_kind = 'human_user'
+            and approval_audit.actor_user_profile_id =
+              approved_claim.reviewer_user_profile_id
+            and approval_audit.actor_authorization_snapshot in ('owner', 'admin')
+            and approval_audit.target_entity_type =
+              'supplier_ownership_claim'
+            and approval_audit.target_id = approved_claim.id
+            and approval_audit.related_target_entity_type =
+              'supplier_profile'
+            and approval_audit.related_target_id =
+              approved_claim.supplier_profile_id
+            and approval_audit.occurred_at = approved_claim.decided_at
+            and approval_audit.recorded_at = approved_claim.decided_at
+            and approval_audit.environment_code = 'local'
+            and approval_audit.source_system_code = 'mujahiz'
+            and approval_audit.producing_component_code =
+              'supplier_claim_command'
+            and approval_audit.source_operation_class = 'trusted_command'
+            and approval_audit.outcome_class = 'succeeded'
+            and approval_audit.result_code = 'approved'
+            and approval_audit.reason_code = 'verified_claim_approved'
+            and approval_audit.safe_context_schema_version =
+              'claim_approve_context_v1'
+            and (
+              select pg_catalog.count(*)
+              from pg_catalog.jsonb_object_keys(approval_audit.safe_context)
+            ) = 19
+            and approval_audit.safe_context -> 'reason_registry_version' =
+              pg_catalog.to_jsonb('claim_approval_reason_registry_v1'::text)
+            and approval_audit.safe_context ->
+              'approval_evidence_policy_version' =
+              pg_catalog.to_jsonb('claim_approval_evidence_policy_v1'::text)
+            and approval_audit.safe_context ->
+              'evidence_verification_method_code' =
+              pg_catalog.to_jsonb(approved_claim.evidence_verification_method_code)
+            and approval_audit.safe_context ->
+              'evidence_verification_version' =
+              pg_catalog.to_jsonb(approved_claim.evidence_verification_version)
+            and approval_audit.safe_context ->
+              'evidence_verification_outcome_code' =
+              pg_catalog.to_jsonb(approved_claim.evidence_verification_outcome_code)
+            and approval_audit.safe_context -> 'checked_source_classes' in (
+              '["authorized_officer_confirmation"]'::jsonb,
+              '["claimant_authority","official_registry"]'::jsonb,
+              '["company_domain_challenge","independent_supplier_corroboration"]'::jsonb
+            )
+            and approval_audit.safe_context -> 'evidence_digest_version' =
+              pg_catalog.to_jsonb('claim_approve_evidence_digest_v1'::text)
+            and approval_audit.safe_context -> 'disclosure_policy_version' =
+              pg_catalog.to_jsonb('claim_approve_disclosure_v1'::text)
+            and approval_audit.safe_context ->
+              'decision_authorization_policy_version' =
+              pg_catalog.to_jsonb('sec-001-claim-v1'::text)
+            and approval_audit.safe_context -> 'reviewer_role_code' =
+              pg_catalog.to_jsonb(approval_audit.actor_authorization_snapshot)
+            and approval_audit.safe_context -> 'reviewer_conflict_result' =
+              pg_catalog.to_jsonb('clear'::text)
+            and approval_audit.safe_context -> 'provider_state_version' =
+              pg_catalog.to_jsonb('firebase-provider-state-v1'::text)
+            and approval_audit.safe_context -> 'role_policy_version' =
+              pg_catalog.to_jsonb('platform-role-policy-v1'::text)
+            and approval_audit.safe_context -> 'access_policy_version' =
+              pg_catalog.to_jsonb('platform-access-policy-v1'::text)
+            and approval_audit.safe_context -> 'security_policy_version' =
+              pg_catalog.to_jsonb('platform-admin-security-v1'::text)
+            and approval_audit.safe_context -> 'security_coverage_version' =
+              pg_catalog.to_jsonb('platform-admin-coverage-v1'::text)
+            and approval_audit.safe_context -> 'evidence_minimization_version' =
+              pg_catalog.to_jsonb('platform-admin-minimization-v1'::text)
+            and approval_audit.safe_context ->
+              'resulting_supplier_ownership_id' =
+              pg_catalog.to_jsonb(ownership_row.id)
+            and pg_catalog.jsonb_typeof(
+              approval_audit.safe_context -> 'superseded_claim_count'
+            ) = 'number'
+            and coalesce(
+              approval_audit.safe_context ->> 'superseded_claim_count'
+                !~ '^(0|[1-9][0-9]*)$',
+              true
+            ) = false
+            and approval_audit.prior_state_code = 'under_review'
+            and approval_audit.result_state_code = 'approved'
+            and approval_audit.prior_record_version =
+              approved_claim.record_version - 1
+            and approval_audit.result_record_version =
+              approved_claim.record_version
+            and approval_audit.changed_field_codes is not distinct from array[
+              'status', 'record_version', 'decided_by_user_profile_id', 'decided_at',
+              'decision_reason_code', 'evidence_verification_method_code',
+              'evidence_verification_version', 'evidence_verification_outcome_code',
+              'decision_authorization_policy_version',
+              'resulting_supplier_ownership_id'
+            ]::text[]
+            and approval_audit.evidence_digest = pg_catalog.encode(
+              extensions.digest(
+                pg_catalog.convert_to(
+                  'claim-approve-evidence-digest-v1|'
+                    || pg_catalog.octet_length(
+                      approval_audit.restricted_evidence_reference
+                    )::text
+                    || ':' || approval_audit.restricted_evidence_reference,
+                  'UTF8'
+                ),
+                'sha256'
+              ),
+              'hex'
+            )
+            and approval_audit.evidence_digest_algorithm = 'sha256'
+            and approval_audit.evidence_digest_version =
+              'claim_approve_evidence_digest_v1'
+            and approval_audit.restricted_evidence_reference is not null
+            and pg_catalog.octet_length(
+              approval_audit.restricted_evidence_reference
+            ) between 1 and 256
+            and approval_audit.audit_schema_version = 'audit_log_v1'
+            and approval_audit.action_evidence_schema_version =
+              'claim_approve_success_v1'
+            and approval_audit.authorization_policy_version =
+              'sec-001-claim-v1'
+            and approval_audit.producer_contract_version =
+              'supplier_claim.approve.v1'
+            and approval_audit.minimization_policy_version =
+              'aud-001-minimized-v1'
+            and approval_audit.retention_class =
+              'claim_ownership_decision'
+            and approval_idempotency.environment_code = 'local'
+            and approval_idempotency.command_name = 'supplier_claim.approve'
+            and approval_idempotency.command_contract_version = 1
+            and approval_idempotency.principal_kind = 'human_user'
+            and approval_idempotency.principal_user_profile_id =
+              approved_claim.reviewer_user_profile_id
+            and approval_idempotency.target_aggregate_type =
+              'supplier_ownership_claim'
+            and approval_idempotency.target_aggregate_id = approved_claim.id
+            and approval_idempotency.status = 'completed'
+            and approval_idempotency.outcome_code = 'approved'
+            and approval_idempotency.result_resource_type =
+              'supplier_ownership_claim'
+            and approval_idempotency.result_resource_id = approved_claim.id
+            and approval_idempotency.result_version_token =
+              approved_claim.record_version::text
+            and approval_idempotency.completed_at = approved_claim.decided_at
+            and approval_event.event_type =
+              'supplier_ownership.claim_approved'
+            and approval_event.event_schema_version = 1
+            and approval_event.aggregate_type =
+              'supplier_ownership_claim'
+            and approval_event.aggregate_id = approved_claim.id
+            and approval_event.aggregate_sequence =
+              approved_claim.record_version
+            and approval_event.producer_command_name =
+              'supplier_claim.approve'
+            and approval_event.producer_command_contract_version = 1
+            and approval_event.producer_idempotency_key_id =
+              approval_idempotency.id
+            and approval_event.event_ordinal = 1
+            and approval_event.actor_kind = 'human_user'
+            and approval_event.actor_user_profile_id =
+              approved_claim.reviewer_user_profile_id
+            and approval_event.occurred_at = approved_claim.decided_at
+            and approval_event.persisted_at = approved_claim.decided_at
+            and approval_event.payload is not distinct from
+              pg_catalog.jsonb_build_object(
+                'claim_id', approved_claim.id,
+                'supplier_profile_id', approved_claim.supplier_profile_id,
+                'claimant_user_profile_id',
+                  approved_claim.claimant_user_profile_id,
+                'ownership_id', ownership_row.id,
+                'claim_version', approved_claim.record_version
+              )
+        )
       );
 
     select v_invalid_history_count + pg_catalog.count(*) into v_invalid_history_count
