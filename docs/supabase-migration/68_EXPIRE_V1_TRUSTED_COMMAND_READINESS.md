@@ -2,7 +2,7 @@
 
 Date: 2026-08-14
 Primary task profile: Documentation
-Verdict: **BLOCKED - OWNER DECISION REQUIRED**
+Verdict: **IMPLEMENTATION-READY**
 
 ## 1. Boundary and verified starting state
 
@@ -25,14 +25,9 @@ Firebase remains the live Production authority. No hosted Supabase project is li
 
 The merged contracts are sufficient to fix the state transition, trusted-time boundary, worker-only authority class, assignment preservation, version increment, shared lock architecture, idempotency/source binding, event, notification exclusion, ownership exclusion, replay surface, and concurrency outcomes below.
 
-### OWNER DECISION REQUIRED
+### VERIFIED / DERIVED FROM OWNER APPROVAL
 
-Two material command-registry choices remain expressly delegated to the Expire slice by the Owner-approved Claim-v1 architecture:
-
-1. whether an ordinary successful expiry writes a durable AUD-001 success row; and
-2. the exact expiry provenance registry stored in `expiry_system_source_code` and `expiry_policy_version`, including confirmation that this pair is the complete bounded expiry-reason representation.
-
-Those choices affect the atomic write set, replay reconciliation, failure taxonomy, retention classification, fingerprint, and durable row provenance. Multiple safe implementations remain possible, so this document does not convert the recommendation in section 16 into approved authority.
+The Product/Security/Data Owner approved the two previously open decisions recorded below. No material Owner blocker remains for the local-only Expire v1 implementation.
 
 ## 3. Exact expirable states and terminal immutability
 
@@ -114,8 +109,8 @@ For a coherent due `submitted|under_review` Claim whose `record_version = p_expe
 | `status` | `expired` |
 | `record_version` | prior version + 1 |
 | `expired_at` | the single post-lock `command_now` |
-| `expiry_system_source_code` | server-derived approved registry value; Owner decision still required |
-| `expiry_policy_version` | server-derived/validated approved registry value; Owner decision still required |
+| `expiry_system_source_code` | server-derived fixed v1 registry value |
+| `expiry_policy_version` | server-derived fixed v1 registry value |
 | `updated_at` | `command_now` |
 
 All immutable submission/fingerprint/evidence/prior-Claim fields remain unchanged. Assignment fields remain null for a formerly `submitted` Claim and unchanged for a formerly `under_review` Claim. Decision, withdrawal, supersession, and resulting-ownership fields remain null. Expire writes no `decided_at`, decision actor/reason/evidence, `withdrawn_at`, `superseded_at`, `superseded_by_claim_id`, or `resulting_supplier_ownership_id`.
@@ -147,7 +142,7 @@ No reviewer principal, reviewer role/access/security, competing Claim, ownership
 
 The command name is `supplier_claim.expire`, contract version `1`, target aggregate type `supplier_ownership_claim`, and target aggregate ID = Claim UUID.
 
-The durable scheduler/job/item source identity is scoped to the exact Claim UUID, immutable `expires_at`, and expiry-policy version. One Claim is one logical source item and one transaction. A bounded scheduler batch may be ordered by `(expires_at, id)`, but batch identity, batch rollback, or batch-wide completion never replaces per-Claim fencing.
+The durable scheduler/job/item identity is scoped to the exact Claim UUID, immutable `expires_at`, and fixed policy version. The worker provenance code is the fixed server-derived `claim_expiry_worker`; it is not a caller-selected worker instance. One Claim is one logical source item and one transaction. A bounded scheduler batch may be ordered by `(expires_at, id)`, but batch identity, batch rollback, or batch-wide completion never replaces per-Claim fencing.
 
 The minimum canonical request fingerprint contains:
 
@@ -208,14 +203,9 @@ An event insert or integrity failure rolls back Claim expiry and idempotency com
 
 ## 12. Audit contract
 
-### OWNER DECISION REQUIRED
+### VERIFIED / DERIVED FROM OWNER APPROVAL
 
-AUD-001 explicitly requires durable success audit for Claim approval/rejection and privileged/security authority mutations. It does not explicitly require ordinary deterministic Claim expiry. The Owner-approved Claim-v1 contract says ordinary expiry need not duplicate aggregate history in audit, but deliberately leaves Expire success classification to this slice. That wording permits both of these materially different safe choices:
-
-- **Option A - no ordinary expiry success audit (recommended):** the Claim row plus immutable `claim_expired` event are the authoritative aggregate/integration history. Ordinary `claim_not_due`, `already_terminal`, and stale-version outcomes also create no audit. Worker-context abuse/integrity incidents use restricted telemetry/alerting unless a separately registered audit action applies. Event unavailability maps to reconciliation/infrastructure failure, not `audit_unavailable`.
-- **Option B - one automated-worker success audit:** register `supplier_claim.expire` v1 as an AUD-001 action with exact action/retention/evidence versions, automated-worker source, Claim/Supplier target, prior/result status/version, expiry policy, correlation, idempotency, and event linkage. The audit must commit atomically and any insert failure must roll back with `audit_unavailable`. Completed replay verifies and reuses that row without duplication.
-
-Option B also requires an Owner-approved retention class and exact safe-context schema. This document cannot infer those values from the Claim-decision audit registry because deterministic expiry is not a human evidence decision.
+The Owner approved **Option A**: a normal successful automated Claim expiry writes no ordinary audit row. Expire is a deterministic trusted-time lifecycle transition, not a discretionary human decision. The durable terminal Claim state, completed idempotency record, and immutable `claim_expired` event provide the required ordinary traceability without duplicating the same fact in `internal.audit_logs`. This does not weaken separately required corruption, failure, security, or future operational audit paths, and does not change Reject or Approve audit semantics.
 
 ## 13. Notification boundary
 
@@ -260,21 +250,19 @@ The smallest business boundary is:
 
 ```text
 supplier_claim.expire(
-  p_source_operation_identity text,
   p_claim_id uuid,
   p_expected_claim_version integer,
-  p_expiry_policy_version text,
   p_correlation_id uuid default null
 )
 ```
 
 Caller-supplied fields are limited to:
 
-- `p_source_operation_identity`: bounded durable scheduler/job/item identity reused for retry and scoped to Claim, expiry instant, and policy;
 - `p_claim_id`: opaque target aggregate ID;
-- `p_expected_claim_version`: optimistic concurrency precondition from the worker's bounded due-item read;
-- `p_expiry_policy_version`: worker/source compatibility assertion; only the exact approved version is accepted and the stored value remains server-authoritative; and
+- `p_expected_claim_version`: optimistic concurrency precondition from the worker's bounded due-item read; and
 - `p_correlation_id`: optional opaque UUID for tracing, generated when absent and excluded from the request fingerprint.
+
+`source_operation_identity = 'claim_expiry_worker'` and `expiry_policy_version = 'claim_expiry_v1'` are fixed server-derived v1 constants. They are not caller inputs, are not exposed as override parameters, and are included by the trusted command in its canonical idempotency binding. The durable scheduler/job/item identity remains an internal source-item binding, not a free-form public reason or policy input.
 
 The established two-phase implementation may add a private `_execute_expire(..., p_execution_fence uuid)` Phase-B routine. The fence is returned only by Phase A and is not a business input.
 
@@ -294,16 +282,16 @@ idempotent_replay
 
 `expired_at` is present for an `expired` result and nullable for an `already_terminal` result whose terminal status is not `expired`.
 
-### IMPLEMENTATION RECOMMENDATION - REQUIRES OWNER APPROVAL
+### VERIFIED / DERIVED FROM OWNER APPROVAL
 
-Approve this fixture-compatible minimal registry:
+The exact fixed v1 provenance registry is:
 
 ```text
 expiry_system_source_code = claim_expiry_worker
 expiry_policy_version     = claim_expiry_v1
 ```
 
-Treat that source/policy pair, the status transition, and trusted `expired_at` as the complete bounded expiry-reason representation. Add no caller reason and no schema column. These literals already appear in merged synthetic fixtures, but fixture use alone is not Owner approval.
+These are server-side v1 constants, not arbitrary caller vocabulary. No separate expiry reason column or caller-supplied reason is required. The reason is inherent to reaching the fixed trusted-time expiry; no human actor or reviewer decision is represented.
 
 ## 17. Error taxonomy
 
