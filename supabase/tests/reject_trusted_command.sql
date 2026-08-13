@@ -203,6 +203,18 @@ begin
   return pg_catalog.to_jsonb(v_reservation);
 end $$;
 
+create function pg_temp.reject_raises_integrity_reconciliation(p_sql text)
+returns boolean language plpgsql volatile security invoker set search_path=pg_catalog as $$
+begin
+  execute p_sql;
+  return false;
+exception
+  when sqlstate 'P5199' then
+    return sqlerrm='integrity_reconciliation_required';
+  when others then
+    return false;
+end $$;
+
 create function pg_temp.reserve_reject(
   p_principal uuid,p_key text,p_claim uuid,p_expected integer,p_assignment integer,
   p_reason text,p_outcome text,p_reference text)
@@ -979,35 +991,36 @@ set role mujahiz_claim_runtime;
 select pg_temp.run_reject(pg_temp.reject_id(1),pg_temp.reject_key(96),
   pg_temp.reject_id(1024),2,1,'supplier_mismatch','verified','conflict-unknown') result \gset conflict_unknown_
 reset role;
-select is((:'conflict_unknown_result'::jsonb)->>'outcome_code','reviewer_conflict',
-  'future relationship coverage makes target conflict unknown and non-authorizing');
+select ((:'conflict_unknown_result'::jsonb)->>'outcome_code'='reviewer_conflict')::text as result \gset conflict_unknown_
 rollback to savepoint reject_conflict_unknown;
+select ok(:'conflict_unknown_result'::boolean,
+  'future relationship coverage makes target conflict unknown and non-authorizing');
 
 savepoint reject_wrong_event_version;
 update internal.domain_events set event_schema_version=2
 where aggregate_id=pg_temp.reject_id(1002);
 set role mujahiz_claim_runtime;
-select throws_ok(pg_catalog.format(
+select pg_temp.reject_raises_integrity_reconciliation(pg_catalog.format(
   'select pg_temp.run_reject(%L::uuid,%L,%L::uuid,2,1,%L,%L,%L)',
   pg_temp.reject_id(1),pg_temp.reject_key(2),pg_temp.reject_id(1002),
-  'claimant_ineligible','verified','reject-ref-claimant'),
-  'P5199','integrity_reconciliation_required',
-  'wrong completed event version fails closed');
+  'claimant_ineligible','verified','reject-ref-claimant'))::text as result \gset wrong_event_version_
 reset role;
 rollback to savepoint reject_wrong_event_version;
+select ok(:'wrong_event_version_result'::boolean,
+  'wrong completed event version fails closed');
 
 savepoint reject_wrong_audit_classification;
 update internal.audit_logs set outcome_class='failed'
 where target_id=pg_temp.reject_id(1002) and source_operation_class='trusted_command';
 set role mujahiz_claim_runtime;
-select throws_ok(pg_catalog.format(
+select pg_temp.reject_raises_integrity_reconciliation(pg_catalog.format(
   'select pg_temp.run_reject(%L::uuid,%L,%L::uuid,2,1,%L,%L,%L)',
   pg_temp.reject_id(1),pg_temp.reject_key(2),pg_temp.reject_id(1002),
-  'claimant_ineligible','verified','reject-ref-claimant'),
-  'P5199','integrity_reconciliation_required',
-  'wrong completed audit classification fails closed');
+  'claimant_ineligible','verified','reject-ref-claimant'))::text as result \gset wrong_audit_classification_
 reset role;
 rollback to savepoint reject_wrong_audit_classification;
+select ok(:'wrong_audit_classification_result'::boolean,
+  'wrong completed audit classification fails closed');
 
 select * from finish();
 rollback;
