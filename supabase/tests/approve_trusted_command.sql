@@ -629,6 +629,11 @@ begin
         execute 'alter table internal.idempotency_keys drop constraint idempotency_keys_lifecycle_shape_ck';
         update internal.idempotency_keys set status='processing'
         where id=pg_temp.approve_id(6001);
+      when 'idempotency_expired_before_completion' then
+        update internal.idempotency_keys
+        set created_at=completed_at-interval '800 hours',
+            expires_at=completed_at-interval '80 hours'
+        where id=pg_temp.approve_id(6001);
       when 'idempotency_missing' then
         update internal.audit_logs
         set idempotency_reference=pg_temp.approve_id(6999)
@@ -651,7 +656,7 @@ begin
     raise exception using errcode='P0001',
       message=coalesce(v_result->>'outcome_code','no_outcome');
   exception when others then
-    if sqlstate='P0001' then
+    if sqlstate in ('P0001','P5199') then
       return sqlerrm;
     end if;
     return sqlstate||':'||sqlerrm;
@@ -763,9 +768,33 @@ select is(pg_temp.probe_historical_approval_corruption('idempotency_outcome'),
 select is(pg_temp.probe_historical_approval_corruption('idempotency_status'),
   'integrity_reconciliation_required',
   'M3 idempotency: incorrect completion status fails reconciliation');
+select
+  (select pg_catalog.count(*) from public.supplier_ownerships
+    where supplier_profile_id=pg_temp.approve_id(202) and ownership_status='active') as active_ownership_count,
+  (select pg_catalog.count(*) from public.supplier_ownership_claims
+    where id=pg_temp.approve_id(1002) and status='under_review' and record_version=2) as winning_claim_count,
+  (select pg_catalog.count(*) from internal.audit_logs) as audit_count,
+  (select pg_catalog.count(*) from internal.domain_events) as event_count,
+  (select pg_catalog.count(*) from internal.idempotency_keys) as idempotency_count
+\gset m3_lifecycle_before_
+select is(pg_temp.probe_historical_approval_corruption('idempotency_expired_before_completion'),
+  'integrity_reconciliation_required',
+  'M3 idempotency: expired completed reservation fails reconciliation');
+select ok(
+  (select pg_catalog.count(*) from public.supplier_ownerships where supplier_profile_id=pg_temp.approve_id(202) and ownership_status='active')=:'m3_lifecycle_before_active_ownership_count'::bigint
+  and (select pg_catalog.count(*) from public.supplier_ownership_claims where id=pg_temp.approve_id(1002) and status='under_review' and record_version=2)=:'m3_lifecycle_before_winning_claim_count'::bigint,
+  'M3 idempotency: expired completed reservation creates no active ownership or winning Claim transition');
+select ok(
+  (select pg_catalog.count(*) from internal.audit_logs)=:'m3_lifecycle_before_audit_count'::bigint
+  and (select pg_catalog.count(*) from internal.domain_events)=:'m3_lifecycle_before_event_count'::bigint
+  and (select pg_catalog.count(*) from internal.idempotency_keys)=:'m3_lifecycle_before_idempotency_count'::bigint,
+  'M3 idempotency: expired completed reservation creates no audit, event, or idempotency mutation');
 select is(pg_temp.probe_historical_approval_corruption('idempotency_missing'),
   'integrity_reconciliation_required',
   'M3 idempotency: orphaned historical audit-idempotency link fails reconciliation');
+select ok((select expires_at > completed_at
+  from internal.idempotency_keys where id=pg_temp.approve_id(6001)),
+  'M3 idempotency: coherent historical completed reservation remains valid');
 
 grant mujahiz_claim_runtime to postgres with set true;
 grant usage on schema extensions to mujahiz_claim_runtime;

@@ -1808,6 +1808,7 @@ begin
             and approval_idempotency.created_at <= approved_claim.decided_at
             and approval_idempotency.expires_at is not distinct from
               approval_idempotency.created_at + interval '720 hours'
+            and approval_idempotency.expires_at > approval_idempotency.completed_at
             and approval_event.event_type =
               'supplier_ownership.claim_approved'
             and approval_event.event_schema_version = 1
@@ -2038,6 +2039,23 @@ begin
       and (ownership_row.valid_until is null or v_command_now < ownership_row.valid_until);
 
     if v_invalid_history_count <> 0 then
+      if exists (
+        select 1
+        from public.supplier_ownership_claims as approved_claim
+        join internal.audit_logs as approval_audit
+          on approval_audit.action_code = 'supplier_claim.approve'
+         and approval_audit.source_operation_class = 'trusted_command'
+         and approval_audit.target_entity_type = 'supplier_ownership_claim'
+         and approval_audit.target_id = approved_claim.id
+        join internal.idempotency_keys as approval_idempotency
+          on approval_idempotency.id = approval_audit.idempotency_reference
+        where approved_claim.supplier_profile_id = v_routed_supplier_id
+          and approved_claim.status = 'approved'
+          and approval_idempotency.status = 'completed'
+          and approval_idempotency.expires_at <= approval_idempotency.completed_at
+      ) then
+        raise exception using errcode = 'P5199', message = 'integrity_reconciliation_required';
+      end if;
       v_denial_code := 'integrity_reconciliation_required';
       v_denial_outcome_class := 'failed';
     end if;

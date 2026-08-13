@@ -79,11 +79,38 @@ focused Approve is **183/183**; true multi-session concurrency remains
 across 28 migrations and 28 test files, 0 failures, 211.9 seconds**. All
 execution used disposable local PostgreSQL and synthetic data only.
 
+## Third focused independent-review closure for PR #130
+
+The third focused independent review of head
+`b6f1741aea934bbc1e7d736330d920e4a96319f5` kept M1, M2, and M3 event
+reconciliation closed, and found one remaining MEDIUM historical-idempotency
+lifecycle gap. Historical approved-Claim reconciliation verified
+`created_at <= decided_at` and the exact 720-hour reservation duration but did
+not require the completed reservation to have remained valid at completion.
+A structurally valid row with `created_at = completed_at - interval '800 hours'`
+and `expires_at = completed_at - interval '80 hours'` could therefore permit a
+new approval.
+
+Historical reconciliation now requires the approved idempotency row to satisfy
+`expires_at > completed_at`, while retaining its existing exact binding of
+`completed_at` to the approved Claim decision. The lifecycle-corruption path
+also raises the established `P5199 / integrity_reconciliation_required` before
+terminal-denial bookkeeping, so no new audit, event, or idempotency mutation is
+persisted. The focused adversarial regression proves that an expired completed
+reservation returns the required denial, creates no active ownership or winning
+Claim transition, and persists no audit/event/idempotency change; the coherent
+historical completed reservation still validates.
+
+Validation after this closure: complete focused Approve **187/187**, including
+M1 **6/6**, M2 **24/24**, M3 event/cardinality **13/13**, and M3
+idempotency/fingerprint **15/15**; full local SQL validator **2,170/2,170**
+across **28 migrations and 28 test files**, 0 failures, 320.6 seconds.
+
 ## Baseline and reconciliation
 
 Verified origin/main is 6155a08a8ba05bdbc5cf46aa4ee14d18d2764e66, which includes the merged PR #129 Reject pgTAP bookkeeping-only fix. The existing Approve migration was preserved byte-for-byte while the branch was switched back from the prerequisite hotfix branch, then the Approve branch was fast-forwarded from 883dd9e to the verified origin/main.
 
-The preserved migration's pre-reconciliation SHA-256 was 565E414154D26E281F425DE87A5AFF2C811AB5A1A3A24057C55AF679237351E5. Its post-first-review SHA-256 was 1191FED156CE031A70CF2A42B3519B3B4AC30AABD078F2E07B161274D0CF703B. After closing the second-review M2/M3 findings, the final SHA-256 is 2936D671E110C638FE609275ACFD2CB964F892486D79045C2FC2BE783822BF3B.
+The preserved migration's pre-reconciliation SHA-256 was 565E414154D26E281F425DE87A5AFF2C811AB5A1A3A24057C55AF679237351E5. Its post-first-review SHA-256 was 1191FED156CE031A70CF2A42B3519B3B4AC30AABD078F2E07B161274D0CF703B. After closing the second-review M2/M3 findings, the SHA-256 was 2936D671E110C638FE609275ACFD2CB964F892486D79045C2FC2BE783822BF3B. After closing the third-review lifecycle finding, it is FD03E62365A8AB2AF131AA4125E3B5249284912D1F21A16B1D8D66BCD504AD67.
 
 The prerequisite complete validator passed after reconciliation with **28 migrations, 27 test files, 1,983/1,983 assertions, 0 failures**. The corrected Reject suite passed **108/108**, proving the pre-existing bookkeeping blocker was gone before Approve work resumed.
 
@@ -151,13 +178,13 @@ All **24/24 checks passed**. Every race produced one compatible winner or accoun
 
 ## Validation evidence
 
-- Focused Approve pgTAP: **183/183 passed, 0 failures**, including M1 **6/6**, M2 **24/24**, and M3 **37/37**.
+- Focused Approve pgTAP: **187/187 passed, 0 failures**, including M1 **6/6**, M2 **24/24**, and M3 **41/41**.
 - M2 outer-audit regressions: **18/18 passed** for SQL-NULL required fields, wrong valid-looking state/version values, exact valid replay, and zero-write rollback preservation; the retained JSON-null/type/value/missing/extra cases also passed.
 - M3 event/cardinality regressions: **13/13 passed** for fixed metadata, schema/sequence/correlation, availability/processing state, historical/fanout flags, missing/duplicate/orphan primary events, and the exact produced-event set.
-- M3 idempotency/fingerprint regressions: **11/11 passed** for command version, fingerprint version/presence/exact value, key-digest presence, target/result/version/outcome/status, and orphan linkage.
-- Completed replay/corruption coverage: current role/access/security/conflict loss, winner, ownership, competitor set, event ordering/payload, audit JSON and SQL NULL, historical event/idempotency, completed result binding, and rollback preservation all passed within the focused **183/183** suite.
+- M3 idempotency/fingerprint regressions: **15/15 passed** for command version, fingerprint version/presence/exact value, key-digest presence, target/result/version/outcome/status, orphan linkage, expired-before-completion denial, zero-write preservation, and coherent completed-reservation validity.
+- Completed replay/corruption coverage: current role/access/security/conflict loss, winner, ownership, competitor set, event ordering/payload, audit JSON and SQL NULL, historical event/idempotency, completed result binding, and rollback preservation all passed within the focused **187/187** suite.
 - True multi-session concurrency: **10 race scenarios, 24/24 checks passed; 114.2 seconds**.
-- Full local SQL validator: **28 migrations, 28 test files, 2,166/2,166 assertions passed, 0 failures; 211.9 seconds**.
+- Full local SQL validator: **28 migrations, 28 test files, 2,170/2,170 assertions passed, 0 failures; 320.6 seconds**.
 - git diff --check: passed.
 - Catalog assertions: **24 physical tables; 15 supplier_claim routines; 10 SECURITY DEFINER boundaries; 15 fixed search_path routines; exactly 3 Claim SELECT policies and 0 Claim mutation policies**.
 - Approve grants: exactly the Phase-A business boundary and private-named Phase-B executor are executable by mujahiz_claim_runtime; the digest-returning canonicalizer is not. PUBLIC, anon, authenticated, and service_role have 0 Approve routine grants, while runtime and API roles have 0 direct Claim UPDATE and 0 direct ownership INSERT privileges.
