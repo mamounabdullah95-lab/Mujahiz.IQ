@@ -1,8 +1,8 @@
-# `supplier_claim.approve` v1 أ¢â‚¬â€‌ Critical Trusted-Command Readiness
+# `supplier_claim.approve` v1 ط·آ£ط¢آ¢ط£آ¢أ¢â‚¬ع‘ط¢آ¬ط£آ¢أ¢â€ڑآ¬أ¢â‚¬إ’ Critical Trusted-Command Readiness
 
 Date: 2026-08-13
 Primary task profile: Documentation
-Verdict: **BLOCKED أ¢â‚¬â€‌ OWNER DECISION REQUIRED**
+Verdict: **IMPLEMENTATION-READY**
 
 ## 1. Boundary and verified starting state
 
@@ -18,11 +18,11 @@ Static repository verification found:
 - exactly three Claim `SELECT` policies and zero Claim mutation policies; and
 - exactly four implemented Claim commands: `supplier_claim.submit`, `supplier_claim.withdraw`, `supplier_claim.assign_reviewer`, and `supplier_claim.reject`. `supplier_claim.approve` and `supplier_claim.expire` are absent.
 
-The approved architecture fixes approval authorization, locking, one-winner behavior, aggregate writes, replay integrity, audit/event ordering, and notification/RLS boundaries. SQL cannot yet choose two Product/Data semantics silently: the approval-specific high-assurance evidence registry and the approval/ownership/supersession reason registry.
+The approved architecture and the two Owner decisions below fix approval authorization, evidence semantics, locking, one-winner behavior, aggregate writes, replay integrity, audit/event ordering, and notification/RLS boundaries. This document is implementation-ready for the local-only SQL slice; it does not authorize hosted or Production activation.
 
-## 2. Proposed business signature
+## 2. Final business signature
 
-Subject to Owner decision 1, the minimum business signature is:
+The final minimum business signature is:
 
 ```text
 supplier_claim.approve(
@@ -41,7 +41,7 @@ supplier_claim.approve(
 
 The later SQL may use the established durable Phase-A reservation/fence plus private Phase-B executor shape without changing these business inputs. The effective reviewer, claimant, Supplier, ownership ID, competitor set/count, reason codes, policy versions, actor role, timestamps, resulting versions, audit/event IDs, ordinals, and notification data are server-derived.
 
-`reviewer_notes` is deliberately omitted from the minimum signature. The approved architecture permits notes but does not require them; approve v1 can keep `reviewer_notes = NULL`, matching the smallest current decision-command convention. The correlation ID is opaque and presentation/correlation-only. Evidence inputs remain blocked until Owner decision 1 fixes their exact values, combinations, bounds, normalization, and non-file reference contract.
+`reviewer_notes` is deliberately omitted from the minimum signature. The approved architecture permits notes but does not require them; approve v1 keeps `reviewer_notes = NULL`. The correlation ID is opaque and presentation/correlation-only. Exactly one normalized, allowlisted high-assurance source-class path is required, with one bounded opaque non-file reference whose digest is server-derived.
 
 ## 3. Exact reviewer and Claim predicate
 
@@ -56,7 +56,7 @@ Approval is permitted only when all of the following are re-proved after the est
 7. The claimant remains approval-eligible: active Supplier-context profile with verified mirror; exactly one linked active primary verified Firebase identity mirror; and the current Firebase observation required by the approved gateway contract when a real gateway exists. Local SQL proves only the relational part with synthetic data.
 8. The Supplier exists, has `listing_status = approved`, is not `verification_status = watchlist`, and has no unresolved eligibility/source/security contradiction.
 9. The complete ownership history is coherent and the active `primary_controller` slot is empty.
-10. Owner decision 1's registered high-assurance evidence method, exact source-class combination, version, `verified` outcome, and restricted non-file reference all pass. Unknown, unverified, inconclusive, file-dependent, malformed, or unsupported evidence denies.
+10. Evidence uses method `manual_review`, version `claim_evidence_review_v1`, outcome `verified`, and approval policy/registry `claim_approval_evidence_policy_v1`. Exactly one of these normalized source-class paths is present, with no extra or missing class: `official_registry + claimant_authority`; `authorized_officer_confirmation`; or `company_domain_challenge + independent_supplier_corroboration`. Unknown, unverified, inconclusive, file-dependent, malformed, or unsupported evidence denies.
 
 The final-usable-Owner guard is not invoked because approval changes no role/access/security authority. It still shares the reviewer principal lock with any future eligibility-removing command.
 
@@ -73,7 +73,7 @@ The final-usable-Owner guard is not invoked because approval changes no role/acc
 | `valid_until` | `NULL` |
 | `record_version` | `1` |
 | `establishment_source_type` | `claim_approval` |
-| `establishment_reason_code` | Owner decision 2 |
+| `establishment_reason_code` | `verified_claim_approved` |
 | `established_by_user_profile_id` | Effective assigned reviewer |
 | `establishment_system_source` | `NULL`; this is an accountable human decision |
 | `established_at` | `command_now` |
@@ -84,7 +84,7 @@ The final-usable-Owner guard is not invoked because approval changes no role/acc
 
 The ownership table has no Claim-source FK. Do not add a polymorphic source ID. The supported linkage is the winning Claim's unique `resulting_supplier_ownership_id` pointing to the new ownership, corroborated by the approval audit and `supplier_ownership.claim_approved` event.
 
-The winning Claim changes once to `approved`, increments `record_version` by exactly one, stores the effective reviewer and trusted decision time, the approved decision/evidence/policy fields, keeps `reviewer_notes = NULL`, and sets `resulting_supplier_ownership_id` to the new ownership.
+The winning Claim changes once to `approved`, increments `record_version` by exactly one, stores the effective reviewer and trusted decision time, `decision_reason_code = verified_claim_approved`, the approved evidence fields, `decision_authorization_policy_version = claim_approval_reason_registry_v1`, keeps `reviewer_notes = NULL`, and sets `resulting_supplier_ownership_id` to the new ownership.
 
 ## 5. Competing Claim policy
 
@@ -92,8 +92,8 @@ The complete competing set is every other same-Supplier row whose stored status 
 
 | Same-Supplier status | Classification | Exact behavior |
 |---|---|---|
-| `submitted` | **SUPERSEDE** | Includes due rows; set `superseded`, `record_version + 1`, `superseded_at = command_now`, Owner decision 2 reason, and `superseded_by_claim_id = winning claim_id` |
-| `under_review` other than winner | **SUPERSEDE** | Same behavior, including due rows; preserve immutable assignment provenance and do not add decision fields or reviewer notes |
+| `submitted` | **SUPERSEDE** | Includes due rows; set `superseded`, `record_version + 1`, `superseded_at = command_now`, `supersession_reason_code = competing_claim_superseded_by_approval`, and `superseded_by_claim_id = winning claim_id` |
+| `under_review` other than winner | **SUPERSEDE** | Same behavior, including due rows; set `supersession_reason_code = competing_claim_superseded_by_approval`, preserve immutable assignment provenance, and do not add decision fields or reviewer notes |
 | `rejected` | **PRESERVE** | Terminal and immutable |
 | `withdrawn` | **PRESERVE** | Terminal and immutable |
 | `approved` | **PRESERVE or CORRUPTION/BLOCK** | Preserve a coherent historical approval. If it proves an active owner, approval blocks as already owned; missing/mismatched ownership provenance or contradictory state fails integrity reconciliation |
@@ -146,7 +146,7 @@ The safe result is the established fixed envelope plus `ownership_id`, `decided_
 
 ## 8. Audit and domain events
 
-The fixed success audit boundary is exactly one primary `supplier_claim.approve` action, contract version `1`, action class `claim_ownership`, retention class `claim_ownership_decision`, human reviewer actor, `succeeded` outcome, and `approved` result. It includes the winning Claim, Supplier, ownership, actor role/assignment/policy snapshot, prior/result state and versions, approved evidence method/version/outcome and restricted reference/digest, superseded count without competitor identities, correlation, idempotency reference, and primary event reference. Owner decision 2 must fix the bounded reason code; implementation-owned audit evidence-schema labels may then version this already-fixed shape.
+The fixed success audit boundary is exactly one primary `supplier_claim.approve` action, contract version `1`, action class `claim_ownership`, retention class `claim_ownership_decision`, human reviewer actor, `succeeded` outcome, and `approved` result. It includes the winning Claim, Supplier, ownership, actor role/assignment/policy snapshot, prior/result state and versions, approved evidence method/version/outcome and restricted reference/digest, superseded count without competitor identities, correlation, idempotency reference, and primary event reference. The audit records `decision_reason_code = verified_claim_approved` and `reason_registry_version = claim_approval_reason_registry_v1`; implementation-owned audit evidence-schema labels may version this fixed shape.
 
 The exact event effects are:
 
@@ -164,37 +164,33 @@ No separate ownership-established event is approved. The approved Claim event co
 - `PUBLIC`, `anon`, browser `authenticated`, generic `service_role`, and unlisted roles receive no trusted mutation authority or internal-table access. The local command follows the existing narrowly granted runtime/private-executor pattern; local `postgres` function ownership is not hosted least-privilege proof.
 - Firebase remains Production authority. Supabase remains local-only and synthetic-data-only.
 
-## 10. Material Owner decisions
+## 10. Approved Owner decisions
 
-### Decision 1 أ¢â‚¬â€‌ approval high-assurance evidence registry
+### Decision 1 â€” approval high-assurance evidence registry â€” APPROVED
 
-**Unresolved question:** Which exact approval method/version, checked-source-class combinations, restricted-reference shape, evidence policy/digest versions, and affirmative tuple satisfy the already-approved high-assurance paths?
+The Owner approved Option A. Approve v1 uses method `manual_review`, evidence version `claim_evidence_review_v1`, affirmative outcome `verified`, and approval policy/registry version `claim_approval_evidence_policy_v1`.
 
-**Existing evidence:** The contracts require one reviewed high-assurance path and only a registered `verified` outcome. Reject v1 approved `manual_review / claim_evidence_review_v1 / verified|not_verified` for rejection semantics, but no contract authorizes that tuple for ownership creation. The schema constrains shapes, not meaning.
+Exactly one normalized source-class path is required:
 
-**Option A:** Reuse `manual_review / claim_evidence_review_v1 / verified` for approve, but add one approval-only allowlist that requires a normalized source-class combination proving exactly one of the three approved paths, plus one required opaque non-file restricted reference and server-derived digest.
+- `official_registry` + `claimant_authority`;
+- `authorized_officer_confirmation`; or
+- `company_domain_challenge` + `independent_supplier_corroboration`.
 
-**Option B:** Introduce distinct approval method/version tuples for official-registry plus claimant authority, authorized-officer confirmation, and company-domain challenge plus independent corroboration, each with its own exact source combination and the same bounded non-file reference/digest boundary.
+The source-class array is normalized, deterministically ordered, and exact-match allowlisted. Extra, missing, unsupported, malformed, inconclusive, unknown, or unregistered combinations fail closed. One bounded opaque restricted non-file reference is required; its canonical digest is server-derived. Raw secrets, tokens, unrestricted evidence, identity-document contents, private file URLs, and reviewer notes are prohibited. FILE-001 remains Open. The source path remains private and is absent from domain-event and notification payloads. Reject-v1 semantics are unchanged.
 
-**Recommendation:** Option A for v1. It minimizes caller and registry surface while the checked-source combination, not a generic `manual_review` label alone, proves the approved high-assurance path. Unknown combinations fail closed. SQL cannot select it silently because reusing a reject-approved evidence tuple to create ownership materially broadens that tuple's authority.
+### Decision 2 â€” approval, establishment, and supersession reason registry â€” APPROVED
 
-### Decision 2 أ¢â‚¬â€‌ approval, establishment, and supersession reason registry
+The Owner approved Option A with registry/version `claim_approval_reason_registry_v1`:
 
-**Unresolved question:** Which exact server-derived reason literals and registry/policy version bind the winning Claim decision, ownership establishment, primary audit, and competitor supersessions?
+- winning Claim, resulting ownership, and primary approval audit: `verified_claim_approved`;
+- competing active Claim superseded by the successful approval: `competing_claim_superseded_by_approval`.
 
-**Existing evidence:** `claim_approval`, `approved`, and the event names/versions are fixed. The ownership schema requires `establishment_reason_code`; the Claim schema requires decision and supersession reason codes; and the approved atomicity contract explicitly defers the bounded approval and supersession reason registry to the approve slice.
+Both codes are server-derived and never caller-controlled. Evidence paths are not duplicated into ownership-establishment or supersession reason codes.
 
-**Option A:** Approve one generic verified-Claim reason for the winning Claim/ownership/audit and one generic competing-Claim-approved reason for every superseded Claim, under one approval reason registry version.
-
-**Option B:** Use evidence-path-specific approval/establishment reasons while retaining one generic competing-Claim-approved supersession reason.
-
-**Recommendation:** Option A. Evidence path and source classes already belong in restricted decision/audit evidence; duplicating them into ownership reason codes would couple long-lived authority history to verification mechanics. SQL cannot invent required reason literals because they become durable Product/Data semantics and replay-integrity inputs.
-
-These are the only material blockers. Exact SQL function-owner mechanics, audit context-schema labels, canonicalization code, UUID allocation, and error-to-SQLSTATE mapping remain technical implementation choices constrained by existing command conventions, not Owner decisions.
-
+These approvals leave no material unresolved dependency for the local-only SQL implementation. Exact SQL mechanics remain implementation work under this contract.
 ## 11. Required future tests
 
-After both decisions are approved, the SQL PR must add focused proof for:
+The SQL PR must add focused proof for:
 
 - exact signature, canonical evidence allowlist, normalization, bounds, non-file reference, fingerprint, and same-key replay/conflict;
 - complete reviewer/claimant/Supplier/ownership/Claim eligibility and immutable-shape checks;
@@ -210,7 +206,7 @@ The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`,
 
 Production/data impact is none. This review reads repository evidence and creates one Markdown file only. It performs no Firebase or hosted Supabase action, Production/TEST read or write, SQL migration, seed, backfill, deployment, DNS, billing, Auth/config, RLS/grant, notification, or file operation.
 
-Exact stop point: readiness document, minimal two-decision blocker list, static validation, commit, push, one Draft PR, and PR Gate result if available. Stop before approve SQL, expire work, Baseline synchronization, merge, deployment, hosted action, or data movement.
+Exact stop point: updated readiness document, static validation, commit, push, and existing Draft PR #128. Stop before approve SQL, expire work, Baseline synchronization, merge, deployment, hosted action, or data movement.
 
 ## References
 
