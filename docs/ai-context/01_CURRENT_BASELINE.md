@@ -1,7 +1,7 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-12-reject-merged`
-Updated: 2026-08-12
+Baseline ID: `baseline-2026-08-14-approve-merged`
+Updated: 2026-08-14
 Canonical Production URL: `https://mujahiz.com`
 
 This is the single authoritative, frequently changing project baseline. Keep GitHub `main`, merged-but-undeployed work, Firebase Hosting, active Firestore Rules and indexes, deployed Functions and Storage, bounded Production data, and hosted Supabase state distinct.
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `043cd21a025c07bb265a183cae52595cef829a85`, the merge of PR #126 after the merged PR #122 chain. PR #126 reviewed head `9d3cfef5214177b94c85a185f27d93c847468ba0` is an ancestor.
+- **Verified current fact:** Current GitHub `main`: `463f9805c96376be6176663b4b6264050242bd0f`, the merge of PR #130 after the merged PR #129/#126 chain. PR #130's implementation head `a1291e40018d6874960ef23e29b47b3c4ffe8b62` is an ancestor.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -395,3 +395,15 @@ PR #126 evidence is recorded separately in `65_REJECT_TRUSTED_COMMAND_IMPLEMENTA
 Reject v1 is local-only: exact assigned usable Owner/Admin reviewer, clear conflict, coherent non-due `under_review` Claim, expected versions, `under_review -> rejected`, one record-version increment, retained assignment provenance, `reviewer_notes = NULL`, bounded non-file evidence reference/digest, durable Phase-A reservation, fenced Phase-B execution, completed replay integrity validation, one success audit, one `supplier_ownership.claim_rejected` v1 event, no notification, ownership, or competing-Claim mutation, and no mutation RLS policy. Local `SECURITY DEFINER` ownership remains `postgres`; this is not hosted least-privilege proof.
 
 The next technical task is `supplier_claim.approve v1` — Trusted Command Readiness. Approve requires a separate readiness/security closure before SQL because it must create ownership, supersede competing active Claims, preserve one-winner semantics, and produce multiple ordered effects. `supplier_claim.expire` remains separate and unimplemented. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`. Production/data impact is none.
+
+### PR #130 supplier_claim.approve synchronization
+
+PR #130 is merged in GitHub `main` at `463f9805c96376be6176663b4b6264050242bd0f`; its implementation head `a1291e40018d6874960ef23e29b47b3c4ffe8b62` is an ancestor. PRs #127, #128, and #129 are also ancestors of this verified merge. The merged local SQL inventory is 28 tracked migrations and 28 pgTAP test files, with 24 physical `public`/`internal` PostgreSQL tables.
+
+The Claim inventory remains exactly three SELECT RLS policies — `supplier_ownership_claims_claimant_self_select`, `supplier_ownership_claims_owner_assignment_select`, and `supplier_ownership_claims_assigned_reviewer_select` — with zero Claim mutation policies. Exactly five Claim v1 business commands are implemented locally: `supplier_claim.submit`, `supplier_claim.withdraw`, `supplier_claim.assign_reviewer`, `supplier_claim.reject`, and `supplier_claim.approve`. The only remaining Claim v1 command is `supplier_claim.expire`; it is separately scoped and not implementation-ready from this baseline alone.
+
+PR #130 evidence records focused Approve validation of 187/187 assertions, true multi-session Approve concurrency of 24/24 across ten races, and the latest complete local SQL validation of 2,170/2,170 assertions across 28 migrations and 28 test files with 0 failures. These are local disposable PostgreSQL and synthetic-data results only; they are not combined with Firebase or hosted environments.
+
+`supplier_claim.approve` is a local trusted-command implementation only. Its merged SQL is not hosted Supabase, is not deployed, is not exposed as a browser/API surface, and does not make Supabase Production-ready. Firebase remains the live Production authority, and GitHub `main` must not be described as the Firebase live runtime without separate Hosting evidence. No hosted Supabase project is linked or deployed.
+
+No Production or TEST data migration, seed, backfill, hosted operation, remote migration, deployment, Firebase change, Auth/config change, DNS, billing, gateway, notification-delivery, or file operation occurred. Only disposable local PostgreSQL and synthetic data were used for the merged SQL work. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
