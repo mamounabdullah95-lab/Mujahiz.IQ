@@ -478,10 +478,10 @@ begin
   v_digest:=pg_catalog.encode(extensions.digest(pg_catalog.convert_to(
     'claim-reject-evidence-digest-v1|'||pg_catalog.octet_length(v_a.restricted_evidence_reference)::text
       ||':'||v_a.restricted_evidence_reference,'UTF8'),'sha256'),'hex');
-  if v_a.action_code<>'supplier_claim.reject' or v_a.action_contract_version<>1
+  if coalesce((v_a.action_code<>'supplier_claim.reject' or v_a.action_contract_version<>1
      or v_a.action_class<>'claim_ownership' or v_a.actor_kind<>'human_user'
      or v_a.actor_user_profile_id<>v_claim.reviewer_user_profile_id or v_a.actor_source_code is not null
-     or v_a.actor_authorization_snapshot not in ('owner','admin')
+     or v_a.actor_authorization_snapshot is null or v_a.actor_authorization_snapshot not in ('owner','admin')
      or v_a.target_entity_type<>'supplier_ownership_claim' or v_a.target_id<>v_claim.id
      or v_a.related_target_entity_type<>'supplier_profile' or v_a.related_target_id<>v_claim.supplier_profile_id
      or v_a.occurred_at<>v_claim.decided_at or v_a.recorded_at<>v_claim.decided_at
@@ -491,15 +491,15 @@ begin
      or v_a.result_code<>'rejected' or v_a.reason_code<>v_claim.decision_reason_code
      or v_a.safe_context_schema_version<>'claim_reject_context_v1'
      or (select count(*) from pg_catalog.jsonb_object_keys(v_a.safe_context))<>16
-     or v_a.safe_context->>'reason_registry_version'<>'claim_rejection_reason_v1'
-     or v_a.safe_context->>'evidence_policy_version'<>'claim_reject_evidence_policy_v1'
-     or v_a.safe_context->>'evidence_verification_method_code'<>v_claim.evidence_verification_method_code
-     or v_a.safe_context->>'evidence_verification_version'<>v_claim.evidence_verification_version
-     or v_a.safe_context->>'evidence_verification_outcome_code'<>v_claim.evidence_verification_outcome_code
-     or v_a.safe_context->>'evidence_digest_version'<>'claim_reject_evidence_digest_v1'
-     or v_a.safe_context->>'disclosure_policy_version'<>'claim_reject_disclosure_v1'
+     or v_a.safe_context->>'reason_registry_version' is distinct from 'claim_rejection_reason_v1'
+     or v_a.safe_context->>'evidence_policy_version' is distinct from 'claim_reject_evidence_policy_v1'
+     or v_a.safe_context->>'evidence_verification_method_code' is distinct from v_claim.evidence_verification_method_code
+     or v_a.safe_context->>'evidence_verification_version' is distinct from v_claim.evidence_verification_version
+     or v_a.safe_context->>'evidence_verification_outcome_code' is distinct from v_claim.evidence_verification_outcome_code
+     or v_a.safe_context->>'evidence_digest_version' is distinct from 'claim_reject_evidence_digest_v1'
+     or v_a.safe_context->>'disclosure_policy_version' is distinct from 'claim_reject_disclosure_v1'
      or v_a.safe_context->>'decision_authorization_policy_version' is distinct from 'sec-001-claim-v1'
-     or v_a.safe_context->>'reviewer_role_code'<>v_a.actor_authorization_snapshot
+     or v_a.safe_context->>'reviewer_role_code' is distinct from v_a.actor_authorization_snapshot
      or v_a.safe_context->>'reviewer_conflict_result' is distinct from 'clear'
      or v_a.safe_context->>'provider_state_version' is distinct from 'firebase-provider-state-v1'
      or v_a.safe_context->>'role_policy_version' is distinct from 'platform-role-policy-v1'
@@ -525,7 +525,7 @@ begin
      or v_a.retention_class<>'claim_ownership_decision'
      or v_a.legal_hold_classification is not null or v_a.predecessor_audit_log_id is not null
      or v_a.correction_reason_code is not null
-  then return false; end if;
+  ),true) then return false; end if;
   v_binding:=pg_catalog.encode(extensions.hmac(pg_catalog.convert_to(
     'claim-reject-evidence-reference-v1|'||pg_catalog.jsonb_build_object(
       'restricted_evidence_reference',v_a.restricted_evidence_reference,'evidence_digest',v_a.evidence_digest,
@@ -644,9 +644,9 @@ begin
   v_digest:=pg_catalog.encode(extensions.digest(pg_catalog.convert_to(
     'claim-approve-evidence-digest-v1|'||pg_catalog.octet_length(v_a.restricted_evidence_reference)::text
       ||':'||v_a.restricted_evidence_reference,'UTF8'),'sha256'),'hex');
-  if v_a.action_contract_version<>1 or v_a.action_class<>'claim_ownership'
+  if coalesce((v_a.action_contract_version<>1 or v_a.action_class<>'claim_ownership'
      or v_a.actor_kind<>'human_user' or v_a.actor_user_profile_id<>v_claim.reviewer_user_profile_id
-     or v_a.actor_source_code is not null or v_a.actor_authorization_snapshot not in ('owner','admin')
+     or v_a.actor_source_code is not null or v_a.actor_authorization_snapshot is null or v_a.actor_authorization_snapshot not in ('owner','admin')
      or v_a.related_target_entity_type<>'supplier_profile' or v_a.related_target_id<>v_claim.supplier_profile_id
      or v_a.occurred_at<>v_claim.decided_at or v_a.recorded_at<>v_claim.decided_at
      or v_a.environment_code<>'local' or v_a.source_system_code<>'mujahiz'
@@ -657,17 +657,18 @@ begin
      or (select count(*) from pg_catalog.jsonb_object_keys(v_a.safe_context))<>19
      or v_a.safe_context->>'reason_registry_version' is distinct from 'claim_approval_reason_registry_v1'
      or v_a.safe_context->>'approval_evidence_policy_version' is distinct from 'claim_approval_evidence_policy_v1'
-     or v_a.safe_context->>'evidence_verification_method_code'<>v_claim.evidence_verification_method_code
-     or v_a.safe_context->>'evidence_verification_version'<>v_claim.evidence_verification_version
-     or v_a.safe_context->>'evidence_verification_outcome_code'<>v_claim.evidence_verification_outcome_code
-     or v_a.safe_context->'checked_source_classes' is null or v_a.safe_context->'checked_source_classes' not in
+     or v_a.safe_context->>'evidence_verification_method_code' is distinct from v_claim.evidence_verification_method_code
+     or v_a.safe_context->>'evidence_verification_version' is distinct from v_claim.evidence_verification_version
+     or v_a.safe_context->>'evidence_verification_outcome_code' is distinct from v_claim.evidence_verification_outcome_code
+     or pg_catalog.jsonb_typeof(v_a.safe_context->'checked_source_classes') is distinct from 'array'
+     or v_a.safe_context->'checked_source_classes' not in
        ('["authorized_officer_confirmation"]'::jsonb,
         '["claimant_authority","official_registry"]'::jsonb,
         '["company_domain_challenge","independent_supplier_corroboration"]'::jsonb)
      or v_a.safe_context->>'evidence_digest_version' is distinct from 'claim_approve_evidence_digest_v1'
      or v_a.safe_context->>'disclosure_policy_version' is distinct from 'claim_approve_disclosure_v1'
      or v_a.safe_context->>'decision_authorization_policy_version' is distinct from 'sec-001-claim-v1'
-     or v_a.safe_context->>'reviewer_role_code'<>v_a.actor_authorization_snapshot
+     or v_a.safe_context->>'reviewer_role_code' is distinct from v_a.actor_authorization_snapshot
      or v_a.safe_context->>'reviewer_conflict_result' is distinct from 'clear'
      or v_a.safe_context->>'provider_state_version' is distinct from 'firebase-provider-state-v1'
      or v_a.safe_context->>'role_policy_version' is distinct from 'platform-role-policy-v1'
@@ -676,7 +677,7 @@ begin
      or v_a.safe_context->>'security_coverage_version' is distinct from 'platform-admin-coverage-v1'
      or v_a.safe_context->>'evidence_minimization_version' is distinct from 'platform-admin-minimization-v1'
      or v_a.safe_context->'resulting_supplier_ownership_id' is distinct from pg_catalog.to_jsonb(v_o.id)
-     or pg_catalog.jsonb_typeof(v_a.safe_context->'superseded_claim_count')<>'number'
+     or pg_catalog.jsonb_typeof(v_a.safe_context->'superseded_claim_count') is distinct from 'number'
      or coalesce(v_a.safe_context->>'superseded_claim_count'!~'^(0|[1-9][0-9]*)$',true)
      or v_a.correlation_id<>v_e.correlation_id or v_a.prior_state_code<>'under_review'
      or v_a.result_state_code<>'approved' or v_a.prior_record_version<>v_claim.record_version-1
@@ -696,7 +697,7 @@ begin
      or v_a.retention_class<>'claim_ownership_decision'
      or v_a.legal_hold_classification is not null or v_a.predecessor_audit_log_id is not null
      or v_a.correction_reason_code is not null
-  then return false; end if;
+  ),true) then return false; end if;
 
   if v_i.environment_code<>'local' or v_i.command_name<>'supplier_claim.approve'
      or v_i.command_contract_version<>1 or v_i.principal_kind<>'human_user'

@@ -4,7 +4,7 @@ Date: 2026-08-15
 Branch: `codex/expire-trusted-command-implementation`
 Base: `7bdf29b1fbdce6d2d9a4a7bd9d6d547a1d675bab`
 Scope: local PostgreSQL and synthetic data only
-Correction loop: 1, reviewed head `460307b0ca4f5f6b90840015ab0991958cddb036`
+Correction loop: 2, previous reviewed head `974585ff8218b662781401dc03a43b24f1f5838e`
 
 ## Implemented boundary
 
@@ -119,6 +119,39 @@ history returns `P5199 / integrity_reconciliation_required`. The new Expire
 observation then completes no idempotency result and writes no Claim, event,
 audit, ownership, competitor, or notification effect.
 
+## Correction loop 2: fail-closed terminal-history NULL semantics
+
+Independent review confirmed that a required Approved audit `safe_context` member
+could retain its key while being changed to JSON `null`. PostgreSQL `->>` then
+returned SQL `NULL`; ordinary `<>` comparisons made the large validation
+predicate indeterminate, and PL/pgSQL did not enter its rejection branch. The
+same nullable-comparison shape existed in Reject reconciliation.
+
+The correction makes every required Reject and Approved safe-context scalar
+comparison null-safe with `IS DISTINCT FROM`, explicitly rejects a null actor
+authorization snapshot, verifies Approved `checked_source_classes` is a JSON
+array and `superseded_claim_count` is a JSON number, and wraps each nullable
+audit/provenance rejection predicate with `coalesce(predicate, true)`. This is
+fail-closed: an indeterminate predicate is rejection, never acceptance. It
+does not normalize malformed evidence into a valid value.
+
+A second bounded scan covered shared, Withdrawn, Rejected, Approved, Expired,
+and Superseded reconciliation helpers. Their remaining `<>`/`NOT IN`
+comparisons are either over NOT NULL or lifecycle-shape-constrained Claim,
+idempotency, event, and ownership values, use explicit null guards, or appear
+in ordinary SQL `WHERE` filtering. No remaining nullable safe-context
+extraction or terminal-validation IF predicate can accept SQL `NULL`.
+
+The new synthetic local regression cases mutate only a coherent terminal audit
+fixture, preserve the exact safe-context key count, and use a new Expire
+observation. Both cases returned `P5199 / integrity_reconciliation_required`:
+
+- Approved: 19 keys, JSON-null `evidence_verification_method_code`, no Expire
+  completion, Claim/event/audit/ownership/competitor repair.
+- Rejected: 16 keys, JSON-null `evidence_verification_method_code`, no Expire
+  completion, Claim/event/audit/ownership repair.
+
+The isolated new-case probe passed before the full focused suite.
 ## Atomic event and audit behavior
 
 A real expiry writes exactly one ordinal-1
@@ -143,17 +176,17 @@ and replay, coherent terminal no-op, malformed originating expiry fail-closed,
 event provenance/payload/cardinality, zero ordinary audit, no not-due mutation,
 worker-context denial, stored-expiry/source/fingerprint/result-resource
 corruption, active assignment chronology/provenance corruption, stale-fence
-takeover, durable attempt exhaustion, and not-due replay after later expiry.
+takeover, durable attempt exhaustion, and not-due replay after later expiry, plus JSON-null Approved and Rejected terminal audit reconciliation with key-count and no-side-effect assertions.
 
-The focused Expire suite passed 53/53 assertions with zero failures.
+The focused Expire suite passed 59/59 assertions with zero failures.
 
 The complete repository local SQL validator passed:
 
 - 29 migrations applied;
 - 29 pgTAP files run;
-- 2,223/2,223 assertions passed;
+- 2,229/2,229 assertions passed;
 - 0 failures; and
-- 170.6 seconds.
+- 194.1 seconds.
 
 Command:
 
@@ -179,7 +212,7 @@ behind forced shared-lock waits and covers:
 11. a forced wait crossing the exact expiry boundary; and
 12. Expire versus an independent competing Submit.
 
-All 23/23 checks passed across twelve races in 68.3 seconds. The outcomes prove
+All 23/23 checks passed across twelve races in 144.6 seconds. The outcomes prove
 one version increment and event, coherent `already_terminal` for the second
 valid observation, allowed loser denial classes, post-lock trusted time,
 assignment preservation, no ownership/approval side effect, no competitor

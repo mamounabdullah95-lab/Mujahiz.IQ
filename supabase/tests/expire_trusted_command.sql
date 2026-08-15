@@ -437,6 +437,58 @@ select ok((select status='withdrawn' from public.supplier_ownership_claims
   where id=pg_temp.expire_id(202)) and not exists(select 1 from internal.domain_events
   where aggregate_id=pg_temp.expire_id(202) and event_type='supplier_ownership.claim_expired'),
   'malformed terminal history produces no repair Claim mutation or Expire event');
+
+-- A present JSON null preserves cardinality but must never bypass terminal reconciliation.
+update internal.audit_logs set safe_context=jsonb_set(
+  safe_context,'{evidence_verification_method_code}','null'::jsonb)
+where target_id=pg_temp.expire_id(203) and action_code='supplier_claim.reject'
+  and source_operation_class='trusted_command';
+update internal.audit_logs set safe_context=jsonb_set(
+  safe_context,'{evidence_verification_method_code}','null'::jsonb)
+where target_id=pg_temp.expire_id(205) and action_code='supplier_claim.approve'
+  and source_operation_class='trusted_command';
+select is((select count(*)::integer from pg_catalog.jsonb_object_keys((select safe_context
+  from internal.audit_logs where target_id=pg_temp.expire_id(203)
+    and action_code='supplier_claim.reject' and source_operation_class='trusted_command'))),16,
+  'Rejected JSON-null fixture preserves the exact safe_context key count');
+select is((select count(*)::integer from pg_catalog.jsonb_object_keys((select safe_context
+  from internal.audit_logs where target_id=pg_temp.expire_id(205)
+    and action_code='supplier_claim.approve' and source_operation_class='trusted_command'))),19,
+  'Approved JSON-null fixture preserves the exact safe_context key count');
+set role mujahiz_claim_expiry_worker;
+select extensions.throws_ok(format('select pg_temp.run_expire(%L,%L::uuid,2)',
+  'terminal-observation-reject-json-null',pg_temp.expire_id(203)),
+  'P5199','integrity_reconciliation_required','Rejected JSON-null audit history fails closed');
+select extensions.throws_ok(format('select pg_temp.run_expire(%L,%L::uuid,2)',
+  'terminal-observation-approve-json-null',pg_temp.expire_id(205)),
+  'P5199','integrity_reconciliation_required','Approved JSON-null audit history fails closed');
+reset role;
+select ok(
+  (select status='rejected' and record_version=3 from public.supplier_ownership_claims
+    where id=pg_temp.expire_id(203))
+  and not exists(select 1 from internal.idempotency_keys
+    where command_name='supplier_claim.expire' and upstream_request_identity='terminal-observation-reject-json-null')
+  and not exists(select 1 from internal.domain_events
+    where source_operation_identity='terminal-observation-reject-json-null')
+  and (select count(*) from internal.audit_logs where target_id=pg_temp.expire_id(203)
+    and action_code='supplier_claim.reject' and source_operation_class='trusted_command')=1
+  and (select count(*) from public.supplier_ownerships where supplier_profile_id=(select supplier_profile_id
+    from public.supplier_ownership_claims where id=pg_temp.expire_id(203)))=0,
+  'Rejected JSON-null rejection leaves no Expire completion, Claim, event, audit, or ownership repair');
+select ok(
+  (select status='approved' and record_version=3 from public.supplier_ownership_claims
+    where id=pg_temp.expire_id(205))
+  and not exists(select 1 from internal.idempotency_keys
+    where command_name='supplier_claim.expire' and upstream_request_identity='terminal-observation-approve-json-null')
+  and not exists(select 1 from internal.domain_events
+    where source_operation_identity='terminal-observation-approve-json-null')
+  and (select count(*) from internal.audit_logs where target_id=pg_temp.expire_id(205)
+    and action_code='supplier_claim.approve' and source_operation_class='trusted_command')=1
+  and (select count(*) from public.supplier_ownerships where supplier_profile_id=(select supplier_profile_id
+    from public.supplier_ownership_claims where id=pg_temp.expire_id(205)))=1
+  and (select status='superseded' and record_version=2 from public.supplier_ownership_claims
+    where id=pg_temp.expire_id(206)),
+  'Approved JSON-null rejection leaves no Expire completion, Claim, event, audit, ownership, or competitor repair');
 -- Input validation runs before target lookup and stored expiry is fingerprint-bound.
 set role mujahiz_claim_expiry_worker;
 select extensions.throws_ok($$select * from supplier_claim.expire('null-target',null,1,null)$$,
