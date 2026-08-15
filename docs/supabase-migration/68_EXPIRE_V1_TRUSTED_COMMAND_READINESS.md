@@ -8,7 +8,7 @@ Verdict: **IMPLEMENTATION-READY**
 
 This is a bounded documentation-only readiness review for the final unimplemented Claim-v1 command, `supplier_claim.expire`. It does not implement SQL, pgTAP, a worker, RLS, grants, notifications, hosted Supabase, Firebase behavior, migration, or Production behavior.
 
-The review started from clean `origin/main` at `9300c7c21f44b538e4e67c0f1fe39e1e001828f4`, the merge of PR #131 after merged PR #130. Static repository verification found:
+This corrective review started from clean `origin/main` at `c7878505d604850fe1d4d34aba2180523434b6ed`, the merge of PR #132. PR #132 contains the original Expire readiness document and retains merged PR #130's five-command implementation baseline. Static repository verification found:
 
 - 28 tracked migrations and 28 tracked pgTAP files;
 - 24 physical `public`/`internal` PostgreSQL tables;
@@ -37,11 +37,11 @@ The Product/Security/Data Owner approved the two previously open decisions recor
 |---|---|
 | `submitted` | May transition to `expired` only when due and the expected active Claim version matches |
 | `under_review` | May transition to `expired` only when due and the expected active Claim version matches; preserve every reviewer-assignment field unchanged |
-| `approved` | Immutable terminal state; complete a new valid worker source item as `already_terminal`, with no mutation/audit/event |
-| `rejected` | Same `already_terminal` no-op |
-| `withdrawn` | Same `already_terminal` no-op |
-| `expired` | Exact completed request replays; a different valid worker source item completes `already_terminal` without another transition/event |
-| `superseded` | Same `already_terminal` no-op |
+| `approved` | Immutable terminal state; only after the status-specific historical validation in section 10 may a new valid worker observation complete as `already_terminal`, with no mutation/audit/event |
+| `rejected` | Same status-specific validated `already_terminal` no-op |
+| `withdrawn` | Same status-specific validated `already_terminal` no-op |
+| `expired` | Exact completed request replays; only after section 10 validates the originating expiry may a different valid worker observation complete `already_terminal` without another transition/event |
+| `superseded` | Same status-specific validated `already_terminal` no-op |
 
 `submitted` and `under_review` have the same due predicate and target status, but they do not have identical preservation checks. A coherent `submitted` Claim has all reviewer-assignment fields null. A coherent `under_review` Claim has the complete write-once assignment group and the assignment instant in `[submitted_at, expires_at)`.
 
@@ -61,17 +61,17 @@ due        = command_now >= expires_at
 
 Both timestamps are `timestamptz`. `submitted_at` is the immutable anchor. Equality is due: a Claim may expire when `command_now = expires_at`. There is no grace period, local-midnight rule, calendar-month rule, session-timezone adjustment, or caller timestamp.
 
-Phase B captures one `clock_timestamp()`-equivalent `command_now` exactly once, after every required lock is held. That single instant supplies the due check, `expired_at`, `updated_at`, event times, idempotency completion time, and any audit time if the Owner selects an audit-writing option. A transaction-start timestamp is insufficient because a transaction may wait across the expiry boundary.
+Phase B captures one `clock_timestamp()`-equivalent `command_now` exactly once, after every required lock is held. That single instant supplies the due check, `expired_at`, `updated_at`, event times, and idempotency completion time. Ordinary success has no audit row. A transaction-start timestamp is insufficient because a transaction may wait across the expiry boundary.
 
 ## 5. Caller and authority model
 
 ### VERIFIED / DERIVED FROM MERGED CONTRACT
 
-Expire is executed only by a dedicated automated non-browser worker/service with one registered expiry purpose, environment, policy version, and durable source item. It has:
+Expire is executed only by a dedicated automated non-browser worker/service with one registered expiry purpose, environment, policy version, and durable scheduler observation. The worker creates one opaque `p_source_item_identity` before its first attempt for that observation, reuses it unchanged for every retry of that observation, and creates a different identity for a later observation. It has:
 
 - `principal_kind = automated_worker`;
 - no human `principal_user_profile_id` and no fabricated reviewer/Admin/Owner actor;
-- a stable code-owned worker source, not a process/host/instance identity;
+- fixed actor provenance `claim_expiry_worker`, distinct from the observation identity and never a process/host/instance identity;
 - no browser, `anon`, `authenticated`, generic `service_role`, migration-operator, notification-worker, or human endpoint authority; and
 - no caller-selected time, claimant, Supplier, reviewer, status, result version, reason, audit/event identity, or execution fence at the business boundary.
 
@@ -127,36 +127,57 @@ The smallest Expire lock order consistent with the universal Claim protocol is:
 2. durable Phase-A reservation/replay/reclaim in `internal.idempotency_keys`, producing a new fence/attempt when executable;
 3. routing-hint read of Claim ID to immutable claimant/Supplier IDs; the read grants no authority;
 4. in Phase B, lock and validate the idempotency row/fence first;
-5. acquire the target claimant's versioned principal advisory lock, then lock/re-read the claimant `user_profiles` row for immutable target integrity only; no provider/role/access/security eligibility is required;
-6. acquire the common Supplier advisory lock;
-7. lock/re-read the Supplier row;
-8. lock/read the Supplier ownership set in ascending ownership UUID order without modifying it;
-9. lock/re-read the target Claim row; validate immutable parties, structure, state, version, 720-hour invariant, and assignment shape;
-10. capture one `command_now`, apply the due predicate, allocate the event/result, update the Claim, insert the required event and any Owner-approved audit, and complete the fenced idempotency row atomically.
+5. acquire the target claimant's versioned principal advisory lock;
+6. acquire the common Supplier advisory lock before any principal or domain row lock;
+7. lock/re-read the claimant `user_profiles` row for immutable target integrity only; no provider/role/access/security eligibility is required;
+8. lock/re-read the Supplier row;
+9. lock/read the Supplier ownership set in ascending ownership UUID order without modifying it;
+10. lock/re-read the target Claim row; validate immutable parties, structure, state, version, 720-hour invariant, and assignment shape;
+11. capture one `command_now`, apply the due predicate, allocate the event/result, update the Claim, insert the required event, and complete the fenced idempotency row atomically.
 
-No reviewer principal, reviewer role/access/security, competing Claim, ownership-creation, or evidence-verification lock is required. The shared Supplier-before-Claim order prevents inversion with Withdraw, Assign Reviewer, Reject, Approve, Submit, and future ownership writers. Skipping the Supplier lock would violate the approved universal architecture even though Expire changes only one Claim.
+No reviewer principal, reviewer role/access/security, competing Claim, ownership-creation, or evidence-verification lock is required. Submit, Withdraw, Assign Reviewer, Reject, and Approve all acquire the involved principal advisory lock or sorted principal advisory locks, then the Supplier advisory lock, and only then principal rows. Expire now uses that exact advisory-before-row order. The shared Supplier-before-Claim order prevents inversion with those five commands and future ownership writers; there is no claimant-row-before-Supplier-advisory path. Skipping the Supplier lock would violate the approved universal architecture even though Expire changes only one Claim.
 
 ## 9. Idempotency and source-item contract
 
 ### VERIFIED / DERIVED FROM MERGED CONTRACT
 
-The command name is `supplier_claim.expire`, contract version `1`, target aggregate type `supplier_ownership_claim`, and target aggregate ID = Claim UUID.
+The command name is `supplier_claim.expire`, contract version `1`, target aggregate type `supplier_ownership_claim`, and target aggregate ID = Claim UUID. The reliability identities are deliberately separate:
 
-The durable scheduler/job/item identity is scoped to the exact Claim UUID, immutable `expires_at`, and fixed policy version. The worker provenance code is the fixed server-derived `claim_expiry_worker`; it is not a caller-selected worker instance. One Claim is one logical source item and one transaction. A bounded scheduler batch may be ordered by `(expires_at, id)`, but batch identity, batch rollback, or batch-wide completion never replaces per-Claim fencing.
+| Concern | Exact v1 value/binding |
+|---|---|
+| automated principal | `principal_kind = automated_worker`; no `principal_user_profile_id` |
+| worker/actor provenance | fixed server-derived `principal_source_code = claim_expiry_worker`; the event uses `actor_kind = automated_worker`, no actor user-profile ID, and `actor_source_code = claim_expiry_worker` |
+| scheduler/source-system class | fixed server-derived `upstream_source_system_code = claim_expiry_scheduler` |
+| one scheduler observation | caller-supplied `p_source_item_identity`, stored as `upstream_request_identity` |
+| event operation identity | the same validated `p_source_item_identity`, stored as event `source_operation_identity`; event `source_system_code` remains the existing `mujahiz` convention |
+
+`p_source_item_identity` is an opaque, non-empty UTF-8 value of at most 256 octets, matching the implemented REL-001 bound. The scheduler must allocate it durably before the first attempt, guarantee it is unique for each observation within the `mujahiz` event source namespace, and reuse it only for retries of that observation. It must not contain a secret, token, credential, personal data, Claim/Supplier display data, process/host/instance identity, retry number, or attempt timestamp. It is stored only in the protected REL source-identity fields and is never copied into the Claim, event payload, audit, result, error, or log.
+
+The source item is scoped by immutable bindings to the exact Claim UUID, expected Claim version, stored `expires_at`, and fixed expiry policy. One Claim observation is one logical source item and one transaction. A bounded scheduler batch may be ordered by `(expires_at, id)`, but batch identity, batch rollback, or batch-wide completion never replaces per-observation fencing.
+
+The Phase-A key digest is HMAC-SHA-256 over a versioned, length-delimited namespace containing environment, `supplier_claim.expire`, contract version 1, fixed source-system class `claim_expiry_scheduler`, and the raw `p_source_item_identity`. The raw identity is never used as the database uniqueness key. The immutable source binding additionally requires the stored `upstream_source_system_code` and `upstream_request_identity` to match exactly.
 
 The minimum canonical request fingerprint contains:
 
+- fixed upstream source-system class `claim_expiry_scheduler`;
+- durable `p_source_item_identity`;
 - Claim UUID;
 - expected Claim version;
 - immutable stored expiry instant;
-- expiry-policy version; and
-- durable source-operation identity.
+- fixed expiry-policy version `claim_expiry_v1`; and
+- fixed worker provenance `claim_expiry_worker`.
 
 It excludes server time, raw fence, retry count, worker instance, generated IDs, correlation ID, Claim result state/version, event/audit metadata, and any human actor.
 
-Phase A uses the established 60-second local lease, 10-attempt cap, fenced reclaim, and 720-hour replay-row retention only as provisional local protocol parameters. A stale fence cannot enter Phase B or complete a result. Same source identity plus the same target/fingerprint replays or reports `command_in_progress`; a changed target, expected version, expiry instant, policy, source binding, or fingerprint fails `idempotency_key_conflict`.
+Phase A uses the established 60-second local lease, 10-attempt cap, fenced reclaim, and 720-hour replay-row retention only as provisional local protocol parameters. A stale fence cannot enter Phase B or complete a result. The same observation identity plus the same source/target/fingerprint replays or reports `command_in_progress`; reuse with a changed source class, target, expected version, expiry instant, policy, worker provenance, or fingerprint fails `idempotency_key_conflict`.
 
-Successful expiry completes with `outcome_code = expired`, resource type `supplier_ownership_claim`, Claim UUID, and committed Claim-version token. An already-terminal no-op completes with `outcome_code = already_terminal`, the same resource type/ID, and the immutable current terminal version. A not-due active source item records/replays terminal safe failure `claim_not_due`; it never reserves future authority to expire the Claim after time advances. A later scheduler observation must use a new durable source item for the then-current Claim version and due instant.
+Successful expiry completes with `outcome_code = expired`, resource type `supplier_ownership_claim`, Claim UUID, and committed Claim-version token. An already-terminal no-op completes with `outcome_code = already_terminal`, the same resource type/ID, and the immutable current terminal version. A not-due observation records/replays terminal safe failure `claim_not_due`; it never reserves future authority to expire the Claim after time advances.
+
+Mandatory progression invariant:
+
+1. Observation A is created before expiry with source item A and the current expected Claim version. It completes `claim_not_due`; every retry of A replays that same terminal result and performs no Claim/event/audit mutation.
+2. After the expiry boundary, the scheduler creates distinct source item B for a new observation and supplies the then-current expected Claim version. B has a different key digest and upstream/source-operation identity, cannot resolve to A, and may expire the still-active Claim.
+3. Every retry of successful B replays B. No completed `claim_not_due` record can permanently prevent a later distinct due observation from expiring the Claim.
 
 Exact completed replay is read-only and creates no second transition, version, event, audit, ownership, competitor effect, or notification.
 
@@ -166,14 +187,24 @@ Exact completed replay is read-only and creates no second transition, version, e
 
 Completed `expired` replay must verify only durable facts relevant to Expire:
 
-1. the full completed idempotency lifecycle and exact command/version/environment/automated-worker/source/target/upstream/fingerprint/outcome/resource/version binding, including `expires_at > completed_at`;
+1. the full completed idempotency lifecycle and exact command/version/environment/automated-worker/source/target/upstream/fingerprint/outcome/resource/version binding, including `expires_at > completed_at` for the idempotency row;
 2. one coherent Claim at the bound version with `status = expired`, `expires_at = submitted_at + interval '720 hours'`, `expired_at >= expires_at`, `expired_at = updated_at = idempotency.completed_at`, the approved expiry source/policy pair, no decision/withdrawal/supersession/ownership fields, and coherent preserved assignment shape;
 3. exactly one ordinal-1 `supplier_ownership.claim_expired` v1 event produced by the same idempotency/source item, with aggregate sequence equal to the committed Claim version, exact envelope/times/correlation, exact minimized payload, `is_historical = false`, and `fanout_suppressed = false`; and
-4. the exact success-audit shape only if the Owner selects audit-writing expiry.
+4. zero ordinary Expire success-audit rows, matching the approved audit Option A.
 
-Completed `already_terminal` replay verifies the completed idempotency binding and the same immutable terminal Claim/version, but requires no Expire event or audit. The no-op does not claim that Expire caused the terminal state.
+For a **first-time** Expire observation of an already-terminal Claim, schema validity is insufficient. Under the same advisory/row locks, Expire must prove the terminal status under its originating command contract before completing its own observation as `already_terminal`:
 
-Do not copy Approve's ownership, competitor-set, event-ordinal range, or approval-audit reconciliation. Missing, duplicate, partial, mismatched, or contradictory durable facts fail `integrity_reconciliation_required`; they never authorize re-execution or repair.
+| Terminal status | Minimum originating history that must be proven |
+|---|---|
+| `withdrawn` | Complete terminal Claim field group with `withdrawn_by_user_profile_id = claimant_user_profile_id`, reason `claimant_withdrawal`, assignment group either wholly null or coherently preserved, `submitted_at <= withdrawn_at = updated_at < expires_at`, and exactly one completed `supplier_claim.withdraw` v1 idempotency row bound to the Claim/result version/time plus exactly one matching ordinal-1 `supplier_ownership.claim_withdrawn` v1 event. Ordinary withdrawal has zero success audits. |
+| `rejected` | Complete preserved assignment and decision field groups; assigned reviewer is the decision actor; `submitted_at <= reviewer_assigned_at <= decided_at = updated_at < expires_at`; registered rejection reason/evidence tuple and policy versions; `reviewer_notes = NULL`; exactly one completed `supplier_claim.reject` v1 idempotency row; exactly one complete primary success audit with its required evidence binding; and exactly one matching ordinal-1 `supplier_ownership.claim_rejected` v1 event. No ownership or competitor effect may exist. |
+| `approved` | Complete preserved assignment and approved decision field groups with registered approval/evidence/policy values and pre-expiry chronology; the exact resulting ownership linked to the Claim with coherent `claim_approval` establishment and lifecycle (including a later coherently closed ownership) plus the one-primary-at-a-time invariant; the complete originating `supplier_claim.approve` v1 idempotency row and primary success audit; the exact approval-produced competitor set; and the complete contiguous event set consisting of ordinal 1 `supplier_ownership.claim_approved` plus ordered `claim_superseded` events for that set. This is the implemented Approval reconciliation boundary, not a generic terminal-shape check. |
+| `superseded` | Complete terminal Claim field group with no decision/withdrawal/expiry/ownership result, preserved assignment shape, `superseded_at = updated_at`, reason `competing_claim_superseded_by_approval`, and a same-Supplier `superseded_by_claim_id` that is a coherent approved winner. The winner's resulting ownership, complete `supplier_claim.approve` v1 idempotency row and primary audit, exact approval-produced competitor set, and contiguous ordered event set must prove that this Claim has the matching `supplier_ownership.claim_superseded` event at its correct ordinal/version/time. |
+| `expired` | Complete terminal Claim field group with no decision/withdrawal/supersession/ownership result, coherent preserved assignment shape, exact `expires_at = submitted_at + interval '720 hours'`, `expired_at = updated_at >= expires_at`, fixed `claim_expiry_worker` / `claim_expiry_v1` provenance, exactly one completed originating `supplier_claim.expire` v1 idempotency row with its source observation binding, exactly one matching ordinal-1 `supplier_ownership.claim_expired` v1 event, and zero ordinary Expire success audits. |
+
+The first-time observation does not need to prove unrelated current human authorization or re-run a terminal command. It does have to prove every artifact that the originating atomic command required. Missing, duplicate, partial, mismatched, expired-before-completion, malformed, or contradictory originating facts raise `P5199 / integrity_reconciliation_required`. Expire then does not complete its new observation, return `already_terminal`, repair history, emit an Expire event, or mutate the Claim. A valid terminal history permits the new observation to complete only its own worker idempotency item as `already_terminal`, with no Expire event, audit, or domain mutation.
+
+Completed `already_terminal` replay verifies the complete Expire observation binding plus the same status-specific immutable terminal Claim/version and originating history. The no-op never claims that Expire caused the terminal state.
 
 ## 11. Domain event
 
@@ -188,9 +219,9 @@ Successful transition writes exactly one event in the same Phase-B transaction:
 | aggregate type/id | `supplier_ownership_claim` / expired Claim UUID |
 | aggregate sequence | committed Claim `record_version` |
 | producer | `supplier_claim.expire`, contract version `1` |
-| producer identity | current idempotency row and durable source-operation identity |
+| producer identity | current idempotency row and `source_operation_identity = p_source_item_identity` |
 | ordinal | `1` |
-| actor | `automated_worker`; no actor user-profile ID; stable expiry-worker source code |
+| actor | `automated_worker`; no actor user-profile ID; `actor_source_code = claim_expiry_worker` |
 | environment/source/component | current trusted environment; existing `mujahiz` source convention; bounded expiry-worker component |
 | times | `occurred_at = persisted_at = available_at = command_now` |
 | processing | `pending`, attempt 0, no lease/error/processed/dead-letter fields |
@@ -240,31 +271,48 @@ An existing ownership row does not convert expiry into approval/rejection or aut
 | Expire vs Approve | `under_review` | Approve captures time before boundary | Approve | `approved`, ownership, competitor effects | Expire completes `already_terminal` | Approval's complete atomic write set wins; no expiry event |
 | Expire vs Approve | `under_review` | at/after boundary | Expire or waiting Approve | Only `expired` may commit | Approve returns `claim_expired` or terminal/version denial; creates no ownership/competitor effects | One expiry version/event; no approval effects |
 
+Required observation examples are exact: source observation A before expiry completes and replays `claim_not_due`; distinct source observation B after expiry uses the current expected version, cannot replay A, and may expire the still-active Claim; retries of successful B replay B. If another valid command terminalizes first, Expire validates that status's complete originating history under section 10 before completing `already_terminal`; incoherent history fails `integrity_reconciliation_required` with no Expire completion or mutation.
+
 An active Claim with a stale expected version returns `claim_version_conflict`; Expire never silently applies to a newer active version. The explicit `already_terminal` rule is evaluated for a coherent terminal row before active-version transition validation, otherwise the approved no-op could not handle concurrent terminalization.
 
 ## 16. Proposed exact v1 signature and registry recommendation
 
 ### VERIFIED / DERIVED FROM MERGED CONTRACT
 
-The smallest business boundary is:
+The exact Phase-A/business boundary is:
 
 ```text
 supplier_claim.expire(
+  p_source_item_identity text,
   p_claim_id uuid,
   p_expected_claim_version integer,
   p_correlation_id uuid default null
 )
 ```
 
-Caller-supplied fields are limited to:
+Caller/worker supplied:
 
+- `p_source_item_identity`: the validated durable identity of this one scheduler observation, stable across its retries and different for a later observation;
 - `p_claim_id`: opaque target aggregate ID;
-- `p_expected_claim_version`: optimistic concurrency precondition from the worker's bounded due-item read; and
+- `p_expected_claim_version`: optimistic concurrency precondition from the worker's bounded observation; and
 - `p_correlation_id`: optional opaque UUID for tracing, generated when absent and excluded from the request fingerprint.
 
-`source_operation_identity = 'claim_expiry_worker'` and `expiry_policy_version = 'claim_expiry_v1'` are fixed server-derived v1 constants. They are not caller inputs, are not exposed as override parameters, and are included by the trusted command in its canonical idempotency binding. The durable scheduler/job/item identity remains an internal source-item binding, not a free-form public reason or policy input.
+Server derived:
 
-The established two-phase implementation may add a private `_execute_expire(..., p_execution_fence uuid)` Phase-B routine. The fence is returned only by Phase A and is not a business input.
+- `principal_kind = automated_worker`;
+- worker/actor provenance `claim_expiry_worker`;
+- upstream source-system class `claim_expiry_scheduler`;
+- `upstream_request_identity = p_source_item_identity`;
+- event `source_operation_identity = p_source_item_identity`;
+- fixed `expiry_policy_version = claim_expiry_v1`;
+- trusted `command_now`;
+- Claim, Supplier, claimant, stored expiry, assignment, and terminal-history facts;
+- status/outcome, committed Claim version, event metadata/ID, and safe result envelope; and
+- the Phase-A execution fence and all other generated operational values.
+
+The callable does not expose worker provenance, source-system class, policy/version literals, trusted time, claimant, Supplier, reviewer, result state/version, event/audit identity, or execution fence as caller overrides. The source item is an identity, not a reason, policy, timestamp, batch ID, worker instance, or authorization fact.
+
+The implementation follows the current Reject/Approve shape: the callable above is the runtime-facing durable Phase-A reservation/replay/reclaim boundary. A private `supplier_claim._execute_expire(..., p_execution_fence uuid)` Phase-B routine carries the same validated semantic inputs and the opaque current fence; the fence is returned only by Phase A and is not a business input.
 
 The result uses the fixed Claim envelope:
 
@@ -291,7 +339,7 @@ expiry_system_source_code = claim_expiry_worker
 expiry_policy_version     = claim_expiry_v1
 ```
 
-These are server-side v1 constants, not arbitrary caller vocabulary. No separate expiry reason column or caller-supplied reason is required. The reason is inherent to reaching the fixed trusted-time expiry; no human actor or reviewer decision is represented.
+These are server-side v1 constants, not arbitrary caller vocabulary and not the per-observation identity. No separate expiry reason column or caller-supplied reason is required. The reason is inherent to reaching the fixed trusted-time expiry; no human actor or reviewer decision is represented.
 
 ## 17. Error taxonomy
 
@@ -309,7 +357,7 @@ These are server-side v1 constants, not arbitrary caller vocabulary. No separate
 | changed source/target/fingerprint binding | `P5108 / idempotency_key_conflict` |
 | matching unexpired lease | `P5109 / command_in_progress` |
 | retryable/reclaim timing failure | `P5110 / retry_later` |
-| required audit unavailable, only if audit Option B is approved | `P5116 / audit_unavailable` |
+| a separately required security/failure audit is unavailable; ordinary expiry success requires no audit | `P5116 / audit_unavailable` |
 | corrupt Claim/idempotency/event/audit history or required event unavailable | `P5199 / integrity_reconciliation_required` |
 
 ### IMPLEMENTATION RECOMMENDATION
@@ -320,30 +368,39 @@ Assign the already-approved `claim_not_due` literal the next unused Claim SQLSTA
 
 Do not run these tests in this documentation task. The later SQL PR must prove:
 
-1. **Signature/grants:** exact Phase-A signature/result; private fenced Phase B; dedicated worker-only execute; no human/API/generic-`service_role` execute; no direct Claim/internal-table grants; fixed owners/search paths; exactly three Claim SELECT and zero mutation policies.
-2. **Time:** before-expiry `claim_not_due`; exact equality success; after-expiry success; one post-lock timestamp; session timezone/DST independence; exact `submitted_at + 720 hours` integrity.
-3. **States:** submitted success; under-review success; every terminal status produces `already_terminal`; malformed/unsupported lifecycle fails reconciliation; terminal rows never reopen.
-4. **Assignment:** all six assignment fields preserved byte-for-byte; no assignment-version input; reviewer visibility closes because status is terminal; no reviewer/role/access mutation.
-5. **Versioning:** current version increments once; active stale expected version fails; same completed request does not increment; concurrent assignment produces active-version conflict for the old expiry item.
-6. **Idempotency:** same source/fingerprint replay; changed source/target/version/expiry/policy conflict; unexpired lease; expired reclaim; stale-fence denial; attempt-10 reconciliation; completed retention valid at completion; terminal failure replay.
-7. **Replay corruption:** Claim version/status/time/source/policy/assignment shape; idempotency lifecycle/fingerprint/result; missing/duplicate/wrong event; payload/envelope/sequence/correlation/time/historical flags; selected audit option; all fail closed with zero writes.
-8. **Atomic rollback:** Claim update, required event, idempotency completion, and selected audit behavior commit or roll back together; injected event/audit/idempotency failure leaves no expiry/version/result success.
-9. **Event/audit:** exact `supplier_ownership.claim_expired` v1 ordinal/payload/automated-worker provenance; no event for `claim_not_due|already_terminal`; exact Owner-selected audit classification and zero duplicates on replay.
-10. **No extra effects:** no notification insert; no ownership mutation; no competing-Claim mutation; no decision/withdrawal/supersession fields; sensitive-value/event-payload scan.
-11. **True multi-session races:** Expire vs Expire (same and different source identity), Withdraw, Assign Reviewer, Reject, and Approve before/at/after the boundary; forced lock waits across the boundary; one compatible winner; no deadlock; correct stale-version/no-op behavior.
-12. **Bounded worker scan:** `(expires_at, id)` order, independent per-Claim transaction/source binding, one corrupt item does not roll back unrelated items, and no batch-wide business transaction.
+1. **Signature/grants:** exact public `expire(text,uuid,integer,uuid)` Phase-A signature/result; private fenced Phase B; dedicated worker-only execute; no human/API/generic-`service_role` execute; no direct Claim/internal-table grants; fixed owners/search paths; exactly three Claim SELECT and zero mutation policies.
+2. **Source identity and context:** valid non-empty 1-256-octet observation identity; missing, invalid, and oversized denial; fixed `claim_expiry_scheduler` upstream source and `claim_expiry_worker` principal/actor provenance; exact upstream/event source mapping; no process/host/instance identity; worker-role/source-context isolation.
+3. **Observation progression:** observation A before expiry completes `claim_not_due`; exact retry of A replays A; distinct observation B after expiry with the current version does not replay A and expires the Claim; exact retry of B replays B.
+4. **Source-binding conflict:** reuse one source-item identity with a changed target, expected version, stored expiry, source class, worker provenance, policy, or fingerprint fails `idempotency_key_conflict` without mutation.
+5. **Time:** before-expiry `claim_not_due`; exact equality success; after-expiry success; one post-lock timestamp; session timezone/DST independence; exact `submitted_at + 720 hours` integrity.
+6. **States:** submitted success; under-review success; every valid terminal status produces `already_terminal`; terminal rows never reopen.
+7. **First-time terminal integrity:** schema-valid malformed prior `expired`, `withdrawn`, `rejected`, `approved`, and `superseded` rows, including missing/duplicate/wrong originating idempotency, event, audit, ownership, winner, or competitor-set artifacts as applicable, all fail `integrity_reconciliation_required`; exact valid controls for all five statuses complete `already_terminal` without an Expire event/audit/domain mutation.
+8. **Assignment:** all six assignment fields preserved byte-for-byte; no assignment-version input; reviewer visibility closes because status is terminal; no reviewer/role/access mutation.
+9. **Versioning:** current version increments once; active stale expected version fails; same completed observation does not increment; concurrent assignment produces active-version conflict for the old expiry observation.
+10. **Idempotency lifecycle:** unexpired lease; expired reclaim; stale-fence denial; attempt-10 reconciliation; completed retention valid at completion; terminal failure replay.
+11. **Replay corruption:** Claim version/status/time/source/policy/assignment shape; source/upstream binding; idempotency lifecycle/fingerprint/result; missing/duplicate/wrong event; payload/envelope/sequence/correlation/time/historical flags; exact zero ordinary audit; all fail closed with zero writes.
+12. **Atomic rollback:** Claim update, required event, and idempotency completion commit or roll back together; injected event/idempotency failure leaves no expiry/version/result success.
+13. **Event/audit/effects:** exact `supplier_ownership.claim_expired` v1 ordinal/payload/automated-worker/source-operation provenance; no event for `claim_not_due|already_terminal`; zero ordinary success audits; no notification, ownership, competing-Claim, decision/withdrawal/supersession, or sensitive-payload effect.
+14. **Lock order and true multi-session races:** instrument exact principal-advisory -> Supplier-advisory -> principal-row ordering; Expire vs Expire (same and different observation identity), Submit, Withdraw, Assign Reviewer, Reject, and Approve before/at/after the boundary; forced lock waits across the boundary; one compatible winner; no deadlock; status-specific terminal validation before `already_terminal`.
+15. **Bounded worker scan:** `(expires_at, id)` order, independent per-Claim observation/transaction/source binding, one corrupt item does not roll back unrelated items, and no batch-wide business transaction.
 
 ## 19. Open gates, impact, and stop point
 
 The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 
-Production/data impact is none. This review changes one Markdown file only. It performs no Firebase or hosted Supabase access, Production/TEST read or write, SQL migration, pgTAP execution, seed, backfill, deployment, DNS, billing, Auth/config, RLS/grant, notification, ownership, Claim-row, or file operation.
+Production/data impact is none. This correction changes one Markdown file only. It performs no Firebase or hosted Supabase access, Production/TEST read or write, SQL migration, pgTAP execution, seed, backfill, deployment, DNS, billing, Auth/config, RLS/grant, notification, ownership, Claim-row, or file operation.
 
-Exact stop point: this readiness document, static validation, commit, push, and one Draft PR. Stop before Owner-decision closure, Expire SQL/pgTAP/worker implementation, Baseline synchronization, Ready status, merge, deployment, hosted action, or data movement.
+The two Owner decisions are closed: ordinary successful expiry writes no audit row, and the fixed expiry provenance registry is `claim_expiry_worker` / `claim_expiry_v1`. No material Owner decision remains.
 
-## 20. Manual-merge recommendation
+Exact stop point: this corrected readiness document, documentation/static validation, commit, push, and one Draft PR. Stop before independent-review approval, Ready status, merge, Expire SQL/pgTAP/worker implementation, Baseline synchronization, hosted action, deployment, or data movement.
 
-Manually merge this readiness PR after human review confirms that it accurately records the two unresolved Owner decisions. Merging this documentation does not authorize implementation. After merge, obtain explicit Owner approval for one audit option and the exact expiry provenance registry, then create a separate implementation-readiness closure or SQL task from the newer verified `main`.
+## 20. Independent-review and implementation recommendation
+
+The corrected contract remains **IMPLEMENTATION-READY** because M-1 through M-4 are closed from merged REL-001, CLAIM-CMD-001, the five implemented commands, the Claim structure, and the already recorded Owner decisions; no new material Product/Security/Data Owner decision is required.
+
+This corrected readiness exact head should proceed to independent read-only review. Only after that review approves this exact head may a separate local-only task implement `supplier_claim.expire` SQL, focused pgTAP, and its synthetic concurrency harness under the boundaries in this document. This documentation PR contains no SQL or runtime implementation and does not itself authorize work from an unreviewed or changed head.
+
+Merging this corrected readiness PR deploys and activates nothing. Hosted Supabase linking/migration, gateway or worker activation, Firebase/Production authority, data movement, and deployment remain separately gated, including by `RES-001` and `MIG-002`. Do not mark this Draft PR Ready or merge it in this task.
 
 ## References
 
