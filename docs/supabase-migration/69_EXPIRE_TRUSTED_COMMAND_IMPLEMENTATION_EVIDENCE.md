@@ -4,6 +4,7 @@ Date: 2026-08-15
 Branch: `codex/expire-trusted-command-implementation`
 Base: `7bdf29b1fbdce6d2d9a4a7bd9d6d547a1d675bab`
 Scope: local PostgreSQL and synthetic data only
+Correction loop: 1, reviewed head `460307b0ca4f5f6b90840015ab0991958cddb036`
 
 ## Implemented boundary
 
@@ -51,21 +52,24 @@ identity field and computes its uniqueness digest with HMAC-SHA-256 over the
 versioned, length-delimited Expire/source namespace.
 
 The request fingerprint binds the source item, target Claim, expected version,
-fixed source class, fixed worker provenance, and fixed expiry policy. Correlation,
+stored Claim expiry timestamp, fixed source class, fixed worker provenance, and
+fixed expiry policy. Correlation,
 trusted time, generated IDs, retry count, result values, and the fence are
 excluded.
 
 Phase A preserves the established 60-second local lease, 10-attempt cap,
-rotated HMAC fence, expired-lease reclaim, terminal failure, and 720-hour
-replay-row retention. Changed source/target/version/fingerprint binding fails
+rotated HMAC fence, expired-lease reclaim, durably persisted attempt-limit
+terminal failure and replay, and 720-hour replay-row retention. Changed source/target/version/fingerprint binding fails
 with `P5108 / idempotency_key_conflict`; an active lease returns
 `P5109 / command_in_progress`; an unusable fence/lifecycle returns the
 established retry or reconciliation failure.
 
 Completed replay validates its full result lifecycle, retained Claim version,
 outcome-specific state, zero unauthorized event/audit effects, and either the
-coherent originating expiry history or coherent active not-due state before
-returning a safe replay.
+coherent originating expiry history or coherent active/terminal state before
+returning a safe replay. A completed pre-expiry observation therefore retains
+its original `claim_not_due` status/version after a distinct later observation
+expires the Claim.
 
 ## State, locks, and trusted time
 
@@ -79,7 +83,8 @@ Phase B follows the canonical order:
 6. target Claim row; and
 7. one `clock_timestamp()` captured after all locks.
 
-Only coherent `submitted|under_review` Claims with exact
+Only coherent `submitted|under_review` Claims with exact assignment-null or
+assignment-present provenance/chronology and exact
 `expires_at = submitted_at + interval '720 hours'` are mutable. A stale active
 version returns `P5112 / claim_version_conflict`. Before expiry, the
 observation completes `claim_not_due` without a Claim/event/audit mutation.
@@ -105,7 +110,7 @@ originating history:
 - Rejected: completed Reject idempotency, terminal decision, matching event,
   and matching success audit.
 - Approved: completed Approve idempotency, matching event/audit, and coherent
-  active resulting ownership.
+  resulting ownership, including a valid later ownership closure lifecycle.
 - Superseded: matching Approve-produced supersession event, winning approved
   Claim, and winner ownership.
 
@@ -136,15 +141,19 @@ generic/human denial, no direct table authority, unchanged RLS inventory,
 submitted and under-review expiry, assignment preservation, not-due completion
 and replay, coherent terminal no-op, malformed originating expiry fail-closed,
 event provenance/payload/cardinality, zero ordinary audit, no not-due mutation,
-worker-context denial, and source/version binding conflict.
+worker-context denial, stored-expiry/source/fingerprint/result-resource
+corruption, active assignment chronology/provenance corruption, stale-fence
+takeover, durable attempt exhaustion, and not-due replay after later expiry.
+
+The focused Expire suite passed 53/53 assertions with zero failures.
 
 The complete repository local SQL validator passed:
 
 - 29 migrations applied;
 - 29 pgTAP files run;
-- 2,196/2,196 assertions passed;
+- 2,223/2,223 assertions passed;
 - 0 failures; and
-- 206.2 seconds.
+- 170.6 seconds.
 
 Command:
 
@@ -159,14 +168,18 @@ behind forced shared-lock waits and covers:
 
 1. same observation and same fence;
 2. different observations against one Claim;
-3. Expire versus Withdraw;
-4. Expire versus Reject;
-5. Expire versus Assign Reviewer;
-6. Expire versus Approve;
-7. a forced wait crossing the exact expiry boundary; and
-8. Expire versus an independent competing Submit.
+3. due Expire versus Withdraw;
+4. due Expire versus Reject;
+5. due Expire versus Assign Reviewer;
+6. due Expire versus Approve;
+7. pre-expiry Withdraw winning before Expire;
+8. pre-expiry Assign Reviewer winning before Expire;
+9. pre-expiry Reject winning before Expire;
+10. pre-expiry Approve winning before Expire;
+11. a forced wait crossing the exact expiry boundary; and
+12. Expire versus an independent competing Submit.
 
-All 15/15 checks passed across eight races in 114.1 seconds. The outcomes prove
+All 23/23 checks passed across twelve races in 68.3 seconds. The outcomes prove
 one version increment and event, coherent `already_terminal` for the second
 valid observation, allowed loser denial classes, post-lock trusted time,
 assignment preservation, no ownership/approval side effect, no competitor
@@ -193,6 +206,6 @@ accessed. No Firebase Production/Auth/config/Rules/index, Production/TEST data,
 deployment, migration, seed, backfill, DNS, billing, secret, credential,
 notification delivery, or file-storage operation occurred.
 
-Exact stop point: commit and push this one branch, open one Draft PR, and stop
-at `AWAITING_INDEPENDENT_REVIEW`. Do not mark Ready, merge, deploy, operate a
+Exact stop point: commit and push this correction to the same branch, update
+Draft PR #135, and stop at `AWAITING_INDEPENDENT_REVIEW`. Do not mark Ready, merge, deploy, operate a
 hosted service, synchronize the Baseline, or begin A2/A5.
