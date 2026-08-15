@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-15-expire-merged`
+Baseline ID: `baseline-2026-08-15-package-a-complete`
 Updated: 2026-08-15
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `a02adc9f5bf2db858079de84874bb917687d8c4c`, the merge of PR #135 after the merged PR #130 chain. PR #135's reviewed implementation head `b4d5ee23d38b99087c8de84bd315fbc253cd30a6` is an ancestor.
+- **Verified current fact:** Current GitHub `main`: `63ebaf2972350848dbe494908efd6756c070802a`, the merge of documentation/control-plane PR #136 after implementation PR #135. PR #136's head `e18bb2c4af41c8dc88126cf2929adcdcccb762e3` and PR #135's independently reviewed implementation head `b4d5ee23d38b99087c8de84bd315fbc253cd30a6` are ancestors.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
