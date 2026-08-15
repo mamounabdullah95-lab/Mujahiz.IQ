@@ -21,7 +21,7 @@ Hard boundary for the whole package:
 
 ### A1 — `supplier_claim.expire` trusted-command implementation
 
-- State: `READY_AUTONOMOUS`
+- State: `COMPLETED_MERGED`
 - Dependency: this control-plane PR is merged; latest `origin/main` contains the independently approved `docs/supabase-migration/68_EXPIRE_V1_TRUSTED_COMMAND_READINESS.md` from PR #133.
 - Objective: implement the approved local-only `supplier_claim.expire` v1 contract and its focused/true-session validation.
 - Risk: High.
@@ -31,7 +31,8 @@ Hard boundary for the whole package:
 - Suggested branch: `codex/expire-trusted-command-implementation`.
 - Deliverable: one Draft implementation PR.
 - Required evidence: exact base/head; migration/test/evidence files; focused pgTAP; relevant true-session races; required broader local SQL validation; role/grant/RLS invariants; Production/data impact.
-- Stop state after implementation: `AWAITING_INDEPENDENT_REVIEW`.
+- Merged PR: #135 at `a02adc9f5bf2db858079de84874bb917687d8c4c`; reviewed implementation head `b4d5ee23d38b99087c8de84bd315fbc253cd30a6`.
+- Evidence: Expire focused pgTAP 59/59, true-session concurrency 23/23 across 12 races, and complete local SQL validation 2,229/2,229 across 29 migrations and 29 pgTAP files with 0 failures.
 - Never: Ready, merge, deploy, hosted action, Firebase action, Production/TEST data action.
 
 Implementation must follow the merged readiness contract rather than restating it. At minimum preserve:
@@ -47,9 +48,9 @@ Implementation must follow the merged readiness contract rather than restating i
 - exactly one `supplier_ownership.claim_expired` v1 event on a real expiry;
 - no notification, ownership mutation, competitor mutation, hosted action, or browser/human/generic-service authority.
 
-### A2 — Independent review of A1
+### A2 — Independent review of A1 (historical workflow stage)
 
-- State: `WAITING_DEPENDENCY`
+- State: `COMPLETED_HISTORICAL`
 - Dependency: A1 Draft PR with exact head and required implementation evidence.
 - Objective: independently review the A1 exact head read-only.
 - Model: Sol.
@@ -61,9 +62,9 @@ Implementation must follow the merged readiness contract rather than restating i
 - Failure state: `CORRECTION_REQUIRED` on A1.
 - Success state: `AWAITING_MANUAL_MERGE` for A1.
 
-### A3 — Bounded correction loop for A1
+### A3 — Bounded correction loop for A1 (historical workflow stage)
 
-- State: `WAITING_DEPENDENCY`
+- State: `COMPLETED_HISTORICAL`
 - Dependency: A2 returns concrete `CHANGES REQUIRED` findings.
 - Objective: correct only the actionable findings on the same A1 branch/PR, rerun affected validation, and return the new exact head to A2.
 - Model: lowest capable model; use Sol High for security/concurrency/idempotency findings, otherwise lower when safe.
@@ -71,9 +72,9 @@ Implementation must follow the merged readiness contract rather than restating i
 - Escalate to: `HUMAN_DECISION_REQUIRED` if the third occurrence remains, scope must materially expand, or a genuine Owner/security choice appears.
 - Never create a separate corrective PR unless the finding proves a separable prerequisite that must be isolated for safety.
 
-### A4 — Manual merge gate for A1
+### A4 — Manual merge gate for A1 (historical workflow stage)
 
-- State: `WAITING_DEPENDENCY`
+- State: `COMPLETED_HISTORICAL`
 - Dependency: A2 approves the exact unchanged A1 head and required PR Gate/checks are green.
 - Action: surface `MANUAL_MERGE_REQUIRED` with exact PR, head SHA, checks, review verdict, data/Production impact, and explicit recommendation `ادمج الآن` or `لا تدمج بعد`.
 - Owner action only: merge.
@@ -81,7 +82,7 @@ Implementation must follow the merged readiness contract rather than restating i
 
 ### A5 — Post-Expire Baseline synchronization
 
-- State: `WAITING_DEPENDENCY`
+- State: `IN_PROGRESS`
 - Dependency: A1 is manually merged and the new `origin/main` merge SHA is verified.
 - Objective: update only authoritative current-state documentation needed to record the merged Expire implementation and same-commit local SQL evidence.
 - Risk: Low.
@@ -92,7 +93,7 @@ Implementation must follow the merged readiness contract rather than restating i
 - Deliverable: one Draft documentation PR.
 - Required state to record only if verified from the same relevant merged evidence: all six Claim-v1 external commands are implemented locally; latest migration/pgTAP counts; latest complete local SQL assertion total; physical table/routine/policy counts; seven Open gates; Firebase remains live Production; hosted Supabase remains unlinked/undeployed.
 - Do not combine Firebase-suite totals with SQL totals from another commit/environment.
-- Stop state: `AWAITING_MANUAL_MERGE` after bounded review/checks.
+- Stop state: `AWAITING_MANUAL_MERGE` after bounded review/checks and one Draft documentation PR.
 - Autonomous merge: forbidden.
 
 ### A6 — Claim v1 local completion verification and next-package recommendation

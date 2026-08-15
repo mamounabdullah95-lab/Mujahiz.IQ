@@ -1,7 +1,7 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-14-approve-merged`
-Updated: 2026-08-14
+Baseline ID: `baseline-2026-08-15-expire-merged`
+Updated: 2026-08-15
 Canonical Production URL: `https://mujahiz.com`
 
 This is the single authoritative, frequently changing project baseline. Keep GitHub `main`, merged-but-undeployed work, Firebase Hosting, active Firestore Rules and indexes, deployed Functions and Storage, bounded Production data, and hosted Supabase state distinct.
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `463f9805c96376be6176663b4b6264050242bd0f`, the merge of PR #130 after the merged PR #129/#126 chain. PR #130's implementation head `a1291e40018d6874960ef23e29b47b3c4ffe8b62` is an ancestor.
+- **Verified current fact:** Current GitHub `main`: `a02adc9f5bf2db858079de84874bb917687d8c4c`, the merge of PR #135 after the merged PR #130 chain. PR #135's reviewed implementation head `b4d5ee23d38b99087c8de84bd315fbc253cd30a6` is an ancestor.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -249,7 +249,7 @@ Migration sequencing and product priorities are separate.
 
 ### Current architecture checkpoint
 
-**Implemented locally: Claimant self-read; `supplier_claim.submit`; `supplier_claim.withdraw`; `supplier_claim.assign_reviewer`; `supplier_claim.reject`; access/security structural foundations; relational privileged-actor evaluators; target-Supplier conflict resolver; Reviewer Private-Read Substrate. Still absent: `supplier_claim.approve`; `supplier_claim.expire`; access/security administration runtime; real gateway; hosted/Production authority.**
+**Implemented locally: all six Claim-v1 external commands (`supplier_claim.submit`, `supplier_claim.assign_reviewer`, `supplier_claim.withdraw`, `supplier_claim.approve`, `supplier_claim.reject`, and `supplier_claim.expire`); access/security structural foundations; relational privileged-actor evaluators; target-Supplier conflict resolver; Reviewer Private-Read Substrate. Still absent: access/security administration runtime; real gateway; hosted/Production authority.**
 
 Merged PR #99 implemented the empty Claim foundation; PR #101 added identity context; PR #102 added Claimant self-read FORCE RLS and one policy; PR #103 added local `supplier_claim.submit`; PR #108 recorded the red-team review; and PR #109 corrected the three blocking Medium findings. Current `origin/main` contains 27 migrations, 27 pgTAP files, 24 physical tables, and 22 implemented concepts. The Owner-approved catalog now contains 37 Core Phase 1 concepts, with 15 unimplemented. Exactly four of the six approved Claim business mutations are implemented: `supplier_claim.submit`, `supplier_claim.withdraw`, `supplier_claim.assign_reviewer`, and `supplier_claim.reject`. The two unimplemented commands are `supplier_claim.approve` and `supplier_claim.expire`. `supplier_claim.reserve_submit`, `supplier_claim.reserve_withdraw`, and `supplier_claim.reserve_assign_reviewer` are private trusted Phase-A reservation/replay/reclaim boundaries, not Claim business commands. PR #108 identified M-1, M-2, and M-3; PR #109 closes them for the local implementation. PR #110 verifies completed idempotency self-integrity before current-request comparison; corrupted completed binding returns `P5199 / integrity_reconciliation_required`, genuine coherent same-key conflict returns `idempotency_key_conflict`, and required conflict-audit failure returns `P5116 / audit_unavailable`. Ordinary withdrawal success and replay create no audit row. Submit, withdraw, assign_reviewer, and reject use durable Phase-A reservation plus separately fenced Phase-B execution. Reject uses the externally callable `supplier_claim.reject` Phase-A reservation/replay boundary paired with the private fenced `supplier_claim._execute_reject` Phase-B executor. Assign-reviewer also commits its required success audit and `claim_under_review` event atomically with the Claim mutation. This does not imply gateway, hosted Supabase, Firebase signed-token, Production, or deployment readiness. No hosted gateway or signed-token staging proof exists. Local SECURITY DEFINER ownership remains `postgres`; dedicated non-superuser command ownership, HMAC rotation, and transaction-pool behavior remain release requirements. PR #108 low findings on inert evidence URL semantics and Unicode/order/URL canonicalization remain unresolved before client activation.
 
@@ -273,7 +273,7 @@ On 10 August 2026, the Product/Security/Data Owner approved [`55_PRIVILEGED_ACTO
 
 The repository has completed the local privileged foundations: identity/profile/link structure, platform-role structure, role-backed administration-access structure, security-eligibility assessment structure, `claim_security.current_privileged_actor_v1()`, private `claim_security.privileged_actor_for_profile_v1(uuid)` eligibility evaluation, and the bounded `claim_security.target_supplier_conflict_v1(uuid, uuid, uuid)` resolver. Reviewer Private-Read Substrate includes the Owner assignment queue, reviewer candidate projection/eligibility delivery, assigned-reviewer queue/detail, and exact RLS/object grants. `supplier_claim.reject` is implemented locally; `supplier_claim.approve`, `supplier_claim.expire`, access/security administration, gateway/hosted authorization, and Production authority remain absent. Local relational eligibility is not Firebase authentication; local conflict `clear` is not Reviewer authorization.
 
-The next technical task recommendation is **`supplier_claim.approve v1` — Trusted Command Readiness**. Approve is the highest-risk remaining human Claim decision because it must atomically create ownership, supersede competing active Claims, preserve one-winner semantics, and produce multiple ordered effects; it requires a dedicated readiness/security closure before SQL. `supplier_claim.expire` remains separate and unimplemented.
+The next task is **A6 — Claim v1 local completion verification and next-package recommendation**. A6 is read-only and must identify the next smallest dependency-safe package from current authoritative evidence; it does not begin that package.
 
 ### Target-Supplier conflict resolver boundary
 
@@ -396,7 +396,7 @@ Reject v1 is local-only: exact assigned usable Owner/Admin reviewer, clear confl
 
 The next technical task is `supplier_claim.approve v1` — Trusted Command Readiness. Approve requires a separate readiness/security closure before SQL because it must create ownership, supersede competing active Claims, preserve one-winner semantics, and produce multiple ordered effects. `supplier_claim.expire` remains separate and unimplemented. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`. Production/data impact is none.
 
-### PR #130 supplier_claim.approve synchronization
+### Historical PR #130 supplier_claim.approve synchronization
 
 PR #130 is merged in GitHub `main` at `463f9805c96376be6176663b4b6264050242bd0f`; its implementation head `a1291e40018d6874960ef23e29b47b3c4ffe8b62` is an ancestor. PRs #127, #128, and #129 are also ancestors of this verified merge. The merged local SQL inventory is 28 tracked migrations and 28 pgTAP test files, with 24 physical `public`/`internal` PostgreSQL tables.
 
@@ -407,3 +407,15 @@ PR #130 evidence records focused Approve validation of 187/187 assertions, true 
 `supplier_claim.approve` is a local trusted-command implementation only. Its merged SQL is not hosted Supabase, is not deployed, is not exposed as a browser/API surface, and does not make Supabase Production-ready. Firebase remains the live Production authority, and GitHub `main` must not be described as the Firebase live runtime without separate Hosting evidence. No hosted Supabase project is linked or deployed.
 
 No Production or TEST data migration, seed, backfill, hosted operation, remote migration, deployment, Firebase change, Auth/config change, DNS, billing, gateway, notification-delivery, or file operation occurred. Only disposable local PostgreSQL and synthetic data were used for the merged SQL work. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+
+### PR #135 supplier_claim.expire synchronization
+
+PR #135 is merged in `origin/main` at `a02adc9f5bf2db858079de84874bb917687d8c4c`; reviewed implementation head `b4d5ee23d38b99087c8de84bd315fbc253cd30a6` is an ancestor. The current local SQL inventory is 29 tracked migrations and 29 pgTAP files, with 24 physical `public`/`internal` PostgreSQL tables, 80 logical concepts, 37 Core Phase 1 concepts, and 22 implemented / 15 unimplemented Core concepts.
+
+The Claim inventory remains exactly three SELECT RLS policies (`supplier_ownership_claims_claimant_self_select`, `supplier_ownership_claims_owner_assignment_select`, and `supplier_ownership_claims_assigned_reviewer_select`) with zero Claim mutation policies. All six Claim-v1 external business commands are implemented locally: `supplier_claim.submit`, `supplier_claim.assign_reviewer`, `supplier_claim.withdraw`, `supplier_claim.approve`, `supplier_claim.reject`, and `supplier_claim.expire`.
+
+PR #135 evidence records focused Expire pgTAP 59/59, true-session Expire concurrency 23/23 across 12 races, and the latest complete local SQL validation of 2,229/2,229 assertions across 29 migrations and 29 pgTAP files with 0 failures. These are local disposable PostgreSQL and synthetic-data results only and are not combined with Firebase or other historical suites.
+
+`supplier_claim.expire` is a local trusted command for a dedicated automated expiry worker. Its v1 boundary preserves Phase-A observation/idempotency and fenced Phase-B execution, binds the stored Claim expiry into the request fingerprint, uses trusted post-lock time, expires only due `submitted|under_review` Claims, preserves assignment provenance, supports replayable valid not-due observations, and fails closed on terminal-history inconsistency with `P5199 / integrity_reconciliation_required`. Real expiry emits exactly one `supplier_ownership.claim_expired` v1 event and zero ordinary success audits; it creates no notification, ownership mutation, or competing-Claim mutation and adds no Claim mutation RLS policy. The JSON-null/SQL-NULL terminal-history issue was corrected in correction loop 2.
+
+All six commands remain local-only. Firebase remains live Production and authoritative; hosted Supabase remains unlinked, undeployed, and non-authoritative. GitHub `main` is not Firebase live runtime, local SECURITY DEFINER behavior is not hosted least-privilege proof, and local 6/6 completion is not deployment readiness. No Production/TEST data migration, seed, backfill, hosted operation, remote migration, deployment, Firebase/Auth/config/DNS/billing change, or file operation occurred. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
