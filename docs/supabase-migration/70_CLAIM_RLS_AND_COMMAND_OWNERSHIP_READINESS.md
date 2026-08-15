@@ -267,8 +267,10 @@ Transfer ownership of every Expire Phase-A/Phase-B and expiry-only
 `SECURITY DEFINER` helper to the expiry command owner. Transfer the target
 conflict helper only to the target-conflict helper owner and the private
 Reviewer prior-Claim context helper only to the Reviewer-prior-context helper
-owner. Retain both exact read-only bodies. No current Claim `SECURITY DEFINER`
-routine may remain owned by `postgres` after B4.
+owner. Retain the Reviewer-prior-context body exactly. The target-conflict body
+may change only through the least-privilege explicit-projection hardening in
+section 8.3; no behavior or callable-surface change is selected. No current
+Claim `SECURITY DEFINER` routine may remain owned by `postgres` after B4.
 
 This separation is determined by the merged authority rather than preference.
 Document 55 section 10.2 limits an owner to the exact columns and operations
@@ -335,31 +337,29 @@ by its own function family. At minimum:
   Expire body proves it is required;
 - the target-conflict helper owner receives schema `USAGE` only on `public` and
   `claim_security`, Claim `SELECT` only under its named FORCE-RLS policy, and
-  column `SELECT` on exactly `user_profiles.id`, `supplier_profiles.id`, all 41
-  current Claim columns required by the unchanged `claim.*` binding (`id`,
-  `claimant_user_profile_id`, `supplier_profile_id`, `status`, `record_version`,
-  `submitted_at`, `expires_at`, `submitted_reason`,
-  `claimant_snapshot_schema_version`, `claimant_snapshot`,
-  `submission_fingerprint_version`, `submission_fingerprint`,
-  `evidence_schema_version`, `evidence_descriptors`,
-  `reviewer_user_profile_id`, `reviewer_assignment_version`,
+  column `SELECT` on exactly `user_profiles.id`, `supplier_profiles.id`, the 19
+  Claim columns used by the current helper logic (`id`,
+  `claimant_user_profile_id`, `supplier_profile_id`, `status`, `submitted_at`,
+  `expires_at`, `reviewer_user_profile_id`, `reviewer_assignment_version`,
   `reviewer_assigned_at`, `reviewer_assigned_by_user_profile_id`,
   `reviewer_assignment_source_code`, `reviewer_assignment_policy_version`,
-  `decided_by_user_profile_id`, `decided_at`, `decision_reason_code`,
-  `evidence_verification_method_code`, `evidence_verification_version`,
-  `evidence_verification_outcome_code`, `decision_authorization_policy_version`,
-  `reviewer_notes`, `withdrawn_at`, `withdrawn_by_user_profile_id`,
-  `withdrawal_reason_code`, `expired_at`, `expiry_system_source_code`,
-  `expiry_policy_version`, `superseded_at`, `supersession_reason_code`,
-  `prior_claim_id`, `superseded_by_claim_id`,
+  `decided_at`, `withdrawn_at`, `expired_at`, `superseded_at`,
   `resulting_supplier_ownership_id`, `created_at`, `updated_at`), and exactly
   `supplier_ownerships.id`, `supplier_profile_id`,
   `controller_user_profile_id`, `authority_type`, `ownership_status`,
   `valid_from`, `valid_until`, `establishment_source_type`,
   `closure_reason_code`, `closed_by_user_profile_id`, `closure_system_source`,
   `closed_at`, `transfer_successor_ownership_id`, `created_at`, and `updated_at`;
-  grant the 41 Claim columns individually so no future column is covered
-  automatically;
+  grant the 19 Claim columns individually so no unlisted or future Claim column
+  is covered automatically;
+- B4 must replace the target-conflict helper's
+  `public.supplier_ownership_claims%rowtype` variable and `SELECT claim.*` with a
+  correspondingly bounded record/variables populated by an explicit projection
+  of exactly those 19 Claim columns. This is the only selected function-body
+  change: it must preserve the helper's fixed signature, `clear|conflict|unknown`
+  result contract, product/authorization/conflict semantics, integrity checks,
+  fail-closed null/exception behavior, volatility, fixed search path, and every
+  existing external and internal callable boundary;
 - the Reviewer-prior-context helper owner receives schema `USAGE` only on
   `public` and `claim_security`, Claim `SELECT` only under its named FORCE-RLS
   policy, and column `SELECT` only on `id`, `claimant_user_profile_id`,
@@ -388,9 +388,10 @@ by its own function family. At minimum:
 Every affected definer must retain fixed `search_path=pg_catalog`, qualified
 application objects, fixed argument/result types, no dynamic SQL, revoked
 `PUBLIC` execute, and only its already approved caller execute boundary. The
-ownership/grant migration must not change a function body, command signature,
-result shape, lifecycle rule, lock order, replay rule, audit/event cardinality,
-or notification behavior.
+ownership/grant migration must not change any function body except the exact
+target-conflict projection hardening above, and must not change any command
+signature, result shape, lifecycle rule, lock order, replay rule, audit/event
+cardinality, or notification behavior.
 
 ## 9. B4 deterministic validation contract
 
@@ -401,38 +402,58 @@ the same exact head:
    zero table/schema/database ownership, zero `BYPASSRLS`, zero schema `CREATE`,
    and zero grant options in the committed end-of-migration catalog, after any
    transaction-bounded ownership-transfer capability has been revoked;
-2. catalog assertions prove every Claim mutation definer/helper is owned by the
+2. direct `pg_default_acl` catalog assertions prove that no default ACL grants
+   any privilege to any of the four owner roles for any object type or schema;
+3. catalog assertions prove every Claim mutation definer/helper is owned by the
    exact selected non-superuser command/helper role, the two read-only helpers
    have separate owners, and no Claim `SECURITY DEFINER` remains owned by
    `postgres`;
-3. catalog assertions prove the exact seven actor `SELECT`/technical `SELECT`
+4. catalog assertions prove the exact seven actor `SELECT`/technical `SELECT`
    total, one `INSERT`, two `UPDATE`, and zero `DELETE` policy inventory, with
    each new policy targeted only to its named owner;
-4. `anon`, `authenticated`, generic `service_role`, runtime caller, expiry
+5. `anon`, `authenticated`, generic `service_role`, runtime caller, expiry
    caller, projection roles, and unlisted roles all fail direct Claim
    `INSERT|UPDATE|DELETE` and protected/internal base access;
-5. the human caller cannot execute Expire, the expiry caller cannot execute a
+6. the human caller cannot execute Expire, the expiry caller cannot execute a
    human command, and neither caller can `SET ROLE` to an owner;
-6. one positive and the existing material negative/replay/corruption path for
-   each of the six external commands still passes under the new owner;
-7. claimant, Owner queue/candidate, and assigned-Reviewer fixed reads retain
-   their exact output shapes and deny cross-audience reads; target-conflict
-   execute remains limited to the two projection roles and human command owner,
-   while Reviewer-prior-context execute remains Reviewer-projection-only;
-8. direct Claim deletion remains impossible and no function body, signature,
-   output, command/event/audit contract, notification boundary, or lock order
-   changes;
-9. the complete local SQL validator applies all tracked migrations and passes
-   every tracked pgTAP file in disposable PostgreSQL with synthetic data; and
-10. static checks prove documentation links, migration order, fixed search
+7. catalog and execution assertions prove the target-conflict owner can read
+   exactly the 19 Claim, 15 ownership, and two identity-id columns selected in
+   section 8.3, cannot read any other Claim or protected column, and remains
+   subject to enabled and FORCE RLS; equivalent assertions preserve the separate
+   Reviewer-prior-context owner's exact six-column Claim footprint and policy;
+8. focused before/after helper cases prove identical `clear|conflict|unknown`
+   results for positive, conflict, unsupported-relationship, null, exception,
+   malformed-lifecycle, duplicate-active-Claim, broken-successor, overlapping-
+   ownership, assignment-shape, and approval-provenance cases;
+9. focused Owner queue/candidate and assigned-Reviewer queue/detail cases prove
+   every path using the target-conflict helper retains its exact output shape,
+   audience isolation, conflict denial, unknown denial, and fail-closed behavior;
+10. one positive and the existing material negative/replay/corruption path for
+    each of the six external commands still passes under the new owners, with
+    focused evidence for Assign-Reviewer, Reject, and Approve because those human
+    commands directly invoke the target-conflict helper;
+11. the directly affected true-session race cases in which the target-conflict
+    helper participates are rerun and preserve current locking, concurrent
+    ownership/Claim observation, conflict, unknown, and fail-closed outcomes;
+12. claimant, Owner queue/candidate, and assigned-Reviewer fixed reads retain
+    their exact output shapes and deny cross-audience reads; target-conflict
+    execute remains limited to the two projection roles and human command owner,
+    while Reviewer-prior-context execute remains Reviewer-projection-only;
+13. direct Claim deletion remains impossible, the target helper no longer uses
+    `%rowtype` or `claim.*`, and no other function body, signature, output,
+    command/event/audit contract, notification boundary, or lock order changes;
+14. the complete local SQL validator applies all tracked migrations and passes
+    every tracked pgTAP file in disposable PostgreSQL with synthetic data; and
+15. static checks prove documentation links, migration order, fixed search
     paths, no dynamic SQL, no sensitive values, documentation/evidence accuracy,
     and a scoped diff.
 
-True-session race harnesses need not be repeated solely for a body-preserving
-owner/grant change when focused command execution, replay/corruption coverage,
-and the complete local validator are green. Any function-body, locking,
-transaction, idempotency, or timing change invalidates that exception and
-requires the directly affected race harnesses.
+The target-conflict body change invalidates the prior body-preserving race-test
+exception only for the directly affected helper, projection, and command paths.
+Do not mechanically add Firebase or unrelated repository-wide suites unless the
+merged testing policy or implementation evidence shows that shared behavior has
+changed. The complete local SQL validator remains required because B4 changes a
+high-risk security migration and its tracked SQL behavior.
 
 ## 10. Explicit exclusions and later release gates
 
@@ -465,6 +486,10 @@ B1 validation is documentation/static only:
 - verify 29 migrations, 29 pgTAP files, six external commands, three current
   Claim `SELECT` policies, zero current mutation policies, and seven Open gates;
 - verify every relative Markdown link resolves;
+- verify the target helper's exact 19 Claim, 15 ownership, and two identity-id
+  source references, the prior-context helper's exact six Claim columns, the
+  four-role and 7/1/2/0 policy inventories, the bounded target-body exception,
+  and the explicit `pg_default_acl` assertion requirement;
 - scan for stale Package A/A5/A6 planning, contradictory direct-write or role
   statements, credentials, tokens, secrets, personal data, hosted/Production
   claims, and executable SQL;
