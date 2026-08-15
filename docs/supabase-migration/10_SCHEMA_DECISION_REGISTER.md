@@ -1,7 +1,7 @@
 # Mujahiz IQ PostgreSQL Schema Decision Register
 
 Status: Design register with local SQL-slice evidence
-Baseline: `origin/main` at `043cd21a025c07bb265a183cae52595cef829a85`, the merge of PR #126 after the merged PR #120 chain.
+Baseline: `origin/main` at `63ebaf2972350848dbe494908efd6756c070802a`, the merge of PR #136 after the merged PR #135 implementation chain.
 Companion design: `09_POSTGRESQL_SCHEMA_DESIGN.md`
 
 ## 1. Use of this register
