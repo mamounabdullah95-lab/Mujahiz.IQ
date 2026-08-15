@@ -98,10 +98,11 @@ the trusted-command boundary.
 
 Therefore the only authority-consistent local hardening is to keep all actor and
 caller mutation paths denied while adding policies targeted solely to isolated
-credentialless definer-owner roles. Those policies are an internal execution
-mechanism, not actor authorization. Every actor, lifecycle, transition,
-idempotency, conflict, assignment, expiry, audit, event, and ownership decision
-continues to be enforced and re-read inside the fixed trusted command.
+credentialless command-owner and read-only helper-owner roles. Those policies
+are an internal execution mechanism, not actor authorization. Every actor,
+lifecycle, transition, idempotency, conflict, assignment, expiry, audit, event,
+and ownership decision continues to be enforced and re-read inside the fixed
+trusted command.
 
 ## 5. Current local role, RLS, routine, and grant inventory
 
@@ -227,35 +228,62 @@ After this exact B1 contract is independently approved and manually merged, B4
 may implement exactly one local SQL hardening migration plus focused synthetic
 pgTAP. The selected objects are:
 
-### 8.1 Two isolated definer-owner roles
+### 8.1 Four isolated command/helper-owner roles
 
 Create exactly:
 
-- `mujahiz_claim_human_command_owner` for the five human command families and
-  the shared Claim authorization/integrity helpers they invoke; and
+- `mujahiz_claim_human_command_owner` for the five human command families;
 - `mujahiz_claim_expiry_command_owner` for the Expire Phase-A, fenced Phase-B,
-  and expiry-only integrity helper family.
+  and expiry-only integrity helper family;
+- `mujahiz_claim_target_conflict_helper_owner` for only
+  `claim_security.target_supplier_conflict_v1(uuid, uuid, uuid)`; and
+- `mujahiz_claim_reviewer_prior_context_helper_owner` for only
+  `claim_security.reviewer_prior_claim_context_v1(uuid, uuid, uuid)`.
 
-Both roles must be `NOLOGIN`, `NOINHERIT`, `NOSUPERUSER`, `NOCREATEDB`,
-`NOCREATEROLE`, `NOREPLICATION`, and `NOBYPASSRLS`. Neither role may:
+All four roles must be `NOLOGIN`, `NOINHERIT`, `NOSUPERUSER`, `NOCREATEDB`,
+`NOCREATEROLE`, `NOREPLICATION`, and `NOBYPASSRLS`. None may:
 
 - own a table, sequence, schema, database, or extension;
 - receive a credential, runtime/gateway/worker membership, role-administration
   option, schema `CREATE`, generic SQL entrypoint, or exposed API surface;
-- be granted to `postgres`, a gateway login, `mujahiz_claim_runtime`,
-  `mujahiz_claim_expiry_worker`, a projection role, browser/API role,
-  `service_role`, migration operator, or human; or
+- in the committed catalog, be granted to `postgres`, a gateway login,
+  `mujahiz_claim_runtime`, `mujahiz_claim_expiry_worker`, a projection role,
+  browser/API role, `service_role`, migration operator, or human; or
 - acquire privileges through inheritance or another role membership.
+
+Zero membership and zero schema `CREATE` are mandatory committed,
+end-of-migration catalog conditions. A privileged migration actor may perform
+ownership transfer directly. If the selected PostgreSQL migration context
+requires temporary membership, `SET ROLE`, or schema `CREATE` to complete an
+ownership transfer, that capability must be transaction-bounded, used only for
+the transfer, and fully revoked or reset before migration validation and commit.
+No membership, role-assumption path, or schema `CREATE` privilege may survive
+the migration; a transient migration capability is not a permanent grant and a
+committed residue fails B4.
 
 Transfer ownership of every current `supplier_claim` `SECURITY DEFINER` routine
 reachable from the five human command families to the human command owner.
 Transfer ownership of every Expire Phase-A/Phase-B and expiry-only
-`SECURITY DEFINER` helper to the expiry command owner. Transfer the shared
-`claim_security.target_supplier_conflict_v1(...)` and the private Reviewer
-prior-Claim context helper to the human command owner, retaining their exact
-read-only bodies and their existing restricted projection-role execute grants.
-No current Claim `SECURITY DEFINER` routine may remain owned by `postgres` after
-B4.
+`SECURITY DEFINER` helper to the expiry command owner. Transfer the target
+conflict helper only to the target-conflict helper owner and the private
+Reviewer prior-Claim context helper only to the Reviewer-prior-context helper
+owner. Retain both exact read-only bodies. No current Claim `SECURITY DEFINER`
+routine may remain owned by `postgres` after B4.
+
+This separation is determined by the merged authority rather than preference.
+Document 55 section 10.2 limits an owner to the exact columns and operations
+needed by one helper. The target-conflict helper reads `user_profiles`,
+`supplier_profiles`, Claim, and ownership rows; the Reviewer-prior-context
+helper reads only six Claim columns. A shared helper owner would give each
+owned routine the union of both read footprints, including privileges not
+needed by that helper, so it is not an authority-consistent alternative.
+
+| Proposed owner role | Sole ownership boundary | Claim operation admitted by FORCE RLS | Routine execute boundary |
+|---|---|---|---|
+| `mujahiz_claim_human_command_owner` | Five human command families and their human-command-only helpers | `SELECT`, `INSERT`, `UPDATE` | Existing human command caller boundary only; may execute the target-conflict helper as an internal dependency |
+| `mujahiz_claim_expiry_command_owner` | Expire Phase A, fenced Phase B, and expiry-only helper family | `SELECT`, `UPDATE` | Existing expiry-worker boundary only |
+| `mujahiz_claim_target_conflict_helper_owner` | Target-Supplier conflict helper only | `SELECT` | Existing Owner/Reviewer projection consumers plus the human command owner; no browser, application caller, worker, or generic runtime execute |
+| `mujahiz_claim_reviewer_prior_context_helper_owner` | Reviewer prior-Claim context helper only | `SELECT` | Existing Reviewer projection consumer only |
 
 The existing outer field-minimized Owner and Reviewer projection functions and
 privileged-actor helpers remain owned by their two dedicated projection roles.
@@ -274,6 +302,8 @@ Add only these internal execution policies on
 | `supplier_ownership_claims_human_command_update` | `UPDATE` | `mujahiz_claim_human_command_owner` | Permit fixed Withdraw/Assign/Approve/Reject bodies and approved replay reconciliation to update after command checks. |
 | `supplier_ownership_claims_expiry_command_select` | `SELECT` | `mujahiz_claim_expiry_command_owner` | Permit the fixed Expire family to route, re-read, lock, and reconcile the target history. |
 | `supplier_ownership_claims_expiry_command_update` | `UPDATE` | `mujahiz_claim_expiry_command_owner` | Permit only the fixed Expire execution path to terminalize a due active Claim. |
+| `supplier_ownership_claims_target_conflict_helper_select` | `SELECT` | `mujahiz_claim_target_conflict_helper_owner` | Permit only the fixed read-only target-conflict helper to inspect the Claim rows in its fail-closed integrity/conflict decision. |
+| `supplier_ownership_claims_reviewer_prior_context_helper_select` | `SELECT` | `mujahiz_claim_reviewer_prior_context_helper_owner` | Permit only the fixed private prior-context helper to inspect its exact rejected prior Claim. |
 
 The policies are role-targeted capability plumbing. They must not attempt to
 duplicate the multi-row command contracts in RLS. Their `USING`/`WITH CHECK`
@@ -284,9 +314,9 @@ preconditions in catalog tests.
 
 No `DELETE` policy is selected. The three current audience `SELECT` policies
 remain byte-for-byte unchanged. The expected post-B4 Claim policy inventory is
-therefore five `SELECT`, one `INSERT`, two `UPDATE`, and zero `DELETE` policies.
+therefore seven `SELECT`, one `INSERT`, two `UPDATE`, and zero `DELETE` policies.
 Only the original three `SELECT` policies are actor/audience visibility
-policies; the five new policies target isolated implementation owners.
+policies; the seven new policies target isolated implementation owners.
 
 ### 8.3 Exact grants and unchanged caller surfaces
 
@@ -303,6 +333,46 @@ by its own function family. At minimum:
   Expire; it receives no human actor resolver, assignment-command, approval
   ownership-insert, or generic audit-write authority unless the exact current
   Expire body proves it is required;
+- the target-conflict helper owner receives schema `USAGE` only on `public` and
+  `claim_security`, Claim `SELECT` only under its named FORCE-RLS policy, and
+  column `SELECT` on exactly `user_profiles.id`, `supplier_profiles.id`, all 41
+  current Claim columns required by the unchanged `claim.*` binding (`id`,
+  `claimant_user_profile_id`, `supplier_profile_id`, `status`, `record_version`,
+  `submitted_at`, `expires_at`, `submitted_reason`,
+  `claimant_snapshot_schema_version`, `claimant_snapshot`,
+  `submission_fingerprint_version`, `submission_fingerprint`,
+  `evidence_schema_version`, `evidence_descriptors`,
+  `reviewer_user_profile_id`, `reviewer_assignment_version`,
+  `reviewer_assigned_at`, `reviewer_assigned_by_user_profile_id`,
+  `reviewer_assignment_source_code`, `reviewer_assignment_policy_version`,
+  `decided_by_user_profile_id`, `decided_at`, `decision_reason_code`,
+  `evidence_verification_method_code`, `evidence_verification_version`,
+  `evidence_verification_outcome_code`, `decision_authorization_policy_version`,
+  `reviewer_notes`, `withdrawn_at`, `withdrawn_by_user_profile_id`,
+  `withdrawal_reason_code`, `expired_at`, `expiry_system_source_code`,
+  `expiry_policy_version`, `superseded_at`, `supersession_reason_code`,
+  `prior_claim_id`, `superseded_by_claim_id`,
+  `resulting_supplier_ownership_id`, `created_at`, `updated_at`), and exactly
+  `supplier_ownerships.id`, `supplier_profile_id`,
+  `controller_user_profile_id`, `authority_type`, `ownership_status`,
+  `valid_from`, `valid_until`, `establishment_source_type`,
+  `closure_reason_code`, `closed_by_user_profile_id`, `closure_system_source`,
+  `closed_at`, `transfer_successor_ownership_id`, `created_at`, and `updated_at`;
+  grant the 41 Claim columns individually so no future column is covered
+  automatically;
+- the Reviewer-prior-context helper owner receives schema `USAGE` only on
+  `public` and `claim_security`, Claim `SELECT` only under its named FORCE-RLS
+  policy, and column `SELECT` only on `id`, `claimant_user_profile_id`,
+  `supplier_profile_id`, `status`, `decision_reason_code`, and `decided_at` in
+  `public.supplier_ownership_claims`;
+- both helper owners remain strictly read-only: no relation `INSERT`, `UPDATE`,
+  `DELETE`, `TRUNCATE`, sequence privilege, grant option, default privilege,
+  role membership, or schema `CREATE`;
+- retain target-conflict execute for the Owner and Reviewer projection roles and
+  grant its exact internal dependency execute only to the human command owner;
+  retain Reviewer-prior-context execute only for the Reviewer projection role;
+  all prior `PUBLIC`, browser/API, generic runtime, and unrelated-role execute
+  revocations remain effective;
 - no owner receives `TRUNCATE`, `DELETE`, schema `CREATE`, arbitrary sequence
   use, default privileges, dynamic SQL, or a grant option;
 - `PUBLIC`, `anon`, `authenticated`, generic `service_role`, browser/API roles,
@@ -327,13 +397,15 @@ or notification behavior.
 The later implementation is acceptable only if all of the following pass on
 the same exact head:
 
-1. focused pgTAP proves the two role shapes, zero credentials, zero memberships,
+1. focused pgTAP proves the four role shapes, zero credentials, zero memberships,
    zero table/schema/database ownership, zero `BYPASSRLS`, zero schema `CREATE`,
-   and zero grant options;
+   and zero grant options in the committed end-of-migration catalog, after any
+   transaction-bounded ownership-transfer capability has been revoked;
 2. catalog assertions prove every Claim mutation definer/helper is owned by the
-   selected non-superuser role and no Claim `SECURITY DEFINER` remains owned by
+   exact selected non-superuser command/helper role, the two read-only helpers
+   have separate owners, and no Claim `SECURITY DEFINER` remains owned by
    `postgres`;
-3. catalog assertions prove the exact five actor `SELECT`/technical `SELECT`
+3. catalog assertions prove the exact seven actor `SELECT`/technical `SELECT`
    total, one `INSERT`, two `UPDATE`, and zero `DELETE` policy inventory, with
    each new policy targeted only to its named owner;
 4. `anon`, `authenticated`, generic `service_role`, runtime caller, expiry
@@ -344,7 +416,9 @@ the same exact head:
 6. one positive and the existing material negative/replay/corruption path for
    each of the six external commands still passes under the new owner;
 7. claimant, Owner queue/candidate, and assigned-Reviewer fixed reads retain
-   their exact output shapes and deny cross-audience reads;
+   their exact output shapes and deny cross-audience reads; target-conflict
+   execute remains limited to the two projection roles and human command owner,
+   while Reviewer-prior-context execute remains Reviewer-projection-only;
 8. direct Claim deletion remains impossible and no function body, signature,
    output, command/event/audit contract, notification boundary, or lock order
    changes;
