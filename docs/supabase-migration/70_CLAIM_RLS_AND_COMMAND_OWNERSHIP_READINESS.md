@@ -1,6 +1,9 @@
 # Claim v1 local RLS and command-ownership readiness
 
-Status: **B1 candidate readiness contract; documentation-only; awaiting independent exact-head security review; no SQL, RLS, grant, role, function, Auth, hosted, data, or Production change is authorized by this branch**
+Status: **Merged B1 authority from PR #138; documentation-only; B4 is blocked by
+the separate Claim owner-role privileged-provisioning prerequisite; no SQL, RLS,
+grant, role, function, Auth, hosted, data, or Production change is authorized by
+this document**
 
 Date: 2026-08-15
 
@@ -261,6 +264,16 @@ No membership, role-assumption path, or schema `CREATE` privilege may survive
 the migration; a transient migration capability is not a permanent grant and a
 committed residue fails B4.
 
+Post-merge local PostgreSQL 17 evidence proved that ordinary non-superuser
+`postgres` role creation always leaves an `ADMIN=true`, `INHERIT=false`,
+`SET=false` membership granted by `supabase_admin`, and that `postgres` cannot
+remove the grantor-owned row. The Owner decision preserves this section's zero-
+membership invariant. B4 is therefore waiting on the separately reviewed and
+manually merged [Claim owner-role privileged provisioning
+readiness](71_CLAIM_OWNER_ROLE_PROVISIONING_READINESS.md) and its later local-only
+implementation. That prerequisite does not revise or absorb any B4 ownership,
+grant, policy, function-body, or validation scope.
+
 Transfer ownership of every current `supplier_claim` `SECURITY DEFINER` routine
 reachable from the five human command families to the human command owner.
 Transfer ownership of every Expire Phase-A/Phase-B and expiry-only
@@ -478,9 +491,9 @@ gateway membership, real environment grants/default privileges, signed-token
 ingress, HMAC custody, driver/pool isolation, and hosted catalog evidence remain
 absent.
 
-## 11. B1 validation and exact stop point
+## 11. Historical B1 validation and merged stop point
 
-B1 validation is documentation/static only:
+B1 validation was documentation/static only:
 
 - verify exact starting `origin/main` and Package A ancestry;
 - verify 29 migrations, 29 pgTAP files, six external commands, three current
@@ -496,10 +509,13 @@ B1 validation is documentation/static only:
 - run `git diff --check`; and
 - confirm the branch diff is documentation-only.
 
-Exact stop point: one Draft documentation PR at
-`AWAITING_INDEPENDENT_REVIEW`. The independent Reviewer must inspect the exact
-head read-only against the merged authorities and current DDL, including
-permissive-policy union risk, non-`BYPASSRLS` definer behavior, owner membership,
-base and column grants, hidden-field exposure, and direct-mutation denial. Do
-not implement B4, create SQL/pgTAP, mark Ready, merge, deploy, access hosted
-Supabase or Firebase Production, or read/write Production/TEST data.
+B1 reached that stop point and was later merged by PR #138 at
+`7f9d810006d12301365af747477257f5489b0009`. B4 must not begin until the separate
+owner-role privileged-provisioning contract and implementation are independently
+approved and manually merged. The later B4 Reviewer must still inspect the exact
+implementation head read-only against the merged authorities and current DDL,
+including permissive-policy union risk, non-`BYPASSRLS` definer behavior, owner
+membership, base and column grants, hidden-field exposure, and direct-mutation
+denial. Do not implement B4, create SQL/pgTAP from this document, mark Ready,
+merge, deploy, access hosted Supabase or Firebase Production, or read/write
+Production/TEST data.
