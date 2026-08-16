@@ -1,6 +1,6 @@
 # Autonomous Execution Queue
 
-Updated: 2026-08-15
+Updated: 2026-08-16
 Package A setup base: `bd33fb3d3b73f87a775d5f2375194d2acf67b6be`
 Verified Package A closure base: `63ebaf2972350848dbe494908efd6756c070802a` (merge of PR #136)
 
@@ -119,16 +119,17 @@ Implementation must follow the merged readiness contract rather than restating i
 
 Package objective: define, independently review, and—only after manual approval and merge of the readiness contract—implement the smallest local-only Claim v1 RLS/authorization foundation consistent with the approved identity, platform-role, Supplier-ownership, Claim privacy, trusted-command, and Reviewer-read authorities.
 
-- Package state: `READY_AUTONOMOUS` at B1 only.
-- Verified starting point: Package A is `COMPLETE` on `63ebaf2972350848dbe494908efd6756c070802a`; the Claim surface is exactly 6/6 local external commands; the Claim table has exactly three SELECT policies and zero mutation policies.
-- Existing architectural constraint: direct browser Claim writes are denied and Claim mutations use trusted commands. B1 must determine from merged authority—not assumption—whether zero direct Claim mutation policies remains the complete intended architecture and what, if any, local RLS/authorization work is still required.
+- Package state: `IN_PROGRESS`; B4-P0 is `AWAITING_INDEPENDENT_REVIEW` and B4 remains `WAITING_DEPENDENCY`.
+- Verified starting point: Package A is `COMPLETE`; PR #138 merged B1 on current `origin/main` `7f9d810006d12301365af747477257f5489b0009`; the Claim surface is exactly 6/6 local external commands; the Claim table has exactly three SELECT policies and zero mutation policies.
+- Existing architectural constraint: B1 preserves zero browser/application Claim mutation policies while selecting isolated technical owner policies. Its four owner roles require a separate clean privileged local provisioner because ordinary PostgreSQL 17 `postgres` creation leaves prohibited creator-administration memberships. The Owner-selected B4 model keeps all ordinary work in a direct `postgres` session and permits privilege only for an exact ownership-transfer-only finalization; temporary membership and schema `CREATE` are prohibited.
 
 Hard boundary for the whole package:
 
 - local repository/local PostgreSQL/Supabase and synthetic data only;
 - deny by default and expose only the minimum approved rows, columns, routines, and principals;
+- all four B1 owner roles retain zero committed membership, credentials, schema `CREATE`, default ACL, and role-assumption path;
 - no Auth Bridge, provider adapter, gateway, signed-token/pool integration, or real identity population;
-- no access/security administration or bootstrap runtime;
+- no application access/security administration or identity/role-row bootstrap runtime; only the separately scoped local database-role provisioner may be designed and implemented;
 - no hosted Supabase access, link, push, policy/grant action, or deployment;
 - no Firebase change and no Production/TEST data access or write;
 - no migration of data, seed, backfill, repair, bulk update, deletion, DNS, billing, Storage, messaging, RFQ, notification delivery, or automatic merge;
@@ -136,25 +137,25 @@ Hard boundary for the whole package:
 
 ### B1 — Claim RLS/security readiness contract
 
-- State: `READY_AUTONOMOUS`
-- Dependency: Package A is `COMPLETE`; latest `origin/main` contains PR #136 and still matches the verified command/policy/count/gate inventory.
+- State: `COMPLETE`
+- Dependency: satisfied; Package A is `COMPLETE`, and PR #138 is merged on `7f9d810006d12301365af747477257f5489b0009`.
 - Objective: create one documentation-only readiness contract that defines the exact local Claim v1 security matrix and selects no SQL implementation until the matrix is independently approved and manually merged.
 - Risk: High because this task defines an authorization boundary, despite being documentation-only.
 - Model: Sol.
 - Reasoning: High.
 - Expected usage: Medium; stop before execution if actual expected usage becomes High.
 - Suggested branch: `codex/claim-rls-security-readiness`.
-- Deliverable: one Draft documentation PR, expected to add one focused authority document and only the minimum current-state/register synchronization required for factual consistency.
+- Merged deliverable: PR #138, with B1 authority in `docs/supabase-migration/70_CLAIM_RLS_AND_COMMAND_OWNERSHIP_READINESS.md`.
 - Required inspection: the three current Claim SELECT policies; exact table/column/schema/routine grants; command and helper ownership, `SECURITY DEFINER`/invoker mode, fixed search paths, role attributes, and execute boundaries; the approved ID-001 identity, platform-role, access/security, Supplier-ownership, Claim privacy/authorization, trusted-command, and Reviewer-read contracts.
 - Required matrix: principals and actor classes versus base-table reads, fixed read APIs, each of the six trusted commands, direct `INSERT|UPDATE|DELETE`, Claim lifecycle/assignment/expiry states, claimant/Owner/Admin/assigned-reviewer/worker distinctions, conflict/eligibility/identity failures, and explicit allow/deny outcomes.
 - Mandatory decision: cite merged authority and explicitly conclude whether zero direct Claim mutation policies remains intended. If authority conflicts or more than one materially safe architecture remains, stop at `HUMAN_DECISION_REQUIRED`; do not select by invention.
 - Validation: documentation/static checks only, including authority/link checks, exact inventory checks, contradiction/stale-state scan, and sensitive-value scan. Do not run the full SQL validator merely for B1.
-- Stop state: `AWAITING_INDEPENDENT_REVIEW`; no SQL, RLS, grant, role, function, pgTAP, Auth, hosted, Firebase, or data change.
+- Merged result: B1 selected four isolated owner roles and exact later RLS/grant/ownership hardening; no SQL, RLS, grant, role, function, pgTAP, Auth, hosted, Firebase, or data change occurred.
 
 ### B2 — Independent exact-head security review of B1
 
-- State: `WAITING_DEPENDENCY`
-- Dependency: B1 Draft PR with exact head and completed static evidence.
+- State: `COMPLETE` (historical workflow stage before PR #138 merged)
+- Dependency: satisfied by the exact B1 PR review/merge chain.
 - Objective: independently review the exact B1 head read-only against the merged identity/role/ownership/Claim authorities and current SQL/grant catalog.
 - Review focus: authority traceability; actor/principal separation; permissive-policy union risk; table-owner/`BYPASSRLS`/`SECURITY DEFINER` behavior; grants and default privileges; direct-mutation denial; hidden-field exposure; fail-closed unknown/conflict/expiry behavior; and scope exclusions.
 - Pass criterion: no Critical/High/Medium blocking finding and explicit exact-head `APPROVE FOR MANUAL MERGE` or equivalent.
@@ -163,24 +164,47 @@ Hard boundary for the whole package:
 
 ### B3 — Manual merge gate for the approved B1 contract
 
-- State: `WAITING_DEPENDENCY`
-- Dependency: B2 approves the exact unchanged B1 head and required head-specific PR Gate/checks are green.
-- Action: surface `MANUAL_MERGE_REQUIRED` with exact PR/head, checks, review verdict, unchanged seven gates, and explicit no-data/no-Production impact.
-- Owner action only: merge.
+- State: `COMPLETE`
+- Dependency: satisfied; PR #138 was manually merged as `7f9d810006d12301365af747477257f5489b0009`.
+- Result: the merged B1 contract is authoritative; no data, Production, hosted, Firebase, or deployment action occurred.
 - Autonomous merge: forbidden.
+
+
+### B4-P0 — Claim owner-role privileged-provisioning readiness contract
+
+- State: `AWAITING_INDEPENDENT_REVIEW`
+- Dependency: B1 is merged through PR #138, and the Owner security decision preserves zero committed membership for all four B1 owner roles.
+- Objective: define the smallest reproducible local-only clean role-provisioning prerequisite plus the later three-transaction fail-closed B4 model: ordinary `postgres` migration, exact privileged ownership-only finalization, and final allowlist validation, without implementing any phase.
+- Risk: High because this task defines a privileged PostgreSQL boundary, despite being documentation-only.
+- Model: Sol.
+- Reasoning: Extra High.
+- Expected usage: Medium.
+- Branch: `codex/claim-owner-role-provisioning-readiness`.
+- Deliverable: one Draft documentation/security-contract PR adding one focused readiness document plus minimum B1 and queue synchronization.
+- Validation: authority/link checks; pre-/post-B4 temporal invariants; privileged-boundary, ownership-inventory, failure-model, and complete catalog-allowlist review; contradiction/stale-state and sensitive-value scans; documentation/static checks; and `git diff --check`; no full SQL or Firebase suite.
+- Stop state: `AWAITING_INDEPENDENT_REVIEW`; do not implement the provisioner or resume B4.
+
+### B4-P1 — Local-only privileged owner-role provisioner implementation
+
+- State: `WAITING_DEPENDENCY`
+- Dependency: B4-P0 is independently approved and manually merged on an exact verified `origin/main`.
+- Objective: implement only the dedicated atomic four-role local-bootstrap asset, complete pre-B4 catalog allowlist, and reusable disposable-runner hook selected by B4-P0; no B4 or ownership-finalization capability belongs to B4-P1.
+- Deliverable: one separate Draft implementation PR with focused clean-role, zero-membership, catalog-dependency, injected-failure, idempotency, and clean reset/replay evidence.
+- Prohibited scope: no B4 migration, Claim ownership transfer, Claim privilege or policy, function-body change, application `EXECUTE`, identity/role-row bootstrap, data, hosted, Firebase, Production/TEST, or deployment action.
+- Review/merge gate: independent exact-head security review and manual merge are required before B4 becomes eligible.
 
 ### B4 — Local-only Claim RLS/authorization implementation
 
 - State: `WAITING_DEPENDENCY`
-- Dependency: B1 is manually merged; latest `origin/main` and the exact approved readiness contract are verified.
-- Objective: implement only the local RLS/authorization objects selected by B1. If B1 proves no new mutation policy is intended, B4 must preserve zero mutation policies and may implement only the separately selected read/grant/ownership/defense-in-depth changes.
+- Dependency: B1 is merged, and B4-P0 plus B4-P1 are independently approved and manually merged; latest `origin/main` must verify the exact clean role-only prerequisite before B4 begins.
+- Objective: implement only the local RLS/authorization objects selected by B1 through one direct ordinary-`postgres` migration plus one exact manifest- and SHA-256-bound privileged ownership-transfer-only finalization asset; preserve zero browser/application mutation policies and prohibit temporary membership, schema `CREATE`, role handoff, or arbitrary privileged SQL.
 - Risk: High.
 - Model: Sol.
 - Reasoning: High.
 - Expected usage: Medium–High, but stop before execution if actual expected usage becomes High.
 - Suggested branch: `codex/claim-rls-authorization-foundation`.
-- Deliverable: one Draft implementation PR with the smallest migration, focused synthetic pgTAP allow/deny matrix, and implementation evidence required by the merged B1 contract.
-- Required validation: exact positive and negative actor/principal matrix; policy/grant/owner/search-path/catalog assertions; direct mutation denial; no hidden-field leakage; fail-closed unsupported/ambiguous/error behavior; focused replay in disposable local PostgreSQL; broader local SQL validation only at the risk level required by the merged contract and PR gate.
+- Deliverable: one Draft implementation PR with the smallest ordinary migration, exact ownership manifest/finalization asset and fixed runner binding, focused synthetic pgTAP allow/deny matrix, and implementation evidence required by merged B1 and B4-P0.
+- Required validation: direct-`postgres` ordinary execution; independent rollback of the ordinary and ownership-finalization transactions; incomplete-cluster rejection; exact asset path/manifest/hash/statement inventory; pre-/post-B4 `pg_shdepend` and complete catalog allowlists; exact positive and negative actor/principal matrix; policy/grant/owner/search-path assertions; direct mutation denial; no hidden-field leakage; fail-closed unsupported/ambiguous/error behavior; focused replay in disposable local PostgreSQL; and the broader local SQL validation required by the merged contract and PR gate.
 - Prohibited scope: Auth Bridge, Firebase, hosted Supabase, real identities or rows, access/security bootstrap/administration, provider/gateway/application adapters, Production/TEST data, migration/cutover, RFQ, Storage, messaging, billing, and deployment.
 - Stop state: `AWAITING_INDEPENDENT_REVIEW`.
 
@@ -189,7 +213,7 @@ Hard boundary for the whole package:
 - State: `WAITING_DEPENDENCY`
 - Dependency: B4 Draft PR with exact head, implementation evidence, focused matrix, and required broader validation.
 - Objective: independently review the exact B4 head read-only; correct only concrete findings on the same branch/PR; re-review every changed head; then stop for manual merge when technically eligible.
-- Review focus: exact B1 conformance; deny-by-default policy semantics; permissive-policy interactions; actor/principal isolation; direct table/function/schema grants; definer/invoker ownership and search path; table-owner and `BYPASSRLS` effects; positive/negative pgTAP completeness; hidden-field leakage; atomic rollback/no side effects; and unchanged environment/data boundary.
+- Review focus: exact B1/B4-P0 conformance; deny-by-default policy semantics; permissive-policy interactions; actor/principal isolation; direct table/function/schema grants; exact privileged ownership manifest/hash/statement boundary; definer/invoker ownership and search path; table-owner and `BYPASSRLS` effects; pre-/post-B4 dependency allowlists; phase-specific rollback and incomplete-cluster rejection; positive/negative pgTAP completeness; hidden-field leakage; and unchanged environment/data boundary.
 - Maximum automatic correction loops for the same material finding: 2. On a third occurrence, conflicting authority, or required scope expansion, stop at `HUMAN_DECISION_REQUIRED`.
 - Manual merge eligibility: exact-head approval; required head-specific checks green; no Critical/High/Medium blocker; explicit local-only/no-data/no-Production impact; explicit recommendation to merge manually.
 - Success state: `AWAITING_MANUAL_MERGE` for B4. Owner action only: merge. Autonomous merge: forbidden.

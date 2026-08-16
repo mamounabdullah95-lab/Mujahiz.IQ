@@ -1,6 +1,9 @@
 # Claim v1 local RLS and command-ownership readiness
 
-Status: **B1 candidate readiness contract; documentation-only; awaiting independent exact-head security review; no SQL, RLS, grant, role, function, Auth, hosted, data, or Production change is authorized by this branch**
+Status: **Merged B1 authority from PR #138; documentation-only; B4 is blocked by
+the separate Claim owner-role privileged-provisioning prerequisite; no SQL, RLS,
+grant, role, function, Auth, hosted, data, or Production change is authorized by
+this document**
 
 Date: 2026-08-15
 
@@ -225,8 +228,9 @@ creates a standalone browser mutation path.
 ## 8. Selected B4 local implementation boundary
 
 After this exact B1 contract is independently approved and manually merged, B4
-may implement exactly one local SQL hardening migration plus focused synthetic
-pgTAP. The selected objects are:
+may implement exactly one ordinary-`postgres` local SQL hardening migration, one
+exact non-migration privileged ownership-finalization asset, plus focused
+synthetic pgTAP. The selected objects are:
 
 ### 8.1 Four isolated command/helper-owner roles
 
@@ -251,15 +255,33 @@ All four roles must be `NOLOGIN`, `NOINHERIT`, `NOSUPERUSER`, `NOCREATEDB`,
   browser/API role, `service_role`, migration operator, or human; or
 - acquire privileges through inheritance or another role membership.
 
-Zero membership and zero schema `CREATE` are mandatory committed,
-end-of-migration catalog conditions. A privileged migration actor may perform
-ownership transfer directly. If the selected PostgreSQL migration context
-requires temporary membership, `SET ROLE`, or schema `CREATE` to complete an
-ownership transfer, that capability must be transaction-bounded, used only for
-the transfer, and fully revoked or reset before migration validation and commit.
-No membership, role-assumption path, or schema `CREATE` privilege may survive
-the migration; a transient migration capability is not a permanent grant and a
-committed residue fails B4.
+Zero membership and zero schema `CREATE` are mandatory committed conditions.
+The Owner security decision prohibits temporary membership, `SET ROLE`, and
+temporary schema `CREATE` entirely. B4-P1 provisions only the clean inert roles.
+The ordinary B4 migration runs in a connection authenticated directly as
+non-superuser `postgres` and performs every B1 operation except ownership
+transfer. A separate privileged transaction may execute only an exact,
+signature-qualified, manifest- and SHA-256-bound ownership-finalization asset
+containing the B1-enumerated `ALTER FUNCTION ... OWNER TO ...` statements. It may
+execute no ordinary B4 SQL, grant, policy, function body, membership, role
+handoff, transaction command, psql meta-command, or dynamic SQL.
+
+These transactions are independently atomic; no cross-session atomicity is
+claimed. A disposable cluster is B4-valid only after the ordinary migration,
+exact ownership finalization, and complete post-B4 allowlist all succeed. If a
+later phase fails after an earlier transaction committed, the cluster is
+incomplete, runs no tests or later migrations, and is destroyed and replayed
+rather than repaired or accepted.
+
+Post-merge local PostgreSQL 17 evidence proved that ordinary non-superuser
+`postgres` role creation always leaves an `ADMIN=true`, `INHERIT=false`,
+`SET=false` membership granted by `supabase_admin`, and that `postgres` cannot
+remove the grantor-owned row. The Owner decision preserves this section's zero-
+membership invariant. B4 is therefore waiting on the separately reviewed and
+manually merged [Claim owner-role privileged provisioning
+readiness](71_CLAIM_OWNER_ROLE_PROVISIONING_READINESS.md) and its later local-only
+implementation. That prerequisite does not revise or absorb any B4 ownership,
+grant, policy, function-body, or validation scope.
 
 Transfer ownership of every current `supplier_claim` `SECURITY DEFINER` routine
 reachable from the five human command families to the human command owner.
@@ -398,12 +420,16 @@ cardinality, or notification behavior.
 The later implementation is acceptable only if all of the following pass on
 the same exact head:
 
-1. focused pgTAP proves the four role shapes, zero credentials, zero memberships,
-   zero table/schema/database ownership, zero `BYPASSRLS`, zero schema `CREATE`,
-   and zero grant options in the committed end-of-migration catalog, after any
-   transaction-bounded ownership-transfer capability has been revoked;
-2. direct `pg_default_acl` catalog assertions prove that no default ACL grants
-   any privilege to any of the four owner roles for any object type or schema;
+1. focused pgTAP proves the four role shapes, zero credentials and memberships,
+   zero `BYPASSRLS`, schema `CREATE`, default ACL, grant option, role-assumption
+   path, and unauthorized ownership/privilege both before and after B4; pre-B4
+   has zero protected ownership/privilege, while post-B4 matches exactly the
+   B1-authorized routine owners, grants, and policy targets;
+2. direct assertions over `pg_default_acl`, `pg_shdepend`,
+   `pg_db_role_setting`, PostgreSQL 17 `pg_parameter_acl`, and every relevant
+   database-local ownership/ACL/policy catalog prove the exact pre-B4 empty
+   allowlist and exact post-B4 B1 allowlist, including zero unexpected owner,
+   ACL, initial-ACL, policy, parameter, or persistent-setting dependency;
 3. catalog assertions prove every Claim mutation definer/helper is owned by the
    exact selected non-superuser command/helper role, the two read-only helpers
    have separate owners, and no Claim `SECURITY DEFINER` remains owned by
@@ -478,9 +504,9 @@ gateway membership, real environment grants/default privileges, signed-token
 ingress, HMAC custody, driver/pool isolation, and hosted catalog evidence remain
 absent.
 
-## 11. B1 validation and exact stop point
+## 11. Historical B1 validation and merged stop point
 
-B1 validation is documentation/static only:
+B1 validation was documentation/static only:
 
 - verify exact starting `origin/main` and Package A ancestry;
 - verify 29 migrations, 29 pgTAP files, six external commands, three current
@@ -496,10 +522,13 @@ B1 validation is documentation/static only:
 - run `git diff --check`; and
 - confirm the branch diff is documentation-only.
 
-Exact stop point: one Draft documentation PR at
-`AWAITING_INDEPENDENT_REVIEW`. The independent Reviewer must inspect the exact
-head read-only against the merged authorities and current DDL, including
-permissive-policy union risk, non-`BYPASSRLS` definer behavior, owner membership,
-base and column grants, hidden-field exposure, and direct-mutation denial. Do
-not implement B4, create SQL/pgTAP, mark Ready, merge, deploy, access hosted
-Supabase or Firebase Production, or read/write Production/TEST data.
+B1 reached that stop point and was later merged by PR #138 at
+`7f9d810006d12301365af747477257f5489b0009`. B4 must not begin until the separate
+owner-role privileged-provisioning contract and implementation are independently
+approved and manually merged. The later B4 Reviewer must still inspect the exact
+implementation head read-only against the merged authorities and current DDL,
+including permissive-policy union risk, non-`BYPASSRLS` definer behavior, owner
+membership, base and column grants, hidden-field exposure, and direct-mutation
+denial. Do not implement B4, create SQL/pgTAP from this document, mark Ready,
+merge, deploy, access hosted Supabase or Firebase Production, or read/write
+Production/TEST data.
