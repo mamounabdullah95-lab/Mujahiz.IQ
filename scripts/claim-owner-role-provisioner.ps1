@@ -2,7 +2,6 @@ function Invoke-ClaimOwnerRoleProvisioner {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ContainerName,
-    [ValidateNotNullOrEmpty()][string]$DatabaseName = 'postgres',
     [ValidateSet('', 'before_create', 'after_role_1', 'after_role_2', 'after_role_3', 'after_role_4', 'final_assertion')]
     [string]$FailurePoint = '',
     [ValidateSet('normal', 'cancellation', 'termination')][string]$InvocationKind = 'normal',
@@ -21,6 +20,34 @@ function Invoke-ClaimOwnerRoleProvisioner {
     throw 'Claim owner-role provisioning is limited to the fixed disposable validation harness.'
   }
 
+  $repoRoot = [System.IO.Path]::GetFullPath((Resolve-Path (Join-Path $PSScriptRoot '..')).Path).TrimEnd(
+    [System.IO.Path]::DirectorySeparatorChar,
+    [System.IO.Path]::AltDirectorySeparatorChar
+  )
+  $hostAssetPath = Join-Path $repoRoot 'supabase\local-bootstrap\claim-owner-roles.sql'
+  $assetPath = '/workspace/supabase/local-bootstrap/claim-owner-roles.sql'
+  $expectedAssetSha256 = '5cfcc9d9b30d9bfd5ccef3b64a61d8ed8e98d66b819c41c606c87123ed1d4fb1'
+  $assetPathChain = @(
+    $repoRoot,
+    (Join-Path $repoRoot 'supabase'),
+    (Join-Path $repoRoot 'supabase\local-bootstrap'),
+    $hostAssetPath
+  )
+  foreach ($candidatePath in $assetPathChain) {
+    $candidate = Get-Item -Force -LiteralPath $candidatePath -ErrorAction Stop
+    if (($candidate.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+      throw 'Claim owner-role provisioning rejected a reparse-point in the fixed asset path.'
+    }
+  }
+  $asset = Get-Item -Force -LiteralPath $hostAssetPath -ErrorAction Stop
+  if ($asset.PSIsContainer -or -not [System.IO.File]::Exists($asset.FullName)) {
+    throw 'Claim owner-role provisioning requires the fixed repository asset to be a regular file.'
+  }
+  $hostAssetSha256 = (Get-FileHash -LiteralPath $hostAssetPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  if ($hostAssetSha256 -cne $expectedAssetSha256) {
+    throw 'Claim owner-role provisioning rejected a host asset SHA-256 mismatch.'
+  }
+
   $expectedImage = 'supabase/postgres:17.6.1.064'
   $expectedImageId = 'sha256:4c6d67181e482549bab276e8ae933f807be59ea1c371c225d85c189b0c14b9de'
   $inspectFormat = '{{.Config.Image}}|{{.Image}}|{{.HostConfig.AutoRemove}}|{{.State.Running}}|{{json .HostConfig.PortBindings}}'
@@ -32,13 +59,32 @@ function Invoke-ClaimOwnerRoleProvisioner {
   $mountInspectExitCode = $LASTEXITCODE
   $ErrorActionPreference = $previousErrorActionPreference
   $containerMetadata = if ($containerMetadataOutput.Count -gt 0) { @($containerMetadataOutput[-1] -split '\|', 5) } else { @() }
-  $workspaceMounts = @()
+  $allMounts = @()
   if ($mountInspectExitCode -eq 0 -and $containerMountOutput.Count -gt 0) {
+    try { $allMounts = @($containerMountOutput[-1] | ConvertFrom-Json) }
+    catch { $allMounts = @() }
+  }
+
+  $workspaceMountMatches = $false
+  if ($allMounts.Count -eq 1) {
+    $workspaceMount = $allMounts[0]
     try {
-      $allMounts = @($containerMountOutput[-1] | ConvertFrom-Json)
-      $workspaceMounts = @($allMounts | Where-Object { $_.Destination -eq '/workspace' })
+      $mountSource = [System.IO.Path]::GetFullPath([string]$workspaceMount.Source).TrimEnd(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+      )
+      $pathComparison = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) {
+        [System.StringComparison]::OrdinalIgnoreCase
+      }
+      else { [System.StringComparison]::Ordinal }
+      $workspaceMountMatches = (
+        $workspaceMount.Type -eq 'bind' -and
+        $workspaceMount.Destination -eq '/workspace' -and
+        $workspaceMount.RW -eq $false -and
+        [string]::Equals($mountSource, $repoRoot, $pathComparison)
+      )
     }
-    catch { $workspaceMounts = @() }
+    catch { $workspaceMountMatches = $false }
   }
 
   $containerRejected = (
@@ -50,14 +96,34 @@ function Invoke-ClaimOwnerRoleProvisioner {
     $containerMetadata[2] -ne 'true' -or
     $containerMetadata[3] -ne 'true' -or
     $containerMetadata[4] -notin @('null', '{}') -or
-    $workspaceMounts.Count -ne 1 -or
-    $workspaceMounts[0].RW -ne $false
+    $allMounts.Count -ne 1 -or
+    -not $workspaceMountMatches
   )
   if ($containerRejected) {
     throw 'Claim owner-role provisioning rejected a container outside the pinned disposable boundary.'
   }
 
-  $assetPath = '/workspace/supabase/local-bootstrap/claim-owner-roles.sql'
+  $previousErrorActionPreference = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  $containerAssetTypeOutput = @(& docker exec $ContainerName stat '--format=%F' $assetPath 2>&1 | ForEach-Object { $_.ToString() })
+  $containerAssetTypeExitCode = $LASTEXITCODE
+  $containerAssetHashOutput = @(& docker exec $ContainerName sha256sum $assetPath 2>&1 | ForEach-Object { $_.ToString() })
+  $containerAssetHashExitCode = $LASTEXITCODE
+  $ErrorActionPreference = $previousErrorActionPreference
+  $containerAssetHash = if (
+    $containerAssetHashOutput.Count -eq 1 -and
+    $containerAssetHashOutput[0] -match '^([0-9a-f]{64})\s+/workspace/supabase/local-bootstrap/claim-owner-roles\.sql$'
+  ) { $Matches[1] } else { '' }
+  if (
+    $containerAssetTypeExitCode -ne 0 -or
+    $containerAssetTypeOutput.Count -ne 1 -or
+    $containerAssetTypeOutput[0] -ne 'regular file' -or
+    $containerAssetHashExitCode -ne 0 -or
+    $containerAssetHash -cne $expectedAssetSha256
+  ) {
+    throw 'Claim owner-role provisioning rejected the mounted asset identity.'
+  }
+
   $applicationName = "mujahiz_claim_owner_role_provisioner_$InvocationKind"
   $beginCommand = 'begin;'
   if ($FailurePoint) {
@@ -65,8 +131,8 @@ function Invoke-ClaimOwnerRoleProvisioner {
   }
 
   $psqlArguments = @(
-    '--no-psqlrc', '--set=ON_ERROR_STOP=1', '--username=supabase_admin',
-    "--dbname=$DatabaseName", '--quiet', '--command', $beginCommand,
+    '--no-psqlrc', '--set=ON_ERROR_STOP=1', '--host=/var/run/postgresql', '--port=5432',
+    '--username=supabase_admin', '--dbname=postgres', '--quiet', '--command', $beginCommand,
     '--file', $assetPath
   )
   if ($PauseBeforeCommit) {
@@ -76,7 +142,20 @@ function Invoke-ClaimOwnerRoleProvisioner {
 
   $dockerArguments = @('exec')
   if ($Detach) { $dockerArguments += '--detach' }
-  $dockerArguments += @('--env', "PGAPPNAME=$applicationName", $ContainerName, 'psql')
+  $libpqEnvironmentToUnset = @(
+    'PGHOST', 'PGHOSTADDR', 'PGPORT', 'PGDATABASE', 'PGUSER', 'PGPASSFILE',
+    'PGSERVICE', 'PGSERVICEFILE', 'PGSYSCONFDIR', 'PGOPTIONS', 'PGCONNECT_TIMEOUT',
+    'PGCLIENTENCODING', 'PGTARGETSESSIONATTRS', 'PGLOADBALANCEHOSTS', 'PGCHANNELBINDING',
+    'PGSSLMODE', 'PGREQUIRESSL', 'PGSSLNEGOTIATION', 'PGSSLCOMPRESSION', 'PGSSLCERT',
+    'PGSSLKEY', 'PGSSLROOTCERT', 'PGSSLCRL', 'PGSSLCRLDIR', 'PGREQUIREPEER',
+    'PGSSLMINPROTOCOLVERSION', 'PGSSLMAXPROTOCOLVERSION', 'PGGSSENCMODE',
+    'PGKRBSRVNAME', 'PGGSSLIB'
+  )
+  $dockerArguments += @('--env', "PGAPPNAME=$applicationName", $ContainerName, '/usr/bin/env')
+  foreach ($environmentName in $libpqEnvironmentToUnset) {
+    $dockerArguments += @('-u', $environmentName)
+  }
+  $dockerArguments += '/usr/bin/psql'
   $dockerArguments += $psqlArguments
 
   $previousErrorActionPreference = $ErrorActionPreference

@@ -16,16 +16,21 @@ declare
   target_role record;
 begin
   if current_user <> 'supabase_admin'
-     or not coalesce((select r.rolsuper from pg_catalog.pg_roles r where r.rolname = current_user), false) then
+     or not coalesce((select r.rolsuper from pg_catalog.pg_roles r where r.rolname = current_user), false)
+     or current_database() <> 'postgres'
+     or pg_catalog.inet_server_addr() is not null
+     or pg_catalog.inet_server_port() is not null
+     or pg_catalog.current_setting('port') <> '5432'
+     or pg_catalog.current_setting('unix_socket_directories') <> '/var/run/postgresql' then
     raise exception using
       errcode = '42501',
-      message = 'claim owner-role provisioning requires the pinned disposable bootstrap actor';
+      message = 'claim owner-role provisioning requires the fixed pinned-image local endpoint and bootstrap actor';
   end if;
 
   if exists (
     select 1
     from pg_catalog.pg_roles r
-    where r.rolname ~ '^mujahiz_claim_.*_owner$'
+    where r.rolname ~ '^mujahiz_claim_.+_owner.*$'
       and r.rolname <> all(expected_roles)
   ) then
     raise exception using errcode = 'P0001', message = 'unexpected similarly prefixed Claim owner role';
