@@ -1,7 +1,7 @@
 # Claim owner-role privileged provisioning readiness
 
-Status: **B4-P0 candidate security contract; documentation-only; awaiting
-independent exact-head security review; the privileged provisioner and B4 remain
+Status: **B4-P0 candidate security contract; documentation-only; Correction Loop
+1; awaiting independent exact-head security review; B4-P1 and B4 remain
 unimplemented and blocked**
 
 Date: 2026-08-16
@@ -13,14 +13,22 @@ Working branch: `codex/claim-owner-role-provisioning-readiness`
 
 Primary task profile: Documentation
 
-## 1. Decision and scope
+## 1. Owner decision and scope
 
-The Owner security decision preserves the merged B1 zero-membership invariant.
-The four future Claim owner roles must not retain the automatic PostgreSQL 17 /
-local Supabase membership granted to an ordinary non-superuser role creator.
-This contract selects the smallest reproducible local-only prerequisite that can
-provision the roles cleanly before B4 and defines the later transaction-bounded
-handoff that lets B4 remain an ordinary `postgres` migration.
+The Owner security decision preserves the merged B1 zero-membership invariant
+and selects the smallest local privileged boundary:
+
+1. B4-P1 uses the validated local privileged actor only for clean creation and
+   validation of four inert roles;
+2. B4 runs every non-ownership operation in the ordinary repository `postgres`
+   migration context; and
+3. B4 ends with a separate, exact, privileged ownership-transfer-only
+   finalization followed by final validation.
+
+The rejected design that ran arbitrary B4 SQL in a `supabase_admin`-authenticated
+session after `SET ROLE postgres` is removed. Temporary membership, temporary
+schema `CREATE`, role handoff, and arbitrary privileged migration execution are
+prohibited.
 
 The selected roles remain exactly:
 
@@ -29,249 +37,363 @@ The selected roles remain exactly:
 3. `mujahiz_claim_target_conflict_helper_owner`; and
 4. `mujahiz_claim_reviewer_prior_context_helper_owner`.
 
-This document does not implement the provisioner, create a role, create or run a
-migration, add pgTAP, change a grant or policy, transfer ownership, alter a
-function body, populate data, access a hosted project, or deploy anything.
+This document does not implement a provisioner, role, migration, ownership
+transfer, grant, policy, function-body change, pgTAP test, data operation,
+hosted action, or deployment.
 
-## 2. Binding authority and unchanged invariants
+## 2. Binding authority and temporal invariants
 
 The merged [Claim v1 local RLS and command-ownership readiness
 contract](70_CLAIM_RLS_AND_COMMAND_OWNERSHIP_READINESS.md) remains authoritative
-for B4 ownership, grants, policies, target-conflict projection hardening, callable
-surfaces, and validation. This prerequisite narrows only how the four roles and
-the temporary ownership-transfer capability are established locally.
+for B4 ownership, grants, policies, target-conflict projection hardening,
+callable surfaces, and validation. This prerequisite narrows only clean local
+role creation and B1's exact ownership-finalization mechanism.
 
-Each role must be `NOLOGIN`, `NOINHERIT`, `NOSUPERUSER`, `NOCREATEDB`,
+Each role must always be `NOLOGIN`, `NOINHERIT`, `NOSUPERUSER`, `NOCREATEDB`,
 `NOCREATEROLE`, `NOREPLICATION`, and `NOBYPASSRLS`, with `rolpassword IS NULL`.
-Before B4, and again at B4 commit, all four must have:
+
+### 2.1 Clean pre-B4 state
+
+After B4-P1 and before B4, all four roles must have:
 
 - zero `pg_auth_members` rows in either the granted-role or member direction;
 - no `SET ROLE` path from `postgres`, runtime, worker, projection, browser/API,
-  generic `service_role`, migration operator, or human principals;
-- zero schema `CREATE`, default ACL, grant option, and protected-object
-  privilege;
-- no table, sequence, view, routine, schema, database, or extension ownership;
-  and
-- no credential, login, application-facing surface, or inherited capability.
+  generic `service_role`, migration operator, human, or other ordinary role;
+- zero schema `CREATE`, default-ACL grant, grant option, protected-object
+  privilege, protected routine ownership, and application-facing surface; and
+- no table, sequence, view, routine, schema, database, extension, or other
+  database-object ownership.
 
-B1's four-role separation, exact later grants, seven added technical RLS
-policies, 19-column target-conflict hardening, and all command/read behavior are
-unchanged.
+### 2.2 Successful post-B4 state
+
+After the ordinary B4 phase, exact privileged ownership finalization, and final
+validation all succeed, the roles must have exactly the B1-authorized:
+
+- routine ownership;
+- table, column, sequence, schema-`USAGE`, and routine privileges;
+- Claim technical-policy targeting; and
+- internal callable relationships.
+
+They may have no additional ownership, privilege, policy target, or callable
+surface.
+
+### 2.3 Invariants that remain zero before and after B4
+
+Both before and after B4 the four roles retain zero:
+
+- credentials or login;
+- unauthorized membership or ordinary role-assumption path;
+- schema `CREATE`;
+- default-ACL grant or grant option;
+- unauthorized ownership or protected privilege; and
+- unrelated application, runtime, worker, projection, API, migration-operator,
+  or human callable surface.
+
+B4's exact authorized ownership and privilege allowlist is required post-B4 and
+must not be misclassified as residue.
 
 ## 3. Reproduced local PostgreSQL/Supabase behavior
 
-The investigation used only disposable local containers and synthetic probe
-objects. It used the repository-pinned image
+The investigation and independent review used disposable local containers and
+synthetic probe objects only. They used the repository-pinned image
 `supabase/postgres:17.6.1.064`, image digest
 `sha256:4c6d67181e482549bab276e8ae933f807be59ea1c371c225d85c189b0c14b9de`,
-and PostgreSQL `17.6`. Every probe container was removed after inspection.
+and PostgreSQL `17.6`. Every probe container was removed.
 
-The image exposes these two relevant local actors after its initialization:
+The image exposes these relevant local actors after initialization:
 
 | Actor | Observed local attributes | Role in this contract |
 |---|---|---|
 | `postgres` | login, non-superuser, `CREATEROLE` | ordinary repository migration actor |
-| `supabase_admin` | login, superuser | image bootstrap actor; local privileged provisioner only |
+| `supabase_admin` | login, superuser | disposable-image bootstrap actor; exact local privileged operations only |
 
-The exact reproduced results were:
+The reproduced results were:
 
 | Probe | Result |
 |---|---|
-| `postgres` creates one restricted `NOLOGIN` role | The role attributes and null password are correct, but PostgreSQL adds one membership row: granted role = probe role, member = `postgres`, grantor = `supabase_admin`, `ADMIN=true`, `INHERIT=false`, `SET=false`. |
-| `postgres` attempts to remove that automatic row | Fails with permission denied because only a role with `supabase_admin` privileges may revoke a grant made by `supabase_admin`; the row remains. |
-| `supabase_admin` creates the same restricted role | The role has the exact restricted attributes, a null password, zero membership rows in either direction, and `postgres` has no `SET` path. |
-| The privileged idempotent create-if-absent path is repeated | The role remains single, unchanged, and membership-free. |
-| `postgres` attempts to transfer a probe function to the clean role | Fails with `must be able to SET ROLE` to the clean role. Role provisioning alone therefore cannot make an ordinary B4 ownership transfer succeed. |
-| `supabase_admin` performs the transfer directly | Succeeds with zero membership, proving the local privileged actor is capable, but running all of B4 as superuser would be broader than required. |
-| Privileged transaction grants only temporary `SET` membership plus schema `CREATE`, executes the transfer under `postgres`, then cleans up before commit | Succeeds. The final function owner is the clean role; membership rows are zero; `postgres` cannot `SET ROLE`; schema `CREATE` is false. |
+| `postgres` creates one restricted `NOLOGIN` role | Attributes and null password are correct, but PostgreSQL adds one membership: role = probe, member = `postgres`, grantor = `supabase_admin`, `ADMIN=true`, `INHERIT=false`, `SET=false`. |
+| `postgres` attempts to remove that row | It cannot remove the `supabase_admin`-granted row; the membership remains. |
+| `supabase_admin` creates the same restricted role | Exact restricted attributes, null password, zero memberships, and no `postgres` `SET ROLE` path. |
+| Privileged create-if-absent repeats | The role remains single, unchanged, and membership-free. |
+| `postgres` attempts to transfer its probe function to the clean role | Fails with `must be able to SET ROLE` to the clean role. |
+| `supabase_admin` performs only that ownership transfer | Succeeds with zero membership and without schema `CREATE`. |
+| Privileged session uses `SET ROLE postgres` before arbitrary SQL | Rejected: `RESET ROLE` restores `supabase_admin`; an early `COMMIT` can persist temporary membership and schema `CREATE`. |
 
-This is the exact blocker: ordinary PostgreSQL 17 role creation is not defective,
-but its managed creator-administration row contradicts B1's stricter committed
-catalog invariant and the ordinary creator cannot remove the grantor-owned row.
+Clean role creation and exact routine ownership transfer therefore require the
+validated privileged actor in the current local image. B1's grants, revocations,
+policies, projection hardening, assertions, and tests do not require that actor
+and remain ordinary B4 work.
 
-## 4. Selected local provisioning architecture
+## 4. Selected architecture and privilege boundary
 
-Select a **repository-owned privileged bootstrap SQL asset executed by the
-existing disposable test-harness boundary**, with a narrowly scoped privileged
-transaction wrapper for the later B4 migration.
+The Owner-selected architecture has three independent PostgreSQL transactions
+and a final acceptance gate. It is not one cross-session transaction:
 
-The future prerequisite implementation must add one non-migration,
-local-bootstrap SQL asset dedicated to these four roles and one reusable runner
-hook used by the disposable PostgreSQL harnesses. The SQL asset must not be
-placed in `supabase/migrations`, because every tracked migration is currently
-applied as ordinary `postgres` and repeating the failed creator path would
-recreate the prohibited rows. It must not be represented as seed data.
+1. **B4-P1 role-provisioning transaction:** privileged, role-only, atomic;
+2. **ordinary B4 transaction:** authenticated and executed directly as ordinary
+   `postgres`, with no privileged session behind it;
+3. **ownership-finalization transaction:** privileged, exact transfer-only,
+   atomic; and
+4. **final validation:** accept the disposable database only when the complete
+   post-B4 allowlist passes.
 
-The runner hook must:
+Only role creation and the exact routine ownership transfers cross the local
+privileged boundary. No materially different unresolved safe architecture
+remains after the Owner selected this narrower model.
 
-1. wait for the pinned Supabase PostgreSQL image initialization to finish;
+B4-P1 and the later B4 runner integration may extend only the established local
+disposable harness. They must introduce no runtime/application entrypoint,
+persistent privileged helper, generic privileged SQL executor, hosted
+credential, or reusable arbitrary-file parameter.
+
+The current validator replays migrations sequentially in one disposable
+cluster and creates test databases sequentially. B4 integration must preserve
+that model: provision cluster-scoped roles once, apply ordinary migrations per
+database, run exact ownership finalization immediately after the B4 migration
+in every database that reaches B4, and never run tests or later migrations in a
+database whose finalization or final validation failed.
+
+## 5. B4-P1 clean role provisioning
+
+B4-P1 may add one repository-owned, non-migration local-bootstrap asset for the
+four fixed role definitions and one reusable disposable-runner hook. It must not
+place role creation in `supabase/migrations` or seed data.
+
+The runner must:
+
+1. wait for pinned-image initialization;
 2. authenticate a container-local `supabase_admin` session using only the
-   runner's existing disposable bootstrap credential, without logging it;
-3. execute the dedicated allowlisted role-provisioning asset once before any
-   ordinary migration that depends on the roles;
-4. create only a missing expected role with the exact attributes in section 2;
-5. fail closed, without repairing or dropping, when an expected role already has
-   an unsafe attribute, password, membership, ownership, grant, or unexpected
-   identity;
-6. revalidate the complete clean pre-B4 catalog contract before returning; and
-7. remain idempotent when invoked again in the same disposable cluster.
+   existing disposable bootstrap credential and never log it;
+3. begin one provisioning transaction;
+4. validate all four role names before creating anything, failing closed on any
+   unsafe existing role, unexpected similarly prefixed role, membership,
+   ownership, ACL, policy target, persistent setting, or identity;
+5. create only missing expected roles with the exact section 2 attributes;
+6. run the complete pre-B4 catalog allowlist in the same transaction; and
+7. commit only when all four roles are exact and inert.
 
-Roles are cluster-scoped, so one successful provisioning invocation per
-disposable cluster is sufficient even when the current validator creates
-multiple test databases. The current sequential database replay model must be
-preserved while the later B4 handoff temporarily changes cluster-wide role
-membership.
+Any error, assertion failure, cancellation, or connection termination rolls back
+all role creations in that attempt. The runner must not repair, alter, drop, or
+partially normalize an unsafe existing role. Re-execution in the same cluster is
+a validated no-op.
 
-This mechanism is selected instead of materially broader alternatives:
+B4-P1 must not create or exercise temporary `SET`, `ADMIN`, or `INHERIT`
+membership; grant or revoke schema `CREATE`; transfer a routine; add a Claim
+privilege or policy; alter a function body; grant application `EXECUTE`; or add
+identity, access, security, Claim, ownership, audit, idempotency, event, or other
+data.
 
-- an ordinary migration cannot meet zero membership;
-- privileged creation followed by an unwrapped ordinary B4 cannot transfer
-  ownership;
-- running all B4 statements as `supabase_admin` retains unnecessary superuser
-  authority for grants, policies, and body hardening;
-- pre-transferring functions would move B4 ownership scope into the
-  prerequisite;
-- a persistent privileged helper would introduce a new durable escalation
-  surface; and
-- a container-init convention is not an established repository mechanism and
-  would not solve the later ordinary ownership-transfer boundary by itself.
+## 6. Ordinary B4 phase
 
-No materially different equally narrow architecture remains after this
-evidence, so this contract does not stop at `SECURITY_DECISION_REQUIRED`.
+B4's normal migration must run in a separate connection authenticated directly
+as the established non-superuser `postgres` migration actor. It must not run in
+a `supabase_admin`-authenticated session, under `SET ROLE`, or through the
+privileged ownership-finalization runner.
 
-## 5. Separation between the prerequisite and B4
+Subject to merged B1, the ordinary B4 transaction remains responsible for:
 
-### A. Privileged role-provisioning prerequisite
-
-The separate prerequisite implementation may add only:
-
-- the four exact role definitions;
-- fail-closed idempotency and catalog assertions for those roles;
-- the local disposable-runner hook that invokes the allowlisted asset as
-  `supabase_admin`; and
-- the narrow B4 transaction-handoff capability described below, without a B4
-  migration or any protected-object operation.
-
-Before B4 exists or runs, the prerequisite must leave only the four inert clean
-roles. It must grant no Claim or other table privilege, create no RLS policy,
-transfer no routine, alter no function body, grant no application `EXECUTE`, and
-create no identity, platform-role, access, security, Claim, ownership, audit,
-idempotency, event, or other data row.
-
-### B. Later normal B4 security migration
-
-B4 remains solely responsible for:
-
-- every selected function ownership transfer;
-- all exact base, column, sequence, schema-`USAGE`, and routine grants and
-  revocations;
+- the target-conflict helper's exact 19-column projection hardening;
+- all exact grants and revocations ordinary `postgres` is authorized to perform;
 - the seven exact owner-targeted Claim RLS policies;
-- the target-conflict helper's exact 19-column projection hardening; and
-- focused pgTAP, affected concurrency checks, and complete local SQL validation.
+- every non-ownership catalog/security assertion;
+- focused pgTAP and affected helper, projection, command, and concurrency
+  validation; and
+- the required complete local SQL validation.
 
-The prerequisite must not contain, duplicate, anticipate, or silently execute
-those B4 statements. B4 remains blocked until the prerequisite contract and its
-separate implementation are independently approved and manually merged.
+The ordinary migration must be atomic on its own: migration errors and assertion
+failures roll back that transaction. It contains no privileged ownership
+transfer and cannot assume an owner role. Successful ordinary B4 does not by
+itself make the database acceptable; ownership finalization and the final
+post-B4 allowlist must also succeed.
 
-## 6. Later B4 transaction handoff
+## 7. Exact privileged ownership finalization
 
-Clean privileged creation intentionally leaves `postgres` unable to transfer
-ownership. The later disposable runner must therefore apply B4 through one
-atomic handoff controlled by the already authenticated `supabase_admin` session:
+B4 may add one separate non-migration ownership-finalization asset. The
+privileged runner must accept no caller-supplied SQL path and execute only the
+fixed repository path declared by the B4 implementation.
 
-1. begin one transaction and assert the four roles still satisfy the clean
-   pre-B4 contract;
-2. grant each role to `postgres` with `SET=true`, `ADMIN=false`, and
-   `INHERIT=false`, from `supabase_admin` only;
-3. grant temporary schema `CREATE` only on `supplier_claim` to the human and
-   expiry command owners, and only on `claim_security` to the two helper owners;
-4. switch the effective role to ordinary `postgres` and execute the B4-owned
-   migration file as B4's migration actor;
-5. reset to the privileged session actor;
-6. revoke every temporary schema `CREATE` and every membership using the same
-   privileged grantor;
-7. run the complete zero-residue catalog assertions before commit; and
-8. commit only if B4 and every cleanup assertion succeeded.
+The B4 implementation must commit an exact ownership manifest with one tuple for
+each transfer:
 
-Any error must roll back the ownership/grant/policy changes and every temporary
-capability together. The runner must not retry cleanup outside the failed
-transaction as a substitute for rollback. No temporary grant may commit between
-steps, and no parallel migration/test database may observe the handoff.
+- fully qualified routine signature using identity argument types;
+- verified pre-transfer owner;
+- exact B1-selected new owner; and
+- expected `SECURITY DEFINER` state.
 
-This wrapper supplies only the capability that ordinary `postgres` demonstrably
-lacks. B4 still supplies and owns the security migration statements. It must
-order its statements so that its ordinary actor remains authorized without
-expanding the wrapper or retaining schema `CREATE`.
+The manifest and asset must be one-to-one: no missing, duplicate, or extra
+statement is allowed. The manifest must enumerate every current
+`supplier_claim` definer in the five human command families, every Expire
+Phase-A/Phase-B and expiry-only definer, the exact target-conflict helper, and
+the exact Reviewer-prior-context helper, while excluding the projection-owned
+and `SECURITY INVOKER` routines that B1 leaves unchanged.
 
-## 7. Deterministic prerequisite validation contract
+The runner must contain the expected canonical SHA-256 of the exact asset as a
+literal reviewed with the same Git head. It must hash the mounted read-only file
+before connecting or executing and fail on mismatch. The fixed path, exact
+manifest, digest, and B4 head bind the reviewed bytes without a secret; the hash
+prevents runtime file substitution but does not replace statement-inventory
+validation or independent review.
 
-The later prerequisite implementation is acceptable only when focused local
-validation proves, on the same exact head:
+The asset may contain only the enumerated, signature-qualified `ALTER FUNCTION
+... OWNER TO ...` statements. It must contain no:
 
-1. exactly the four expected role names exist and no similarly prefixed extra
-   owner role was created;
-2. every role has the exact attributes in section 2 and `rolpassword IS NULL`;
-3. `pg_auth_members` has zero rows where any role is either `roleid` or `member`;
-4. direct `SET ROLE` fails from `postgres`, `mujahiz_claim_runtime`,
-   `mujahiz_claim_expiry_worker`, both projection roles, `anon`,
-   `authenticated`, generic `service_role`, and an unlisted restricted probe;
-5. all four have zero schema `CREATE` and zero grant option;
-6. `pg_default_acl` grants none of the four any privilege for any object type or
-   schema;
-7. before B4, all four have zero privilege on protected relations, sequences,
-   schemas, and routines, and own no database object of any supported ownership
-   class;
-8. none has a login, credential, role-administration path, or application-facing
-   callable surface;
-9. invoking the provisioner twice in one disposable cluster is a no-op after the
-   first success and preserves the exact catalog result;
-10. two clean disposable reset/replay runs produce the same exact role and
-    zero-membership result with no retained container or host artifact;
-11. a synthetic unsafe pre-existing role and a synthetic unexpected membership
-    both fail closed without alteration or partial repair; and
-12. a focused handoff probe proves ordinary ownership transfer fails before the
-    wrapper, succeeds inside it, and finishes with zero membership, no `SET ROLE`,
-    and no schema `CREATE` after commit.
+- arbitrary B4 SQL, role creation, dynamic SQL, or generic privileged mechanism;
+- RLS policy, table/column/sequence/schema/routine grant or revoke;
+- function-body or application-`EXECUTE` change;
+- membership grant/revoke or schema `CREATE` grant/revoke;
+- `SET ROLE`, `RESET ROLE`, `SET SESSION AUTHORIZATION`, or `RESET SESSION
+  AUTHORIZATION`;
+- transaction-control statement; or
+- psql meta-command.
 
-The prerequisite validation is focused and local. It must not run B4, transfer a
-Claim routine, add a Claim policy, or use the full SQL validator as a substitute
-for the role-only assertions. B4's later merged contract still requires the full
-validator for the actual security migration.
+The runner, not the asset, begins one transaction, validates the exact clean
+roles, manifest, routine signatures, current owners, and definer modes, executes
+the fixed asset directly as `supabase_admin`, validates the exact resulting
+owners and zero prohibited residue, and commits. A wrong/missing role,
+unexpected owner, substituted statement/file, error, assertion failure,
+cancellation, or connection termination rolls back every transfer in that
+transaction.
 
-## 8. Hosted and Production boundary
+The runner must never execute the ordinary B4 migration or any arbitrary file as
+`supabase_admin`.
 
-The selected `supabase_admin` path is proven only inside the repository's pinned
-disposable local image. It neither authorizes nor proves that the same role,
-credential, connection, bootstrap actor, or transaction wrapper exists or is
-supported in hosted Supabase.
+## 8. Multi-phase failure and rollback model
 
-Hosted owner-role provisioning remains a separate future hosted-security gate.
-It must use a Supabase-supported mechanism verified against the exact hosted
-environment at that time. No local role or privilege assumption may be copied to
-hosted, staging, TEST, or Production by inference.
+The three transactions are independently atomic; there is no invented
+cross-session atomicity.
 
-The prerequisite and B4 must not access hosted Supabase, Firebase, Production or
-TEST data; link a project; migrate, seed, backfill, repair, delete, or populate
-data; change Auth, provider, gateway, worker, DNS, billing, or credentials; or
+- **B4-P1 failure:** the provisioning transaction rolls back. Injected failures
+  before creation, after each partial-creation point, on unsafe pre-existing and
+  mixed missing/unsafe roles, and on connection termination must leave the
+  pre-attempt catalog unchanged.
+- **Ordinary B4 failure:** a migration error or assertion failure rolls back the
+  ordinary transaction. Ownership finalization must not start.
+- **Ownership-finalization failure:** a failure before the first transfer,
+  midway through the inventory, on a final assertion, on connection termination,
+  on wrong/missing role or owner, or on substituted/unapproved content rolls
+  back the entire finalization transaction.
+- **Incomplete workflow:** if ordinary B4 committed but finalization or final
+  validation failed, the disposable cluster is incomplete, must run no tests or
+  later migrations, must not be accepted as B4-valid, and must be destroyed and
+  replayed cleanly. Out-of-transaction repair is not an acceptance path.
+
+No temporary membership or schema `CREATE` residue is introduced by the
+workflow because neither capability is ever used. Failure validation must prove
+absence rather than rely on cleanup.
+
+Merged B1 requires the exact final catalog and transaction-safe individual
+changes; it does not authorize weakening the final state or claiming a
+cross-session transaction. This local disposable fail-closed model does not
+select or prove a hosted rollout model.
+
+## 9. Complete catalog allowlists
+
+Validation must use exact role OIDs and direct catalog evidence, not only
+information-schema views or effective privilege helpers.
+
+At minimum inspect:
+
+- `pg_roles` plus privileged boolean/null checks from `pg_authid` without
+  printing password values;
+- cluster-wide `pg_auth_members`, `pg_shdepend`, `pg_db_role_setting`, and
+  PostgreSQL 17 `pg_parameter_acl`;
+- `pg_default_acl` in every relevant database;
+- database ownership and ACLs;
+- schema ownership and ACLs;
+- relation, view, materialized-view, and sequence ownership and ACLs, including
+  column ACLs;
+- routine ownership, definer mode, configuration, and ACLs;
+- policy role targets and their `pg_shdepend` policy dependencies; and
+- owner, ACL, initial-ACL, and policy dependency residue represented by
+  `pg_shdepend`.
+
+`pg_parameter_acl` is available in the pinned PostgreSQL 17 image and must prove
+that no target role is a grantee. `pg_db_role_setting` must contain no row for a
+target role.
+
+### 9.1 Pre-B4 allowlist
+
+The four inert roles may have only the verified role definitions. The expected
+`pg_shdepend` allowlist is empty unless implementation-time evidence proves an
+unavoidable pinned-image role-definition dependency; any such dependency must be
+enumerated by catalog class, object, database, and dependency type in the B4-P1
+contract/evidence before acceptance. Ownership, ACL, initial-ACL, policy, role
+setting, parameter ACL, default ACL, and membership dependencies are forbidden.
+
+### 9.2 Post-B4 allowlist
+
+After finalization, `pg_shdepend` and database-local catalogs must contain
+exactly the B1-authorized routine-owner, ACL, and Claim-policy dependencies for
+the four roles and nothing else. The final validator must compare normalized
+actual tuples against an exact committed expected set; count-only or
+zero-dependency assertions are insufficient.
+
+The post-B4 allowlist must also prove zero unauthorized database/schema/relation/
+sequence/routine ownership or ACL, zero schema `CREATE`, zero default ACL and
+grant option, zero membership/role setting/parameter ACL, exact routine owners,
+exact policy targets, and no unintended application-facing execute surface.
+
+## 10. Deterministic validation requirements
+
+B4-P1 focused validation must prove:
+
+1. exactly the four role names and attributes;
+2. atomic clean creation and an unchanged catalog after every injected failure;
+3. zero memberships and failed `SET ROLE` from `postgres`, runtime, worker,
+   projection, `anon`, `authenticated`, `service_role`, and an unlisted probe;
+4. the complete section 9.1 pre-B4 allowlist;
+5. same-cluster idempotent replay;
+6. two deterministic clean disposable reset/replays; and
+7. unsafe, unexpected-membership, and mixed missing/unsafe cases fail without
+   alteration or partial repair.
+
+B4 validation must prove:
+
+1. ordinary B4 runs in a direct `postgres` session and rolls back on migration
+   error or assertion failure;
+2. the exact ownership asset path, manifest, SHA-256, statement inventory, and
+   prohibited-content checks;
+3. every finalization injected-failure case in section 8;
+4. the exact section 9.2 post-B4 allowlist;
+5. no temporary membership or schema `CREATE` exists at any phase because none
+   is used;
+6. idempotent clean disposable replay of the complete multi-phase workflow; and
+7. all focused and complete-local-SQL validation still required by merged B1.
+
+B4-P1 validation must not run B4 or transfer a Claim routine. This documentation
+correction does not create any validation SQL or harness implementation.
+
+## 11. Hosted and Production boundary
+
+The selected `supabase_admin` operations are proven only inside the repository's
+pinned disposable local image. They neither authorize nor prove that the same
+role, credential, connection, bootstrap actor, provisioner, or ownership
+finalization exists or is supported in hosted Supabase.
+
+Hosted owner-role provisioning and ownership transfer remain a separate future
+hosted-security gate using a Supabase-supported mechanism verified against the
+exact hosted environment at that time. No local role or privilege assumption may
+be copied to hosted, staging, TEST, or Production by inference.
+
+B4-P1 and B4 must not access hosted Supabase, Firebase, Production or TEST data;
+link a project; migrate, seed, backfill, repair, delete, or populate data; change
+Auth, provider, gateway, worker, DNS, billing, secrets, or credentials; or
 deploy.
 
-## 9. Validation for this documentation task and exact stop point
+## 12. Validation for this documentation correction and exact stop point
 
-This contract requires documentation/static validation only:
+Correction Loop 1 requires documentation/static validation only:
 
-- relative authority/link validation;
-- contradiction and stale-state scan across this document, B1, and the Package B
-  queue;
-- exact role, attribute, membership, temporary-capability, and A/B separation
-  review against the reproduced evidence;
-- sensitive-value and executable-SQL scan;
+- authority and relative-link validation;
+- contradiction and stale-state scan across this document, B1, and Package B;
+- pre-B4/post-B4 temporal-invariant consistency;
+- privileged-boundary and exact ownership-inventory feasibility review;
+- catalog-coverage and multi-phase failure-model review;
+- hosted-boundary, sensitive-value, and executable-SQL scans;
 - documentation-only diff confirmation; and
 - `git diff --check`.
 
-Exact stop point: one Draft documentation/security-contract PR at
-`AWAITING_INDEPENDENT_REVIEW`. The independent Reviewer must inspect the exact
-head and the reproduced local evidence, including the privileged actor boundary,
-grantor-specific revocation, transaction rollback, cluster-wide membership,
-schema-`CREATE` cleanup, idempotency, and hosted separation. Do not implement the
-provisioner, resume B4, create SQL/pgTAP, mark Ready, merge, deploy, access hosted
-Supabase or Firebase Production, or read/write Production/TEST data.
+Exact stop point: the same Draft PR #139 at `AWAITING_INDEPENDENT_REVIEW` on a
+new exact head. Do not implement B4-P1 or B4, create SQL/pgTAP, mark Ready,
+merge, deploy, access hosted Supabase or Firebase Production, or read/write
+Production/TEST data.
