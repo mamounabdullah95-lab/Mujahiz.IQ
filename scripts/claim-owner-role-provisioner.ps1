@@ -26,7 +26,7 @@ function Invoke-ClaimOwnerRoleProvisioner {
   )
   $hostAssetPath = Join-Path $repoRoot 'supabase\local-bootstrap\claim-owner-roles.sql'
   $assetPath = '/workspace/supabase/local-bootstrap/claim-owner-roles.sql'
-  $expectedAssetSha256 = '5cfcc9d9b30d9bfd5ccef3b64a61d8ed8e98d66b819c41c606c87123ed1d4fb1'
+  $expectedAssetSha256 = '52fe86ad84f1ebb8c12c0439d7de7583dcbf69d76862274505667b5a62d10077'
   $assetPathChain = @(
     $repoRoot,
     (Join-Path $repoRoot 'supabase'),

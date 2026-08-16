@@ -7,7 +7,9 @@ $repoRoot = [System.IO.Path]::GetFullPath((Resolve-Path (Join-Path $PSScriptRoot
   [System.IO.Path]::AltDirectorySeparatorChar
 )
 $mount = "type=bind,source=$repoRoot,target=/workspace,readonly"
-$expectedAssetSha256 = '5cfcc9d9b30d9bfd5ccef3b64a61d8ed8e98d66b819c41c606c87123ed1d4fb1'
+$assetRepositoryPath = 'supabase/local-bootstrap/claim-owner-roles.sql'
+$assetContainerPath = '/workspace/supabase/local-bootstrap/claim-owner-roles.sql'
+$expectedAssetSha256 = '52fe86ad84f1ebb8c12c0439d7de7583dcbf69d76862274505667b5a62d10077'
 $rolePattern = '^mujahiz_claim_.+_owner.*$'
 $ownerRoles = @(
   'mujahiz_claim_human_command_owner',
@@ -42,6 +44,7 @@ $checksPassed = 0
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 $symlinkProbeStatus = 'not attempted'
 $provisionerPath = Join-Path $PSScriptRoot 'claim-owner-role-provisioner.ps1'
+$gitExecutable = (Get-Command git -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 
 . $provisionerPath
 
@@ -152,6 +155,81 @@ function Assert-Matches {
   $script:checksPassed++
 }
 
+function Get-RawGitBlobIdentity {
+  param(
+    [Parameter(Mandatory)][string]$RepositoryRoot,
+    [Parameter(Mandatory)][string]$Revision,
+    [Parameter(Mandatory)][string]$RepositoryPath
+  )
+
+  $objectIdOutput = @(& $gitExecutable -C $RepositoryRoot rev-parse "$Revision`:$RepositoryPath" 2>&1 |
+    ForEach-Object { $_.ToString() })
+  if ($LASTEXITCODE -ne 0 -or $objectIdOutput.Count -ne 1 -or $objectIdOutput[0] -notmatch '^[0-9a-f]{40,64}$') {
+    throw "Unable to resolve the exact Git blob for $Revision`:$RepositoryPath."
+  }
+
+  $processInfo = [System.Diagnostics.ProcessStartInfo]::new()
+  $processInfo.FileName = $gitExecutable
+  $processInfo.Arguments = "cat-file blob $($objectIdOutput[0])"
+  $processInfo.WorkingDirectory = $RepositoryRoot
+  $processInfo.UseShellExecute = $false
+  $processInfo.CreateNoWindow = $true
+  $processInfo.RedirectStandardOutput = $true
+  $processInfo.RedirectStandardError = $true
+  $process = [System.Diagnostics.Process]::Start($processInfo)
+  $rawBytes = [System.IO.MemoryStream]::new()
+  try {
+    $process.StandardOutput.BaseStream.CopyTo($rawBytes)
+    $errorOutput = $process.StandardError.ReadToEnd()
+    $process.WaitForExit()
+    if ($process.ExitCode -ne 0) {
+      throw "Binary-safe git cat-file failed: $errorOutput"
+    }
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+      $digest = ([System.BitConverter]::ToString($sha256.ComputeHash($rawBytes.ToArray()))).Replace('-', '').ToLowerInvariant()
+    }
+    finally { $sha256.Dispose() }
+    return [pscustomobject]@{
+      ObjectId = $objectIdOutput[0]
+      Size = $rawBytes.Length
+      Sha256 = $digest
+    }
+  }
+  finally {
+    $rawBytes.Dispose()
+    $process.Dispose()
+  }
+}
+
+function Get-MountedAssetIdentity {
+  param([Parameter(Mandatory)][string]$ContainerName)
+
+  $sizeOutput = @(& docker exec $ContainerName stat '--format=%s' $assetContainerPath 2>&1 |
+    ForEach-Object { $_.ToString() })
+  $sizeExitCode = $LASTEXITCODE
+  $hashOutput = @(& docker exec $ContainerName sha256sum $assetContainerPath 2>&1 |
+    ForEach-Object { $_.ToString() })
+  $hashExitCode = $LASTEXITCODE
+  if ($sizeExitCode -ne 0 -or $sizeOutput.Count -ne 1 -or $sizeOutput[0] -notmatch '^\d+$' -or
+      $hashExitCode -ne 0 -or $hashOutput.Count -ne 1 -or
+      $hashOutput[0] -notmatch '^([0-9a-f]{64})\s+/workspace/supabase/local-bootstrap/claim-owner-roles\.sql$') {
+    throw 'Unable to read the exact mounted asset byte identity.'
+  }
+  return [pscustomobject]@{
+    Size = [long]$sizeOutput[0]
+    Sha256 = $Matches[1]
+  }
+}
+
+function Get-CarriageReturnCount {
+  param([Parameter(Mandatory)][byte[]]$Bytes)
+  $count = 0
+  foreach ($value in $Bytes) {
+    if ($value -eq 13) { $count++ }
+  }
+  return $count
+}
 function New-TemporaryRepositoryCopy {
   $temporaryBase = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd(
     [System.IO.Path]::DirectorySeparatorChar,
@@ -167,6 +245,29 @@ function New-TemporaryRepositoryCopy {
   return $temporaryRoot
 }
 
+function New-FreshAutocrlfCheckout {
+  param([Parameter(Mandatory)][string]$HeadCommit)
+
+  $temporaryBase = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd(
+    [System.IO.Path]::DirectorySeparatorChar,
+    [System.IO.Path]::AltDirectorySeparatorChar
+  )
+  $temporaryRoot = Join-Path $temporaryBase "mujahiz-b4p1-$PID-$([guid]::NewGuid().ToString('N'))"
+  $temporaryRoots.Add($temporaryRoot)
+  $cloneOutput = @(& $gitExecutable -c core.autocrlf=true clone --quiet --no-local --no-checkout -- $repoRoot $temporaryRoot 2>&1 |
+    ForEach-Object { $_.ToString() })
+  if ($LASTEXITCODE -ne 0) {
+    throw "Unable to create the disposable core.autocrlf=true checkout.$([Environment]::NewLine)$($cloneOutput -join [Environment]::NewLine)"
+  }
+  & $gitExecutable -C $temporaryRoot config --local core.autocrlf true
+  if ($LASTEXITCODE -ne 0) { throw 'Unable to set disposable checkout core.autocrlf=true.' }
+  $checkoutOutput = @(& $gitExecutable -C $temporaryRoot checkout --quiet --detach $HeadCommit 2>&1 |
+    ForEach-Object { $_.ToString() })
+  if ($LASTEXITCODE -ne 0) {
+    throw "Unable to check out the exact HEAD in the disposable repository.$([Environment]::NewLine)$($checkoutOutput -join [Environment]::NewLine)"
+  }
+  return $temporaryRoot
+}
 function Remove-TemporaryRoot {
   param([Parameter(Mandatory)][string]$Path)
 
@@ -244,6 +345,54 @@ function Invoke-ProvisionerWithHostileLibpqEnvironment {
   } $ContainerName $dockerExecutable
 }
 
+function Invoke-ProvisionerWithMountedHashMismatch {
+  param([Parameter(Mandatory)][string]$ContainerName)
+
+  $dockerExecutable = (Get-Command docker.exe -ErrorAction Stop).Source
+  return & {
+    param($TargetContainer, $DockerExecutable, $ExpectedAssetPath)
+    $shimState = [pscustomobject]@{
+      FailureMessage = ''
+      Interceptions = 0
+      ProvisionerSucceeded = $false
+      ShimRemoved = $false
+    }
+    try {
+      function docker {
+        $forwardArguments = @($args)
+        $isExactMountedHashCall = (
+          $forwardArguments.Count -eq 4 -and
+          $forwardArguments[0] -eq 'exec' -and
+          $forwardArguments[1] -eq $TargetContainer -and
+          $forwardArguments[2] -eq 'sha256sum' -and
+          $forwardArguments[3] -eq $ExpectedAssetPath
+        )
+        if ($isExactMountedHashCall) {
+          $realOutput = @(& $DockerExecutable @forwardArguments 2>&1 | ForEach-Object { $_.ToString() })
+          if ($LASTEXITCODE -ne 0) {
+            $realOutput
+            return
+          }
+          $shimState.Interceptions++
+          ('f' * 64) + "  $ExpectedAssetPath"
+          return
+        }
+        & $DockerExecutable @forwardArguments
+      }
+
+      try {
+        Invoke-ClaimOwnerRoleProvisioner -ContainerName $TargetContainer | Out-Null
+        $shimState.ProvisionerSucceeded = $true
+      }
+      catch { $shimState.FailureMessage = $_.Exception.Message }
+    }
+    finally {
+      Remove-Item -LiteralPath Function:\docker -Force -ErrorAction SilentlyContinue
+      $shimState.ShimRemoved = -not (Test-Path -LiteralPath Function:\docker)
+    }
+    return $shimState
+  } $ContainerName $dockerExecutable $assetContainerPath
+}
 function Get-ExpectedRoleCount {
   param([string]$ContainerName)
   return @(Invoke-ContainerSql -ContainerName $ContainerName -Sql "select count(*) from ($expectedRoleSql) expected;")[-1]
@@ -416,7 +565,7 @@ role_shape as (
   ) as value
   from pg_catalog.pg_authid a join expected e on e.oid = a.oid
 )
-select role_shape.value
+select coalesce(role_shape.value, '<none>')
   || '|members=' || (select count(*) from pg_catalog.pg_auth_members m, expected e where m.roleid=e.oid or m.member=e.oid)
   || '|setpaths=' || (select count(*) from pg_catalog.pg_roles actor, expected e where not actor.rolsuper and actor.oid<>e.oid and pg_catalog.pg_has_role(actor.oid,e.oid,'SET'))
   || '|shdepend=' || (select count(*) from pg_catalog.pg_shdepend d, expected e where d.refclassid='pg_catalog.pg_authid'::pg_catalog.regclass and d.refobjid=e.oid)
@@ -486,7 +635,47 @@ try {
   Assert-Matches $provisionerSource "--username=supabase_admin'.*--dbname=postgres" 'provisioner hard-binds the bootstrap actor and postgres database'
   Assert-Matches $provisionerSource "'PGHOST', 'PGHOSTADDR', 'PGPORT', 'PGDATABASE', 'PGUSER'" 'provisioner clears ambient libpq routing environment'
   Assert-Matches $provisionerSource 'FileAttributes]::ReparsePoint' 'provisioner explicitly rejects host reparse-point substitution'
-  Assert-Equal (Get-FileHash -LiteralPath (Join-Path $repoRoot 'supabase\local-bootstrap\claim-owner-roles.sql') -Algorithm SHA256).Hash.ToLowerInvariant() $expectedAssetSha256 'fixed host asset SHA-256 matches the reviewed literal'
+  Assert-Equal ([regex]::Matches($provisionerSource, [regex]::Escape($expectedAssetSha256))).Count 1 'provisioner contains exactly one canonical reviewed SHA-256 literal'
+
+  $attributeOutput = @(& $gitExecutable -C $repoRoot check-attr text eol -- $assetRepositoryPath)
+  Assert-Equal $LASTEXITCODE 0 'Git resolves attributes for the fixed privileged asset'
+  Assert-Equal $attributeOutput.Count 2 'Git reports exactly the requested text and eol attributes'
+  Assert-Equal $attributeOutput[0] "$assetRepositoryPath`: text: set" 'privileged asset resolves as text'
+  Assert-Equal $attributeOutput[1] "$assetRepositoryPath`: eol: lf" 'privileged asset resolves to canonical LF checkout behavior'
+
+  $headCommit = @(& $gitExecutable -C $repoRoot rev-parse HEAD)[-1]
+  Assert-Matches $headCommit '^[0-9a-f]{40}$' 'focused byte binding runs against an exact committed HEAD'
+  $rawGitIdentity = Get-RawGitBlobIdentity -RepositoryRoot $repoRoot -Revision $headCommit -RepositoryPath $assetRepositoryPath
+  $hostAssetPath = Join-Path $repoRoot 'supabase\local-bootstrap\claim-owner-roles.sql'
+  $hostAssetBytes = [System.IO.File]::ReadAllBytes($hostAssetPath)
+  $hostAssetHash = (Get-FileHash -LiteralPath $hostAssetPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  Assert-Equal (Get-CarriageReturnCount $hostAssetBytes) 0 'fixed host asset contains no CR or CRLF bytes'
+  Assert-Equal $rawGitIdentity.Sha256 $expectedAssetSha256 'raw Git blob SHA-256 matches the reviewed literal'
+  Assert-Equal $hostAssetHash $rawGitIdentity.Sha256 'host asset SHA-256 matches the raw Git blob'
+  Assert-Equal $hostAssetBytes.Length $rawGitIdentity.Size 'host asset byte size matches the raw Git blob'
+
+  $mountedAssetIdentity = Get-MountedAssetIdentity -ContainerName $activeContainer
+  Assert-Equal $mountedAssetIdentity.Sha256 $rawGitIdentity.Sha256 'mounted asset SHA-256 matches the raw Git blob'
+  Assert-Equal $mountedAssetIdentity.Size $rawGitIdentity.Size 'mounted asset byte size matches the raw Git blob'
+
+  $freshCheckout = New-FreshAutocrlfCheckout -HeadCommit $headCommit
+  $freshAssetPath = Join-Path $freshCheckout 'supabase\local-bootstrap\claim-owner-roles.sql'
+  $freshAssetBytes = [System.IO.File]::ReadAllBytes($freshAssetPath)
+  $freshAssetHash = (Get-FileHash -LiteralPath $freshAssetPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  Assert-Equal @(& $gitExecutable -C $freshCheckout config --local --get core.autocrlf)[-1] 'true' 'disposable checkout uses repository-local core.autocrlf=true'
+  Assert-Equal (Get-CarriageReturnCount $freshAssetBytes) 0 'core.autocrlf=true fresh checkout preserves canonical LF bytes'
+  Assert-Equal $freshAssetHash $rawGitIdentity.Sha256 'core.autocrlf=true fresh checkout SHA-256 matches the raw Git blob'
+  Assert-Equal $freshAssetBytes.Length $rawGitIdentity.Size 'core.autocrlf=true fresh checkout byte size matches the raw Git blob'
+
+  $mountedMismatchFingerprint = Get-AcceptedFingerprint $activeContainer
+  Assert-Equal (Get-ExpectedRoleCount $activeContainer) '0' 'mounted-hash isolation starts before any owner role exists'
+  $mountedMismatch = Invoke-ProvisionerWithMountedHashMismatch -ContainerName $activeContainer
+  Assert-Equal $mountedMismatch.ProvisionerSucceeded $false 'test-only mounted sha256sum mismatch is rejected'
+  Assert-Equal $mountedMismatch.Interceptions 1 'test-only Docker shim intercepts exactly the mounted sha256sum invocation'
+  Assert-Matches $mountedMismatch.FailureMessage '^Claim owner-role provisioning rejected the mounted asset identity\.$' 'mounted sha256sum mismatch reaches the specific mounted-asset identity rejection'
+  Assert-Equal $mountedMismatch.ShimRemoved $true 'test-only Docker command shim is removed in finally'
+  Assert-Equal (Get-ExpectedRoleCount $activeContainer) '0' 'mounted sha256sum mismatch creates zero owner roles'
+  Assert-Equal (Get-AcceptedFingerprint $activeContainer) $mountedMismatchFingerprint 'mounted sha256sum mismatch leaves the owner-role catalog fingerprint unchanged'
 
   Invoke-ClaimOwnerRoleProvisioner -ContainerName $activeContainer | Out-Null
   Assert-Equal (Get-ExpectedRoleCount $activeContainer) '4' 'clean provisioning role count'
@@ -537,14 +726,20 @@ try {
 
   $modifiedAssetRoot = New-TemporaryRepositoryCopy
   $modifiedAssetPath = Join-Path $modifiedAssetRoot 'supabase\local-bootstrap\claim-owner-roles.sql'
-  [System.IO.File]::AppendAllText($modifiedAssetPath, "-- synthetic modified asset bytes`r`n", [System.Text.UTF8Encoding]::new($false))
+  $modifiedAssetText = [System.IO.File]::ReadAllText($modifiedAssetPath)
+  if ($modifiedAssetText.Contains("`r")) { throw 'CRLF representation probe requires a canonical LF source asset.' }
+  [System.IO.File]::WriteAllText(
+    $modifiedAssetPath,
+    $modifiedAssetText.Replace("`n", "`r`n"),
+    [System.Text.UTF8Encoding]::new($false)
+  )
   $modifiedAssetContainer = Start-TestContainer -MountSpecs @(
     "type=bind,source=$modifiedAssetRoot,target=/workspace,readonly"
   )
   try {
     $modifiedAssetFailure = Get-CopiedProvisionerFailure -TemporaryRoot $modifiedAssetRoot -ContainerName $modifiedAssetContainer
-    Assert-Matches $modifiedAssetFailure 'host asset SHA-256 mismatch' 'modified asset bytes are rejected before privileged SQL'
-    Assert-Equal (Get-ExpectedRoleCount $modifiedAssetContainer) '0' 'modified asset creates no owner role'
+    Assert-Matches $modifiedAssetFailure 'host asset SHA-256 mismatch' 'CRLF checkout representation is rejected before privileged SQL'
+    Assert-Equal (Get-ExpectedRoleCount $modifiedAssetContainer) '0' 'CRLF checkout representation creates no owner role'
   }
   finally { Stop-TestContainer $modifiedAssetContainer }
 
@@ -729,4 +924,9 @@ foreach ($temporaryRoot in $temporaryRoots) {
 }
 
 Write-Output "Symlink/reparse probe: $symlinkProbeStatus."
+Write-Output ("Asset byte identity: raw Git {0} bytes {1}; host {2} bytes {3}; mounted {4} bytes {5}; literal {6}." -f `
+  $rawGitIdentity.Size, $rawGitIdentity.Sha256, $hostAssetBytes.Length, $hostAssetHash,
+  $mountedAssetIdentity.Size, $mountedAssetIdentity.Sha256, $expectedAssetSha256)
+Write-Output ("Fresh core.autocrlf=true checkout: {0} bytes {1}; mounted-hash shim interceptions: {2}; zero roles preserved." -f `
+  $freshAssetBytes.Length, $freshAssetHash, $mountedMismatch.Interceptions)
 Write-Output ("Claim owner-role provisioner validation passed: {0} checks; two clean reset/replays; {1:n1}s elapsed." -f $checksPassed, $stopwatch.Elapsed.TotalSeconds)
