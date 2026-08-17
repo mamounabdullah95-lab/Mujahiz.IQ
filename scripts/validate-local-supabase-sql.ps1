@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $migrationsDirectory = Join-Path $repoRoot 'supabase/migrations'
 $testsDirectory = Join-Path $repoRoot 'supabase/tests'
+$claimOwnerRoleProvisioner = Join-Path $PSScriptRoot 'claim-owner-role-provisioner.ps1'
 $containerName = "mujahiz-iq-sql-validation-$PID-$([guid]::NewGuid().ToString('N').Substring(0, 12))"
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 $failureDetails = [System.Collections.Generic.List[string]]::new()
@@ -69,6 +70,10 @@ try {
   if (-not (Test-Path -LiteralPath $migrationsDirectory) -or -not (Test-Path -LiteralPath $testsDirectory)) {
     throw 'Expected repository-relative supabase/migrations and supabase/tests directories were not found.'
   }
+  if (-not (Test-Path -LiteralPath $claimOwnerRoleProvisioner)) {
+    throw 'The fixed Claim owner-role provisioner hook was not found.'
+  }
+  . $claimOwnerRoleProvisioner
 
   $migrations = @(Get-ChildItem -LiteralPath $migrationsDirectory -File -Filter '*.sql' | Sort-Object Name)
   $tests = @(Get-ChildItem -LiteralPath $testsDirectory -File -Filter '*.sql' | Sort-Object Name)
@@ -76,7 +81,7 @@ try {
   $testMigrationAliases = @{ identity_provider_foundation = 'provider_neutral_identity_foundation' }
 
   $mount = "type=bind,source=$repoRoot,target=/workspace,readonly"
-  $containerId = & docker run --detach --rm --name $containerName --mount $mount --env 'POSTGRES_PASSWORD=postgres' --env 'POSTGRES_DB=postgres' $PostgresImage 2>&1
+  $containerId = & docker run --detach --rm --name $containerName --mount $mount --env 'POSTGRES_PASSWORD=postgres' --env 'PGPASSWORD=postgres' --env 'POSTGRES_DB=postgres' $PostgresImage 2>&1
   if ($LASTEXITCODE -ne 0) {
     $failureDetails.Add("Unable to start disposable PostgreSQL container.$([Environment]::NewLine)$($containerId -join [Environment]::NewLine)")
     throw 'Disposable PostgreSQL startup failed.'
@@ -98,6 +103,8 @@ try {
     throw 'Disposable PostgreSQL readiness check failed.'
   }
 
+  Invoke-ClaimOwnerRoleProvisioner -ContainerName $containerName | Out-Null
+
   $bootstrapSql = @(
     'create schema if not exists extensions;',
     'create extension if not exists pgtap with schema extensions;',
@@ -117,6 +124,9 @@ try {
   foreach ($migration in $migrations) {
     Invoke-Psql -Label "Migration $($migration.Name)" -ContainerPath "/workspace/supabase/migrations/$($migration.Name)" | Out-Null
   }
+
+  # Re-execution is validation-only: the already exact cluster roles are unchanged.
+  Invoke-ClaimOwnerRoleProvisioner -ContainerName $containerName | Out-Null
 
   $assertionsPassed = 0
   $assertionsFailed = 0
