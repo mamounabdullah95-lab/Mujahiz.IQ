@@ -4,6 +4,9 @@ param([string]$PostgresImage = 'supabase/postgres:17.6.1.064')
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $migrationsDirectory = Join-Path $repoRoot 'supabase/migrations'
+. (Join-Path $PSScriptRoot 'claim-owner-role-provisioner.ps1')
+. (Join-Path $PSScriptRoot 'claim-authorization-finalizer.ps1')
+$b4MigrationName = '20260817000100_claim_rls_authorization_foundation.sql'
 $containerName = "mujahiz-claim-withdraw-concurrency-$PID-$([guid]::NewGuid().ToString('N').Substring(0, 10))"
 $containerStarted = $false
 $checks = [System.Collections.Generic.List[string]]::new()
@@ -155,6 +158,7 @@ end
 $$;
 '@ | Out-Null
 
+  Invoke-ClaimOwnerRoleProvisioner -ContainerName $containerName | Out-Null
   foreach ($migration in @(Get-ChildItem -LiteralPath $migrationsDirectory -File -Filter '*.sql' | Sort-Object Name)) {
     $arguments = @('exec', $containerName, 'psql', '--no-psqlrc', '--set=ON_ERROR_STOP=1', '--username=postgres', '--dbname=postgres', '--quiet', '--file', "/workspace/supabase/migrations/$($migration.Name)")
     $savedPreference = $ErrorActionPreference
@@ -163,6 +167,9 @@ $$;
     $migrationExit = $LASTEXITCODE
     $ErrorActionPreference = $savedPreference
     if ($migrationExit -ne 0) { throw "Migration $($migration.Name) failed.$([Environment]::NewLine)$($migrationOutput -join [Environment]::NewLine)" }
+    if ($migration.Name -eq $b4MigrationName) {
+      Invoke-ClaimAuthorizationFinalizer -ContainerName $containerName | Out-Null
+    }
   }
 
   Invoke-Psql -Label 'synthetic fixture setup' -Sql @'

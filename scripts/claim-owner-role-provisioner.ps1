@@ -16,7 +16,7 @@ function Invoke-ClaimOwnerRoleProvisioner {
     throw 'Interruption probe invocation kinds require the fixed pre-commit pause.'
   }
 
-  if ($ContainerName -notmatch '^mujahiz-(iq-sql-validation|b4p1-validation)-') {
+  if ($ContainerName -notmatch '^mujahiz-(iq-sql-validation|b4p1-validation|approve-race|expire-race|reject-race|claim-(assign|hotfix|withdraw)-concurrency)-') {
     throw 'Claim owner-role provisioning is limited to the fixed disposable validation harness.'
   }
 
@@ -151,7 +151,7 @@ function Invoke-ClaimOwnerRoleProvisioner {
     'PGSSLMINPROTOCOLVERSION', 'PGSSLMAXPROTOCOLVERSION', 'PGGSSENCMODE',
     'PGKRBSRVNAME', 'PGGSSLIB'
   )
-  $dockerArguments += @('--env', "PGAPPNAME=$applicationName", $ContainerName, '/usr/bin/env')
+  $dockerArguments += @('--env', "PGAPPNAME=$applicationName", '--env', 'PGPASSWORD=postgres', $ContainerName, '/usr/bin/env')
   foreach ($environmentName in $libpqEnvironmentToUnset) {
     $dockerArguments += @('-u', $environmentName)
   }

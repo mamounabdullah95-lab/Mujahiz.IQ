@@ -6,6 +6,8 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $migrationsDirectory = Join-Path $repoRoot 'supabase/migrations'
 $testsDirectory = Join-Path $repoRoot 'supabase/tests'
 $claimOwnerRoleProvisioner = Join-Path $PSScriptRoot 'claim-owner-role-provisioner.ps1'
+$claimAuthorizationFinalizer = Join-Path $PSScriptRoot 'claim-authorization-finalizer.ps1'
+$b4MigrationName = '20260817000100_claim_rls_authorization_foundation.sql'
 $containerName = "mujahiz-iq-sql-validation-$PID-$([guid]::NewGuid().ToString('N').Substring(0, 12))"
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 $failureDetails = [System.Collections.Generic.List[string]]::new()
@@ -73,11 +75,18 @@ try {
   if (-not (Test-Path -LiteralPath $claimOwnerRoleProvisioner)) {
     throw 'The fixed Claim owner-role provisioner hook was not found.'
   }
+  if (-not (Test-Path -LiteralPath $claimAuthorizationFinalizer)) {
+    throw 'The fixed Claim authorization finalizer hook was not found.'
+  }
   . $claimOwnerRoleProvisioner
+  . $claimAuthorizationFinalizer
 
   $migrations = @(Get-ChildItem -LiteralPath $migrationsDirectory -File -Filter '*.sql' | Sort-Object Name)
   $tests = @(Get-ChildItem -LiteralPath $testsDirectory -File -Filter '*.sql' | Sort-Object Name)
   if ($migrations.Count -eq 0 -or $tests.Count -eq 0) { throw 'At least one migration and one pgTAP SQL test file are required.' }
+  if (@($migrations | Where-Object Name -eq $b4MigrationName).Count -ne 1) {
+    throw 'The exact B4 migration is required.'
+  }
   $testMigrationAliases = @{ identity_provider_foundation = 'provider_neutral_identity_foundation' }
 
   $mount = "type=bind,source=$repoRoot,target=/workspace,readonly"
@@ -104,6 +113,8 @@ try {
   }
 
   Invoke-ClaimOwnerRoleProvisioner -ContainerName $containerName | Out-Null
+  # Re-execution before B4 proves the cluster roles remain exact and inert.
+  Invoke-ClaimOwnerRoleProvisioner -ContainerName $containerName | Out-Null
 
   $bootstrapSql = @(
     'create schema if not exists extensions;',
@@ -123,10 +134,10 @@ try {
 
   foreach ($migration in $migrations) {
     Invoke-Psql -Label "Migration $($migration.Name)" -ContainerPath "/workspace/supabase/migrations/$($migration.Name)" | Out-Null
+    if ($migration.Name -eq $b4MigrationName) {
+      Invoke-ClaimAuthorizationFinalizer -ContainerName $containerName -DatabaseOrdinal 0 | Out-Null
+    }
   }
-
-  # Re-execution is validation-only: the already exact cluster roles are unchanged.
-  Invoke-ClaimOwnerRoleProvisioner -ContainerName $containerName | Out-Null
 
   $assertionsPassed = 0
   $assertionsFailed = 0
@@ -147,6 +158,9 @@ try {
     for ($migrationIndex = 0; $migrationIndex -le $migrationLimit; $migrationIndex++) {
       $migration = $migrations[$migrationIndex]
       Invoke-Psql -Label "Test setup $($migration.Name)" -ContainerPath "/workspace/supabase/migrations/$($migration.Name)" -DatabaseName $testDatabase | Out-Null
+      if ($migration.Name -eq $b4MigrationName) {
+        Invoke-ClaimAuthorizationFinalizer -ContainerName $containerName -DatabaseOrdinal ($testIndex + 1) | Out-Null
+      }
     }
 
     $tapOutput = @(Invoke-Psql -Label "Test $($test.Name)" -ContainerPath "/workspace/supabase/tests/$($test.Name)" -DatabaseName $testDatabase)

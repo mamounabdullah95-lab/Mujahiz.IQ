@@ -2,6 +2,9 @@
 param([string]$PostgresImage='supabase/postgres:17.6.1.064')
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'claim-owner-role-provisioner.ps1')
+. (Join-Path $PSScriptRoot 'claim-authorization-finalizer.ps1')
+$b4MigrationName='20260817000100_claim_rls_authorization_foundation.sql'
 $name="mujahiz-reject-race-$PID-$([guid]::NewGuid().ToString('N').Substring(0,8))"
 $started=$false;$checks=[Collections.Generic.List[string]]::new();$sw=[Diagnostics.Stopwatch]::StartNew()
 function Assert([bool]$ok,[string]$message){if(-not $ok){throw "Assertion failed: $message"};$script:checks.Add($message)}
@@ -32,7 +35,16 @@ try{
  $ready=$false;1..60|ForEach-Object{if(-not$ready){docker exec $name pg_isready -U postgres -d postgres*>$null;$db=$LASTEXITCODE-eq 0;docker exec $name sh -c "ps -eo args | grep '[m]igrate.sh' > /dev/null"*>$null;if($db-and$LASTEXITCODE-ne 0){$ready=$true}else{Start-Sleep -Milliseconds 500}}};if(-not$ready){throw 'postgres not ready'}
  $boot="create schema if not exists extensions;create extension if not exists pgtap with schema extensions;do "+'$x$'+" begin if not exists(select 1 from pg_roles where rolname='anon')then create role anon nologin noinherit;end if;if not exists(select 1 from pg_roles where rolname='authenticated')then create role authenticated nologin noinherit;end if;if not exists(select 1 from pg_roles where rolname='service_role')then create role service_role nologin noinherit;end if;end "+'$x$'+";"
  Q $boot bootstrap|Out-Null
- Get-ChildItem (Join-Path $root 'supabase/migrations') -File -Filter '*.sql'|Sort-Object Name|ForEach-Object{$old=$ErrorActionPreference;$ErrorActionPreference='Continue';$o=@(docker exec $name psql -X -v ON_ERROR_STOP=1 -q -U postgres -d postgres -f "/workspace/supabase/migrations/$($_.Name)" 2>&1);$code=$LASTEXITCODE;$ErrorActionPreference=$old;if($code){throw "migration failed: $($_.Name) $o"}}
+ Invoke-ClaimOwnerRoleProvisioner -ContainerName $name | Out-Null
+ Get-ChildItem (Join-Path $root 'supabase/migrations') -File -Filter '*.sql'|Sort-Object Name|ForEach-Object{
+  $old=$ErrorActionPreference
+  $ErrorActionPreference='Continue'
+  $o=@(docker exec $name psql -X -v ON_ERROR_STOP=1 -q -U postgres -d postgres -f "/workspace/supabase/migrations/$($_.Name)" 2>&1)
+  $code=$LASTEXITCODE
+  $ErrorActionPreference=$old
+  if($code){throw "migration failed: $($_.Name) $o"}
+  if($_.Name -eq $b4MigrationName){Invoke-ClaimAuthorizationFinalizer -ContainerName $name | Out-Null}
+ }
 $source=[IO.File]::ReadAllText((Join-Path $root 'supabase/tests/reject_trusted_command.sql'));$a=$source.IndexOf('create function pg_temp.reject_id');$b=$source.IndexOf('-- Approved v1 reason/evidence matrix.');$helpers=$source.Substring($a,$b-$a).Replace('pg_temp.','public.');$temp=[IO.Path]::GetTempFileName();try{[IO.File]::WriteAllText($temp,$helpers,[Text.UTF8Encoding]::new($false));docker cp $temp ($name+':/tmp/reject-race-helpers.sql')|Out-Null;if($LASTEXITCODE){throw 'helper copy failed'};$old=$ErrorActionPreference;$ErrorActionPreference='Continue';$o=@(docker exec $name psql -X -v ON_ERROR_STOP=1 -q -U postgres -d postgres -f /tmp/reject-race-helpers.sql 2>&1);$code=$LASTEXITCODE;$ErrorActionPreference=$old;if($code){throw "helpers failed: $o"}}finally{Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue}
  $fixture=@("select public.seed_eligible_actor(1,'owner')","select public.seed_eligible_actor(2,'admin')","select public.seed_eligible_actor(3,'owner')","select public.seed_eligible_actor(4,'owner')","select public.seed_claimant(n) from generate_series(101,109)n","select public.seed_supplier(n) from generate_series(201,209)n")
  101..109|ForEach-Object{$fixture+="insert into internal.identity_provider_links(id,user_profile_id,provider_code,provider_subject,is_primary,link_status,identity_status,verification_status,provider_state_observed_at,provider_state_version,linked_at,verified_at,created_at)values(public.reject_id($_),public.reject_id($_),'firebase','race-claimant-$_',true,'linked','active','verified',statement_timestamp(),'firebase-provider-state-v1',statement_timestamp(),statement_timestamp(),statement_timestamp())"}
