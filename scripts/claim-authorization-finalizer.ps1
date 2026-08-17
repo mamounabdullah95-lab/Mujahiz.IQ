@@ -2,7 +2,6 @@ function Invoke-ClaimAuthorizationFinalizer {
   [CmdletBinding()]
   param(
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()][string]$ContainerName,
-    [ValidateRange(0, 99)][int]$DatabaseOrdinal = 0,
     [ValidateSet('', 'after_acl_1', 'after_acl_2', 'after_acl_3', 'after_acl_4',
       'between_assets', 'after_owner_1', 'after_owner_13', 'after_owner_26',
       'final_assertion')]
@@ -20,9 +19,7 @@ function Invoke-ClaimAuthorizationFinalizer {
     throw 'Interruption probe invocation kinds require the fixed pre-commit pause.'
   }
 
-
-  $databaseName = if ($DatabaseOrdinal -eq 0) { 'postgres' } else { "runner_test_$DatabaseOrdinal" }
-  if ($ContainerName -notmatch '^mujahiz-(iq-sql-validation|b4-validation|approve-race|expire-race|reject-race|claim-(assign|hotfix|withdraw)-concurrency)-') {
+  if ($ContainerName -notmatch '^mujahiz-(iq-sql-validation|b4-validation|approve-race|expire-race|reject-race|claim-(assign|hotfix|withdraw)-concurrency|b4-security)-') {
     throw 'Claim authorization finalization is limited to the fixed disposable validation harness.'
   }
 
@@ -42,6 +39,18 @@ function Invoke-ClaimAuthorizationFinalizer {
       ContainerPath = '/workspace/supabase/local-bootstrap/claim-routine-ownership-finalization.sql'
       Sha256 = '1832ed403d168a73f61346952c42ebfcd632589e93ac95698311bbb49ed26aa4'
       Kind = 'ownership'
+    },
+    [pscustomobject]@{
+      RelativePath = 'supabase/local-bootstrap/claim-authorization-catalog-normalization.sql'
+      ContainerPath = '/workspace/supabase/local-bootstrap/claim-authorization-catalog-normalization.sql'
+      Sha256 = 'eea294d32f8813fc6d4efe543221d5b4dd4b2ab6e109461d9b18b95d89189f9d'
+      Kind = 'normalizer'
+    },
+    [pscustomobject]@{
+      RelativePath = 'supabase/local-bootstrap/claim-authorization-catalog-allowlist.txt'
+      ContainerPath = '/workspace/supabase/local-bootstrap/claim-authorization-catalog-allowlist.txt'
+      Sha256 = '0322bd136f209cbe0dabd82575abf7620b9acdb3d51a20bb20ef60d2a7702071'
+      Kind = 'allowlist'
     }
   )
 
@@ -120,19 +129,81 @@ function Invoke-ClaimAuthorizationFinalizer {
     if ($sql.Contains("`r") -or $sql.Contains([char]0)) {
       throw "Claim authorization finalization rejected non-LF or NUL $($assetDefinition.Kind) content."
     }
-    $actualStatements = @(Get-NormalizedStatements $sql)
-    $expectedStatements = if ($assetDefinition.Kind -eq 'acl') { $aclManifest } else { $ownershipManifest }
-    if ($actualStatements.Count -ne $expectedStatements.Count -or
-        (Compare-Object $expectedStatements $actualStatements -SyncWindow 0)) {
-      throw "Claim authorization finalization rejected the $($assetDefinition.Kind) manifest inventory."
+    if ($assetDefinition.Kind -in @('acl', 'ownership')) {
+      $actualStatements = @(Get-NormalizedStatements $sql)
+      $expectedStatements = if ($assetDefinition.Kind -eq 'acl') { $aclManifest } else { $ownershipManifest }
+      if ($actualStatements.Count -ne $expectedStatements.Count -or
+          (Compare-Object $expectedStatements $actualStatements -SyncWindow 0)) {
+        throw "Claim authorization finalization rejected the $($assetDefinition.Kind) manifest inventory."
+      }
+      if ($assetDefinition.Kind -eq 'acl' -and $sql -match '(?im)\b(?:alter|create|drop|truncate|insert|update|delete|set|reset|begin|commit|rollback|copy)\b|\\') {
+        throw 'Claim authorization finalization rejected prohibited ACL asset content.'
+      }
+      if ($assetDefinition.Kind -eq 'ownership' -and
+          @($actualStatements | Where-Object { $_ -notmatch '^ALTER FUNCTION .+ OWNER TO mujahiz_claim_.+_owner$' }).Count -gt 0) {
+        throw 'Claim authorization finalization rejected prohibited ownership asset content.'
+      }
     }
-    if ($assetDefinition.Kind -eq 'acl' -and $sql -match '(?im)\b(?:alter|create|drop|truncate|insert|update|delete|set|reset|begin|commit|rollback|copy)\b|\\') {
-      throw 'Claim authorization finalization rejected prohibited ACL asset content.'
+  }
+
+  $normalizerPath = Join-Path $repoRoot 'supabase/local-bootstrap/claim-authorization-catalog-normalization.sql'
+  $normalizationSql = [System.IO.File]::ReadAllText(
+    $normalizerPath, [System.Text.UTF8Encoding]::new($false)
+  )
+  if (-not $normalizationSql.EndsWith(";`n", [System.StringComparison]::Ordinal)) {
+    throw 'Claim authorization finalization requires one LF-terminated normalizer statement.'
+  }
+  $normalizationBody = $normalizationSql.Substring(0, $normalizationSql.Length - 2)
+
+  $allowlistPath = Join-Path $repoRoot 'supabase/local-bootstrap/claim-authorization-catalog-allowlist.txt'
+  $allowlistText = [System.IO.File]::ReadAllText(
+    $allowlistPath, [System.Text.UTF8Encoding]::new($false)
+  )
+  $allowlistLines = @($allowlistText -split "`n")
+  if ($allowlistLines.Count -eq 0 -or $allowlistLines[-1] -ne '') {
+    throw 'Claim authorization finalization requires an LF-terminated catalog allowlist.'
+  }
+  $allowlistLines = @($allowlistLines | Select-Object -First ($allowlistLines.Count - 1))
+  if ($allowlistLines.Count -ne 702 -or
+      $allowlistLines[0] -cne '# Claim authorization catalog allowlist v1' -or
+      $allowlistLines[1] -cne '# Fixed normalized tuples; runtime self-reference is prohibited.' -or
+      $allowlistLines[2] -cne '# PRE' -or $allowlistLines[346] -cne '# POST') {
+    throw 'Claim authorization finalization rejected the catalog allowlist structure.'
+  }
+  $unexpectedAllowlistLines = @($allowlistLines | Where-Object {
+    $_ -notin @('# Claim authorization catalog allowlist v1',
+      '# Fixed normalized tuples; runtime self-reference is prohibited.', '# PRE', '# POST') -and
+      -not $_.StartsWith('PRE|', [System.StringComparison]::Ordinal) -and
+      -not $_.StartsWith('POST|', [System.StringComparison]::Ordinal)
+  })
+  $expectedPreCatalog = @($allowlistLines | Where-Object {
+    $_.StartsWith('PRE|', [System.StringComparison]::Ordinal)
+  } | ForEach-Object { $_.Substring(4) })
+  $expectedPostCatalog = @($allowlistLines | Where-Object {
+    $_.StartsWith('POST|', [System.StringComparison]::Ordinal)
+  } | ForEach-Object { $_.Substring(5) })
+  if ($unexpectedAllowlistLines.Count -ne 0 -or
+      $expectedPreCatalog.Count -ne 343 -or $expectedPostCatalog.Count -ne 355 -or
+      @($expectedPreCatalog | Group-Object | Where-Object Count -ne 1).Count -ne 0 -or
+      @($expectedPostCatalog | Group-Object | Where-Object Count -ne 1).Count -ne 0 -or
+      (Compare-Object $expectedPreCatalog @($expectedPreCatalog | Sort-Object) -SyncWindow 0) -or
+      (Compare-Object $expectedPostCatalog @($expectedPostCatalog | Sort-Object) -SyncWindow 0)) {
+    throw 'Claim authorization finalization rejected the exact catalog tuple inventory.'
+  }
+
+  function Get-CatalogPayloadSha256([string[]]$CatalogTuples) {
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+      $bytes = [System.Text.UTF8Encoding]::new($false).GetBytes(($CatalogTuples -join "`n"))
+      return ([BitConverter]::ToString($sha256.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant()
     }
-    if ($assetDefinition.Kind -eq 'ownership' -and
-        @($actualStatements | Where-Object { $_ -notmatch '^ALTER FUNCTION .+ OWNER TO mujahiz_claim_.+_owner$' }).Count -gt 0) {
-      throw 'Claim authorization finalization rejected prohibited ownership asset content.'
-    }
+    finally { $sha256.Dispose() }
+  }
+  if ((Get-CatalogPayloadSha256 $expectedPreCatalog) -cne
+        '9a5a533adf878617b72010e18de9d2b78bec0d1eb914162f3768e3a34eefd22d' -or
+      (Get-CatalogPayloadSha256 $expectedPostCatalog) -cne
+        '46aa89a6b3b5e3bc9fa9ec07e163d30cc468530631a0176ab80c246ab6b72a3f') {
+    throw 'Claim authorization finalization rejected the catalog payload SHA-256.'
   }
 
   $expectedImage = 'supabase/postgres:17.6.1.064'
@@ -161,192 +232,174 @@ function Invoke-ClaimAuthorizationFinalizer {
     }
   }
 
-  $preconditionsSql = @'
-do $b4$
-declare
-  expected_roles constant name[] := array[
-    'mujahiz_claim_human_command_owner','mujahiz_claim_expiry_command_owner',
-    'mujahiz_claim_target_conflict_helper_owner','mujahiz_claim_reviewer_prior_context_helper_owner'
-  ]::name[];
-  role_name name;
-  acl_actual text[];
+  function Invoke-FixedCatalogPsql {
+    param(
+      [Parameter(Mandatory)][string]$DatabaseName,
+      [string]$Command,
+      [string]$ContainerFile
+    )
+    if (($Command.Length -gt 0) -eq ($ContainerFile.Length -gt 0)) {
+      throw 'Fixed catalog psql requires exactly one repository-owned input mode.'
+    }
+    $arguments = @('exec', '--env', 'PGPASSWORD=postgres', $ContainerName, '/usr/bin/env')
+    foreach ($environmentName in @('PGHOST','PGHOSTADDR','PGPORT','PGDATABASE','PGUSER','PGPASSFILE',
+        'PGSERVICE','PGSERVICEFILE','PGOPTIONS','PGSSLMODE','PGSSLKEY','PGSSLCERT')) {
+      $arguments += @('-u', $environmentName)
+    }
+    $arguments += @('/usr/bin/psql', '--no-psqlrc', '--set=ON_ERROR_STOP=1',
+      '--host=/var/run/postgresql', '--port=5432', '--username=supabase_admin',
+      "--dbname=$DatabaseName", '--tuples-only', '--no-align', '--quiet')
+    if ($Command.Length -gt 0) { $arguments += @('--command', $Command) }
+    else { $arguments += @('--file', $ContainerFile) }
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $probeOutput = @(& docker @arguments 2>&1 | ForEach-Object { $_.ToString() })
+    $probeExitCode = $LASTEXITCODE
+    $ErrorActionPreference = $previousErrorActionPreference
+    return [pscustomobject]@{ ExitCode = $probeExitCode; Output = [string[]]$probeOutput }
+  }
+
+  $candidateSql = "select datname from pg_catalog.pg_database where datallowconn and not datistemplate and datname ~ '^(postgres|runner_test_[0-9]+)$' order by datname;"
+  $candidateList = Invoke-FixedCatalogPsql -DatabaseName 'postgres' -Command $candidateSql
+  $candidateNames = @($candidateList.Output | Where-Object { $_ -ne '' })
+  if ($candidateList.ExitCode -ne 0 -or $candidateNames.Count -eq 0 -or
+      @($candidateNames | Where-Object { $_ -notmatch '^(postgres|runner_test_[0-9]+)$' }).Count -ne 0 -or
+      @($candidateNames | Group-Object | Where-Object Count -ne 1).Count -ne 0) {
+    throw 'Claim authorization finalization could not enumerate the fixed local database candidates.'
+  }
+
+  $eligibleDatabaseNames = [System.Collections.Generic.List[string]]::new()
+  foreach ($candidateName in $candidateNames) {
+    $catalogProbe = Invoke-FixedCatalogPsql -DatabaseName $candidateName `
+      -ContainerFile '/workspace/supabase/local-bootstrap/claim-authorization-catalog-normalization.sql'
+    if ($catalogProbe.ExitCode -eq 0 -and
+        $catalogProbe.Output.Count -eq $expectedPreCatalog.Count -and
+        -not (Compare-Object $expectedPreCatalog $catalogProbe.Output -SyncWindow 0)) {
+      $eligibleDatabaseNames.Add($candidateName)
+    }
+  }
+  if ($eligibleDatabaseNames.Count -ne 1) {
+    throw "Claim authorization finalization requires exactly one exact pre-finalization candidate; found $($eligibleDatabaseNames.Count)."
+  }
+  $databaseName = $eligibleDatabaseNames[0]
+
+  $transactionPreludeSql = @"
+do `$b4_endpoint`$
 begin
   if current_user <> 'supabase_admin' or session_user <> 'supabase_admin'
-     or not (select rolsuper from pg_roles where rolname=current_user)
+     or not (select rolsuper from pg_catalog.pg_roles where rolname = current_user)
      or current_database() !~ '^(postgres|runner_test_[0-9]+)$'
-     or inet_server_addr() is not null or inet_server_port() is not null then
+     or pg_catalog.inet_server_addr() is not null
+     or pg_catalog.inet_server_port() is not null then
     raise exception 'invalid privileged B4 endpoint or actor';
   end if;
-  foreach role_name in array expected_roles loop
-    if not exists (select 1 from pg_authid where rolname=role_name and not rolsuper
-      and not rolinherit and not rolcreaterole and not rolcreatedb and not rolcanlogin
-      and not rolreplication and not rolbypassrls and rolpassword is null)
-      or exists (select 1 from pg_auth_members where roleid=(select oid from pg_roles where rolname=role_name)
-        or member=(select oid from pg_roles where rolname=role_name))
-      or exists (select 1 from pg_db_role_setting where setrole=(select oid from pg_roles where rolname=role_name))
-      or exists (select 1 from pg_parameter_acl p cross join lateral aclexplode(p.paracl) a
-        where a.grantee=(select oid from pg_roles where rolname=role_name))
-      or exists (select 1 from pg_default_acl d cross join lateral aclexplode(d.defaclacl) a
-        where a.grantee=(select oid from pg_roles where rolname=role_name)) then
-      raise exception 'unsafe B4 role precondition: %',role_name;
-    end if;
-  end loop;
-  if not has_schema_privilege('mujahiz_claim_human_command_owner','claim_security','USAGE')
-     or has_schema_privilege('mujahiz_claim_human_command_owner','claim_security','CREATE') then
-    raise exception 'unexpected human owner schema precondition';
-  end if;
-  select array_agg(grantee.rolname||'|'||grantor.rolname||'|'||a.privilege_type||'|'||a.is_grantable order by grantee.rolname)
-  into acl_actual from pg_proc p cross join lateral aclexplode(p.proacl) a
-  join pg_roles grantee on grantee.oid=a.grantee join pg_roles grantor on grantor.oid=a.grantor
-  where p.oid='claim_security.current_privileged_actor_v1()'::regprocedure;
-  if acl_actual <> array[
-    'mujahiz_claim_owner_projection|mujahiz_claim_owner_projection|EXECUTE|false',
-    'mujahiz_claim_reviewer_projection|mujahiz_claim_owner_projection|EXECUTE|false',
-    'mujahiz_claim_runtime|mujahiz_claim_owner_projection|EXECUTE|false',
-    'postgres|mujahiz_claim_owner_projection|EXECUTE|false'] then
-    raise exception 'unexpected current_privileged_actor_v1 ACL precondition';
-  end if;
-  select array_agg(grantee.rolname||'|'||grantor.rolname||'|'||a.privilege_type||'|'||a.is_grantable order by grantee.rolname)
-  into acl_actual from pg_proc p cross join lateral aclexplode(p.proacl) a
-  join pg_roles grantee on grantee.oid=a.grantee join pg_roles grantor on grantor.oid=a.grantor
-  where p.oid='claim_security.privileged_actor_for_profile_v1(uuid)'::regprocedure;
-  if acl_actual <> array[
-    'mujahiz_claim_owner_projection|mujahiz_claim_owner_projection|EXECUTE|false',
-    'postgres|mujahiz_claim_owner_projection|EXECUTE|false'] then
-    raise exception 'unexpected privileged_actor_for_profile_v1 ACL precondition';
-  end if;
-  if (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-      where n.nspname='supplier_claim' and p.prosecdef)<>24
-    or exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-      where n.nspname='supplier_claim' and p.prosecdef
-        and p.proconfig is distinct from array['search_path=pg_catalog'])
-    or (select not (p.prosecdef and p.provolatile='v'
-        and p.proconfig=array['search_path=pg_catalog']) from pg_proc p
-      where p.oid='claim_security.target_supplier_conflict_v1(uuid,uuid,uuid)'::regprocedure) is distinct from false
-    or (select not (p.prosecdef and p.provolatile='s'
-        and p.proconfig=array['search_path=pg_catalog']) from pg_proc p
-      where p.oid='claim_security.reviewer_prior_claim_context_v1(uuid,uuid,uuid)'::regprocedure) is distinct from false then
-    raise exception 'unexpected SECURITY DEFINER mode or fixed search_path precondition';
-  end if;
-  if exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-    join pg_roles r on r.oid=p.proowner where ((n.nspname='supplier_claim' and p.prosecdef)
-      or p.oid in ('claim_security.target_supplier_conflict_v1(uuid,uuid,uuid)'::regprocedure,
-        'claim_security.reviewer_prior_claim_context_v1(uuid,uuid,uuid)'::regprocedure))
-      and r.rolname<>'postgres') then
-    raise exception 'unexpected ownership precondition';
-  end if;
-  if (select count(*) from pg_policy where polrelid='public.supplier_ownership_claims'::regclass)<>10 then
-    raise exception 'ordinary B4 policy precondition missing';
-  end if;
 end
-$b4$;
-create temp table b4_helper_snapshot on commit drop as
-select oid,prosrc,provolatile,prosecdef,proconfig from pg_proc where oid in (
-  'claim_security.current_privileged_actor_v1()'::regprocedure,
-  'claim_security.privileged_actor_for_profile_v1(uuid)'::regprocedure,
-  'claim_security.target_supplier_conflict_v1(uuid,uuid,uuid)'::regprocedure,
-  'claim_security.reviewer_prior_claim_context_v1(uuid,uuid,uuid)'::regprocedure);
-'@
+`$b4_endpoint`$;
 
-  $postconditionsSql = @'
-do $b4$
-declare acl_actual text[];
+create function pg_temp.b4_catalog_normalize()
+returns table (catalog_tuple text)
+language sql
+volatile
+set search_path = public, pg_catalog
+as `$b4_normalizer`$
+$normalizationBody
+`$b4_normalizer`$;
+"@
+
+  function New-CatalogAssertionSql {
+    param(
+      [Parameter(Mandatory)][ValidateSet('PRE', 'POST')][string]$State,
+      [Parameter(Mandatory)][int]$ExpectedCount,
+      [Parameter(Mandatory)][string]$ExpectedSha256,
+      [Parameter(Mandatory)][int]$TupleStart
+    )
+    return @"
+do `$b4_catalog`$
+declare
+  observed_expected_count bigint;
+  observed_expected_sha256 text;
 begin
-  if exists (select 1 from b4_helper_snapshot s join pg_proc p using(oid)
-    where (s.prosrc,s.provolatile,s.prosecdef,s.proconfig) is distinct from
-      (p.prosrc,p.provolatile,p.prosecdef,p.proconfig)) then
-    raise exception 'helper body/mode/search_path changed during finalization';
-  end if;
-  select array_agg(grantee.rolname||'|'||grantor.rolname||'|'||a.privilege_type||'|'||a.is_grantable order by grantee.rolname)
-  into acl_actual from pg_proc p cross join lateral aclexplode(p.proacl) a
-  join pg_roles grantee on grantee.oid=a.grantee join pg_roles grantor on grantor.oid=a.grantor
-  where p.oid='claim_security.current_privileged_actor_v1()'::regprocedure;
-  if acl_actual <> array[
-    'mujahiz_claim_human_command_owner|mujahiz_claim_owner_projection|EXECUTE|false',
-    'mujahiz_claim_owner_projection|mujahiz_claim_owner_projection|EXECUTE|false',
-    'mujahiz_claim_reviewer_projection|mujahiz_claim_owner_projection|EXECUTE|false',
-    'mujahiz_claim_runtime|mujahiz_claim_owner_projection|EXECUTE|false'] then
-    raise exception 'unexpected current_privileged_actor_v1 final ACL';
-  end if;
-  select array_agg(grantee.rolname||'|'||grantor.rolname||'|'||a.privilege_type||'|'||a.is_grantable order by grantee.rolname)
-  into acl_actual from pg_proc p cross join lateral aclexplode(p.proacl) a
-  join pg_roles grantee on grantee.oid=a.grantee join pg_roles grantor on grantor.oid=a.grantor
-  where p.oid='claim_security.privileged_actor_for_profile_v1(uuid)'::regprocedure;
-  if acl_actual <> array[
-    'mujahiz_claim_human_command_owner|mujahiz_claim_owner_projection|EXECUTE|false',
-    'mujahiz_claim_owner_projection|mujahiz_claim_owner_projection|EXECUTE|false'] then
-    raise exception 'unexpected privileged_actor_for_profile_v1 final ACL';
-  end if;
-  if (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-      join pg_roles r on r.oid=p.proowner where n.nspname='supplier_claim' and p.prosecdef
-      and r.rolname='mujahiz_claim_human_command_owner')<>10
-    or (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-      join pg_roles r on r.oid=p.proowner where n.nspname='supplier_claim' and p.prosecdef
-      and r.rolname='mujahiz_claim_expiry_command_owner')<>14
-    or (select pg_get_userbyid(proowner) from pg_proc where oid='claim_security.target_supplier_conflict_v1(uuid,uuid,uuid)'::regprocedure)
-      <> 'mujahiz_claim_target_conflict_helper_owner'
-    or (select pg_get_userbyid(proowner) from pg_proc where oid='claim_security.reviewer_prior_claim_context_v1(uuid,uuid,uuid)'::regprocedure)
-      <> 'mujahiz_claim_reviewer_prior_context_helper_owner'
-    or exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-      where n.nspname='supplier_claim' and p.prosecdef and pg_get_userbyid(p.proowner)='postgres') then
-    raise exception 'unexpected final routine-owner inventory';
-  end if;
-  if exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-      join pg_roles r on r.oid=p.proowner where n.nspname='supplier_claim'
-      and r.rolname in ('mujahiz_claim_human_command_owner','mujahiz_claim_expiry_command_owner')
-      and p.proconfig is distinct from array['search_path=pg_catalog']) then
-    raise exception 'transferred Claim definer lost its fixed search_path';
+  with expected(catalog_tuple) as (
+    select pg_catalog.substr(line, $TupleStart)
+    from pg_catalog.regexp_split_to_table(
+      pg_catalog.pg_read_file('/workspace/supabase/local-bootstrap/claim-authorization-catalog-allowlist.txt'),
+      E'\n'
+    ) line
+    where line like '$State|%'
+  )
+  select pg_catalog.count(*),
+    pg_catalog.encode(extensions.digest(pg_catalog.convert_to(
+      pg_catalog.string_agg(catalog_tuple, E'\n' order by catalog_tuple), 'UTF8'
+    ), 'sha256'), 'hex')
+  into observed_expected_count, observed_expected_sha256
+  from expected;
+
+  if observed_expected_count <> $ExpectedCount
+     or observed_expected_sha256 <> '$ExpectedSha256' then
+    raise exception 'B4_CATALOG_EXPECTED_ASSET_MISMATCH:$State';
   end if;
 
-  if exists (select 1 from pg_auth_members m join pg_roles r on r.oid=m.roleid or r.oid=m.member
-      where r.rolname in ('mujahiz_claim_human_command_owner','mujahiz_claim_expiry_command_owner',
-        'mujahiz_claim_target_conflict_helper_owner','mujahiz_claim_reviewer_prior_context_helper_owner'))
-    or exists (select 1 from pg_namespace n cross join lateral aclexplode(n.nspacl) a
-      join pg_roles r on r.oid=a.grantee where r.rolname like 'mujahiz_claim_%_owner'
-        and (a.privilege_type='CREATE' or a.is_grantable))
-    or exists (select 1 from pg_class c cross join lateral aclexplode(c.relacl) a
-      join pg_roles r on r.oid=a.grantee where r.rolname like 'mujahiz_claim_%_owner' and a.is_grantable)
-    or exists (select 1 from pg_attribute c cross join lateral aclexplode(c.attacl) a
-      join pg_roles r on r.oid=a.grantee where r.rolname like 'mujahiz_claim_%_owner' and a.is_grantable)
-    or exists (select 1 from pg_proc p cross join lateral aclexplode(p.proacl) a
-      join pg_roles r on r.oid=a.grantee where r.rolname like 'mujahiz_claim_%_owner' and a.is_grantable) then
-    raise exception 'prohibited membership, schema CREATE, or grant option after B4';
-  end if;
-  if exists (select 1 from pg_shdepend d join pg_roles r on r.oid=d.refobjid
-    where d.refclassid='pg_authid'::regclass
-      and r.rolname in ('mujahiz_claim_human_command_owner','mujahiz_claim_expiry_command_owner',
-        'mujahiz_claim_target_conflict_helper_owner','mujahiz_claim_reviewer_prior_context_helper_owner')
-      and not ((d.classid='pg_class'::regclass and d.deptype='a')
-        or (d.classid='pg_namespace'::regclass and d.deptype='a')
-        or (d.classid='pg_policy'::regclass and d.deptype='r')
-        or (d.classid='pg_proc'::regclass and d.deptype in ('a','o')))) then
-    raise exception 'unexpected pg_shdepend tuple class after B4';
+  if exists (
+    with expected(catalog_tuple) as (
+      select pg_catalog.substr(line, $TupleStart)
+      from pg_catalog.regexp_split_to_table(
+        pg_catalog.pg_read_file('/workspace/supabase/local-bootstrap/claim-authorization-catalog-allowlist.txt'),
+        E'\n'
+      ) line
+      where line like '$State|%'
+    ),
+    actual(catalog_tuple) as (
+      select catalog_tuple from pg_temp.b4_catalog_normalize()
+    )
+    select 1
+    from (
+      (select catalog_tuple from expected except all select catalog_tuple from actual)
+      union all
+      (select catalog_tuple from actual except all select catalog_tuple from expected)
+    ) mismatch
+  ) then
+    raise exception 'B4_CATALOG_MISMATCH:$State';
   end if;
 end
-$b4$;
-'@
+`$b4_catalog`$;
+"@
+  }
+
+  $preCatalogAssertionSql = New-CatalogAssertionSql -State 'PRE' -ExpectedCount 343 `
+    -ExpectedSha256 '9a5a533adf878617b72010e18de9d2b78bec0d1eb914162f3768e3a34eefd22d' `
+    -TupleStart 5
+  $postCatalogAssertionSql = New-CatalogAssertionSql -State 'POST' -ExpectedCount 355 `
+    -ExpectedSha256 '46aa89a6b3b5e3bc9fa9ec07e163d30cc468530631a0176ab80c246ab6b72a3f' `
+    -TupleStart 6
 
   $sqlParts = [System.Collections.Generic.List[string]]::new()
+  function Add-B4FailureInjection([string]$Point) {
+    $sqlParts.Add("do `$b4_injected`$ begin raise notice 'B4_REACHED:$Point'; raise exception 'B4_INJECTED:$Point'; end `$b4_injected`$;")
+  }
+
   $sqlParts.Add('begin;')
-  $sqlParts.Add($preconditionsSql)
+  $sqlParts.Add($transactionPreludeSql)
+  $sqlParts.Add($preCatalogAssertionSql)
   for ($index = 0; $index -lt $aclManifest.Count; $index++) {
     $sqlParts.Add($aclManifest[$index] + ';')
-    if ($FailurePoint -eq "after_acl_$($index + 1)") { $sqlParts.Add("do `$`$ begin raise exception 'injected after ACL-$($index + 1)'; end `$`$;") }
+    $point = "after_acl_$($index + 1)"
+    if ($FailurePoint -eq $point) { Add-B4FailureInjection $point }
   }
-  if ($FailurePoint -eq 'between_assets') { $sqlParts.Add("do `$`$ begin raise exception 'injected between assets'; end `$`$;") }
+  if ($FailurePoint -eq 'between_assets') { Add-B4FailureInjection 'between_assets' }
   for ($index = 0; $index -lt $ownershipManifest.Count; $index++) {
     $sqlParts.Add($ownershipManifest[$index] + ';')
-    if ($FailurePoint -eq "after_owner_$($index + 1)") { $sqlParts.Add("do `$`$ begin raise exception 'injected after ownership $($index + 1)'; end `$`$;") }
+    $point = "after_owner_$($index + 1)"
+    if ($FailurePoint -eq $point) { Add-B4FailureInjection $point }
   }
-  $sqlParts.Add($postconditionsSql)
-  if ($FailurePoint -eq 'final_assertion') { $sqlParts.Add("do `$`$ begin raise exception 'injected final assertion'; end `$`$;") }
+  $sqlParts.Add($postCatalogAssertionSql)
+  if ($FailurePoint -eq 'final_assertion') { Add-B4FailureInjection 'final_assertion' }
   if ($PauseBeforeCommit) { $sqlParts.Add('select pg_catalog.pg_sleep(30);') }
   $sqlParts.Add('commit;')
   $fixedSql = $sqlParts -join [Environment]::NewLine
 
   $applicationName = "mujahiz_claim_authorization_finalizer_$InvocationKind"
-  $dockerArguments = @('exec')
-  if ($Detach) { $dockerArguments += '--detach' } else { $dockerArguments += '--interactive' }
+  $dockerArguments = @('exec', '--interactive')
   $dockerArguments += @('--env', "PGAPPNAME=$applicationName", '--env', 'PGPASSWORD=postgres', $ContainerName, '/usr/bin/env')
   foreach ($environmentName in @('PGHOST','PGHOSTADDR','PGPORT','PGDATABASE','PGUSER','PGPASSFILE',
       'PGSERVICE','PGSERVICEFILE','PGOPTIONS','PGSSLMODE','PGSSLKEY','PGSSLCERT')) {
@@ -359,12 +412,26 @@ $b4$;
   $previousErrorActionPreference = $ErrorActionPreference
   $ErrorActionPreference = 'Continue'
   if ($Detach) {
-    $dockerArguments += @('--command', $fixedSql)
-    $output = @(& docker @dockerArguments 2>&1 | ForEach-Object { $_.ToString() })
+    $dockerCommand = (Get-Command docker -ErrorAction Stop).Source
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $dockerCommand
+    $startInfo.Arguments = @($dockerArguments | ForEach-Object {
+      '"' + $_.Replace('"', '\"') + '"'
+    }) -join ' '
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardInput = $true
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    if (-not $process.Start()) { throw 'Claim authorization finalization could not start the fixed interruption process.' }
+    $process.StandardInput.Write($fixedSql)
+    $process.StandardInput.Close()
+    $processId = $process.Id
+    $process.Dispose()
+    $ErrorActionPreference = $previousErrorActionPreference
+    return @("HOST_PROCESS_ID=$processId")
   }
-  else {
-    $output = @($fixedSql | & docker @dockerArguments 2>&1 | ForEach-Object { $_.ToString() })
-  }
+  $output = @($fixedSql | & docker @dockerArguments 2>&1 | ForEach-Object { $_.ToString() })
   $exitCode = $LASTEXITCODE
   $ErrorActionPreference = $previousErrorActionPreference
   if ($exitCode -ne 0) {

@@ -27,11 +27,13 @@ select ok(not (select p.prosecdef from pg_catalog.pg_proc p where p.oid =
   'approve canonicalizer is SECURITY INVOKER');
 select is((select pg_catalog.count(*) from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid=p.pronamespace
-  where n.nspname='supplier_claim' and p.prosecdef), 10::bigint,
+  where n.nspname='supplier_claim' and p.prosecdef
+    and (not :'claim_post_b4_replay'::boolean or p.proname in ('reserve_submit','submit','reserve_withdraw','withdraw','reserve_assign_reviewer','assign_reviewer','reject','_execute_reject','approve','_execute_approve'))), 10::bigint,
   'five Phase-A and five Phase-B boundaries are SECURITY DEFINER');
 select is((select pg_catalog.count(*) from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid=p.pronamespace
-  where n.nspname='supplier_claim' and p.proconfig @> array['search_path=pg_catalog']::text[]),
+  where n.nspname='supplier_claim' and p.proconfig @> array['search_path=pg_catalog']::text[]
+    and (not :'claim_post_b4_replay'::boolean or p.proname in ('_canonicalize_submit_request_v1','_canonicalize_withdraw_request_v1','_canonicalize_assign_reviewer_request_v1','_canonicalize_reject_request_v1','_canonicalize_approve_request_v1','reserve_submit','submit','reserve_withdraw','withdraw','reserve_assign_reviewer','assign_reviewer','reject','_execute_reject','approve','_execute_approve'))),
   15::bigint, 'all fifteen Claim routines fix search_path');
 select ok(has_function_privilege('mujahiz_claim_runtime',
   'supplier_claim.approve(text,uuid,integer,integer,text,text,text,text[],text,uuid)','execute')
@@ -56,19 +58,22 @@ select ok(not exists (
      or has_table_privilege(r.role_name,'public.supplier_ownerships','insert')),
   'runtime and API roles retain no direct Claim UPDATE or ownership INSERT');
 select is((select pg_catalog.count(*) from pg_catalog.pg_policy
-  where polrelid='public.supplier_ownership_claims'::regclass), 3::bigint,
-  'Claim retains exactly three SELECT policies');
+  where polrelid='public.supplier_ownership_claims'::regclass), case when :'claim_post_b4_replay'::boolean then 10 else 3 end::bigint,
+  'Claim has the expected exact policy count');
 select is((select pg_catalog.count(*) from pg_catalog.pg_policy
-  where polrelid='public.supplier_ownership_claims'::regclass and polcmd <> 'r'), 0::bigint,
-  'Claim retains zero mutation policies');
+  where polrelid='public.supplier_ownership_claims'::regclass and polcmd <> 'r'), case when :'claim_post_b4_replay'::boolean then 3 else 0 end::bigint,
+  'Claim has the expected exact mutation-policy count');
 select is((select pg_catalog.count(*) from pg_catalog.pg_class c
   join pg_catalog.pg_namespace n on n.oid=c.relnamespace
   where n.nspname in ('public','internal') and c.relkind in ('r','p')), 24::bigint,
   'approve adds no physical table');
-select ok(not exists (select 1 from pg_catalog.pg_proc p
+select ok(case when :'claim_post_b4_replay'::boolean then
+  pg_catalog.to_regprocedure('supplier_claim.expire(text,uuid,integer,uuid)') is not null
+  and pg_catalog.to_regprocedure('supplier_claim._execute_expire(text,uuid,integer,uuid,uuid)') is not null
+else not exists (select 1 from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid=p.pronamespace
-  where n.nspname='supplier_claim' and p.proname='expire'),
-  'expire remains absent');
+  where n.nspname='supplier_claim' and p.proname='expire') end,
+  'Expire routine presence matches the exact migration stage');
 select ok(not exists (select 1 from pg_catalog.pg_proc p
   where p.oid in (
     'supplier_claim.approve(text,uuid,integer,integer,text,text,text,text[],text,uuid)'::regprocedure,
@@ -642,10 +647,12 @@ begin
         raise exception 'unknown historical corruption probe';
     end case;
 
+    execute 'set local role mujahiz_claim_runtime';
     v_result := pg_temp.run_approve(
       pg_temp.approve_id(2),pg_temp.approve_key(70),
       pg_temp.approve_id(1002),2,1,
       array['authorized_officer_confirmation'],'m3-probe-reference');
+    execute 'reset role';
     if exists (
       select 1 from public.supplier_ownerships
       where supplier_profile_id=pg_temp.approve_id(202)
@@ -663,6 +670,8 @@ begin
   end;
 end $$;
 
+grant mujahiz_claim_runtime to postgres with set true;
+grant usage on schema extensions to mujahiz_claim_runtime;
 select is(pg_temp.probe_historical_approval_corruption('assignment_version'),
   'integrity_reconciliation_required',
   'M3: historical assignment version other than one fails reconciliation');
@@ -795,9 +804,6 @@ select is(pg_temp.probe_historical_approval_corruption('idempotency_missing'),
 select ok((select expires_at > completed_at
   from internal.idempotency_keys where id=pg_temp.approve_id(6001)),
   'M3 idempotency: coherent historical completed reservation remains valid');
-
-grant mujahiz_claim_runtime to postgres with set true;
-grant usage on schema extensions to mujahiz_claim_runtime;
 set role mujahiz_claim_runtime;
 select pg_temp.run_approve(pg_temp.approve_id(1),pg_temp.approve_key(1),
   pg_temp.approve_id(1001),2,1,

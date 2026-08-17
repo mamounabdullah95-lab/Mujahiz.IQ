@@ -16,7 +16,7 @@ function Invoke-ClaimOwnerRoleProvisioner {
     throw 'Interruption probe invocation kinds require the fixed pre-commit pause.'
   }
 
-  if ($ContainerName -notmatch '^mujahiz-(iq-sql-validation|b4p1-validation|approve-race|expire-race|reject-race|claim-(assign|hotfix|withdraw)-concurrency)-') {
+  if ($ContainerName -notmatch '^mujahiz-(iq-sql-validation|b4p1-validation|approve-race|expire-race|reject-race|claim-(assign|hotfix|withdraw)-concurrency|b4-security)-') {
     throw 'Claim owner-role provisioning is limited to the fixed disposable validation harness.'
   }
 

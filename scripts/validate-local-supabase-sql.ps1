@@ -7,7 +7,21 @@ $migrationsDirectory = Join-Path $repoRoot 'supabase/migrations'
 $testsDirectory = Join-Path $repoRoot 'supabase/tests'
 $claimOwnerRoleProvisioner = Join-Path $PSScriptRoot 'claim-owner-role-provisioner.ps1'
 $claimAuthorizationFinalizer = Join-Path $PSScriptRoot 'claim-authorization-finalizer.ps1'
+$claimAuthorizationSecurityHarness = Join-Path $PSScriptRoot 'test-claim-authorization-finalizer.ps1'
+$claimAuthorizationCatalogAllowlist = Join-Path $repoRoot 'supabase/local-bootstrap/claim-authorization-catalog-allowlist.txt'
+$claimAuthorizationCatalogNormalizer = '/workspace/supabase/local-bootstrap/claim-authorization-catalog-normalization.sql'
 $b4MigrationName = '20260817000100_claim_rls_authorization_foundation.sql'
+$postB4TestNames = @(
+  'claim_submit_idempotency_hotfix.sql',
+  'claim_withdraw_trusted_command.sql',
+  'assign_reviewer_trusted_command.sql',
+  'approve_trusted_command.sql',
+  'reject_trusted_command.sql',
+  'expire_trusted_command.sql',
+  'claim_rls_self_read_foundation.sql',
+  'reviewer_private_read_substrate.sql',
+  'claim_rls_authorization_foundation.sql'
+)
 $containerName = "mujahiz-iq-sql-validation-$PID-$([guid]::NewGuid().ToString('N').Substring(0, 12))"
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 $failureDetails = [System.Collections.Generic.List[string]]::new()
@@ -15,12 +29,14 @@ $containerStarted = $false
 $success = $false
 
 function Invoke-Psql {
-  param([string]$Label, [string]$ContainerPath, [string]$Sql, [string]$DatabaseName = 'postgres')
+  param([string]$Label, [string]$ContainerPath, [string]$Sql, [string]$DatabaseName = 'postgres',
+    [string]$Username = 'postgres', [switch]$PostB4Replay)
 
   $arguments = @(
     'exec', $containerName, 'psql', '--no-psqlrc', '--set=ON_ERROR_STOP=1',
-    '--username=postgres', "--dbname=$DatabaseName", '--quiet', '--tuples-only',
-    '--no-align', '--pset', 'footer=off'
+    "--username=$Username", "--dbname=$DatabaseName", '--quiet', '--tuples-only',
+    '--no-align', '--pset', 'footer=off', '--set',
+    "claim_post_b4_replay=$(if ($PostB4Replay) { '1' } else { '0' })"
   )
   if ($ContainerPath) { $arguments += @('--file', $ContainerPath) }
   else { $arguments += @('--command', $Sql) }
@@ -67,6 +83,34 @@ function Test-TapOutput {
   return [pscustomobject]@{ Passed = $passed.Count; Failed = $failed.Count }
 }
 
+function Assert-ClaimAuthorizationCatalog {
+  param(
+    [Parameter(Mandatory)][string]$DatabaseName,
+    [Parameter(Mandatory)][ValidateSet('PRE', 'POST')][string]$State
+  )
+  $prefix = "$State|"
+  $expected = @(Get-Content -LiteralPath $claimAuthorizationCatalogAllowlist | Where-Object {
+    $_.StartsWith($prefix, [System.StringComparison]::Ordinal)
+  } | ForEach-Object { $_.Substring($prefix.Length) })
+  $actual = @(Invoke-Psql -Label "$State Claim authorization catalog" -DatabaseName $DatabaseName `
+    -ContainerPath $claimAuthorizationCatalogNormalizer)
+  $difference = @(Compare-Object $expected $actual -SyncWindow 0)
+  if ($difference.Count -ne 0) {
+    $failureDetails.Add("$State Claim authorization catalog mismatch in ${DatabaseName}: $($difference.Count) tuple differences.")
+    throw "$State Claim authorization catalog validation failed."
+  }
+}
+
+function Set-RunnerDatabaseAcl([string]$DatabaseName) {
+  if ($DatabaseName -notmatch '^(runner_test|post_b4_test)_[0-9]+$') { throw 'Unexpected validation database ACL target.' }
+  $sql = @(
+    "grant connect, create, temporary on database $DatabaseName to dashboard_user;",
+    "grant create on database $DatabaseName to supabase_etl_admin;",
+    "grant create on database $DatabaseName to supabase_storage_admin;"
+  ) -join [Environment]::NewLine
+  Invoke-Psql -Label "Database ACL $DatabaseName" -Sql $sql | Out-Null
+}
+
 try {
   if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw 'Docker is required but was not found on PATH.' }
   if (-not (Test-Path -LiteralPath $migrationsDirectory) -or -not (Test-Path -LiteralPath $testsDirectory)) {
@@ -78,6 +122,11 @@ try {
   if (-not (Test-Path -LiteralPath $claimAuthorizationFinalizer)) {
     throw 'The fixed Claim authorization finalizer hook was not found.'
   }
+  foreach ($requiredPath in @($claimAuthorizationSecurityHarness, $claimAuthorizationCatalogAllowlist)) {
+    if (-not (Test-Path -LiteralPath $requiredPath)) {
+      throw "Required Claim authorization validation asset was not found: $requiredPath"
+    }
+  }
   . $claimOwnerRoleProvisioner
   . $claimAuthorizationFinalizer
 
@@ -88,6 +137,16 @@ try {
     throw 'The exact B4 migration is required.'
   }
   $testMigrationAliases = @{ identity_provider_foundation = 'provider_neutral_identity_foundation' }
+
+  $authorizationSecuritySummary = 'skipped for synthetic failure-detection mode'
+  if (-not $VerifyFailureDetection) {
+    $securityHarnessOutput = @(& $claimAuthorizationSecurityHarness)
+    if ($securityHarnessOutput.Count -eq 0 -or
+        $securityHarnessOutput[-1] -notmatch '^Claim authorization security validation passed:') {
+      throw 'Claim authorization security harness did not return its fixed success summary.'
+    }
+    $authorizationSecuritySummary = $securityHarnessOutput[-1]
+  }
 
   $mount = "type=bind,source=$repoRoot,target=/workspace,readonly"
   $containerId = & docker run --detach --rm --name $containerName --mount $mount --env 'POSTGRES_PASSWORD=postgres' --env 'PGPASSWORD=postgres' --env 'POSTGRES_DB=postgres' $PostgresImage 2>&1
@@ -124,7 +183,10 @@ try {
     "  if not exists (select 1 from pg_catalog.pg_roles where rolname = 'anon') then create role anon nologin noinherit; end if;",
     "  if not exists (select 1 from pg_catalog.pg_roles where rolname = 'authenticated') then create role authenticated nologin noinherit; end if;",
     "  if not exists (select 1 from pg_catalog.pg_roles where rolname = 'service_role') then create role service_role nologin noinherit; end if;",
-    'end', '$$;'
+    'end', '$$;',
+    'grant usage on schema public to postgres, anon, authenticated, service_role;',
+    'grant usage on schema extensions to anon, authenticated, service_role;',
+    'grant usage, create on schema extensions to dashboard_user;'
   ) -join [Environment]::NewLine
   Invoke-Psql -Label 'Supabase local-role bootstrap' -Sql $bootstrapSql | Out-Null
 
@@ -135,12 +197,43 @@ try {
   foreach ($migration in $migrations) {
     Invoke-Psql -Label "Migration $($migration.Name)" -ContainerPath "/workspace/supabase/migrations/$($migration.Name)" | Out-Null
     if ($migration.Name -eq $b4MigrationName) {
-      Invoke-ClaimAuthorizationFinalizer -ContainerName $containerName -DatabaseOrdinal 0 | Out-Null
+      Invoke-ClaimAuthorizationFinalizer -ContainerName $containerName | Out-Null
+      Assert-ClaimAuthorizationCatalog -DatabaseName 'postgres' -State POST
     }
+  }
+
+  $postB4TemplateDatabase = 'runner_post_b4_template'
+  Invoke-Psql -Label 'Disable post-B4 source connections' -DatabaseName 'template1' -Username 'supabase_admin' `
+    -Sql 'alter database postgres with allow_connections false;' | Out-Null
+  try {
+    Invoke-Psql -Label 'Terminate post-B4 source sessions' -DatabaseName 'template1' -Username 'supabase_admin' `
+      -Sql "select pg_catalog.pg_terminate_backend(pid) from pg_catalog.pg_stat_activity where datname = 'postgres';" | Out-Null
+    Invoke-Psql -Label 'Create post-B4 test template' -DatabaseName 'template1' -Username 'supabase_admin' `
+      -Sql "create database $postB4TemplateDatabase template postgres owner postgres;" | Out-Null
+  }
+  finally {
+    Invoke-Psql -Label 'Re-enable post-B4 source connections' -DatabaseName 'template1' -Username 'supabase_admin' `
+      -Sql 'alter database postgres with allow_connections true;' | Out-Null
   }
 
   $assertionsPassed = 0
   $assertionsFailed = 0
+  $postB4TestsRun = 0
+  foreach ($postB4TestName in $postB4TestNames) {
+    $postB4Test = @($tests | Where-Object { $_.Name -ceq $postB4TestName })
+    if ($postB4Test.Count -ne 1) { throw "Required post-B4 test was not found exactly once: $postB4TestName" }
+    $postB4Database = "post_b4_test_$($postB4TestsRun + 1)"
+    Invoke-Psql -Label "Post-B4 database $postB4TestName" -DatabaseName 'template1' -Username 'supabase_admin' `
+      -Sql "create database $postB4Database template $postB4TemplateDatabase owner postgres;" | Out-Null
+    Set-RunnerDatabaseAcl -DatabaseName $postB4Database
+    Assert-ClaimAuthorizationCatalog -DatabaseName $postB4Database -State POST
+    $tapOutput = @(Invoke-Psql -Label "Post-B4 test $postB4TestName" `
+      -ContainerPath "/workspace/supabase/tests/$postB4TestName" -DatabaseName $postB4Database -PostB4Replay)
+    $result = Test-TapOutput -Output $tapOutput -Label "Post-B4 test $postB4TestName"
+    $assertionsPassed += $result.Passed
+    $assertionsFailed += $result.Failed
+    $postB4TestsRun++
+  }
   for ($testIndex = 0; $testIndex -lt $tests.Count; $testIndex++) {
     $test = $tests[$testIndex]
     $expectedMigrationSuffix = if ($testMigrationAliases.ContainsKey($test.BaseName)) { $testMigrationAliases[$test.BaseName] } else { $test.BaseName }
@@ -155,11 +248,13 @@ try {
 
     $testDatabase = "runner_test_$($testIndex + 1)"
     Invoke-Psql -Label "Test database $($test.Name)" -Sql "create database $testDatabase template $testTemplateDatabase;" | Out-Null
+    Set-RunnerDatabaseAcl -DatabaseName $testDatabase
     for ($migrationIndex = 0; $migrationIndex -le $migrationLimit; $migrationIndex++) {
       $migration = $migrations[$migrationIndex]
       Invoke-Psql -Label "Test setup $($migration.Name)" -ContainerPath "/workspace/supabase/migrations/$($migration.Name)" -DatabaseName $testDatabase | Out-Null
       if ($migration.Name -eq $b4MigrationName) {
-        Invoke-ClaimAuthorizationFinalizer -ContainerName $containerName -DatabaseOrdinal ($testIndex + 1) | Out-Null
+        Invoke-ClaimAuthorizationFinalizer -ContainerName $containerName | Out-Null
+        Assert-ClaimAuthorizationCatalog -DatabaseName $testDatabase -State POST
       }
     }
 
@@ -185,7 +280,7 @@ finally {
 }
 
 if ($success) {
-  Write-Output ("Local SQL validation passed: {0} migrations applied; {1} test files run; {2} assertions passed, {3} failed; {4:n1}s elapsed." -f $migrations.Count, $tests.Count, $assertionsPassed, $assertionsFailed, $stopwatch.Elapsed.TotalSeconds)
+  Write-Output ("Local SQL validation passed: {0} migrations applied; {1} isolated test files plus {2} post-B4 replays run; {3} assertions passed, {4} failed; security: {5}; {6:n1}s elapsed." -f $migrations.Count, $tests.Count, $postB4TestsRun, $assertionsPassed, $assertionsFailed, $authorizationSecuritySummary, $stopwatch.Elapsed.TotalSeconds)
   exit 0
 }
 

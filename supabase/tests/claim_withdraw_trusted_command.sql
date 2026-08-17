@@ -28,12 +28,18 @@ select is((
   from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'supplier_claim'
+    and (not :'claim_post_b4_replay'::boolean or p.proname in (
+      '_canonicalize_submit_request_v1','_canonicalize_withdraw_request_v1',
+      'reserve_submit','reserve_withdraw','submit','withdraw'))
 ), 6::bigint, 'command schema contains submit and withdraw implementation routines only');
 select is((
   select pg_catalog.string_agg(p.proname, ',' order by p.proname)
   from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'supplier_claim'
+    and (not :'claim_post_b4_replay'::boolean or p.proname in (
+      '_canonicalize_submit_request_v1','_canonicalize_withdraw_request_v1',
+      'reserve_submit','reserve_withdraw','submit','withdraw'))
 ), '_canonicalize_submit_request_v1,_canonicalize_withdraw_request_v1,reserve_submit,reserve_withdraw,submit,withdraw', 'no other Claim business command is introduced');
 select is((
   select pg_catalog.count(*)
@@ -41,6 +47,8 @@ select is((
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'supplier_claim'
     and p.prosecdef
+    and (not :'claim_post_b4_replay'::boolean or p.proname in (
+      'reserve_submit','reserve_withdraw','submit','withdraw'))
 ), 4::bigint, 'only reservation and phase-B boundaries are SECURITY DEFINER');
 select ok(not (
   select p.prosecdef
@@ -53,13 +61,21 @@ select is((
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   join pg_catalog.pg_roles r on r.oid = p.proowner
   where n.nspname = 'supplier_claim'
-), 'postgres', 'all Claim routines retain an explicit local trusted owner');
+    and (not :'claim_post_b4_replay'::boolean or p.proname in (
+      '_canonicalize_submit_request_v1','_canonicalize_withdraw_request_v1',
+      'reserve_submit','reserve_withdraw','submit','withdraw'))
+), case when :'claim_post_b4_replay'::boolean
+    then 'mujahiz_claim_human_command_owner,postgres' else 'postgres' end,
+  'all Claim routines retain an explicit local trusted owner');
 select is((
   select pg_catalog.count(*)
   from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'supplier_claim'
     and p.proconfig @> array['search_path=pg_catalog']::text[]
+    and (not :'claim_post_b4_replay'::boolean or p.proname in (
+      '_canonicalize_submit_request_v1','_canonicalize_withdraw_request_v1',
+      'reserve_submit','reserve_withdraw','submit','withdraw'))
 ), 6::bigint, 'all Claim routines fix search_path to pg_catalog');
 select ok(
   pg_catalog.pg_get_function_identity_arguments(
@@ -126,20 +142,23 @@ select is((
   select pg_catalog.count(*)
   from pg_catalog.pg_policy
   where polrelid = 'public.supplier_ownership_claims'::regclass
-), 1::bigint, 'Claim retains exactly one claimant self-select RLS policy');
+), case when :'claim_post_b4_replay'::boolean then 10 else 1 end::bigint,
+  'Claim has the expected exact policy count');
 select is((
   select pg_catalog.count(*)
   from pg_catalog.pg_policy
   where polrelid = 'public.supplier_ownership_claims'::regclass
     and polcmd in ('a', 'w', 'd')
-), 0::bigint, 'withdraw adds no mutation RLS policy');
+), case when :'claim_post_b4_replay'::boolean then 3 else 0 end::bigint,
+  'Claim has the expected exact mutation-policy count');
 select is((
   select pg_catalog.count(*)
   from pg_catalog.pg_class c
   join pg_catalog.pg_namespace n on n.oid = c.relnamespace
   where n.nspname in ('public', 'internal')
     and c.relkind in ('r', 'p')
-), 22::bigint, 'withdraw adds no physical table');
+), case when :'claim_post_b4_replay'::boolean then 24 else 22 end::bigint,
+  'public/internal schemas have the expected exact physical-table count');
 select ok(not exists (
   select 1
   from pg_catalog.pg_proc p
