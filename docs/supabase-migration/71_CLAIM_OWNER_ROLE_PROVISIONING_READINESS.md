@@ -1,8 +1,8 @@
 # Claim owner-role privileged provisioning readiness
 
-Status: **B4-P0 candidate security contract; documentation-only; Correction Loop
-1; awaiting independent exact-head security review; B4-P1 and B4 remain
-unimplemented and blocked**
+Status: **Merged B4-P0 authority from PR #139; B4-P1 merged by PR #140; B4 is
+blocked by the separate B4-P2 projection-helper ACL finalization readiness
+contract**
 
 Date: 2026-08-16
 
@@ -13,6 +13,16 @@ Working branch: `codex/claim-owner-role-provisioning-readiness`
 
 Primary task profile: Documentation
 
+Post-B4-P1 evidence proved one additional prerequisite that this document did
+not authorize: the future human command owner cannot receive the two required
+projection-helper EXECUTEs from ordinary non-owner `postgres`. The separate
+[B4-P2 projection-helper ACL finalization readiness](72_CLAIM_PROJECTION_HELPER_ACL_FINALIZATION_READINESS.md)
+selects one exact privileged ACL exception. It keeps the ACL and ownership
+assets distinct but executes both inside one privileged finalization
+transaction. Where this document refers to the ownership-finalization
+transaction, that later refinement governs the shared transaction; every
+ownership asset restriction below remains unchanged.
+
 ## 1. Owner decision and scope
 
 The Owner security decision preserves the merged B1 zero-membership invariant
@@ -20,10 +30,10 @@ and selects the smallest local privileged boundary:
 
 1. B4-P1 uses the validated local privileged actor only for clean creation and
    validation of four inert roles;
-2. B4 runs every non-ownership operation in the ordinary repository `postgres`
-   migration context; and
-3. B4 ends with a separate, exact, privileged ownership-transfer-only
-   finalization followed by final validation.
+2. B4 runs every operation except the exact privileged finalization in the
+   ordinary repository `postgres` migration context; and
+3. B4 ends with one privileged transaction containing the separately exact B4-P2
+   ACL asset and ownership-transfer-only asset, followed by final validation.
 
 The rejected design that ran arbitrary B4 SQL in a `supabase_admin`-authenticated
 session after `SET ROLE postgres` is removed. Temporary membership, temporary
@@ -119,27 +129,28 @@ The reproduced results were:
 | `supabase_admin` performs only that ownership transfer | Succeeds with zero membership and without schema `CREATE`. |
 | Privileged session uses `SET ROLE postgres` before arbitrary SQL | Rejected: `RESET ROLE` restores `supabase_admin`; an early `COMMIT` can persist temporary membership and schema `CREATE`. |
 
-Clean role creation and exact routine ownership transfer therefore require the
-validated privileged actor in the current local image. B1's grants, revocations,
-policies, projection hardening, assertions, and tests do not require that actor
-and remain ordinary B4 work.
+Clean role creation, the exact B4-P2 helper ACL reconciliation, and exact routine
+ownership transfer therefore require the validated privileged actor in the
+current local image. Every other B1 grant, revocation, policy, projection
+hardening, assertion, and test remains ordinary B4 work.
 
 ## 4. Selected architecture and privilege boundary
 
 The Owner-selected architecture has three independent PostgreSQL transactions
-and a final acceptance gate. It is not one cross-session transaction:
+and a final acceptance gate. B4-P2 refines only the contents of the third
+transaction; it does not create cross-session atomicity:
 
 1. **B4-P1 role-provisioning transaction:** privileged, role-only, atomic;
 2. **ordinary B4 transaction:** authenticated and executed directly as ordinary
    `postgres`, with no privileged session behind it;
-3. **ownership-finalization transaction:** privileged, exact transfer-only,
-   atomic; and
+3. **privileged finalization transaction:** privileged, one exact ACL asset plus
+   one separately exact transfer-only ownership asset, atomic; and
 4. **final validation:** accept the disposable database only when the complete
    post-B4 allowlist passes.
 
-Only role creation and the exact routine ownership transfers cross the local
-privileged boundary. No materially different unresolved safe architecture
-remains after the Owner selected this narrower model.
+Only role creation, the exact B4-P2 helper ACL reconciliation, and the exact
+routine ownership transfers cross the local privileged boundary. B4-P2 proves
+that no materially different unresolved safe architecture remains.
 
 B4-P1 and the later B4 runner integration may extend only the established local
 disposable harness. They must introduce no runtime/application entrypoint,
@@ -208,6 +219,11 @@ post-B4 allowlist must also succeed.
 
 ## 7. Exact privileged ownership finalization
 
+B4-P2 adds no GRANT or REVOKE to this ownership asset. Its separately fixed ACL
+asset executes first in the same runner-owned transaction; then this exact
+ownership asset executes; then one combined post-finalization allowlist must
+pass before commit.
+
 B4 may add one separate non-migration ownership-finalization asset. The
 privileged runner must accept no caller-supplied SQL path and execute only the
 fixed repository path declared by the B4 implementation.
@@ -246,13 +262,13 @@ The asset may contain only the enumerated, signature-qualified `ALTER FUNCTION
 - transaction-control statement; or
 - psql meta-command.
 
-The runner, not the asset, begins one transaction, validates the exact clean
-roles, manifest, routine signatures, current owners, and definer modes, executes
-the fixed asset directly as `supabase_admin`, validates the exact resulting
-owners and zero prohibited residue, and commits. A wrong/missing role,
-unexpected owner, substituted statement/file, error, assertion failure,
-cancellation, or connection termination rolls back every transfer in that
-transaction.
+The runner, not either asset, begins one transaction, validates the exact clean
+roles and both assets/manifests, executes the B4-P2 ACL asset and then this fixed
+ownership asset directly as `supabase_admin`, validates the exact helper ACLs,
+resulting owners, and zero prohibited residue, and commits. A wrong/missing
+role, unexpected owner or ACL, substituted statement/file, error, assertion
+failure, cancellation, or connection termination rolls back every ACL change
+and transfer in that transaction.
 
 The runner must never execute the ordinary B4 migration or any arbitrary file as
 `supabase_admin`.
@@ -268,10 +284,11 @@ cross-session atomicity.
   pre-attempt catalog unchanged.
 - **Ordinary B4 failure:** a migration error or assertion failure rolls back the
   ordinary transaction. Ownership finalization must not start.
-- **Ownership-finalization failure:** a failure before the first transfer,
-  midway through the inventory, on a final assertion, on connection termination,
-  on wrong/missing role or owner, or on substituted/unapproved content rolls
-  back the entire finalization transaction.
+- **Privileged-finalization failure:** a failure before or after any B4-P2 ACL
+  statement, between the two assets, before or midway through ownership
+  transfer, on a final assertion, on connection termination, on wrong/missing
+  role, owner, or ACL, or on substituted/unapproved content rolls back the
+  entire ACL-plus-ownership finalization transaction.
 - **Incomplete workflow:** if ordinary B4 committed but finalization or final
   validation failed, the disposable cluster is incomplete, must run no tests or
   later migrations, must not be accepted as B4-valid, and must be destroyed and
@@ -351,9 +368,10 @@ B4 validation must prove:
 
 1. ordinary B4 runs in a direct `postgres` session and rolls back on migration
    error or assertion failure;
-2. the exact ownership asset path, manifest, SHA-256, statement inventory, and
-   prohibited-content checks;
-3. every finalization injected-failure case in section 8;
+2. both exact finalization asset paths, manifests, SHA-256 values, statement
+   inventories, and type-specific prohibited-content checks;
+3. every ACL, between-assets, ownership, and final-assertion injected-failure
+   case selected by B4-P2 and section 8;
 4. the exact section 9.2 post-B4 allowlist;
 5. no temporary membership or schema `CREATE` exists at any phase because none
    is used;
@@ -393,7 +411,8 @@ Correction Loop 1 requires documentation/static validation only:
 - documentation-only diff confirmation; and
 - `git diff --check`.
 
-Exact stop point: the same Draft PR #139 at `AWAITING_INDEPENDENT_REVIEW` on a
-new exact head. Do not implement B4-P1 or B4, create SQL/pgTAP, mark Ready,
-merge, deploy, access hosted Supabase or Firebase Production, or read/write
-Production/TEST data.
+Historical B4-P0 stop point: PR #139 reached independent review and was manually
+merged; B4-P1 later merged through PR #140. The current B4-P2 stop point is
+owned by document 72. Do not implement or resume B4, create SQL/pgTAP, mark
+Ready, merge, deploy, access hosted Supabase or Firebase Production, or
+read/write Production/TEST data.
