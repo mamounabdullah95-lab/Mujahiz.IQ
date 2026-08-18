@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-18-package-b-complete`
+Baseline ID: `baseline-2026-08-18-provider-contract-kernel`
 Updated: 2026-08-18
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `b7c83f512b337cf21f517548b724a1c5edf9d821`, the merge of PR #143 (B6 post-merge Baseline synchronization and Package B completion verification). Its approved documentation head is `ad6ca64e2a27ca358a492b084ac098bff3ff858e`; PR Gate #242 / run `32109934587` succeeded on that exact head. PR #142's independently reviewed B4 head `5342a54b800577894ff9a23e93316a350fa15f5f` remains an ancestor through merge `283d4b083e6354c236932392c872ee793f0984f4`.
+- **Verified current fact:** Current GitHub `main`: `ea8e308f4b5276b04c3ecd644d7ecf27f5356a96`, the merge of PR #145 (C4 provider-contract kernel implementation). Its independently approved implementation head is `e7b0dcedcc9f09ddb810bcfd33a7da91dd9ca3a2`; PR Gate #248 / run `32140410443` succeeded on that exact head. PR #143's Package B synchronization merge `b7c83f512b337cf21f517548b724a1c5edf9d821` and PR #142's independently reviewed B4 head `5342a54b800577894ff9a23e93316a350fa15f5f` remain ancestors of the current `main`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -273,7 +273,7 @@ On 10 August 2026, the Product/Security/Data Owner approved [`55_PRIVILEGED_ACTO
 
 The repository has completed the local privileged foundations: identity/profile/link structure, platform-role structure, role-backed administration-access structure, security-eligibility assessment structure, `claim_security.current_privileged_actor_v1()`, private `claim_security.privileged_actor_for_profile_v1(uuid)` eligibility evaluation, and the bounded `claim_security.target_supplier_conflict_v1(uuid, uuid, uuid)` resolver. Reviewer Private-Read Substrate includes the Owner assignment queue, reviewer candidate projection/eligibility delivery, assigned-reviewer queue/detail, and exact RLS/object grants. All six Claim-v1 external commands are implemented locally; access/security administration, gateway/hosted authorization, and Production authority remain absent. Local relational eligibility is not Firebase authentication; local conflict `clear` is not Reviewer authorization.
 
-Package B is `COMPLETE`: PR #143 merged B6, and latest `origin/main` was reverified at `b7c83f512b337cf21f517548b724a1c5edf9d821`. The next control-plane task is C1 - Backend provider abstraction readiness; C1 is documentation-only and does not start provider implementation.
+Package B is `COMPLETE`. C1, C2, C3, C4, and C5 are also `COMPLETE`. PR #145 merged the provider-contract kernel, and latest verified GitHub `main` is `ea8e308f4b5276b04c3ecd644d7ecf27f5356a96`. C6 post-merge Baseline/queue synchronization is the current control-plane task. Package C becomes `COMPLETE` only after the separate C6 documentation PR is manually merged and latest `origin/main` is reverified. `D1 — user_profiles_access Firebase Adapter Readiness` is selected as the next readiness task only; this does not authorize adapter implementation, service rewiring, Auth changes, provider switching, Supabase capability, data work, or deployment.
 
 ### Target-Supplier conflict resolver boundary
 
@@ -435,3 +435,12 @@ PR #141 merged B4-P2 readiness and PR #142 merged B4. Read-only verification of 
 Firebase remains the live Production backend/auth/database/hosting authority. GitHub `main` contains the merged B4 local code/documentation state. Hosted Supabase remains unlinked, undeployed, and non-authoritative. B4 is merged; it is not deployed, hosted, or Production RLS. No Production/data/deployment impact occurred. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 
 PR #143 merged this B6 synchronization as `b7c83f512b337cf21f517548b724a1c5edf9d821`; its approved head was `ad6ca64e2a27ca358a492b084ac098bff3ff858e`, and PR Gate #242 / run `32109934587` succeeded on that exact head. Latest `origin/main` was reverified at the merge commit, so B6 and Package B are `COMPLETE`. No provider implementation, Auth change, hosted action, data action, or deployment is implied by completion.
+### C6 post-merge Package C synchronization (2026-08-18)
+
+Current GitHub `main`, local `main`, and `origin/main` are verified at `ea8e308f4b5276b04c3ecd644d7ecf27f5356a96`. PR #145 merged the C4 provider-contract kernel; its approved head was `e7b0dcedcc9f09ddb810bcfd33a7da91dd9ca3a2`. PR Gate #248 succeeded, and the independent C5 exact-head review reported 0 Critical / High / Medium / Low findings with `APPROVE FOR MANUAL MERGE`.
+
+The merged provider-contract kernel is present at `src/services/providers/providerContract.ts` with its focused test at `tests/provider-contract.test.mjs`. The closed vocabulary remains exactly 17 provider feature IDs, the shipped manifest remains explicitly all Firebase, and the resolver exposes exactly five error codes. Valid resolution returns exactly the registered implementation reference and never invokes an implementation. No application, service, or Auth runtime imports the kernel yet, and no Supabase SDK/client/adapter/config/network capability exists.
+
+PR #145 is merged on GitHub `main` but is not deployed and is not wired into the current application runtime. Firebase remains the Production backend, Auth, database, and hosting authority. Hosted Supabase remains unlinked, undeployed, and non-authoritative. No Production or TEST data changed; no Auth, Rules, indexes, Firebase configuration, DNS, billing, migration, seed, backfill, or deployment action occurred.
+
+C6 inspected the smallest plausible Firebase service seams. The next readiness task is uniquely selected as `D1 — user_profiles_access Firebase Adapter Readiness`, centered on the existing read-only `src/services/adminUsers.ts` facade. It is readiness only: no adapter, service rewiring, Auth change, or provider selection is included. D1 must explicitly preserve the existing `isFirebaseConfigured = false` path through `listUsers()` as current Demo/local application behavior; that path must not be reclassified as a backend provider or treated as provider fallback. `supplierWorkspace.ts` remains deferred because its Firebase write path requires an explicit ownership/security contract before adapter work.

@@ -289,32 +289,33 @@ Hard boundary:
 
 ### C4 - First bounded provider-contract implementation
 
-- State: `AWAITING_INDEPENDENT_REVIEW`.
-- Dependency: satisfied; C1/C2/C3 are complete on reverified `origin/main` `022fbc5b44377542c9e0e909eca0b32c5a93e889`.
+- State: `COMPLETE`.
+- Dependency: satisfied; C1/C2/C3 were complete before implementation, and the merged tree is verified on `origin/main` `ea8e308f4b5276b04c3ecd644d7ecf27f5356a96`.
 - Branch: `codex/provider-contract-kernel`.
 - Draft PR: #145.
 - Initial implementation head: `db08e657dbec49cd1b3813ad99a61b50ee94215e`.
 - Objective: implement only the provider-contract kernel, explicit immutable all-Firebase manifest, exact injected-registry resolver, safe resolver errors, and deterministic no-fallback tests selected by C1.
 - Prohibited: service/Auth rewiring, Supabase SDK/client/config/access, provider environment override, Firebase behavior/config change, data access/mutation, deployment, migration, RLS/grants, Storage, RFQ, messaging, notifications, or feature enablement.
 - Required validation: focused provider tests, current runtime-policy tests, TypeScript check, Production build, static no-fallback/prohibited-scope/sensitive-value checks, and exact diff review.
-- Stop state: `AWAITING_INDEPENDENT_REVIEW` in one Draft implementation PR.
+- Merged result: PR #145, approved implementation head `e7b0dcedcc9f09ddb810bcfd33a7da91dd9ca3a2`, merge `ea8e308f4b5276b04c3ecd644d7ecf27f5356a96`; PR Gate #248 succeeded.
 
 ### C5 - Independent implementation review
 
-- State: `WAITING_DEPENDENCY`
-- Dependency: C4 Draft PR with exact head and required evidence.
+- State: `COMPLETE`
+- Dependency: C4 exact head and required evidence were available.
 - Objective: review exact C4 conformance, Firebase parity, immutable manifest, strict failure behavior, exact-reference return and zero adapter invocation, absence of fallback/dual-write/Supabase capability, safe resolver errors, and test sufficiency.
 - Pass: no Critical/High/Medium blocking finding and explicit exact-head approval for manual merge.
-- Failure: `CORRECTION_REQUIRED` on C4; at most two bounded correction/re-review loops for the same material finding.
+- Result: independent exact-head review reported 0 Critical / High / Medium / Low findings and `APPROVE FOR MANUAL MERGE`.
 
 ### C6 - Manual merge and baseline synchronization
 
-- State: `WAITING_DEPENDENCY`
-- Dependency: C5 approves the exact unchanged C4 head and required head-specific checks are green.
+- State: `AWAITING_MANUAL_MERGE`
+- Dependency: C5 approved the exact unchanged C4 head and required head-specific checks are green; the owner merge is verified.
 - Owner action only: manually merge C4; autonomous merge is forbidden.
-- After merge: reverify latest `origin/main`, then update only minimum Baseline/queue facts and recommend the next bounded feature-adapter readiness task.
+- After merge: latest `origin/main` was reverified at `ea8e308f4b5276b04c3ecd644d7ecf27f5356a96`; minimum Baseline/queue facts were synchronized and the next bounded feature-adapter readiness task was selected.
 - Do not select or implement a feature adapter, Auth proof of concept, Supabase client, hosted action, data action, or deployment merely because C4 is merged.
-- Stop: `AWAITING_MANUAL_MERGE` for any separate baseline-sync Draft PR, or `HUMAN_DECISION_REQUIRED` if more than one next feature seam remains materially safe.
+- Next task: `D1 — user_profiles_access Firebase Adapter Readiness`, centered on the existing read-only `src/services/adminUsers.ts` facade. This is not implementation authorization. `supplierWorkspace.ts` was inspected and deferred because its Firebase write path requires an explicit ownership/security contract.
+- Stop: `AWAITING_MANUAL_MERGE` for this separate documentation/control-plane PR. Package C must not become fully `COMPLETE` until this synchronization PR is manually merged and latest `main` is reverified.
 
 ## Queue advancement rules
 
