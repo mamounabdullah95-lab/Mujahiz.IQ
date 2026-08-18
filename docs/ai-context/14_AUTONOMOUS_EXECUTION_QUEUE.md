@@ -266,7 +266,7 @@ Hard boundary:
 
 ### C1 - Provider abstraction readiness
 
-- State: `CORRECTION_REQUIRED` — Correction Loop 1 is applied on the same branch/Draft PR and awaits exact-head independent re-review.
+- State: `CORRECTION_REQUIRED` — Correction Loop 2 is applied on the same branch/Draft PR; the correction is limited to the C5 queue wording consistency issue. C1/C2 await final exact-head independent re-review; C3 and C4 remain blocked.
 - Dependency: satisfied; Package B remains `COMPLETE`, and verified `origin/main` is `b7c83f512b337cf21f517548b724a1c5edf9d821`.
 - Branch: `codex/backend-provider-abstraction-readiness`.
 - Draft PR: #144.
@@ -306,7 +306,7 @@ Hard boundary:
 
 - State: `WAITING_DEPENDENCY`
 - Dependency: C4 Draft PR with exact head and required evidence.
-- Objective: review exact C4 conformance, Firebase parity, immutable manifest, strict failure behavior, single-adapter invocation, absence of fallback/dual-write/Supabase capability, safe errors/telemetry, and test sufficiency.
+- Objective: review exact C4 conformance, Firebase parity, immutable manifest, strict failure behavior, exact-reference return and zero adapter invocation, absence of fallback/dual-write/Supabase capability, safe resolver errors, and test sufficiency.
 - Pass: no Critical/High/Medium blocking finding and explicit exact-head approval for manual merge.
 - Failure: `CORRECTION_REQUIRED` on C4; at most two bounded correction/re-review loops for the same material finding.
 
