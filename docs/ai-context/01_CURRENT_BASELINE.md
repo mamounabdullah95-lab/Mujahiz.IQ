@@ -1,7 +1,7 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-15-package-a-complete`
-Updated: 2026-08-15
+Baseline ID: `baseline-2026-08-18-package-b-b6-in-progress`
+Updated: 2026-08-18
 Canonical Production URL: `https://mujahiz.com`
 
 This is the single authoritative, frequently changing project baseline. Keep GitHub `main`, merged-but-undeployed work, Firebase Hosting, active Firestore Rules and indexes, deployed Functions and Storage, bounded Production data, and hosted Supabase state distinct.
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `63ebaf2972350848dbe494908efd6756c070802a`, the merge of documentation/control-plane PR #136 after implementation PR #135. PR #136's head `e18bb2c4af41c8dc88126cf2929adcdcccb762e3` and PR #135's independently reviewed implementation head `b4d5ee23d38b99087c8de84bd315fbc253cd30a6` are ancestors.
+- **Verified current fact:** Current GitHub main: 283d4b083e6354c236932392c872ee793f0984f4, the merge of PR #142 (B4 Claim v1 local RLS/authorization implementation). Its first parent is ee2f5a5397aecb2e811175329d7bd61ea8ac3c34 and its second parent is the independently reviewed PR #142 head 5342a54b800577894ff9a23e93316a350fa15f5f. PR #141 (B4-P2 readiness) is merged as the first parent predecessor.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -172,7 +172,7 @@ PR #54 validated the third local SQL slice on its exact merged head. PR #51 vali
 - **Verified current fact, PR #51 corrected-head evidence (`a56ed15097a39cb36feebcc2e9e604e7b34aeb57`):** Focused synthetic pgTAP passed **78/78**, complete local pgTAP passed **138/138**, repository tests passed **181/181**, and the Production application build passed.
 - **Verified current fact, PR #54 merged-head evidence:** Focused synthetic pgTAP passed **84/84**, complete local pgTAP passed **222/222**, repository tests passed **181/181**, and the Production application build passed.
 - **Verified current fact, PR #47 exact-head evidence:** GitHub PR gate run `30856547810` passed. This check result is separate from the local PostgreSQL, pgTAP, repository-test, and build evidence above.
-- **Verified current fact:** Current `origin/main` tracks 29 local SQL migrations and 29 pgTAP files, with 24 physical PostgreSQL tables, 80 logical concepts, 37 Core Phase 1 concepts, 22 implemented and 15 unimplemented Core Phase 1 concepts, exactly three Claim SELECT RLS policies, and zero Claim mutation policies.
+- **Verified current fact:** Current origin/main tracks 30 local SQL migrations and 30 pgTAP files, with 24 physical PostgreSQL tables, 80 logical concepts, 37 Core Phase 1 concepts, 22 implemented and 15 unimplemented Core Phase 1 concepts. The final Claim policy inventory is exactly 7 SELECT, 1 INSERT, 2 UPDATE, and 0 DELETE policies; the three read policies and six technical-owner mutation policies are isolated local technical-owner policies, not browser/application mutation policies.
 - **Latest known historical fact:** PR #109 exact-head validation passed **1,248/1,248** assertions; its focused hotfix suite passed **67/67** and its true multi-session concurrency harness passed **34/34** in disposable local PostgreSQL. These are PR #109-specific local synthetic results, not current-main totals and not hosted or Production evidence.
 - **Verified current fact:** GitHub PR #73 verification run `31118132318` passed on the reviewed implementation head. This does not constitute Firebase, hosted Supabase, Production-data, or deployment evidence.
 - **Verified current fact:** GitHub PR #85 verification run `31259633384` passed on reviewed implementation head `65602572ff30faff0772d833f68e2e9d8237a099`. This does not constitute Firebase, hosted Supabase, Production-data, or deployment evidence.
@@ -273,7 +273,7 @@ On 10 August 2026, the Product/Security/Data Owner approved [`55_PRIVILEGED_ACTO
 
 The repository has completed the local privileged foundations: identity/profile/link structure, platform-role structure, role-backed administration-access structure, security-eligibility assessment structure, `claim_security.current_privileged_actor_v1()`, private `claim_security.privileged_actor_for_profile_v1(uuid)` eligibility evaluation, and the bounded `claim_security.target_supplier_conflict_v1(uuid, uuid, uuid)` resolver. Reviewer Private-Read Substrate includes the Owner assignment queue, reviewer candidate projection/eligibility delivery, assigned-reviewer queue/detail, and exact RLS/object grants. All six Claim-v1 external commands are implemented locally; access/security administration, gateway/hosted authorization, and Production authority remain absent. Local relational eligibility is not Firebase authentication; local conflict `clear` is not Reviewer authorization.
 
-The next task is **A6 — Claim v1 local completion verification and next-package recommendation**. A6 is read-only and must identify the next smallest dependency-safe package from current authoritative evidence; it does not begin that package.
+The current control-plane task is B6 — Post-merge Baseline synchronization and Package B completion verification. Package B completion becomes effective only when the B6 documentation PR is manually merged and the latest origin/main is reverified; no next implementation package is started here.
 
 ### Target-Supplier conflict resolver boundary
 
@@ -419,3 +419,19 @@ PR #135 evidence records focused Expire pgTAP 59/59, true-session Expire concurr
 `supplier_claim.expire` is a local trusted command for a dedicated automated expiry worker. Its v1 boundary preserves Phase-A observation/idempotency and fenced Phase-B execution, binds the stored Claim expiry into the request fingerprint, uses trusted post-lock time, expires only due `submitted|under_review` Claims, preserves assignment provenance, supports replayable valid not-due observations, and fails closed on terminal-history inconsistency with `P5199 / integrity_reconciliation_required`. Real expiry emits exactly one `supplier_ownership.claim_expired` v1 event and zero ordinary success audits; it creates no notification, ownership mutation, or competing-Claim mutation and adds no Claim mutation RLS policy. The JSON-null/SQL-NULL terminal-history issue was corrected in correction loop 2.
 
 All six commands remain local-only. Firebase remains live Production and authoritative; hosted Supabase remains unlinked, undeployed, and non-authoritative. GitHub `main` is not Firebase live runtime, local SECURITY DEFINER behavior is not hosted least-privilege proof, and local 6/6 completion is not deployment readiness. No Production/TEST data migration, seed, backfill, hosted operation, remote migration, deployment, Firebase/Auth/config/DNS/billing change, or file operation occurred. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+
+### B6 post-merge Package B synchronization (2026-08-18)
+
+PR #141 merged B4-P2 readiness and PR #142 merged B4. Read-only verification of the exact merged tree confirms:
+
+- Claim external command surface is exactly 6/6: `supplier_claim.submit`, `supplier_claim.assign_reviewer`, `supplier_claim.withdraw`, `supplier_claim.approve`, `supplier_claim.reject`, and `supplier_claim.expire`.
+- Final Claim RLS policy inventory is 7 SELECT, 1 INSERT, 2 UPDATE, and 0 DELETE. The mutation policies target isolated technical-owner roles and are not browser/application mutation policies.
+- The four technical-owner roles are `mujahiz_claim_human_command_owner`, `mujahiz_claim_expiry_command_owner`, `mujahiz_claim_target_conflict_helper_owner`, and `mujahiz_claim_reviewer_prior_context_helper_owner`. The merged role asset and focused harness preserve zero membership, NOLOGIN, non-BYPASSRLS, and no-schema-CREATE boundaries where asserted.
+- The merged routine ownership asset transfers 10 human-command definers and 14 expiry/history definers, plus the target-conflict and reviewer-prior-context helpers: 26 routines total. The two projection helpers remain owned by `mujahiz_claim_owner_projection` with the approved post-B4 EXECUTE boundary.
+- `target_supplier_conflict_v1` uses the explicit 19-column Claim projection and no longer uses `%rowtype` or `SELECT claim.*`.
+- The committed catalog model is PRE 343 tuples and POST 355 tuples. The final normalizer uses exact `search_path=pg_catalog`, catalog-bound resolution, and raw SHA-256 `5873cdab006165aa8ce4b6bf0720f4d432264ab8438dcb78e75e4ec479e2dac6`.
+- Exact-head evidence is PR Gate #240 / run `32103708718` success on reviewed head `5342a54b800577894ff9a23e93316a350fa15f5f`. The merged validator configuration records 30 migrations, 30 isolated pgTAP files, and 9 post-B4 replays; the approved exact-head evidence records 3,154 passed / 0 failed local SQL assertions, 109/109 finalizer security checks, command suites Submit 67/67, Withdraw 101/101, Assign Reviewer 99/99, Approve 187/187, Reject 108/108, Expire 59/59, and true-session races Submit 34, Withdraw 41, Assign Reviewer 22, Approve 24, Reject 14, Expire 23. These are local/disposable evidence only and are not combined with Package A or Firebase suites.
+
+Firebase remains the live Production backend/auth/database/hosting authority. GitHub `main` contains the merged B4 local code/documentation state. Hosted Supabase remains unlinked, undeployed, and non-authoritative. B4 is merged; it is not deployed, hosted, or Production RLS. No Production/data/deployment impact occurred. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+
+Package B remains conditionally complete: completion becomes effective only after this B6 documentation PR is manually merged and the latest `origin/main` is reverified. No next implementation package is started by B6.
