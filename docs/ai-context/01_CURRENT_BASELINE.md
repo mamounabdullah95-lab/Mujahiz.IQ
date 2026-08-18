@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-18-package-b-b6-in-progress`
+Baseline ID: `baseline-2026-08-18-package-b-local-security`
 Updated: 2026-08-18
 Canonical Production URL: `https://mujahiz.com`
 
@@ -172,7 +172,7 @@ PR #54 validated the third local SQL slice on its exact merged head. PR #51 vali
 - **Verified current fact, PR #51 corrected-head evidence (`a56ed15097a39cb36feebcc2e9e604e7b34aeb57`):** Focused synthetic pgTAP passed **78/78**, complete local pgTAP passed **138/138**, repository tests passed **181/181**, and the Production application build passed.
 - **Verified current fact, PR #54 merged-head evidence:** Focused synthetic pgTAP passed **84/84**, complete local pgTAP passed **222/222**, repository tests passed **181/181**, and the Production application build passed.
 - **Verified current fact, PR #47 exact-head evidence:** GitHub PR gate run `30856547810` passed. This check result is separate from the local PostgreSQL, pgTAP, repository-test, and build evidence above.
-- **Verified current fact:** Current origin/main tracks 30 local SQL migrations and 30 pgTAP files, with 24 physical PostgreSQL tables, 80 logical concepts, 37 Core Phase 1 concepts, 22 implemented and 15 unimplemented Core Phase 1 concepts. The final Claim policy inventory is exactly 7 SELECT, 1 INSERT, 2 UPDATE, and 0 DELETE policies; the three read policies and six technical-owner mutation policies are isolated local technical-owner policies, not browser/application mutation policies.
+- **Verified current fact:** Current origin/main tracks 30 local SQL migrations and 30 pgTAP files, with 24 physical PostgreSQL tables, 80 logical concepts, 37 Core Phase 1 concepts, 22 implemented and 15 unimplemented Core Phase 1 concepts. The final Claim policy inventory is exactly 7 SELECT, 1 INSERT, 2 UPDATE, and 0 DELETE policies: three pre-existing audience/read SELECT policies, four B4 technical-owner SELECT policies, and three technical-owner mutation policies consisting of 1 INSERT and 2 UPDATE. There are zero browser/application Claim mutation policies.
 - **Latest known historical fact:** PR #109 exact-head validation passed **1,248/1,248** assertions; its focused hotfix suite passed **67/67** and its true multi-session concurrency harness passed **34/34** in disposable local PostgreSQL. These are PR #109-specific local synthetic results, not current-main totals and not hosted or Production evidence.
 - **Verified current fact:** GitHub PR #73 verification run `31118132318` passed on the reviewed implementation head. This does not constitute Firebase, hosted Supabase, Production-data, or deployment evidence.
 - **Verified current fact:** GitHub PR #85 verification run `31259633384` passed on reviewed implementation head `65602572ff30faff0772d833f68e2e9d8237a099`. This does not constitute Firebase, hosted Supabase, Production-data, or deployment evidence.

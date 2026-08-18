@@ -119,7 +119,7 @@ Implementation must follow the merged readiness contract rather than restating i
 
 Package objective: define, independently review, and—only after manual approval and merge of the readiness contract—implement the smallest local-only Claim v1 RLS/authorization foundation consistent with the approved identity, platform-role, Supplier-ownership, Claim privacy, trusted-command, and Reviewer-read authorities.
 
-- Package state: `IN_PROGRESS`; B4-P2, B4, and B5 are `COMPLETE` in merged authority; B6 is `IN_PROGRESS` in this Draft documentation PR and stops at `AWAITING_MANUAL_MERGE`.
+- Package state: `IN_PROGRESS`; B4-P2, B4, and B5 are `COMPLETE` in merged authority; B6 documentation work is complete and is `AWAITING_MANUAL_MERGE` in this Draft PR.
 - Verified starting point: Package A and B1 are `COMPLETE`; PR #139 merged B4-P0; PR #140 merged B4-P1; PR #141 merged B4-P2 readiness; PR #142 merged B4 at `283d4b083e6354c236932392c872ee793f0984f4` with reviewed head `5342a54b800577894ff9a23e93316a350fa15f5f`; the Claim surface remains exactly 6/6 local external commands with final policy inventory 7 SELECT, 1 INSERT, 2 UPDATE, and 0 DELETE.
 - Existing architectural constraint: B1 preserves zero browser/application Claim mutation policies and four isolated technical owner roles. B4-P1 provisions those roles cleanly. B4-P2 selects the only additional privileged exception: one exact helper-ACL asset followed by the separate exact ownership asset in one atomic privileged finalization transaction, with no temporary membership, `SET ROLE`, schema `CREATE`, grant option, or arbitrary privileged SQL.
 
@@ -237,7 +237,7 @@ Hard boundary for the whole package:
 
 - B6 verification result: exact 6/6 command surface; final Claim policy inventory 7 SELECT / 1 INSERT / 2 UPDATE / 0 DELETE; four inert technical-owner roles; 26 transferred routines; projection-helper ownership preserved; explicit 19-column target-conflict projection; PRE/POST catalog 343/355; normalizer SHA-256 verified; PR Gate #240 success on exact reviewed head.
 
-- State: `IN_PROGRESS`
+- State: `AWAITING_MANUAL_MERGE`
 - Dependency: B4 is manually merged and latest `origin/main` merge SHA is verified.
 - Objective: perform read-only verification of the merged Claim policy/grant/routine/role inventory against B1, then update only the minimum authoritative Baseline, design/register, and queue facts needed to record the merged local-only result.
 - Risk: Low–Medium because the edit is documentation-only but records security state.
