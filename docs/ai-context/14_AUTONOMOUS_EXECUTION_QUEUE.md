@@ -1,6 +1,6 @@
 # Autonomous Execution Queue
 
-Updated: 2026-08-17
+Updated: 2026-08-18
 Package A setup base: `bd33fb3d3b73f87a775d5f2375194d2acf67b6be`
 Verified Package A closure base: `63ebaf2972350848dbe494908efd6756c070802a` (merge of PR #136)
 
@@ -119,8 +119,9 @@ Implementation must follow the merged readiness contract rather than restating i
 
 Package objective: define, independently review, and—only after manual approval and merge of the readiness contract—implement the smallest local-only Claim v1 RLS/authorization foundation consistent with the approved identity, platform-role, Supplier-ownership, Claim privacy, trusted-command, and Reviewer-read authorities.
 
-- Package state: `IN_PROGRESS`; B4-P2, B4, and B5 are `COMPLETE` in merged authority; B6 documentation work is complete and is `AWAITING_MANUAL_MERGE` in this Draft PR.
-- Verified starting point: Package A and B1 are `COMPLETE`; PR #139 merged B4-P0; PR #140 merged B4-P1; PR #141 merged B4-P2 readiness; PR #142 merged B4 at `283d4b083e6354c236932392c872ee793f0984f4` with reviewed head `5342a54b800577894ff9a23e93316a350fa15f5f`; the Claim surface remains exactly 6/6 local external commands with final policy inventory 7 SELECT, 1 INSERT, 2 UPDATE, and 0 DELETE.
+- Package state: `COMPLETE`.
+- Completion evidence: PR #142 merged B4 at `283d4b083e6354c236932392c872ee793f0984f4` with reviewed head `5342a54b800577894ff9a23e93316a350fa15f5f`; PR #143 merged B6 at `b7c83f512b337cf21f517548b724a1c5edf9d821` with approved head `ad6ca64e2a27ca358a492b084ac098bff3ff858e`; PR Gate #242 / run `32109934587` succeeded on that exact B6 head; latest `origin/main` was reverified at the PR #143 merge.
+- Final verified state: exact 6/6 local external commands with policy inventory 7 SELECT, 1 INSERT, 2 UPDATE, and 0 DELETE. Firebase remains Production authority; hosted Supabase remains unlinked, undeployed, and non-authoritative.
 - Existing architectural constraint: B1 preserves zero browser/application Claim mutation policies and four isolated technical owner roles. B4-P1 provisions those roles cleanly. B4-P2 selects the only additional privileged exception: one exact helper-ACL asset followed by the separate exact ownership asset in one atomic privileged finalization transaction, with no temporary membership, `SET ROLE`, schema `CREATE`, grant option, or arbitrary privileged SQL.
 
 Hard boundary for the whole package:
@@ -237,8 +238,8 @@ Hard boundary for the whole package:
 
 - B6 verification result: exact 6/6 command surface; final Claim policy inventory 7 SELECT / 1 INSERT / 2 UPDATE / 0 DELETE; four inert technical-owner roles; 26 transferred routines; projection-helper ownership preserved; explicit 19-column target-conflict projection; PRE/POST catalog 343/355; normalizer SHA-256 verified; PR Gate #240 success on exact reviewed head.
 
-- State: `AWAITING_MANUAL_MERGE`
-- Dependency: B4 is manually merged and latest `origin/main` merge SHA is verified.
+- State: `COMPLETE`
+- Dependency: satisfied; B4 and B6 were manually merged, and latest `origin/main` is `b7c83f512b337cf21f517548b724a1c5edf9d821`.
 - Objective: perform read-only verification of the merged Claim policy/grant/routine/role inventory against B1, then update only the minimum authoritative Baseline, design/register, and queue facts needed to record the merged local-only result.
 - Risk: Low–Medium because the edit is documentation-only but records security state.
 - Model: Luna or Terra at the lowest safe reasoning level; use Sol only if verification exposes a genuine security contradiction.
@@ -246,8 +247,74 @@ Hard boundary for the whole package:
 - Suggested branch: `codex/baseline-sync-after-claim-rls`.
 - Deliverable: one Draft documentation/control-plane PR with exact merge base, verified inventory, implementation/review/test evidence, seven Open gates, environment distinctions, and Package B completion recommendation.
 - Validation: static/documentation checks and exact merged-tree inventory checks; do not rerun the full SQL validator unless merged evidence is missing or contradictory.
-- Stop state: `AWAITING_MANUAL_MERGE`; Package B becomes `COMPLETE` only after this synchronization is manually merged and latest `origin/main` is reverified.
+- Merged result: PR #143; merge `b7c83f512b337cf21f517548b724a1c5edf9d821`; approved B6 head `ad6ca64e2a27ca358a492b084ac098bff3ff858e`; PR Gate #242 / run `32109934587` success. Package B is `COMPLETE`.
 - Autonomous merge: forbidden.
+
+## Package C - Backend Provider Contracts and Firebase-Parity Abstraction
+
+Package objective: define, independently review, and only after manual approval implement the smallest provider-contract kernel beneath the existing UI while preserving Firebase as the sole current backend/Auth/data authority.
+
+Hard boundary:
+
+- Firebase remains the sole current Production backend, Auth, database, and hosting authority;
+- exactly one authoritative provider per feature, with no fallback, probing, or uncontrolled dual-write;
+- no Supabase SDK/client, Auth, hosted access, SQL/RLS/grant change, migration, data copy, deployment, or feature enablement unless a later task explicitly authorizes the exact action;
+- no repository-wide service refactor or Auth change in the first implementation slice;
+- no Firebase Production/TEST write, Rules/index/config change, or deployment;
+- no Production/TEST data access or mutation; and
+- no automatic merge.
+
+### C1 - Provider abstraction readiness
+
+- State: `AWAITING_INDEPENDENT_REVIEW`
+- Dependency: satisfied; Package B is `COMPLETE`, and verified `origin/main` is `b7c83f512b337cf21f517548b724a1c5edf9d821`.
+- Branch: `codex/backend-provider-abstraction-readiness`.
+- Objective: document the focused provider inventory, strict manifest/selection/error/no-fallback contract, Firebase parity boundary, future Supabase slot, telemetry/testability/rollback rules, and unique first implementation slice.
+- Deliverable: [`73_BACKEND_PROVIDER_ABSTRACTION_READINESS.md`](../supabase-migration/73_BACKEND_PROVIDER_ABSTRACTION_READINESS.md) plus minimum Package B/B6/Baseline synchronization.
+- Selected result: the first future implementation slice is only the provider-contract kernel, explicit immutable all-Firebase manifest, exact resolver, normalized resolver errors, and deterministic no-fallback tests; no current service/Auth rewiring and no Supabase client.
+- Validation: documentation/static authority, link, inventory, contradiction, no-fallback/no-dual-write, prohibited-scope, sensitive-value, stale-state, and `git diff --check` checks; no SQL validator, Emulator suite, E2E, or Production smoke.
+- Stop state: `AWAITING_INDEPENDENT_REVIEW`; keep Draft; do not implement C4.
+
+### C2 - Independent architecture review of C1
+
+- State: `WAITING_DEPENDENCY`
+- Dependency: C1 Draft PR with exact head and validation evidence.
+- Objective: review the exact C1 head read-only against current Firebase boundaries and merged hybrid/identity authorities, including manifest completeness, one-authority semantics, failure behavior, parity, telemetry privacy, testability, rollback, and first-slice uniqueness.
+- Pass: no Critical/High/Medium blocking finding and explicit exact-head `APPROVE FOR MANUAL MERGE`.
+- Failure: `CORRECTION_REQUIRED` on C1; at most two bounded correction/re-review loops for the same material finding.
+
+### C3 - Manual merge gate for C1
+
+- State: `WAITING_DEPENDENCY`
+- Dependency: C2 approves the exact unchanged C1 head and required head-specific checks are green.
+- Owner action only: manually merge C1; autonomous merge is forbidden.
+- Success: latest `origin/main` contains the approved C1 contract and is reverified before C4.
+
+### C4 - First bounded provider-contract implementation
+
+- State: `WAITING_DEPENDENCY`
+- Dependency: C1 is independently approved and manually merged through C3 on reverified latest `origin/main`.
+- Objective: implement only the provider-contract kernel, explicit immutable all-Firebase manifest, exact injected-registry resolver, safe resolver errors, and deterministic no-fallback tests selected by C1.
+- Prohibited: service/Auth rewiring, Supabase SDK/client/config/access, provider environment override, Firebase behavior/config change, data access/mutation, deployment, migration, RLS/grants, Storage, RFQ, messaging, notifications, or feature enablement.
+- Required validation: focused provider tests, current runtime-policy tests, TypeScript check, Production build, static no-fallback/prohibited-scope/sensitive-value checks, and exact diff review.
+- Stop state: `AWAITING_INDEPENDENT_REVIEW` in one Draft implementation PR.
+
+### C5 - Independent implementation review
+
+- State: `WAITING_DEPENDENCY`
+- Dependency: C4 Draft PR with exact head and required evidence.
+- Objective: review exact C4 conformance, Firebase parity, immutable manifest, strict failure behavior, single-adapter invocation, absence of fallback/dual-write/Supabase capability, safe errors/telemetry, and test sufficiency.
+- Pass: no Critical/High/Medium blocking finding and explicit exact-head approval for manual merge.
+- Failure: `CORRECTION_REQUIRED` on C4; at most two bounded correction/re-review loops for the same material finding.
+
+### C6 - Manual merge and baseline synchronization
+
+- State: `WAITING_DEPENDENCY`
+- Dependency: C5 approves the exact unchanged C4 head and required head-specific checks are green.
+- Owner action only: manually merge C4; autonomous merge is forbidden.
+- After merge: reverify latest `origin/main`, then update only minimum Baseline/queue facts and recommend the next bounded feature-adapter readiness task.
+- Do not select or implement a feature adapter, Auth proof of concept, Supabase client, hosted action, data action, or deployment merely because C4 is merged.
+- Stop: `AWAITING_MANUAL_MERGE` for any separate baseline-sync Draft PR, or `HUMAN_DECISION_REQUIRED` if more than one next feature seam remains materially safe.
 
 ## Queue advancement rules
 

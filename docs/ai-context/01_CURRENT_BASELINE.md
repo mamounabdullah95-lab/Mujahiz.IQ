@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-18-package-b-local-security`
+Baseline ID: `baseline-2026-08-18-package-b-complete`
 Updated: 2026-08-18
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub main: 283d4b083e6354c236932392c872ee793f0984f4, the merge of PR #142 (B4 Claim v1 local RLS/authorization implementation). Its first parent is ee2f5a5397aecb2e811175329d7bd61ea8ac3c34 and its second parent is the independently reviewed PR #142 head 5342a54b800577894ff9a23e93316a350fa15f5f. PR #141 (B4-P2 readiness) is merged as the first parent predecessor.
+- **Verified current fact:** Current GitHub `main`: `b7c83f512b337cf21f517548b724a1c5edf9d821`, the merge of PR #143 (B6 post-merge Baseline synchronization and Package B completion verification). Its approved documentation head is `ad6ca64e2a27ca358a492b084ac098bff3ff858e`; PR Gate #242 / run `32109934587` succeeded on that exact head. PR #142's independently reviewed B4 head `5342a54b800577894ff9a23e93316a350fa15f5f` remains an ancestor through merge `283d4b083e6354c236932392c872ee793f0984f4`.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -273,7 +273,7 @@ On 10 August 2026, the Product/Security/Data Owner approved [`55_PRIVILEGED_ACTO
 
 The repository has completed the local privileged foundations: identity/profile/link structure, platform-role structure, role-backed administration-access structure, security-eligibility assessment structure, `claim_security.current_privileged_actor_v1()`, private `claim_security.privileged_actor_for_profile_v1(uuid)` eligibility evaluation, and the bounded `claim_security.target_supplier_conflict_v1(uuid, uuid, uuid)` resolver. Reviewer Private-Read Substrate includes the Owner assignment queue, reviewer candidate projection/eligibility delivery, assigned-reviewer queue/detail, and exact RLS/object grants. All six Claim-v1 external commands are implemented locally; access/security administration, gateway/hosted authorization, and Production authority remain absent. Local relational eligibility is not Firebase authentication; local conflict `clear` is not Reviewer authorization.
 
-The current control-plane task is B6 — Post-merge Baseline synchronization and Package B completion verification. Package B completion becomes effective only when the B6 documentation PR is manually merged and the latest origin/main is reverified; no next implementation package is started here.
+Package B is `COMPLETE`: PR #143 merged B6, and latest `origin/main` was reverified at `b7c83f512b337cf21f517548b724a1c5edf9d821`. The next control-plane task is C1 - Backend provider abstraction readiness; C1 is documentation-only and does not start provider implementation.
 
 ### Target-Supplier conflict resolver boundary
 
@@ -434,4 +434,4 @@ PR #141 merged B4-P2 readiness and PR #142 merged B4. Read-only verification of 
 
 Firebase remains the live Production backend/auth/database/hosting authority. GitHub `main` contains the merged B4 local code/documentation state. Hosted Supabase remains unlinked, undeployed, and non-authoritative. B4 is merged; it is not deployed, hosted, or Production RLS. No Production/data/deployment impact occurred. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 
-Package B remains conditionally complete: completion becomes effective only after this B6 documentation PR is manually merged and the latest `origin/main` is reverified. No next implementation package is started by B6.
+PR #143 merged this B6 synchronization as `b7c83f512b337cf21f517548b724a1c5edf9d821`; its approved head was `ad6ca64e2a27ca358a492b084ac098bff3ff858e`, and PR Gate #242 / run `32109934587` succeeded on that exact head. Latest `origin/main` was reverified at the merge commit, so B6 and Package B are `COMPLETE`. No provider implementation, Auth change, hosted action, data action, or deployment is implied by completion.
