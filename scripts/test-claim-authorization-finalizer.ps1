@@ -299,6 +299,27 @@ try {
     Assert-CommittedCatalog -DatabaseName 'runner_test_1' -State PRE
   }
   Reset-RunnerDatabase
+  $shadowSql = @"
+create domain public.text as pg_catalog.text;
+create function public.b4_shadow_text_concat(pg_catalog.text, pg_catalog.text)
+returns pg_catalog.text language sql immutable set search_path=pg_catalog
+as `$shadow`$ select pg_catalog.concat('shadow:', `$1, `$2)::pg_catalog.text `$shadow`$;
+create operator public.|| (
+  function = public.b4_shadow_text_concat,
+  leftarg = pg_catalog.text,
+  rightarg = pg_catalog.text
+);
+"@
+  Invoke-PsqlSuccess -Label 'Create harmless public normalizer shadows' -DatabaseName 'runner_test_1' `
+    -Sql $shadowSql -Username 'supabase_admin' | Out-Null
+  $shadowProbe = @(Invoke-PsqlSuccess -Label 'Prove public operator shadow is selectable' `
+    -DatabaseName 'runner_test_1' -Username 'supabase_admin' `
+    -Sql "set search_path=public,pg_catalog; select 'left'::pg_catalog.text || 'right'::pg_catalog.text;")
+  if ($shadowProbe.Count -ne 1 -or $shadowProbe[0] -ne 'shadow:leftright') {
+    throw 'The harmless public operator shadow was not active under the adversarial search path.'
+  }
+  Add-PassedCheck
+
   Invoke-ClaimAuthorizationFinalizer -ContainerName $containerName | Out-Null
   Assert-CommittedCatalog -DatabaseName 'runner_test_1' -State POST
 

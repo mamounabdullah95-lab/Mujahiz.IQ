@@ -43,7 +43,7 @@ function Invoke-ClaimAuthorizationFinalizer {
     [pscustomobject]@{
       RelativePath = 'supabase/local-bootstrap/claim-authorization-catalog-normalization.sql'
       ContainerPath = '/workspace/supabase/local-bootstrap/claim-authorization-catalog-normalization.sql'
-      Sha256 = 'eea294d32f8813fc6d4efe543221d5b4dd4b2ab6e109461d9b18b95d89189f9d'
+      Sha256 = '5873cdab006165aa8ce4b6bf0720f4d432264ab8438dcb78e75e4ec479e2dac6'
       Kind = 'normalizer'
     },
     [pscustomobject]@{
@@ -152,6 +152,34 @@ function Invoke-ClaimAuthorizationFinalizer {
   )
   if (-not $normalizationSql.EndsWith(";`n", [System.StringComparison]::Ordinal)) {
     throw 'Claim authorization finalization requires one LF-terminated normalizer statement.'
+  }
+  $expectedBoundOperators = [ordered]@{
+    'OPERATOR(pg_catalog.||)' = 22
+    'OPERATOR(pg_catalog.=)' = 90
+    'OPERATOR(pg_catalog.>)' = 2
+  }
+  foreach ($entry in $expectedBoundOperators.GetEnumerator()) {
+    if ([regex]::Matches($normalizationSql, [regex]::Escape($entry.Key)).Count -ne $entry.Value) {
+      throw "Claim authorization finalization rejected the exact bound normalizer operator inventory: $($entry.Key)."
+    }
+  }
+  $normalizerWithoutBoundOperators = $normalizationSql
+  foreach ($operatorToken in $expectedBoundOperators.Keys) {
+    $normalizerWithoutBoundOperators = $normalizerWithoutBoundOperators.Replace($operatorToken, '')
+  }
+  if ($normalizationSql -match '::(?!pg_catalog\.)' -or
+      $normalizerWithoutBoundOperators -match '\|\||(?<![<>=!])=(?!=)|(?<![<>=])>(?!=)|(?i)\bin\s*\(') {
+    throw 'Claim authorization finalization rejected an unbound normalizer cast or operator.'
+  }
+  $normalizerBareCallTokens = @([regex]::Matches(
+      $normalizationSql, '(?im)(?<![\w.])([a-z_][a-z0-9_]*)\s*\('
+    ) | ForEach-Object { $_.Groups[1].Value.ToLowerInvariant() } | Sort-Object -Unique)
+  $expectedBareCallTokens = @(
+    'and', 'any', 'as', 'coalesce', 'exists', 'operator',
+    'relevant_roles', 'setting', 'transfer_signatures', 'values'
+  )
+  if (Compare-Object $expectedBareCallTokens $normalizerBareCallTokens -SyncWindow 0) {
+    throw 'Claim authorization finalization rejected an unqualified normalizer call token.'
   }
   $normalizationBody = $normalizationSql.Substring(0, $normalizationSql.Length - 2)
 
@@ -298,13 +326,28 @@ end
 `$b4_endpoint`$;
 
 create function pg_temp.b4_catalog_normalize()
-returns table (catalog_tuple text)
+returns table (catalog_tuple pg_catalog.text)
 language sql
 volatile
-set search_path = public, pg_catalog
+set search_path = pg_catalog
 as `$b4_normalizer`$
 $normalizationBody
 `$b4_normalizer`$;
+
+do `$b4_normalizer_config`$
+begin
+  if not exists (
+    select 1
+    from pg_catalog.pg_proc p
+    where p.oid OPERATOR(pg_catalog.=)
+          pg_catalog.to_regprocedure('pg_temp.b4_catalog_normalize()'::pg_catalog.text)
+      and p.proconfig OPERATOR(pg_catalog.=)
+          array['search_path=pg_catalog'::pg_catalog.text]::pg_catalog.text[]
+  ) then
+    raise exception 'B4_NORMALIZER_SEARCH_PATH_MISMATCH';
+  end if;
+end
+`$b4_normalizer_config`$;
 "@
 
   function New-CatalogAssertionSql {
