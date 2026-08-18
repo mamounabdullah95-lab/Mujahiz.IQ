@@ -266,12 +266,8 @@ Hard boundary:
 
 ### C1 - Provider abstraction readiness
 
-- State: `CORRECTION_REQUIRED` — Correction Loop 2 is applied on the same branch/Draft PR; the correction is limited to the C5 queue wording consistency issue. C1/C2 await final exact-head independent re-review; C3 and C4 remain blocked.
-- Dependency: satisfied; Package B remains `COMPLETE`, and verified `origin/main` is `b7c83f512b337cf21f517548b724a1c5edf9d821`.
-- Branch: `codex/backend-provider-abstraction-readiness`.
-- Draft PR: #144.
-- Previous reviewed head: `6f12545dc3b7543f244f67534c1d1d1a2184882c`.
-- Correction Loop 1: close the one High and three Medium C2 findings for notification authority granularity, machine-exact feature coverage, Firebase AI search ownership, and resolver-only errors/execution.
+- State: `COMPLETE`.
+- Evidence: PR #144 merged; approved head `e3520d5ae1c1cacedf3db60f46c6df5cf99cebe7`; merge commit `022fbc5b44377542c9e0e909eca0b32c5a93e889`; Gate #246 succeeded.
 - Objective: document the focused provider inventory, strict manifest/selection/error/no-fallback contract, Firebase parity boundary, future Supabase slot, telemetry/testability/rollback rules, and unique first implementation slice.
 - Deliverable: [`73_BACKEND_PROVIDER_ABSTRACTION_READINESS.md`](../supabase-migration/73_BACKEND_PROVIDER_ABSTRACTION_READINESS.md) plus minimum Package B/B6/Baseline synchronization.
 - Selected result: C4 remains only the provider-contract kernel, exact machine feature/provider IDs, explicit immutable all-Firebase manifest, injected implementation-reference registry, pure resolver that never invokes an implementation, five resolver-only errors, and deterministic no-fallback tests; no current service/Auth rewiring and no Supabase client.
@@ -280,23 +276,24 @@ Hard boundary:
 
 ### C2 - Independent architecture review of C1
 
-- State: `AWAITING_INDEPENDENT_REVIEW`
-- Dependency: corrected C1 Draft PR #144 with new exact head and validation evidence.
+- State: `COMPLETE`.
+- Evidence: final exact-head independent review reported 0 Critical / High / Medium / Low findings, all prior findings closed, and `APPROVE FOR MANUAL MERGE`.
 - Objective: review the exact C1 head read-only against current Firebase boundaries and merged hybrid/identity authorities, including manifest completeness, one-authority semantics, failure behavior, parity, telemetry privacy, testability, rollback, and first-slice uniqueness.
 - Pass: no Critical/High/Medium blocking finding and explicit exact-head `APPROVE FOR MANUAL MERGE`.
 - Failure: `CORRECTION_REQUIRED` on C1; at most two bounded correction/re-review loops for the same material finding.
 
 ### C3 - Manual merge gate for C1
 
-- State: `WAITING_DEPENDENCY`
-- Dependency: C2 approves the exact unchanged C1 head and required head-specific checks are green.
-- Owner action only: manually merge C1; autonomous merge is forbidden.
-- Success: latest `origin/main` contains the approved C1 contract and is reverified before C4.
+- State: `COMPLETE`.
+- Evidence: Owner manually merged PR #144; latest `origin/main` reverified at `022fbc5b44377542c9e0e909eca0b32c5a93e889`.
 
 ### C4 - First bounded provider-contract implementation
 
-- State: `WAITING_DEPENDENCY`
-- Dependency: C1 is independently approved and manually merged through C3 on reverified latest `origin/main`.
+- State: `AWAITING_INDEPENDENT_REVIEW`.
+- Dependency: satisfied; C1/C2/C3 are complete on reverified `origin/main` `022fbc5b44377542c9e0e909eca0b32c5a93e889`.
+- Branch: `codex/provider-contract-kernel`.
+- Draft PR: #145.
+- Initial implementation head: `db08e657dbec49cd1b3813ad99a61b50ee94215e`.
 - Objective: implement only the provider-contract kernel, explicit immutable all-Firebase manifest, exact injected-registry resolver, safe resolver errors, and deterministic no-fallback tests selected by C1.
 - Prohibited: service/Auth rewiring, Supabase SDK/client/config/access, provider environment override, Firebase behavior/config change, data access/mutation, deployment, migration, RLS/grants, Storage, RFQ, messaging, notifications, or feature enablement.
 - Required validation: focused provider tests, current runtime-policy tests, TypeScript check, Production build, static no-fallback/prohibited-scope/sensitive-value checks, and exact diff review.
