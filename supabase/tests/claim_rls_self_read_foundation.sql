@@ -9,21 +9,23 @@ select has_table('public', 'supplier_ownership_claims', 'Claim base table exists
 select has_view('public', 'supplier_ownership_claims_claimant_v1', 'Claimant-v1 minimized projection exists');
 select ok((select relrowsecurity from pg_catalog.pg_class where oid = 'public.supplier_ownership_claims'::regclass), 'Claim base table has RLS enabled');
 select ok((select relforcerowsecurity from pg_catalog.pg_class where oid = 'public.supplier_ownership_claims'::regclass), 'Claim base table has FORCE ROW LEVEL SECURITY enabled');
-select is((select count(*) from pg_catalog.pg_policy where polrelid = 'public.supplier_ownership_claims'::regclass), 1::bigint, 'Claim base table has exactly one RLS policy');
+select is((select count(*) from pg_catalog.pg_policy where polrelid = 'public.supplier_ownership_claims'::regclass), case when :'claim_post_b4_replay'::boolean then 10 else 1 end::bigint, 'Claim base table has the expected exact RLS policy count');
 select is((
   select polname || ':' || polcmd::text || ':' || polpermissive::text || ':' || pg_catalog.pg_get_expr(polqual, polrelid)
   from pg_catalog.pg_policy
   where polrelid = 'public.supplier_ownership_claims'::regclass
-), 'supplier_ownership_claims_claimant_self_select:r:true:(claimant_user_profile_id = claim_security.current_claim_user_profile_id())', 'sole policy is the exact permissive claimant self-select predicate');
+    and polname = 'supplier_ownership_claims_claimant_self_select'
+), 'supplier_ownership_claims_claimant_self_select:r:true:(claimant_user_profile_id = claim_security.current_claim_user_profile_id())', 'claimant policy is the exact permissive self-select predicate');
 select is((
   select string_agg(r.rolname, ',' order by r.rolname)
   from pg_catalog.pg_policy p
   cross join lateral unnest(p.polroles) policy_role(oid)
   join pg_catalog.pg_roles r on r.oid = policy_role.oid
   where p.polrelid = 'public.supplier_ownership_claims'::regclass
-), 'mujahiz_claim_runtime', 'sole Claim policy applies only to the dedicated runtime role');
-select ok((select polwithcheck is null from pg_catalog.pg_policy where polrelid = 'public.supplier_ownership_claims'::regclass), 'Claim self-read policy has no WITH CHECK expression');
-select is((select count(*) from pg_catalog.pg_policy where polrelid = 'public.supplier_ownership_claims'::regclass and polcmd in ('a', 'w', 'd')), 0::bigint, 'no Claim mutation policy exists');
+    and p.polname = 'supplier_ownership_claims_claimant_self_select'
+), 'mujahiz_claim_runtime', 'claimant policy applies only to the dedicated runtime role');
+select ok((select polwithcheck is null from pg_catalog.pg_policy where polrelid = 'public.supplier_ownership_claims'::regclass and polname = 'supplier_ownership_claims_claimant_self_select'), 'Claim self-read policy has no WITH CHECK expression');
+select is((select count(*) from pg_catalog.pg_policy where polrelid = 'public.supplier_ownership_claims'::regclass and polcmd in ('a', 'w', 'd')), case when :'claim_post_b4_replay'::boolean then 3 else 0 end::bigint, 'Claim has the expected exact mutation-policy count');
 select ok(not exists (
   select 1
   from pg_catalog.pg_policy p
@@ -56,19 +58,19 @@ select is((
   from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'claim_security'
-), 2::bigint, 'self-read slice adds no authorization routine');
+), case when :'claim_post_b4_replay'::boolean then 9 else 2 end::bigint, 'Claim security boundary has the expected exact routine count');
 select is((
   select count(*)
   from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'claim_security' and p.prosecdef
-), 0::bigint, 'Claim security boundary contains no SECURITY DEFINER routine');
+), case when :'claim_post_b4_replay'::boolean then 5 else 0 end::bigint, 'Claim security boundary has the expected exact SECURITY DEFINER count');
 select is((
   select count(*)
   from pg_catalog.pg_class c
   join pg_catalog.pg_namespace n on n.oid = c.relnamespace
   where n.nspname in ('public', 'internal') and c.relkind in ('r', 'p')
-), 22::bigint, 'self-read slice adds no physical table');
+), case when :'claim_post_b4_replay'::boolean then 24 else 22 end::bigint, 'public/internal schemas have the expected exact physical-table count');
 select is((
   select count(*)
   from pg_catalog.pg_class c

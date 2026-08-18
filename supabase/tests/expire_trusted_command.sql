@@ -30,12 +30,14 @@ select is((select count(*) from pg_catalog.pg_policy p
   join pg_catalog.pg_class c on c.oid=p.polrelid
   join pg_catalog.pg_namespace n on n.oid=c.relnamespace
   where n.nspname='public' and c.relname='supplier_ownership_claims'
-    and p.polcmd='r'),3::bigint,'exactly three Claim SELECT policies remain');
+    and p.polcmd='r'),case when :'claim_post_b4_replay'::boolean then 7 else 3 end::bigint,
+  'Claim has the expected exact SELECT-policy count');
 select is((select count(*) from pg_catalog.pg_policy p
   join pg_catalog.pg_class c on c.oid=p.polrelid
   join pg_catalog.pg_namespace n on n.oid=c.relnamespace
   where n.nspname='public' and c.relname='supplier_ownership_claims'
-    and p.polcmd<>'r'),0::bigint,'no Claim mutation policy is added');
+    and p.polcmd<>'r'),case when :'claim_post_b4_replay'::boolean then 3 else 0 end::bigint,
+  'Claim has the expected exact mutation-policy count');
 
 create function pg_temp.expire_id(p integer) returns uuid
 language sql immutable set search_path=pg_catalog

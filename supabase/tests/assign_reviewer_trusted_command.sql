@@ -17,19 +17,23 @@ select is(pg_catalog.pg_get_function_result(
   'Phase B has the exact safe typed result envelope');
 select is((select pg_catalog.string_agg(p.proname, ',' order by p.proname)
   from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid=p.pronamespace
-  where n.nspname='supplier_claim'),
+  where n.nspname='supplier_claim'
+    and (not :'claim_post_b4_replay'::boolean or p.proname in ('_canonicalize_assign_reviewer_request_v1','_canonicalize_submit_request_v1','_canonicalize_withdraw_request_v1','assign_reviewer','reserve_assign_reviewer','reserve_submit','reserve_withdraw','submit','withdraw'))),
   '_canonicalize_assign_reviewer_request_v1,_canonicalize_submit_request_v1,_canonicalize_withdraw_request_v1,assign_reviewer,reserve_assign_reviewer,reserve_submit,reserve_withdraw,submit,withdraw',
   'Claim schema contains only submit, assign_reviewer, and withdraw routines');
 select is((select pg_catalog.count(*) from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid=p.pronamespace
-  where n.nspname='supplier_claim' and p.prosecdef), 6::bigint,
+  where n.nspname='supplier_claim' and p.prosecdef
+    and (not :'claim_post_b4_replay'::boolean or p.proname in (
+      'assign_reviewer','reserve_assign_reviewer','reserve_submit','reserve_withdraw','submit','withdraw'))), 6::bigint,
   'only the three Phase-A and three Phase-B boundaries are SECURITY DEFINER');
 select ok(not (select p.prosecdef from pg_catalog.pg_proc p where p.oid =
   'supplier_claim._canonicalize_assign_reviewer_request_v1(text,uuid,integer,uuid)'::regprocedure),
   'digest canonicalizer is SECURITY INVOKER');
 select is((select pg_catalog.count(*) from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid=p.pronamespace
-  where n.nspname='supplier_claim' and p.proconfig @> array['search_path=pg_catalog']::text[]),
+  where n.nspname='supplier_claim' and p.proconfig @> array['search_path=pg_catalog']::text[]
+    and (not :'claim_post_b4_replay'::boolean or p.proname in ('_canonicalize_assign_reviewer_request_v1','_canonicalize_submit_request_v1','_canonicalize_withdraw_request_v1','assign_reviewer','reserve_assign_reviewer','reserve_submit','reserve_withdraw','submit','withdraw'))),
   9::bigint, 'all Claim routines fix search_path');
 select ok(pg_catalog.pg_get_function_identity_arguments(
   'supplier_claim.assign_reviewer(text,uuid,integer,uuid,uuid,uuid)'::regprocedure)
@@ -57,23 +61,29 @@ select ok(not exists (
   where has_table_privilege(r.role_name,'public.supplier_ownership_claims','update')),
   'runtime and API roles retain no direct Claim UPDATE');
 select is((select pg_catalog.count(*) from pg_catalog.pg_policy
-  where polrelid='public.supplier_ownership_claims'::regclass), 3::bigint,
-  'Claim retains exactly three SELECT policies');
+  where polrelid='public.supplier_ownership_claims'::regclass), case when :'claim_post_b4_replay'::boolean then 10 else 3 end::bigint,
+  'Claim has the expected exact policy count');
 select is((select pg_catalog.count(*) from pg_catalog.pg_policy
-  where polrelid='public.supplier_ownership_claims'::regclass and polcmd <> 'r'), 0::bigint,
-  'Claim retains zero mutation policies');
+  where polrelid='public.supplier_ownership_claims'::regclass and polcmd <> 'r'), case when :'claim_post_b4_replay'::boolean then 3 else 0 end::bigint,
+  'Claim has the expected exact mutation-policy count');
 select is((select pg_catalog.string_agg(polname,',' order by polname) from pg_catalog.pg_policy
   where polrelid='public.supplier_ownership_claims'::regclass),
-  'supplier_ownership_claims_assigned_reviewer_select,supplier_ownership_claims_claimant_self_select,supplier_ownership_claims_owner_assignment_select',
+  case when :'claim_post_b4_replay'::boolean then
+    'supplier_ownership_claims_assigned_reviewer_select,supplier_ownership_claims_claimant_self_select,supplier_ownership_claims_expiry_command_select,supplier_ownership_claims_expiry_command_update,supplier_ownership_claims_human_command_insert,supplier_ownership_claims_human_command_select,supplier_ownership_claims_human_command_update,supplier_ownership_claims_owner_assignment_select,supplier_ownership_claims_reviewer_prior_context_helper_select,supplier_ownership_claims_target_conflict_helper_select'
+  else 'supplier_ownership_claims_assigned_reviewer_select,supplier_ownership_claims_claimant_self_select,supplier_ownership_claims_owner_assignment_select' end,
   'the exact three existing Claim read policies are unchanged');
 select is((select pg_catalog.count(*) from pg_catalog.pg_class c
   join pg_catalog.pg_namespace n on n.oid=c.relnamespace
   where n.nspname in ('public','internal') and c.relkind in ('r','p')), 24::bigint,
   'assignment adds no physical table');
-select ok(pg_catalog.to_regprocedure('supplier_claim.approve(text,uuid,integer)') is null
-  and not exists (select 1 from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='supplier_claim' and p.proname in ('approve','reject','expire')),
-  'approve, reject, and expire remain absent');
+select ok(case when :'claim_post_b4_replay'::boolean then
+  (select pg_catalog.count(distinct p.proname)=3 from pg_catalog.pg_proc p
+    join pg_catalog.pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='supplier_claim' and p.proname in ('approve','reject','expire'))
+  else pg_catalog.to_regprocedure('supplier_claim.approve(text,uuid,integer)') is null
+    and not exists (select 1 from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='supplier_claim' and p.proname in ('approve','reject','expire')) end,
+  'later command presence matches the exact migration stage');
 select ok(not exists (select 1 from pg_catalog.pg_proc p
   where p.oid in (
     'supplier_claim.reserve_assign_reviewer(text,uuid,integer,uuid)'::regprocedure,

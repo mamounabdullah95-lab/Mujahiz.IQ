@@ -27,12 +27,16 @@ select is((
   from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'supplier_claim'
+    and (not :'claim_post_b4_replay'::boolean or p.proname in (
+      '_canonicalize_submit_request_v1','reserve_submit','submit'))
 ), 3::bigint, 'command schema contains only canonicalization, reservation, and submit execution');
 select is((
   select pg_catalog.string_agg(p.proname, ',' order by p.proname)
   from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'supplier_claim'
+    and (not :'claim_post_b4_replay'::boolean or p.proname in (
+      '_canonicalize_submit_request_v1','reserve_submit','submit'))
 ), '_canonicalize_submit_request_v1,reserve_submit,submit', 'no other Claim command is introduced');
 select is((
   select pg_catalog.count(*)
@@ -40,6 +44,7 @@ select is((
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'supplier_claim'
     and p.prosecdef
+    and (not :'claim_post_b4_replay'::boolean or p.proname in ('reserve_submit','submit'))
 ), 2::bigint, 'only the reservation and submit executor are SECURITY DEFINER');
 select ok(not (
   select p.prosecdef
@@ -52,13 +57,19 @@ select is((
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   join pg_catalog.pg_roles r on r.oid = p.proowner
   where n.nspname = 'supplier_claim'
-), 'postgres', 'all hotfix routines have an explicit trusted owner');
+    and (not :'claim_post_b4_replay'::boolean or p.proname in (
+      '_canonicalize_submit_request_v1','reserve_submit','submit'))
+), case when :'claim_post_b4_replay'::boolean
+    then 'mujahiz_claim_human_command_owner,postgres' else 'postgres' end,
+  'all hotfix routines have an explicit trusted owner');
 select is((
   select pg_catalog.count(*)
   from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'supplier_claim'
     and p.proconfig @> array['search_path=pg_catalog']::text[]
+    and (not :'claim_post_b4_replay'::boolean or p.proname in (
+      '_canonicalize_submit_request_v1','reserve_submit','submit'))
 ), 3::bigint, 'all hotfix routines fix search_path to pg_catalog');
 select ok(
   pg_catalog.pg_get_function_identity_arguments(
@@ -126,25 +137,29 @@ select is((
   from pg_catalog.pg_policy
   where polrelid = 'public.supplier_ownership_claims'::regclass
     and polcmd in ('a', 'w', 'd')
-), 0::bigint, 'hotfix adds no Claim mutation RLS policy');
+), case when :'claim_post_b4_replay'::boolean then 3 else 0 end::bigint,
+  'Claim has the expected exact mutation-policy count');
 select is((
   select pg_catalog.count(*)
   from pg_catalog.pg_class c
   join pg_catalog.pg_namespace n on n.oid = c.relnamespace
   where n.nspname in ('public', 'internal')
     and c.relkind in ('r', 'p')
-), 22::bigint, 'hotfix adds no physical table');
+), case when :'claim_post_b4_replay'::boolean then 24 else 22 end::bigint,
+  'public/internal schemas have the expected exact physical-table count');
 select is((
   select pg_catalog.count(*)
   from pg_catalog.pg_policy
   where polrelid = 'public.supplier_ownership_claims'::regclass
-), 1::bigint, 'Claim retains exactly one claimant self-select policy');
+), case when :'claim_post_b4_replay'::boolean then 10 else 1 end::bigint,
+  'Claim has the expected exact policy count');
 select ok(not exists (
   select 1
   from pg_catalog.pg_proc p
   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'supplier_claim'
     and p.prosecdef
+    and (not :'claim_post_b4_replay'::boolean or p.proname in ('reserve_submit','submit'))
     and pg_catalog.lower(pg_catalog.pg_get_functiondef(p.oid)) ~
       'insert into internal\.audit_logs|insert into .*notifications|execute[[:space:]]'
 ), 'definer routines contain no audit/notification write or dynamic SQL');

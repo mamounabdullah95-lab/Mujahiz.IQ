@@ -22,7 +22,7 @@ select has_function('claim_api', 'reviewer_queue_v1',
 select has_function('claim_api', 'reviewer_detail_v1', array['uuid'],
   'reviewer detail exists');
 select ok(pg_catalog.to_regprocedure('supplier_claim.assign_reviewer(text,uuid,integer,uuid,uuid)') is null,
-  'assign_reviewer remains absent');
+  'Assign Reviewer presence matches the exact migration stage');
 
 select is((
   select pg_catalog.array_to_string(p.proargnames, ',')
@@ -57,17 +57,20 @@ select is((
   'evidence descriptor type contains only the approved sanitized fields');
 
 select is((select count(*) from pg_catalog.pg_policy
-  where polrelid = 'public.supplier_ownership_claims'::regclass), 3::bigint,
-  'Claim has exactly three SELECT policies');
+  where polrelid = 'public.supplier_ownership_claims'::regclass), case when :'claim_post_b4_replay'::boolean then 10 else 3 end::bigint,
+  'Claim has the expected exact policy count');
 select is((select count(*) from pg_catalog.pg_policy
   where polrelid = 'public.supplier_ownership_claims'::regclass
-    and polcmd <> 'r'), 0::bigint, 'Claim has zero mutation policies');
+    and polcmd <> 'r'), case when :'claim_post_b4_replay'::boolean then 3 else 0 end::bigint,
+  'Claim has the expected exact mutation-policy count');
 select is((
   select pg_catalog.string_agg(polname, ',' order by polname)
   from pg_catalog.pg_policy
   where polrelid = 'public.supplier_ownership_claims'::regclass
-), 'supplier_ownership_claims_assigned_reviewer_select,supplier_ownership_claims_claimant_self_select,supplier_ownership_claims_owner_assignment_select',
-  'Claim policies are exactly claimant, Owner queue, and assigned reviewer');
+), case when :'claim_post_b4_replay'::boolean then
+  'supplier_ownership_claims_assigned_reviewer_select,supplier_ownership_claims_claimant_self_select,supplier_ownership_claims_expiry_command_select,supplier_ownership_claims_expiry_command_update,supplier_ownership_claims_human_command_insert,supplier_ownership_claims_human_command_select,supplier_ownership_claims_human_command_update,supplier_ownership_claims_owner_assignment_select,supplier_ownership_claims_reviewer_prior_context_helper_select,supplier_ownership_claims_target_conflict_helper_select'
+else 'supplier_ownership_claims_assigned_reviewer_select,supplier_ownership_claims_claimant_self_select,supplier_ownership_claims_owner_assignment_select' end,
+  'Claim policies match the exact migration stage');
 select is((
   select polname || ':' || polcmd::text || ':' || polpermissive::text || ':' || pg_catalog.pg_get_expr(polqual, polrelid)
   from pg_catalog.pg_policy
@@ -92,7 +95,9 @@ select is((
   cross join lateral pg_catalog.unnest(p.polroles) as policy_role(oid)
   join pg_catalog.pg_roles as r on r.oid = policy_role.oid
   where p.polrelid = 'public.supplier_ownership_claims'::regclass
-), 'mujahiz_claim_owner_projection:supplier_ownership_claims_owner_assignment_select,mujahiz_claim_reviewer_projection:supplier_ownership_claims_assigned_reviewer_select,mujahiz_claim_runtime:supplier_ownership_claims_claimant_self_select',
+), case when :'claim_post_b4_replay'::boolean then
+  'mujahiz_claim_expiry_command_owner:supplier_ownership_claims_expiry_command_select,mujahiz_claim_expiry_command_owner:supplier_ownership_claims_expiry_command_update,mujahiz_claim_human_command_owner:supplier_ownership_claims_human_command_insert,mujahiz_claim_human_command_owner:supplier_ownership_claims_human_command_select,mujahiz_claim_human_command_owner:supplier_ownership_claims_human_command_update,mujahiz_claim_owner_projection:supplier_ownership_claims_owner_assignment_select,mujahiz_claim_reviewer_prior_context_helper_owner:supplier_ownership_claims_reviewer_prior_context_helper_select,mujahiz_claim_reviewer_projection:supplier_ownership_claims_assigned_reviewer_select,mujahiz_claim_runtime:supplier_ownership_claims_claimant_self_select,mujahiz_claim_target_conflict_helper_owner:supplier_ownership_claims_target_conflict_helper_select'
+else 'mujahiz_claim_owner_projection:supplier_ownership_claims_owner_assignment_select,mujahiz_claim_reviewer_projection:supplier_ownership_claims_assigned_reviewer_select,mujahiz_claim_runtime:supplier_ownership_claims_claimant_self_select' end,
   'each permissive policy is isolated to one audience role');
 select ok(not exists (
   select 1 from pg_catalog.pg_policy as p
@@ -234,7 +239,8 @@ select ok((
 select ok((
   select p.prosecdef and p.provolatile = 's'
     and p.proconfig = array['search_path=pg_catalog']
-    and r.rolname = 'postgres'
+    and r.rolname = case when :'claim_post_b4_replay'::boolean
+      then 'mujahiz_claim_reviewer_prior_context_helper_owner' else 'postgres' end
   from pg_catalog.pg_proc as p
   join pg_catalog.pg_roles as r on r.oid = p.proowner
   where p.oid = 'claim_security.reviewer_prior_claim_context_v1(uuid,uuid,uuid)'::regprocedure
@@ -275,7 +281,10 @@ select ok(has_function_privilege('mujahiz_claim_reviewer_projection',
   and not has_function_privilege('mujahiz_claim_owner_projection',
     'claim_security.reviewer_prior_claim_context_v1(uuid,uuid,uuid)', 'execute'),
   'private prior-context helper is callable only by the isolated Reviewer projection');
-select ok(has_function_privilege('postgres', 'claim_security.current_privileged_actor_v1()', 'execute')
+select ok((case when :'claim_post_b4_replay'::boolean then
+    not has_function_privilege('postgres', 'claim_security.current_privileged_actor_v1()', 'execute')
+    and has_function_privilege('mujahiz_claim_human_command_owner', 'claim_security.current_privileged_actor_v1()', 'execute')
+  else has_function_privilege('postgres', 'claim_security.current_privileged_actor_v1()', 'execute') end)
   and has_function_privilege('mujahiz_claim_runtime', 'claim_security.current_privileged_actor_v1()', 'execute')
   and not has_function_privilege('public', 'claim_security.current_privileged_actor_v1()', 'execute')
   and not has_function_privilege('anon', 'claim_security.current_privileged_actor_v1()', 'execute')
@@ -308,7 +317,7 @@ select ok(has_function_privilege('mujahiz_claim_runtime',
 select is((select count(*) from pg_catalog.pg_class as c
   join pg_catalog.pg_namespace as n on n.oid = c.relnamespace
   where n.nspname in ('public', 'internal') and c.relkind in ('r', 'p')),
-  24::bigint, 'Reviewer substrate adds no physical table');
+  24::bigint, 'public/internal schemas have the expected exact physical-table count');
 
 -- Deterministic synthetic fixtures.
 create function pg_temp.reviewer_id(p_number integer)

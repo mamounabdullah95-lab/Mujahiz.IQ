@@ -2,6 +2,9 @@
 param([string]$PostgresImage='supabase/postgres:17.6.1.064')
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+. (Join-Path $PSScriptRoot 'claim-owner-role-provisioner.ps1')
+. (Join-Path $PSScriptRoot 'claim-authorization-finalizer.ps1')
+$b4MigrationName='20260817000100_claim_rls_authorization_foundation.sql'
 $name="mujahiz-expire-race-$PID-$([guid]::NewGuid().ToString('N').Substring(0,8))"
 $started=$false
 $checks=[Collections.Generic.List[string]]::new()
@@ -121,10 +124,15 @@ try{
   if(-not$ready){throw 'postgres not ready'}
   $boot="create schema if not exists extensions;create extension if not exists pgtap with schema extensions;do "+'$x$'+" begin if not exists(select 1 from pg_roles where rolname='anon')then create role anon nologin noinherit;end if;if not exists(select 1 from pg_roles where rolname='authenticated')then create role authenticated nologin noinherit;end if;if not exists(select 1 from pg_roles where rolname='service_role')then create role service_role nologin noinherit;end if;end "+'$x$'+";"
   Q $boot bootstrap|Out-Null
+  Invoke-ClaimOwnerRoleProvisioner -ContainerName $name | Out-Null
   Get-ChildItem (Join-Path $root 'supabase/migrations') -File -Filter '*.sql'|Sort-Object Name|ForEach-Object{
     $old=$ErrorActionPreference;$ErrorActionPreference='Continue'
     $out=@(docker exec $name psql -X -v ON_ERROR_STOP=1 -q -U postgres -d postgres -f "/workspace/supabase/migrations/$($_.Name)" 2>&1)
-    $code=$LASTEXITCODE;$ErrorActionPreference=$old;if($code){throw "migration failed: $($_.Name) $out"}}
+    $code=$LASTEXITCODE;$ErrorActionPreference=$old;if($code){throw "migration failed: $($_.Name) $out"}
+    if($_.Name -eq $b4MigrationName){
+      Invoke-ClaimAuthorizationFinalizer -ContainerName $name | Out-Null
+    }
+  }
   $source=[IO.File]::ReadAllText((Join-Path $root 'supabase/tests/approve_trusted_command.sql'))
   $begin=$source.IndexOf('create function pg_temp.approve_id');$end=$source.IndexOf('-- Successful approval paths')
   $helpers=$source.Substring($begin,$end-$begin).Replace('pg_temp.','public.')

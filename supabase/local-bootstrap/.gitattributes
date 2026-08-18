@@ -1,0 +1,4 @@
+claim-projection-helper-acl-finalization.sql text eol=lf
+claim-routine-ownership-finalization.sql text eol=lf
+claim-authorization-catalog-normalization.sql text eol=lf
+claim-authorization-catalog-allowlist.txt text eol=lf
