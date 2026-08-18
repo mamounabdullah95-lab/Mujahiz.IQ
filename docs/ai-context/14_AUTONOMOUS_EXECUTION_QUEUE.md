@@ -289,8 +289,11 @@ Hard boundary:
 
 ### C4 - First bounded provider-contract implementation
 
-- State: `IN_PROGRESS`.
+- State: `AWAITING_INDEPENDENT_REVIEW`.
 - Dependency: satisfied; C1/C2/C3 are complete on reverified `origin/main` `022fbc5b44377542c9e0e909eca0b32c5a93e889`.
+- Branch: `codex/provider-contract-kernel`.
+- Draft PR: #145.
+- Initial implementation head: `db08e657dbec49cd1b3813ad99a61b50ee94215e`.
 - Objective: implement only the provider-contract kernel, explicit immutable all-Firebase manifest, exact injected-registry resolver, safe resolver errors, and deterministic no-fallback tests selected by C1.
 - Prohibited: service/Auth rewiring, Supabase SDK/client/config/access, provider environment override, Firebase behavior/config change, data access/mutation, deployment, migration, RLS/grants, Storage, RFQ, messaging, notifications, or feature enablement.
 - Required validation: focused provider tests, current runtime-policy tests, TypeScript check, Production build, static no-fallback/prohibited-scope/sensitive-value checks, and exact diff review.
