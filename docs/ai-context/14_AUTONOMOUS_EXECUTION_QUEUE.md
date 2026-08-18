@@ -269,6 +269,7 @@ Hard boundary:
 - State: `AWAITING_INDEPENDENT_REVIEW`
 - Dependency: satisfied; Package B is `COMPLETE`, and verified `origin/main` is `b7c83f512b337cf21f517548b724a1c5edf9d821`.
 - Branch: `codex/backend-provider-abstraction-readiness`.
+- Draft PR: #144.
 - Objective: document the focused provider inventory, strict manifest/selection/error/no-fallback contract, Firebase parity boundary, future Supabase slot, telemetry/testability/rollback rules, and unique first implementation slice.
 - Deliverable: [`73_BACKEND_PROVIDER_ABSTRACTION_READINESS.md`](../supabase-migration/73_BACKEND_PROVIDER_ABSTRACTION_READINESS.md) plus minimum Package B/B6/Baseline synchronization.
 - Selected result: the first future implementation slice is only the provider-contract kernel, explicit immutable all-Firebase manifest, exact resolver, normalized resolver errors, and deterministic no-fallback tests; no current service/Auth rewiring and no Supabase client.
