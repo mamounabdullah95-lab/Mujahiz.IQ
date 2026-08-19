@@ -1,6 +1,6 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-19-package-d-d8-supplier-directory-firebase-adapter`
+Baseline ID: `baseline-2026-08-19-package-d-d9-supplier-taxonomy-dictionary-readiness`
 Updated: 2026-08-19
 Canonical Production URL: `https://mujahiz.com`
 
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `586a1922e71c91110177567b9a5e4ff96187d68c`, the manual merge of PR #150. PR #150 merged the D7 `supplier_directory` Firebase adapter readiness contract after independent exact-head review of `b3aff41e5e7d9561dc4870f033f1d2f7ec390caa` found 0 Critical, 0 High, and 0 Medium findings; PR Gate #257 passed on that reviewed head. D1-D7 are complete. D8 is the current draft implementation branch and does not assert a GitHub `main` merge, deployment, or Production change.
+- **Verified current fact:** Current GitHub `main`: `56de751ef80325e443aecbf07393e4737626158d`, the manual merge of PR #151. PR #151 merged D8 implementation head `65d7d199c38c628ef25e6fc31ec5e5bb95deaca9` after independent exact-head parity/security review found 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings; PR Gate #258 / run `32262254095` passed on that exact head. D1-D8 are complete. D9 is the current documentation-only `supplier_taxonomy_dictionary` Firebase Adapter Readiness task and does not implement an adapter, deploy, or change Production.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -475,4 +475,6 @@ Configured Firebase behavior remains exact: queries have no explicit `orderBy` a
 
 `isFirebaseConfigured === false` continues to select intentional Demo/local application behavior before provider resolution. Demo/local pagination uses numeric offsets and `updatedAt` string descending order; Demo candidates have no ten-category cap, 100-result cap, or `canReceiveRfqs` requirement. These differences are not backend fallback or provider parity. The shipped `supplier_directory` authority remains Firebase; future unsupported/misconfigured selection must fail closed, with no Supabase networking, fallback, probing, dual-read, or dual-write.
 
-D7 was documentation/readiness only and is `COMPLETE / MERGED`. D8 is the current Draft implementation on `codex/d8-supplier-directory-firebase-adapter`: its configured-Firebase path routes only this bounded read seam through the Provider Contract to a Firebase adapter, while Demo/local remains the intentional pre-resolution application mode. Firebase remains the selected provider; there is no Supabase runtime capability, deployment, Production/TEST data action, Auth, Rules/index, manifest, SQL/RLS, migration, or hosted change. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`. Exact next gate: independent exact-head D8 parity and security review before manual merge.
+D7 is `COMPLETE / MERGED`. D8 implementation head `65d7d199c38c628ef25e6fc31ec5e5bb95deaca9` passed independent exact-head review with 0 Critical / High / Medium / Low / Nit findings and PR Gate #258, then PR #151 was manually merged as current GitHub `main` `56de751ef80325e443aecbf07393e4737626158d`. The configured-Firebase path routes only the bounded `supplier_directory` read seam through the Provider Contract to its Firebase adapter; Demo/local remains intentional pre-resolution application mode. GitHub `main` contains this code, but Firebase Production was not deployed.
+
+D9 selects the next smallest dependency-safe read seam as `supplier_taxonomy_dictionary` readiness, bounded to `listMaterialTerms()` only. The contract is recorded in `76_SUPPLIER_TAXONOMY_DICTIONARY_FIREBASE_ADAPTER_READINESS.md`; admin-only suggestion reads and all taxonomy/dictionary writes remain excluded. D9 is readiness-only and is `AWAITING_INDEPENDENT_REVIEW`; it adds no adapter, provider-manifest change, Supabase capability, Auth, Rules/index, SQL/RLS, migration, hosted action, Production/TEST data action, or deployment. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`. Exact next gate: independent exact-head D9 readiness review before any runtime implementation.
