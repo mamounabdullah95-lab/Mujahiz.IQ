@@ -376,15 +376,28 @@ Hard boundary:
 
 ### D6 - Post-merge Package D synchronization
 
-- State: `IN_PROGRESS / CURRENT`.
+- State: `COMPLETE`.
 - Objective: synchronize Baseline and queue state after the verified D4/D5/manual-merge cycle, preserve environment distinctions, and select—but not implement—the next bounded task.
-- Current verified GitHub `main`: `852ec65370698d667b59d9d9cc4a7c8caef4377e`.
+- Merged result: PR #149 at current verified GitHub `main` `1c9b49ef74a92ccc652a65e30ef8b2f57bb44216`.
 - Firebase remains the live Production backend/Auth/database/hosting authority; PR #148 did not deploy Firebase. GitHub `main` and Firebase live Production must not be assumed identical. Supabase remains local-only, unlinked, and undeployed. No migration, seed, backfill, RLS/Auth bridge, data copy, cutover, or Production/TEST action occurred.
 - Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 - The D5 Low/Nit observations remain non-blocking technical debt only; no cleanup task is created.
 - Candidate inspected: `supplier_directory` Firebase adapter readiness, supported by the existing read seams in `src/services/firestore.ts`; it is the smallest dependency-safe read-oriented candidate after the completed `user_profiles_access` seam.
 - Candidate deferred: `supplierWorkspace.ts` adapter work, because its Firebase write path requires an explicit ownership/security contract. Auth, RLS, migration, hosted Supabase, write-heavy ownership/security work, and provider cutover remain ineligible under current gates.
-- Planned/next: `D7 — supplier_directory Firebase Adapter Readiness`. This is a readiness-only selection and is not started by D6.
+- Selected next task: `D7 — supplier_directory Firebase Adapter Readiness`. D6 did not authorize its implementation.
+
+### D7 - `supplier_directory` Firebase adapter readiness
+
+- State: `AWAITING_INDEPENDENT_REVIEW`.
+- Verified starting `origin/main`: `1c9b49ef74a92ccc652a65e30ef8b2f57bb44216`, the manual merge of PR #149 and completion of D6.
+- Deliverable: [`75_SUPPLIER_DIRECTORY_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/75_SUPPLIER_DIRECTORY_FIREBASE_ADAPTER_READINESS.md).
+- Selected bounded seam: exactly the current read-only `listSuppliers()`, `listSuppliersPage(...)`, `listSupplierCandidates(...)`, and `getSupplier(...)` functions over the Firestore `suppliers` collection.
+- Exact configured behavior: approved full list; approved snapshot-cursor pagination with default 50/current caller 100 and heuristic `hasMore`; first-ten-category `array-contains-any` candidates limited to 100 before exact approved/RFQ-capable application filtering; one-record profile read with no approval filter; implicit Firestore document-path ordering; shared `{ id: snapshot.id, ...data }` mapping; no function-level cache; and propagated service errors.
+- Demo/local boundary: explicit application mode before provider resolution, with numeric-offset pagination, local `updatedAt` ordering, broader category input, no candidate result cap, and no `canReceiveRfqs` requirement. It is not a provider, fallback, or Firebase parity claim.
+- Provider boundary: `supplier_directory` already exists and remains Firebase-selected. Future unsupported/misconfigured selection must fail closed; no Supabase import/networking, provider probing, fallback, dual-read, or dual-write is authorized.
+- Excluded: every Supplier write, submission, duplicate-index workflow, ownership/Claim path, review, taxonomy, AI intent, private catalog, RFQ lifecycle, Auth, Rules/index, manifest, SQL/RLS, hosted/data, migration, and deployment change.
+- Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+- Next gate: independent exact-head D7 readiness review. Do not implement or manually merge from D7 until that review passes and the required manual sequence is separately satisfied.
 
 ## Queue advancement rules
 
