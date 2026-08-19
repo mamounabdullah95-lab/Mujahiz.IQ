@@ -1,12 +1,12 @@
 # `user_profiles_access` Firebase adapter readiness
 
-Status: **D1 readiness contract remediated after D2 findings; Draft PR requires a new exact-head D2 re-review before D3; no adapter or runtime rewiring authorized**
+Status: **D1 readiness contract merged; D2 passed; D3 complete; D4 adapter implementation merged; no Production deployment authorized or implied**
 
 Date: 2026-08-19
 
 ## 1. Verified scope and starting point
 
-This D1 contract covers only the existing bounded read seam at [`src/services/adminUsers.ts`](../../src/services/adminUsers.ts). The verified starting point is `origin/main` `f8dff27c69c05f567920f97e471dc4a06ed68c9b`, the manual merge of PR #146 and the completed Package C synchronization.
+This D1 contract covers only the existing bounded read seam at [`src/services/adminUsers.ts`](../../src/services/adminUsers.ts). The D1 starting point was `origin/main` `f8dff27c69c05f567920f97e471dc4a06ed68c9b`, the manual merge of PR #146 and completed Package C synchronization. The current verified `origin/main` is `852ec65370698d667b59d9d9cc4a7c8caef4377e`, the manual merge of PR #148, whose D4 implementation head was `5d8834f30535b5de74bb3ec80cc70110576287fe`.
 
 This task defines readiness and parity boundaries only. It does not add a Firebase adapter, Supabase adapter, provider routing, Auth behavior, dependency, configuration, network capability, migration, data operation, or deployment. It does not claim that this one read service represents the full `user_profiles_access` aggregate or every administrative user capability: role/status administration, activation/deactivation, access grants/credits, administrative commands, and other user-management operations remain outside this seam.
 
@@ -97,9 +97,10 @@ D4 must preserve this current Firestore tie-breaking rule; D1 does not add, alte
 
 ## 7. Stop point and impact
 
-- D1 result: readiness contract recorded; implementation deferred.
-- Production/data impact: **NONE**. No Firebase, Supabase, Production, TEST, or hosted data was accessed or changed.
+- D1/D2/D3 result: readiness contract passed review and was manually merged through PR #147.
+- D4 result: the Firebase adapter implementation was merged through PR #148; D5 exact-head review and validation passed. This document remains the readiness authority for the bounded seam and does not authorize a new adapter or provider cutover.
+- Production/data impact: **NONE**. Firebase Production was not deployed or changed; no Firebase, Supabase, Production, TEST, or hosted data was accessed or changed by this synchronization.
 - Deployment impact: **NONE**. No Hosting, Rules, indexes, Functions, Storage, Auth, DNS, migration, seed, backfill, or configuration action occurred.
-- Explicit boundary: no adapter and no Supabase runtime implementation.
+- Explicit boundary: GitHub `main` contains D4 code, but GitHub `main` and Firebase live Production must not be assumed identical. Supabase remains local-only and undeployed.
 
-Exact stop point: complete D1 remediation, focused validation, commit, push, and Draft PR update; stop before the required D2 exact-head re-review, D3, D4, adapter implementation, provider rewiring, merge, or deployment.
+Historical D1 stop point: complete D1 remediation, focused validation, commit, push, and Draft PR update; stop before the required D2 exact-head re-review, D3, D4, adapter implementation, provider rewiring, merge, or deployment. The current D6 stop point is recorded in the authoritative Baseline and queue; D4 is merged, while Production deployment and the next D7 readiness task remain out of scope.
