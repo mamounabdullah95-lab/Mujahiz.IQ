@@ -315,7 +315,7 @@ Hard boundary:
 - After merge: latest `origin/main` was reverified at `f8dff27c69c05f567920f97e471dc4a06ed68c9b`; minimum Baseline/queue facts were synchronized and the next bounded feature-adapter readiness task was selected.
 - Do not select or implement a feature adapter, Auth proof of concept, Supabase client, hosted action, data action, or deployment merely because C4 is merged.
 - Next task: `D1 — user_profiles_access Firebase Adapter Readiness`, centered on the existing read-only `src/services/adminUsers.ts` facade. This is not implementation authorization. `supplierWorkspace.ts` was inspected and deferred because its Firebase write path requires an explicit ownership/security contract.
-- Stop: C6 synchronization is complete on verified `origin/main` `f8dff27c69c05f567920f97e471dc4a06ed68c9b`.
+- Stop: C6 synchronization is complete on verified `origin/main` `f8dff27c69c05f567920f97e471dc4a06ed68c9b`. This is historical Package C state; the current verified `origin/main` is recorded below.
 
 ## Package D - Feature adapter readiness
 
@@ -329,36 +329,62 @@ Hard boundary:
 
 ### D1 - `user_profiles_access` Firebase adapter readiness
 
-- State: `AWAITING_INDEPENDENT_REVIEW`.
-- Dependency: C6 is complete and `origin/main` is verified at `f8dff27c69c05f567920f97e471dc4a06ed68c9b`.
+- State: `COMPLETE`.
+- Dependency: C6 was complete and its readiness contract was merged through PR #147.
 - Deliverable: [`74_USER_PROFILES_ACCESS_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/74_USER_PROFILES_ACCESS_FIREBASE_ADAPTER_READINESS.md).
 - Verified seam: bounded read-only `src/services/adminUsers.ts`; Firebase `users` collection, `createdAt desc`, document-path (`__name__`) descending tie order, limit 500, `{ ...data, uid: documentId }`, pass-through ordinary optional fields, exclusion of documents without `createdAt`, propagated Firebase errors, and explicit `isFirebaseConfigured === false -> listUsers()` Demo/local behavior. This service is not the entire user-management aggregate or every administrative capability.
-- D2 result: an independent review of D1 occurred and found four Medium findings. Their remediation is recorded on Draft PR #147; every remediation commit requires a new exact-head D2 re-review.
+- D2 result: the remediated D1 contract passed exact-head review with no blocking findings.
 - Prohibited: Firebase adapter, Supabase adapter, runtime routing, Auth change, dependency/configuration change, data access/mutation, migration, deployment, D3, and D4 implementation.
-- Stop: keep Draft; D1 is not eligible for manual merge until D2 re-review passes with no High/Medium findings.
 
 ### D2 - Independent readiness review and correction loop for D1
 
-- State: `AWAITING_INDEPENDENT_REVIEW`.
+- State: `COMPLETE / PASSED`.
+- Current result: the remediated exact-head review passed with no High/Medium findings. The earlier four-Medium result below is historical and was superseded by that re-review.
 - Dependency: the remediated exact head of Draft PR #147 and focused documentation/provider-policy checks.
 - Review focus: authoritative baseline/queue state; current Firebase query semantics including missing `createdAt`, document-path tie ordering, and the 500-record boundary; D4's Firebase-only extraction scope; bounded-read-seam wording; and unchanged no-runtime/no-Supabase/no-data boundary.
 - Pass criterion: no High/Medium findings and explicit exact-head approval for manual merge.
-- Current result: the first D2 review reported four Medium findings; the remediated head requires a new exact-head D2 review. Do not merge from that review.
+- Historical first-review result: the first D2 review reported four Medium findings; those findings were remediated and this result was superseded by the successful exact-head re-review above.
 - Failure state: `CORRECTION_REQUIRED` on D1; re-review the new exact head after each correction.
-- Success state: `AWAITING_MANUAL_MERGE` for D1.
+- Historical success state before merge: `AWAITING_MANUAL_MERGE` for D1; superseded by the completed D3 gate.
 
 ### D3 - Manual merge gate for approved D1 readiness contract
 
-- Blocked dependency: a new exact-head D2 re-review must pass with no High/Medium findings, and required head-specific checks must be green.
-- Owner action only: manually merge Draft PR #147 only after that D2 approval; autonomous merge is forbidden.
-- Do not start D4 before the successful manual merge is verified on `main`.
+- State: `COMPLETE`.
+- Result: PR #147 was manually merged before D4; autonomous merge remained forbidden.
 
 ### D4 - `user_profiles_access` extracted Firebase adapter implementation
 
-- State: not started; blocked on successful D3 manual merge.
-- Scope after D3 only: compare the current inline Firebase behavior with extracted Firebase adapter behavior while the provider remains `firebase`.
+- State: `COMPLETE / MERGED`.
+- Merged implementation head: `5d8834f30535b5de74bb3ec80cc70110576287fe`; merge PR: #148; verified GitHub `main`: `852ec65370698d667b59d9d9cc4a7c8caef4377e`.
+- Scope completed: compare the current inline Firebase behavior with extracted Firebase adapter behavior while the provider remains `firebase`.
 - Explicitly excluded: Supabase successor/cutover, Firebase-vs-Supabase parity, Auth bridge, hosted Supabase, migration, and dual-provider runtime.
-- The bounded seam is read-only `src/services/adminUsers.ts`; it does not represent aggregate-wide role/status administration, activation/deactivation, access grants/credits, administrative commands, or other user-management operations.
+- The bounded seam remains read-only `src/services/adminUsers.ts`; it does not represent aggregate-wide role/status administration, activation/deactivation, access grants/credits, administrative commands, or other user-management operations.
+
+### D5 - Exact-head review and validation for D4
+
+- State: `COMPLETE / PASSED`.
+- Exact reviewed head: `5d8834f30535b5de74bb3ec80cc70110576287fe`.
+- Review result: 0 Critical, 0 High, 0 Medium; one non-blocking Low composition-coupling observation and one non-blocking Nit about an unused type-only `AppUser` import. Neither required remediation.
+- Separated evidence: D4 focused 6/6; provider contract 8/8; Firebase runtime/provider policy 4/4; Demo/runtime policy 6/6; full repository unit gate 195/195 across 33 test files; TypeScript build passed; Vite production build passed; PR Gate #254 passed on the exact head.
+- These categories are intentionally not summed into a synthetic total.
+
+### Manual D4 merge gate
+
+- State: `COMPLETE`.
+- PR #148 was manually merged to `main`; the merge is verified by the `852ec653...` commit with D4 head `5d8834f...` as a parent.
+- GitHub `main` contains D4 code. This does not assert Firebase Production deployment or runtime parity with live Hosting.
+
+### D6 - Post-merge Package D synchronization
+
+- State: `IN_PROGRESS / CURRENT`.
+- Objective: synchronize Baseline and queue state after the verified D4/D5/manual-merge cycle, preserve environment distinctions, and select—but not implement—the next bounded task.
+- Current verified GitHub `main`: `852ec65370698d667b59d9d9cc4a7c8caef4377e`.
+- Firebase remains the live Production backend/Auth/database/hosting authority; PR #148 did not deploy Firebase. GitHub `main` and Firebase live Production must not be assumed identical. Supabase remains local-only, unlinked, and undeployed. No migration, seed, backfill, RLS/Auth bridge, data copy, cutover, or Production/TEST action occurred.
+- Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+- The D5 Low/Nit observations remain non-blocking technical debt only; no cleanup task is created.
+- Candidate inspected: `supplier_directory` Firebase adapter readiness, supported by the existing read seams in `src/services/firestore.ts`; it is the smallest dependency-safe read-oriented candidate after the completed `user_profiles_access` seam.
+- Candidate deferred: `supplierWorkspace.ts` adapter work, because its Firebase write path requires an explicit ownership/security contract. Auth, RLS, migration, hosted Supabase, write-heavy ownership/security work, and provider cutover remain ineligible under current gates.
+- Planned/next: `D7 — supplier_directory Firebase Adapter Readiness`. This is a readiness-only selection and is not started by D6.
 
 ## Queue advancement rules
 
