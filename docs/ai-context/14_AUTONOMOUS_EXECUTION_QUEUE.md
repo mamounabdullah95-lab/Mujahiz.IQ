@@ -309,13 +309,33 @@ Hard boundary:
 
 ### C6 - Manual merge and baseline synchronization
 
-- State: `AWAITING_MANUAL_MERGE`
+- State: `COMPLETE`.
 - Dependency: C5 approved the exact unchanged C4 head and required head-specific checks are green; the owner merge is verified.
 - Owner action only: manually merge C4; autonomous merge is forbidden.
-- After merge: latest `origin/main` was reverified at `ea8e308f4b5276b04c3ecd644d7ecf27f5356a96`; minimum Baseline/queue facts were synchronized and the next bounded feature-adapter readiness task was selected.
+- After merge: latest `origin/main` was reverified at `f8dff27c69c05f567920f97e471dc4a06ed68c9b`; minimum Baseline/queue facts were synchronized and the next bounded feature-adapter readiness task was selected.
 - Do not select or implement a feature adapter, Auth proof of concept, Supabase client, hosted action, data action, or deployment merely because C4 is merged.
 - Next task: `D1 — user_profiles_access Firebase Adapter Readiness`, centered on the existing read-only `src/services/adminUsers.ts` facade. This is not implementation authorization. `supplierWorkspace.ts` was inspected and deferred because its Firebase write path requires an explicit ownership/security contract.
-- Stop: `AWAITING_MANUAL_MERGE` for this separate documentation/control-plane PR. Package C must not become fully `COMPLETE` until this synchronization PR is manually merged and latest `main` is reverified.
+- Stop: C6 synchronization is complete on verified `origin/main` `f8dff27c69c05f567920f97e471dc4a06ed68c9b`.
+
+## Package D - Feature adapter readiness
+
+Package objective: define one feature-specific readiness contract at a time before any adapter or runtime provider rewiring, preserving Firebase as the sole current Production authority and keeping Demo/local behavior distinct from provider selection.
+
+Hard boundary:
+
+- no adapter implementation, service rewiring, Auth change, provider switch, Supabase SDK/client/network capability, hosted action, data action, migration, or deployment;
+- one selected provider per feature with no silent fallback, probing, dual-read, or dual-write; and
+- no Demo/local data used to mask a real selected-provider failure.
+
+### D1 - `user_profiles_access` Firebase adapter readiness
+
+- State: `AWAITING_MANUAL_MERGE`.
+- Dependency: C6 is complete and `origin/main` is verified at `f8dff27c69c05f567920f97e471dc4a06ed68c9b`.
+- Deliverable: [`74_USER_PROFILES_ACCESS_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/74_USER_PROFILES_ACCESS_FIREBASE_ADAPTER_READINESS.md).
+- Verified seam: read-only `src/services/adminUsers.ts`; Firebase `users` collection, `createdAt desc`, limit 500, `{ ...data, uid: documentId }`, pass-through optional fields, propagated Firebase errors, and explicit `isFirebaseConfigured === false -> listUsers()` Demo/local behavior.
+- Required future D4 coverage: shape, ordering, limit, empty results, optional fields, Firebase errors, Demo/local behavior, unsupported/misconfigured provider failure, no Supabase networking while Firebase is selected, and no silent fallback.
+- Prohibited: Firebase adapter, Supabase adapter, runtime routing, Auth change, dependency/configuration change, data access/mutation, migration, deployment, D2, and D4 implementation.
+- Stop: `AWAITING_MANUAL_MERGE` for this D1 documentation/control-plane PR; keep Draft and do not begin D2.
 
 ## Queue advancement rules
 
