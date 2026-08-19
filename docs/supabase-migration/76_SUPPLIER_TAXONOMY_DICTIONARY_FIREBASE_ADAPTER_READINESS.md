@@ -79,7 +79,7 @@ This is a Firebase-to-Firebase read extraction boundary only. It is not the enti
 
 ### Wider taxonomy read deferred: `listRegistrationSectors()`
 
-`listRegistrationSectors()` remains part of the wider Firebase-authoritative `supplier_taxonomy_dictionary` feature, but is explicitly excluded from the bounded D9 `listMaterialTerms()` seam and deferred for separate readiness. Its configured path is `getDoc(doc(db, "publicConfig", "registration"))`; the current repository Rules contain no explicit `/publicConfig` match, and the service catches configured read failures and returns active, ordered `defaultRegistrationSectors`. That distinct path/access and fallback/default contract requires its own bounded review. D9 does not move or implement `listRegistrationSectors()`.
+`listRegistrationSectors()` remains part of the wider Firebase-authoritative `supplier_taxonomy_dictionary` feature, but is explicitly excluded from the bounded D9 `listMaterialTerms()` seam and deferred for separate readiness. Its configured path is `getDoc(doc(db, "publicConfig", "registration"))`. The active repository Firebase configuration points to `firestore.rbac.rules`, which explicitly matches `/publicConfig/{configId}` with `allow read: if true` and Owner-only writes; registration-sector deferral is therefore not caused by missing Rules coverage. The service catches configured read failures and returns active, ordered `defaultRegistrationSectors`. Its distinct record path, configured-read behavior, fallback/default behavior, and ordering contract require separate parity treatment. D9 does not move or implement `listRegistrationSectors()`.
 
 ## 5. Excluded seams
 
