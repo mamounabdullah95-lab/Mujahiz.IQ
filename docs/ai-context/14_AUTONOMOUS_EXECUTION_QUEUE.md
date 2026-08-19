@@ -1,6 +1,6 @@
 # Autonomous Execution Queue
 
-Updated: 2026-08-18
+Updated: 2026-08-19
 Package A setup base: `bd33fb3d3b73f87a775d5f2375194d2acf67b6be`
 Verified Package A closure base: `63ebaf2972350848dbe494908efd6756c070802a` (merge of PR #136)
 
@@ -329,13 +329,36 @@ Hard boundary:
 
 ### D1 - `user_profiles_access` Firebase adapter readiness
 
-- State: `AWAITING_MANUAL_MERGE`.
+- State: `AWAITING_INDEPENDENT_REVIEW`.
 - Dependency: C6 is complete and `origin/main` is verified at `f8dff27c69c05f567920f97e471dc4a06ed68c9b`.
 - Deliverable: [`74_USER_PROFILES_ACCESS_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/74_USER_PROFILES_ACCESS_FIREBASE_ADAPTER_READINESS.md).
-- Verified seam: read-only `src/services/adminUsers.ts`; Firebase `users` collection, `createdAt desc`, limit 500, `{ ...data, uid: documentId }`, pass-through optional fields, propagated Firebase errors, and explicit `isFirebaseConfigured === false -> listUsers()` Demo/local behavior.
-- Required future D4 coverage: shape, ordering, limit, empty results, optional fields, Firebase errors, Demo/local behavior, unsupported/misconfigured provider failure, no Supabase networking while Firebase is selected, and no silent fallback.
-- Prohibited: Firebase adapter, Supabase adapter, runtime routing, Auth change, dependency/configuration change, data access/mutation, migration, deployment, D2, and D4 implementation.
-- Stop: `AWAITING_MANUAL_MERGE` for this D1 documentation/control-plane PR; keep Draft and do not begin D2.
+- Verified seam: bounded read-only `src/services/adminUsers.ts`; Firebase `users` collection, `createdAt desc`, document-path (`__name__`) descending tie order, limit 500, `{ ...data, uid: documentId }`, pass-through ordinary optional fields, exclusion of documents without `createdAt`, propagated Firebase errors, and explicit `isFirebaseConfigured === false -> listUsers()` Demo/local behavior. This service is not the entire user-management aggregate or every administrative capability.
+- D2 result: an independent review of D1 occurred and found four Medium findings. Their remediation is recorded on Draft PR #147; every remediation commit requires a new exact-head D2 re-review.
+- Prohibited: Firebase adapter, Supabase adapter, runtime routing, Auth change, dependency/configuration change, data access/mutation, migration, deployment, D3, and D4 implementation.
+- Stop: keep Draft; D1 is not eligible for manual merge until D2 re-review passes with no High/Medium findings.
+
+### D2 - Independent readiness review and correction loop for D1
+
+- State: `AWAITING_INDEPENDENT_REVIEW`.
+- Dependency: the remediated exact head of Draft PR #147 and focused documentation/provider-policy checks.
+- Review focus: authoritative baseline/queue state; current Firebase query semantics including missing `createdAt`, document-path tie ordering, and the 500-record boundary; D4's Firebase-only extraction scope; bounded-read-seam wording; and unchanged no-runtime/no-Supabase/no-data boundary.
+- Pass criterion: no High/Medium findings and explicit exact-head approval for manual merge.
+- Current result: the first D2 review reported four Medium findings; the remediated head requires a new exact-head D2 review. Do not merge from that review.
+- Failure state: `CORRECTION_REQUIRED` on D1; re-review the new exact head after each correction.
+- Success state: `AWAITING_MANUAL_MERGE` for D1.
+
+### D3 - Manual merge gate for approved D1 readiness contract
+
+- Blocked dependency: a new exact-head D2 re-review must pass with no High/Medium findings, and required head-specific checks must be green.
+- Owner action only: manually merge Draft PR #147 only after that D2 approval; autonomous merge is forbidden.
+- Do not start D4 before the successful manual merge is verified on `main`.
+
+### D4 - `user_profiles_access` extracted Firebase adapter implementation
+
+- State: not started; blocked on successful D3 manual merge.
+- Scope after D3 only: compare the current inline Firebase behavior with extracted Firebase adapter behavior while the provider remains `firebase`.
+- Explicitly excluded: Supabase successor/cutover, Firebase-vs-Supabase parity, Auth bridge, hosted Supabase, migration, and dual-provider runtime.
+- The bounded seam is read-only `src/services/adminUsers.ts`; it does not represent aggregate-wide role/status administration, activation/deactivation, access grants/credits, administrative commands, or other user-management operations.
 
 ## Queue advancement rules
 
