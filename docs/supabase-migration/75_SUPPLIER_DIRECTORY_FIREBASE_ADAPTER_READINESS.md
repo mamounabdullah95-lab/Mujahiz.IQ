@@ -1,12 +1,12 @@
 # `supplier_directory` Firebase adapter readiness
 
-Status: **D7 readiness contract complete; awaiting independent exact-head readiness review; no adapter implementation authorized**
+Status: **D7 readiness contract complete, independently reviewed, and manually merged through PR #150; D8 Firebase-only implementation is Draft on `codex/d8-supplier-directory-firebase-adapter` and requires independent exact-head review before manual merge**
 
 Date: 2026-08-19
 
 ## 1. Verified starting point and authority
 
-D7 started from clean `origin/main` `1c9b49ef74a92ccc652a65e30ef8b2f57bb44216`, the manual merge of PR #149 and completion of D6 Package D synchronization. Firebase remains the live Production backend, Auth, database, and hosting authority. GitHub `main` and Firebase live Production must not be assumed identical. Supabase remains local-only, unlinked, undeployed, and non-authoritative.
+D7 started from clean `origin/main` `1c9b49ef74a92ccc652a65e30ef8b2f57bb44216`, the manual merge of PR #149 and completion of D6 Package D synchronization. Its independent exact-head review passed on `b3aff41e5e7d9561dc4870f033f1d2f7ec390caa` with 0 Critical, 0 High, and 0 Medium findings; PR Gate #257 passed, and PR #150 was manually merged as `586a1922e71c91110177567b9a5e4ff96187d68c`. Firebase remains the live Production backend, Auth, database, and hosting authority. GitHub `main` and Firebase live Production must not be assumed identical. Supabase remains local-only, unlinked, undeployed, and non-authoritative.
 
 The shipped provider vocabulary already contains `supplier_directory`, and the immutable shipped manifest selects `firebase`. The merged aggregate definition includes approved Supplier records, public/profile reads, approved-profile maintenance, duplicate identity state, and directory candidate queries. D7 selects only the smallest coherent current **read** subset. It does not change that wider aggregate or authorize a partial provider cutover.
 

@@ -17,10 +17,18 @@ import {
   writeBatch,
   arrayUnion,
   type DocumentData,
-  type QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "../config/firebase";
 import * as demo from "./localDemo";
+import {
+  createFirebaseSupplierDirectoryAdapter,
+  type SupplierDirectoryImplementation,
+} from "./providers/supplierDirectoryFirebaseAdapter";
+import {
+  resolveProviderImplementation,
+  SHIPPED_PROVIDER_MANIFEST,
+  type ProviderImplementationRegistry,
+} from "./providers/providerContract";
 import {
   approveSupplierSubmissionTrusted,
   decideSupplierSubmissionTrusted,
@@ -79,6 +87,30 @@ const auditLogsRef = collection(db, "auditLogs");
 const supplierFeedbackRef = collection(db, "supplierFeedback");
 const materialTermsRef = collection(db, "materialTerms");
 const termSuggestionsRef = collection(db, "termSuggestions");
+
+const supplierDirectoryImplementations: ProviderImplementationRegistry<SupplierDirectoryImplementation> = new Map([
+  ["supplier_directory", new Map([
+    ["firebase", createFirebaseSupplierDirectoryAdapter({
+      db,
+      collection,
+      doc,
+      where,
+      startAfter,
+      limit,
+      query,
+      getDocs,
+      getDoc,
+    })],
+  ])],
+]);
+
+function resolveSupplierDirectoryImplementation() {
+  return resolveProviderImplementation({
+    manifest: SHIPPED_PROVIDER_MANIFEST,
+    feature: "supplier_directory",
+    registry: supplierDirectoryImplementations,
+  });
+}
 
 function withId<T>(snapshot: { id: string; data: () => DocumentData }) {
   return {
@@ -416,44 +448,23 @@ export async function listSuppliers() {
   if (!isFirebaseConfigured) {
     return demo.demoListSuppliers();
   }
-  const snapshot = await getDocs(query(suppliersRef, where("status", "==", "approved")));
-  return snapshot.docs.map((item) => withId<Supplier>(item));
+  return resolveSupplierDirectoryImplementation().listSuppliers();
 }
 
-export type SupplierPageCursor = QueryDocumentSnapshot<DocumentData> | number | null;
+export type SupplierPageCursor = import("./providers/supplierDirectoryFirebaseAdapter").SupplierDirectoryCursor;
 
 export async function listSuppliersPage(pageSize = 50, cursor: SupplierPageCursor = null) {
   if (!isFirebaseConfigured) {
     return demo.demoListSuppliersPage(pageSize, typeof cursor === "number" ? cursor : 0);
   }
-  const baseQuery = [
-    where("status", "==", "approved"),
-    ...(cursor && typeof cursor !== "number" ? [startAfter(cursor)] : []),
-    limit(pageSize),
-  ];
-  const snapshot = await getDocs(query(suppliersRef, ...baseQuery));
-  return {
-    items: snapshot.docs.map((item) => withId<Supplier>(item)),
-    cursor: snapshot.docs.length ? snapshot.docs[snapshot.docs.length - 1] : null,
-    hasMore: snapshot.docs.length === pageSize,
-  };
+  return resolveSupplierDirectoryImplementation().listSuppliersPage(pageSize, cursor);
 }
 
 export async function listSupplierCandidates(categories: string[]) {
   if (!isFirebaseConfigured) {
     return demo.demoListSupplierCandidates(categories);
   }
-  if (!categories.length) {
-    return [];
-  }
-  const snapshot = await getDocs(query(
-    suppliersRef,
-    where("categories", "array-contains-any", categories.slice(0, 10)),
-    limit(100),
-  ));
-  return snapshot.docs
-    .map((item) => withId<Supplier>(item))
-    .filter((item) => item.status === "approved" && item.canReceiveRfqs === true);
+  return resolveSupplierDirectoryImplementation().listSupplierCandidates(categories);
 }
 
 export async function listMaterialTerms() {
@@ -598,8 +609,7 @@ export async function getSupplier(supplierId: string) {
   if (!isFirebaseConfigured) {
     return demo.demoGetSupplier(supplierId);
   }
-  const snapshot = await getDoc(doc(suppliersRef, supplierId));
-  return snapshot.exists() ? withId<Supplier>(snapshot) : null;
+  return resolveSupplierDirectoryImplementation().getSupplier(supplierId);
 }
 
 export async function updateApprovedSupplier(supplierId: string, actorId: string, supplierData: SupplierDraft) {

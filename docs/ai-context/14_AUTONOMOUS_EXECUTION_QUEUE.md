@@ -388,8 +388,9 @@ Hard boundary:
 
 ### D7 - `supplier_directory` Firebase adapter readiness
 
-- State: `AWAITING_INDEPENDENT_REVIEW`.
+- State: `COMPLETE / MERGED`.
 - Verified starting `origin/main`: `1c9b49ef74a92ccc652a65e30ef8b2f57bb44216`, the manual merge of PR #149 and completion of D6.
+- Review and merge result: independent exact-head review of `b3aff41e5e7d9561dc4870f033f1d2f7ec390caa` found 0 Critical, 0 High, and 0 Medium findings; PR Gate #257 passed; PR #150 was manually merged as `586a1922e71c91110177567b9a5e4ff96187d68c`.
 - Deliverable: [`75_SUPPLIER_DIRECTORY_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/75_SUPPLIER_DIRECTORY_FIREBASE_ADAPTER_READINESS.md).
 - Selected bounded seam: exactly the current read-only `listSuppliers()`, `listSuppliersPage(...)`, `listSupplierCandidates(...)`, and `getSupplier(...)` functions over the Firestore `suppliers` collection.
 - Exact configured behavior: approved full list; approved snapshot-cursor pagination with default 50/current caller 100 and heuristic `hasMore`; first-ten-category `array-contains-any` candidates limited to 100 before exact approved/RFQ-capable application filtering; one-record profile read with no approval filter; implicit Firestore document-path ordering; shared `{ id: snapshot.id, ...data }` mapping; no function-level cache; and propagated service errors.
@@ -397,7 +398,15 @@ Hard boundary:
 - Provider boundary: `supplier_directory` already exists and remains Firebase-selected. Future unsupported/misconfigured selection must fail closed; no Supabase import/networking, provider probing, fallback, dual-read, or dual-write is authorized.
 - Excluded: every Supplier write, submission, duplicate-index workflow, ownership/Claim path, review, taxonomy, AI intent, private catalog, RFQ lifecycle, Auth, Rules/index, manifest, SQL/RLS, hosted/data, migration, and deployment change.
 - Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
-- Next gate: independent exact-head D7 readiness review. Do not implement or manually merge from D7 until that review passes and the required manual sequence is separately satisfied.
+- D7 was readiness-only and made no runtime or hosted change. Its completion authorizes only the separately bounded D8 implementation below.
+
+### D8 - `supplier_directory` extracted Firebase adapter implementation
+
+- State: `DRAFT / IMPLEMENTATION COMPLETE` on `codex/d8-supplier-directory-firebase-adapter`; it is not merged or deployed.
+- Scope: route only `listSuppliers()`, `listSuppliersPage(...)`, `listSupplierCandidates(...)`, and `getSupplier(...)` through the existing Provider Contract with `supplier_directory` selected as `firebase`, to a bounded Firebase adapter. The explicit unconfigured Firebase branch remains Demo/local application mode before provider resolution.
+- Required preservation: no explicit Firebase order, raw Firebase snapshot pagination cursor, numeric Demo cursor ignored by configured Firebase, exact full-page `hasMore` heuristic, first-ten category cap, 100-result pre-filter limit, exact approved/RFQ-capable candidate filter, no approval filter on one-record reads, and stored-data `id` overwrite mapping.
+- Excluded and unchanged: provider manifest, Supabase runtime/networking, Auth, Rules/indexes, Supplier writes, SQL/RLS, migrations, data actions, hosted actions, and deployment.
+- Next gate: independent exact-head D8 Firebase adapter parity and security review before manual merge.
 
 ## Queue advancement rules
 
