@@ -343,7 +343,7 @@ Hard boundary:
 - Dependency: the remediated exact head of Draft PR #147 and focused documentation/provider-policy checks.
 - Review focus: authoritative baseline/queue state; current Firebase query semantics including missing `createdAt`, document-path tie ordering, and the 500-record boundary; D4's Firebase-only extraction scope; bounded-read-seam wording; and unchanged no-runtime/no-Supabase/no-data boundary.
 - Pass criterion: no High/Medium findings and explicit exact-head approval for manual merge.
-- Current result: the first D2 review reported four Medium findings; the remediated head requires a new exact-head D2 review. Do not merge from that review.
+- Historical first-review result: the first D2 review reported four Medium findings; those findings were remediated and this result was superseded by the successful exact-head re-review above.
 - Failure state: `CORRECTION_REQUIRED` on D1; re-review the new exact head after each correction.
 - Historical success state before merge: `AWAITING_MANUAL_MERGE` for D1; superseded by the completed D3 gate.
 
