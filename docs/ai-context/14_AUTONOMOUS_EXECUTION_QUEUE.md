@@ -411,7 +411,7 @@ Hard boundary:
 
 ### D9 - `supplier_taxonomy_dictionary` Firebase adapter readiness
 
-- State: `AWAITING_INDEPENDENT_REVIEW`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Verified starting GitHub `main`: `56de751ef80325e443aecbf07393e4737626158d`, the manual merge of PR #151 after exact-head D8 approval and PR Gate #258 success.
 - Deliverable: [`76_SUPPLIER_TAXONOMY_DICTIONARY_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/76_SUPPLIER_TAXONOMY_DICTIONARY_FIREBASE_ADAPTER_READINESS.md).
 - Candidate result: the smallest dependency-safe seam is exactly `listMaterialTerms()` under existing feature ID `supplier_taxonomy_dictionary`. It reads active `materialTerms`, limits configured Firebase custom records to 500, preserves native query order and stored-`id` overwrite mapping, then merges repository defaults with exact replacement/append behavior.
@@ -419,9 +419,20 @@ Hard boundary:
 - Demo/local boundary: explicit application mode before provider resolution; it merges local active terms with repository defaults without the Firebase 500-record cap and is not provider fallback.
 - Aggregate boundary: Firebase remains authoritative for the full taxonomy/dictionary feature. Admin-only suggestion reads, captured query examples/creator IDs, suggestion writes/moderation/audit, categories/settings, registration sectors, and AI intent parsing remain excluded. A later Firebase read extraction would not be a provider cutover or mixed authority.
 - Deferred candidates: reviews (three audiences and cross-feature moderation effects), feedback (private/Admin lifecycle), favorites (private read/write ownership), managed content/config (heterogeneous record families and incomplete current Rules coverage), operational reporting (cross-aggregate caches/consistency), audit evidence (high sensitivity), and AI intent (not a datastore read seam and separately gated capability).
-- Prohibited: runtime adapter or service rewiring, manifest change, Supabase client/networking, Auth, Rules/indexes, SQL/RLS, migration, Production/TEST data, hosted action, deployment, Ready transition, or merge.
+- Review and merge result: head `12d1a7b1bceccd0eb64721579261d145a58553ed`; independent exact-head review found 0 Critical / 0 High / 0 Medium / 0 Low / 0 Nit; PR Gate #261 / run `32273398751` succeeded; PR #152 was manually merged as GitHub `main` `c19b87532026d1ab5dba49fc664b4fc52ba5c6ad`.
+- Production boundary: Firebase Production was not deployed by D9.
 - Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
-- Exact next gate: independent exact-head D9 readiness review before any runtime implementation.
+- D9 authorizes only the separately bounded D10 implementation below.
+
+### D10 - `supplier_taxonomy_dictionary` extracted Firebase adapter implementation
+
+- State: `IN IMPLEMENTATION; AWAITING_INDEPENDENT_EXACT-HEAD_REVIEW_AFTER_COMPLETION`.
+- Verified starting GitHub `main`: `c19b87532026d1ab5dba49fc664b4fc52ba5c6ad`, the manual merge of PR #152.
+- Scope: route only configured `listMaterialTerms()` through the existing Provider Contract feature `supplier_taxonomy_dictionary` to a Firebase-only adapter. Demo/local remains explicit application mode before provider resolution.
+- Required preservation: exact `materialTerms` query with `status == "active"` and limit 500; no explicit order, cursor, pagination, sorting, retries, or fallbacks; `{ id: snapshot.id, ...snapshot.data() }` mapping; real `mergeMaterialTerms(...)` defaults/replacement/append behavior; and unchanged error propagation.
+- Excluded and unchanged: registration sectors, suggestions, taxonomy writes/audit, manifest, Supabase runtime/networking, Auth, Rules/indexes, SQL/RLS, migrations, Production/TEST data, hosted actions, and deployment.
+- Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+- Exact next gate: independent exact-head D10 parity/security review before manual merge.
 
 ## Queue advancement rules
 

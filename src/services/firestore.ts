@@ -25,6 +25,10 @@ import {
   type SupplierDirectoryImplementation,
 } from "./providers/supplierDirectoryFirebaseAdapter";
 import {
+  createFirebaseSupplierTaxonomyDictionaryAdapter,
+  type SupplierTaxonomyDictionaryImplementation,
+} from "./providers/supplierTaxonomyDictionaryFirebaseAdapter";
+import {
   resolveProviderImplementation,
   SHIPPED_PROVIDER_MANIFEST,
   type ProviderImplementationRegistry,
@@ -45,7 +49,6 @@ import {
   sourceTypes,
   supplierCategories,
 } from "../data/constants";
-import { mergeMaterialTerms } from "../data/materialTerms";
 import type {
   AccessCredit,
   AppUser,
@@ -104,11 +107,32 @@ const supplierDirectoryImplementations: ProviderImplementationRegistry<SupplierD
   ])],
 ]);
 
+const supplierTaxonomyDictionaryImplementations: ProviderImplementationRegistry<SupplierTaxonomyDictionaryImplementation> = new Map([
+  ["supplier_taxonomy_dictionary", new Map([
+    ["firebase", createFirebaseSupplierTaxonomyDictionaryAdapter({
+      db,
+      collection,
+      where,
+      limit,
+      query,
+      getDocs,
+    })],
+  ])],
+]);
+
 function resolveSupplierDirectoryImplementation() {
   return resolveProviderImplementation({
     manifest: SHIPPED_PROVIDER_MANIFEST,
     feature: "supplier_directory",
     registry: supplierDirectoryImplementations,
+  });
+}
+
+function resolveSupplierTaxonomyDictionaryImplementation() {
+  return resolveProviderImplementation({
+    manifest: SHIPPED_PROVIDER_MANIFEST,
+    feature: "supplier_taxonomy_dictionary",
+    registry: supplierTaxonomyDictionaryImplementations,
   });
 }
 
@@ -471,8 +495,7 @@ export async function listMaterialTerms() {
   if (!isFirebaseConfigured) {
     return demo.demoListMaterialTerms();
   }
-  const snapshot = await getDocs(query(materialTermsRef, where("status", "==", "active"), limit(500)));
-  return mergeMaterialTerms(snapshot.docs.map((item) => withId<MaterialTerm>(item)));
+  return resolveSupplierTaxonomyDictionaryImplementation().listMaterialTerms();
 }
 
 export async function recordTermSuggestions(

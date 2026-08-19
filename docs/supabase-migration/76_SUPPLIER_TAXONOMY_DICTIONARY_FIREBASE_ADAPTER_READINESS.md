@@ -1,8 +1,14 @@
 # `supplier_taxonomy_dictionary` Firebase adapter readiness
 
-Status: **D9 readiness complete; awaiting independent exact-head review before any runtime implementation**
+Status: **D9 COMPLETE / REVIEWED / MANUALLY MERGED; D10 implementation in progress and awaiting independent exact-head review after completion**
 
 Date: 2026-08-19
+
+## D9 merge and D10 implementation state
+
+D9 head `12d1a7b1bceccd0eb64721579261d145a58553ed` received independent exact-head review with 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings. PR Gate #261 / run `32273398751` succeeded, and PR #152 was manually merged as GitHub `main` `c19b87532026d1ab5dba49fc664b4fc52ba5c6ad`.
+
+D10 is the separate implementation task permitted by that merged readiness contract. It is bounded to extracting only configured `listMaterialTerms()` into a Firebase-only `supplier_taxonomy_dictionary` adapter while retaining the existing manifest authority, exact query/mapping/default-merge/error behavior, and explicit Demo/local pre-resolution branch. D10 is awaiting independent exact-head review after implementation. It is not merged or deployed; Firebase Production was not deployed by D9 or D10.
 
 ## 1. Verified starting main
 
