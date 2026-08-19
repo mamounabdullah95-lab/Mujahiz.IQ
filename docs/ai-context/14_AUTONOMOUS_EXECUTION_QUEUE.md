@@ -402,11 +402,26 @@ Hard boundary:
 
 ### D8 - `supplier_directory` extracted Firebase adapter implementation
 
-- State: `DRAFT / IMPLEMENTATION COMPLETE` on `codex/d8-supplier-directory-firebase-adapter`; it is not merged or deployed.
+- State: `COMPLETE / REVIEWED / MERGED`.
+- Implementation head: `65d7d199c38c628ef25e6fc31ec5e5bb95deaca9`; independent exact-head review found 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings; PR Gate #258 / run `32262254095` passed; PR #151 was manually merged as GitHub `main` `56de751ef80325e443aecbf07393e4737626158d`.
 - Scope: route only `listSuppliers()`, `listSuppliersPage(...)`, `listSupplierCandidates(...)`, and `getSupplier(...)` through the existing Provider Contract with `supplier_directory` selected as `firebase`, to a bounded Firebase adapter. The explicit unconfigured Firebase branch remains Demo/local application mode before provider resolution.
 - Required preservation: no explicit Firebase order, raw Firebase snapshot pagination cursor, numeric Demo cursor ignored by configured Firebase, exact full-page `hasMore` heuristic, first-ten category cap, 100-result pre-filter limit, exact approved/RFQ-capable candidate filter, no approval filter on one-record reads, and stored-data `id` overwrite mapping.
 - Excluded and unchanged: provider manifest, Supabase runtime/networking, Auth, Rules/indexes, Supplier writes, SQL/RLS, migrations, data actions, hosted actions, and deployment.
-- Next gate: independent exact-head D8 Firebase adapter parity and security review before manual merge.
+- Production boundary: GitHub `main` contains D8 code, but Firebase Production was not deployed and must not be assumed identical to GitHub `main`.
+
+### D9 - `supplier_taxonomy_dictionary` Firebase adapter readiness
+
+- State: `AWAITING_INDEPENDENT_REVIEW`.
+- Verified starting GitHub `main`: `56de751ef80325e443aecbf07393e4737626158d`, the manual merge of PR #151 after exact-head D8 approval and PR Gate #258 success.
+- Deliverable: [`76_SUPPLIER_TAXONOMY_DICTIONARY_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/76_SUPPLIER_TAXONOMY_DICTIONARY_FIREBASE_ADAPTER_READINESS.md).
+- Candidate result: the smallest dependency-safe seam is exactly `listMaterialTerms()` under existing feature ID `supplier_taxonomy_dictionary`. It reads active `materialTerms`, limits configured Firebase custom records to 500, preserves native query order and stored-`id` overwrite mapping, then merges repository defaults with exact replacement/append behavior.
+- Direct callers: `DirectoryPage` for search-term expansion and `AdminMaterialDictionaryPage` for the active dictionary display. The Admin caller's alphabetical sort and first-80 display remain caller-level transformations.
+- Demo/local boundary: explicit application mode before provider resolution; it merges local active terms with repository defaults without the Firebase 500-record cap and is not provider fallback.
+- Aggregate boundary: Firebase remains authoritative for the full taxonomy/dictionary feature. Admin-only suggestion reads, captured query examples/creator IDs, suggestion writes/moderation/audit, categories/settings, registration sectors, and AI intent parsing remain excluded. A later Firebase read extraction would not be a provider cutover or mixed authority.
+- Deferred candidates: reviews (three audiences and cross-feature moderation effects), feedback (private/Admin lifecycle), favorites (private read/write ownership), managed content/config (heterogeneous record families and incomplete current Rules coverage), operational reporting (cross-aggregate caches/consistency), audit evidence (high sensitivity), and AI intent (not a datastore read seam and separately gated capability).
+- Prohibited: runtime adapter or service rewiring, manifest change, Supabase client/networking, Auth, Rules/indexes, SQL/RLS, migration, Production/TEST data, hosted action, deployment, Ready transition, or merge.
+- Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+- Exact next gate: independent exact-head D9 readiness review before any runtime implementation.
 
 ## Queue advancement rules
 

@@ -1,6 +1,6 @@
 # `supplier_directory` Firebase adapter readiness
 
-Status: **D7 readiness contract complete, independently reviewed, and manually merged through PR #150; D8 Firebase-only implementation is Draft on `codex/d8-supplier-directory-firebase-adapter` and requires independent exact-head review before manual merge**
+Status: **D7 readiness contract complete, independently reviewed, and manually merged through PR #150; D8 Firebase-only implementation head `65d7d199c38c628ef25e6fc31ec5e5bb95deaca9` passed independent exact-head review and PR Gate #258, then PR #151 was manually merged as GitHub `main` `56de751ef80325e443aecbf07393e4737626158d`; no Firebase Production deployment occurred**
 
 Date: 2026-08-19
 
