@@ -1,7 +1,7 @@
 # Mujahiz IQ — Current Verified Baseline
 
-Baseline ID: `baseline-2026-08-19-package-d-d9-supplier-taxonomy-dictionary-readiness`
-Updated: 2026-08-19
+Baseline ID: `baseline-2026-08-20-package-d-d10-supplier-taxonomy-dictionary-implementation`
+Updated: 2026-08-20
 Canonical Production URL: `https://mujahiz.com`
 
 This is the single authoritative, frequently changing project baseline. Keep GitHub `main`, merged-but-undeployed work, Firebase Hosting, active Firestore Rules and indexes, deployed Functions and Storage, bounded Production data, and hosted Supabase state distinct.
@@ -18,7 +18,7 @@ Evidence labels used below:
 
 - **Verified current fact:** Repository: `mamounabdullah95-lab/Mujahiz.IQ`.
 - **Verified current fact:** Approved branch: `main`.
-- **Verified current fact:** Current GitHub `main`: `56de751ef80325e443aecbf07393e4737626158d`, the manual merge of PR #151. PR #151 merged D8 implementation head `65d7d199c38c628ef25e6fc31ec5e5bb95deaca9` after independent exact-head parity/security review found 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings; PR Gate #258 / run `32262254095` passed on that exact head. D1-D8 are complete. D9 is the current documentation-only `supplier_taxonomy_dictionary` Firebase Adapter Readiness task and does not implement an adapter, deploy, or change Production.
+- **Verified current fact:** Current GitHub `main`: `c19b87532026d1ab5dba49fc664b4fc52ba5c6ad`, the manual merge of PR #152. PR #152 manually merged the D9 readiness head `12d1a7b1bceccd0eb64721579261d145a58553ed` after independent exact-head review found 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings; PR Gate #261 / run `32273398751` succeeded on that exact head. D10 is the current bounded implementation task for `listMaterialTerms()` only; it is not merged or deployed.
 - **Verified current fact:** PR #41 was merged earlier. Its reviewed head was `1ed6a0f4691b414aaf331f6b56626979b1f9809b`.
 - **Verified current fact:** PR #41 added eight documentation files under `docs/supabase-migration/`; it made no runtime, deployment, configuration, Auth, DNS, billing, or data change.
 - **Verified current fact:** PR #43 is merged through the current `main` merge commit. Its reviewed head was `443f48abe5607ecbf731b25542293f028e6afa99`.
@@ -477,4 +477,6 @@ Configured Firebase behavior remains exact: queries have no explicit `orderBy` a
 
 D7 is `COMPLETE / MERGED`. D8 implementation head `65d7d199c38c628ef25e6fc31ec5e5bb95deaca9` passed independent exact-head review with 0 Critical / High / Medium / Low / Nit findings and PR Gate #258, then PR #151 was manually merged as current GitHub `main` `56de751ef80325e443aecbf07393e4737626158d`. The configured-Firebase path routes only the bounded `supplier_directory` read seam through the Provider Contract to its Firebase adapter; Demo/local remains intentional pre-resolution application mode. GitHub `main` contains this code, but Firebase Production was not deployed.
 
-D9 selects the next smallest dependency-safe read seam as `supplier_taxonomy_dictionary` readiness, bounded to `listMaterialTerms()` only. The contract is recorded in `76_SUPPLIER_TAXONOMY_DICTIONARY_FIREBASE_ADAPTER_READINESS.md`; admin-only suggestion reads and all taxonomy/dictionary writes remain excluded. D9 is readiness-only and is `AWAITING_INDEPENDENT_REVIEW`; it adds no adapter, provider-manifest change, Supabase capability, Auth, Rules/index, SQL/RLS, migration, hosted action, Production/TEST data action, or deployment. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`. Exact next gate: independent exact-head D9 readiness review before any runtime implementation.
+D9 is `COMPLETE / REVIEWED / MANUALLY MERGED`: head `12d1a7b1bceccd0eb64721579261d145a58553ed`, independent review 0 Critical / 0 High / 0 Medium / 0 Low / 0 Nit, PR Gate #261 / run `32273398751` success, and PR #152 merged as current GitHub `main` `c19b87532026d1ab5dba49fc664b4fc52ba5c6ad`. Its contract in `76_SUPPLIER_TAXONOMY_DICTIONARY_FIREBASE_ADAPTER_READINESS.md` selects only `listMaterialTerms()` under `supplier_taxonomy_dictionary`; admin-only suggestion reads, all taxonomy writes, and registration-sector reads remain excluded. Firebase Production was not deployed by D9.
+
+D10 is the separate bounded implementation task: extract only configured `listMaterialTerms()` to a Firebase-only adapter behind the existing Provider Contract while preserving pre-resolution Demo/local behavior, Firestore query/default-merge parity, fail-closed unsupported-provider behavior, and full Firebase authority for the taxonomy aggregate. D10 awaits independent exact-head review after implementation; it is not merged or deployed. The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
