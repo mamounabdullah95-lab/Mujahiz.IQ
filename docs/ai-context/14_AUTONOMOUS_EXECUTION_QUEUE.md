@@ -426,13 +426,28 @@ Hard boundary:
 
 ### D10 - `supplier_taxonomy_dictionary` extracted Firebase adapter implementation
 
-- State: `IN IMPLEMENTATION; AWAITING_INDEPENDENT_EXACT-HEAD_REVIEW_AFTER_COMPLETION`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Verified starting GitHub `main`: `c19b87532026d1ab5dba49fc664b4fc52ba5c6ad`, the manual merge of PR #152.
+- Implementation head: `56c170c124ead1211bde0d318c4e61d15dafd79e`; independent exact-head review: 0 Critical / 0 High / 0 Medium / 0 Low / 0 Nit; PR Gate #262 / run `32334282427`: `SUCCESS`; PR #153: manually merged; resulting GitHub `main`: `44f850d485a83b48091052046519668731da0f37`.
 - Scope: route only configured `listMaterialTerms()` through the existing Provider Contract feature `supplier_taxonomy_dictionary` to a Firebase-only adapter. Demo/local remains explicit application mode before provider resolution.
 - Required preservation: exact `materialTerms` query with `status == "active"` and limit 500; no explicit order, cursor, pagination, sorting, retries, or fallbacks; `{ id: snapshot.id, ...snapshot.data() }` mapping; real `mergeMaterialTerms(...)` defaults/replacement/append behavior; and unchanged error propagation.
 - Excluded and unchanged: registration sectors, suggestions, taxonomy writes/audit, manifest, Supabase runtime/networking, Auth, Rules/indexes, SQL/RLS, migrations, Production/TEST data, hosted actions, and deployment.
+- Production boundary: GitHub `main` contains the D10 adapter; Firebase Production was not deployed, no Production/TEST data action occurred, no Supabase runtime capability was added, and Firebase remains authoritative.
 - Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
-- Exact next gate: independent exact-head D10 parity/security review before manual merge.
+
+### D11 - next eligible Firebase read-seam readiness
+
+- State: `READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- Verified starting GitHub `main`: `44f850d485a83b48091052046519668731da0f37`, the manual merge of PR #153 with D10 head `56c170c124ead1211bde0d318c4e61d15dafd79e` as its second parent.
+- Deliverable: [`77_REGISTRATION_SECTORS_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/77_REGISTRATION_SECTORS_FIREBASE_ADAPTER_READINESS.md).
+- Candidate result: the smallest dependency-safe seam is exactly `listRegistrationSectors()` under the existing `supplier_taxonomy_dictionary` feature. It performs one public configured read at `publicConfig/registration`, accepts only an array-valued `sectors` field, filters active entries, sorts by `order` ascending, and deliberately returns the active ordered repository defaults for absent/empty configured data or configured read failure.
+- Direct callers: `RegisterPage`, `CompleteProfilePage`, and the Owner registration-sectors administration page. There is no pagination, limit, query cursor, cache, retry, provider fallback, or Supabase implementation.
+- Demo/local boundary: before any future Provider Contract resolution, read `mujahiz-iq-workspace:registrationSectors`, apply the same active filter/order, and use the same repository defaults when local data is absent, invalid JSON, or has no active entries.
+- Rules boundary: active `firebase.json` points to `firestore.rbac.rules`; `/publicConfig/{configId}` allows public reads and Owner-only create/update/delete. The adjacent `saveRegistrationSectors(...)` write remains inline and excluded.
+- Aggregate boundary: Firebase remains authoritative for the complete `supplier_taxonomy_dictionary` feature. The bounded read extraction would be code organization only and would not authorize registration-sector Supabase reads, mixed taxonomy authority, manifest change, material-term or suggestion changes, or write movement.
+- Deferred candidates: reviews and feedback retain multi-audience/private lifecycle coupling; favorites retain private per-user read/write ownership; managed content/config remains heterogeneous; operational reporting remains cross-aggregate and cached; audit evidence remains highly sensitive and cached; AI intent remains an external AI capability rather than a datastore read seam.
+- Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+- Exact next gate: independent exact-head D11 readiness review before any runtime implementation.
 
 ## Queue advancement rules
 
