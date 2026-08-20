@@ -25,14 +25,11 @@ import {
   type SupplierDirectoryImplementation,
 } from "./providers/supplierDirectoryFirebaseAdapter";
 import {
-  createFirebaseSupplierTaxonomyDictionaryAdapter,
-  type SupplierTaxonomyDictionaryImplementation,
-} from "./providers/supplierTaxonomyDictionaryFirebaseAdapter";
-import {
   resolveProviderImplementation,
   SHIPPED_PROVIDER_MANIFEST,
   type ProviderImplementationRegistry,
 } from "./providers/providerContract";
+import { resolveSupplierTaxonomyDictionaryImplementation } from "./providers/supplierTaxonomyDictionaryProvider";
 import {
   approveSupplierSubmissionTrusted,
   decideSupplierSubmissionTrusted,
@@ -107,32 +104,11 @@ const supplierDirectoryImplementations: ProviderImplementationRegistry<SupplierD
   ])],
 ]);
 
-const supplierTaxonomyDictionaryImplementations: ProviderImplementationRegistry<SupplierTaxonomyDictionaryImplementation> = new Map([
-  ["supplier_taxonomy_dictionary", new Map([
-    ["firebase", createFirebaseSupplierTaxonomyDictionaryAdapter({
-      db,
-      collection,
-      where,
-      limit,
-      query,
-      getDocs,
-    })],
-  ])],
-]);
-
 function resolveSupplierDirectoryImplementation() {
   return resolveProviderImplementation({
     manifest: SHIPPED_PROVIDER_MANIFEST,
     feature: "supplier_directory",
     registry: supplierDirectoryImplementations,
-  });
-}
-
-function resolveSupplierTaxonomyDictionaryImplementation() {
-  return resolveProviderImplementation({
-    manifest: SHIPPED_PROVIDER_MANIFEST,
-    feature: "supplier_taxonomy_dictionary",
-    registry: supplierTaxonomyDictionaryImplementations,
   });
 }
 

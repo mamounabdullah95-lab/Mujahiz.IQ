@@ -1,6 +1,6 @@
 # Autonomous Execution Queue
 
-Updated: 2026-08-19
+Updated: 2026-08-20
 Package A setup base: `bd33fb3d3b73f87a775d5f2375194d2acf67b6be`
 Verified Package A closure base: `63ebaf2972350848dbe494908efd6756c070802a` (merge of PR #136)
 
@@ -437,8 +437,10 @@ Hard boundary:
 
 ### D11 - next eligible Firebase read-seam readiness
 
-- State: `READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Verified starting GitHub `main`: `44f850d485a83b48091052046519668731da0f37`, the manual merge of PR #153 with D10 head `56c170c124ead1211bde0d318c4e61d15dafd79e` as its second parent.
+- Review and merge result: readiness head `d5454560907436527789786996d59a1fd6374102`; independent exact-head review 0 Critical / 0 High / 0 Medium / 1 Low / 0 Nit; PR Gate #263 / run `32336621145` success; PR #154 manually merged as GitHub `main` `f51c7b123dfa2643623fbd2d5a26ccfecfd33c82`.
+- Low finding: D12 must reuse one existing taxonomy Firebase implementation, registry, and resolver path; a second independent taxonomy registry in `workspace.ts` is prohibited.
 - Deliverable: [`77_REGISTRATION_SECTORS_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/77_REGISTRATION_SECTORS_FIREBASE_ADAPTER_READINESS.md).
 - Candidate result: the smallest dependency-safe seam is exactly `listRegistrationSectors()` under the existing `supplier_taxonomy_dictionary` feature. It performs one public configured read at `publicConfig/registration`, accepts only an array-valued `sectors` field, filters active entries, sorts by `order` ascending, and deliberately returns the active ordered repository defaults for absent/empty configured data or configured read failure.
 - Direct callers: `RegisterPage`, `CompleteProfilePage`, and the Owner registration-sectors administration page. There is no pagination, limit, query cursor, cache, retry, provider fallback, or Supabase implementation.
@@ -447,7 +449,23 @@ Hard boundary:
 - Aggregate boundary: Firebase remains authoritative for the complete `supplier_taxonomy_dictionary` feature. The bounded read extraction would be code organization only and would not authorize registration-sector Supabase reads, mixed taxonomy authority, manifest change, material-term or suggestion changes, or write movement.
 - Deferred candidates: reviews and feedback retain multi-audience/private lifecycle coupling; favorites retain private per-user read/write ownership; managed content/config remains heterogeneous; operational reporting remains cross-aggregate and cached; audit evidence remains highly sensitive and cached; AI intent remains an external AI capability rather than a datastore read seam.
 - Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
-- Exact next gate: independent exact-head D11 readiness review before any runtime implementation.
+- Exact next gate: the separately bounded D12 implementation below, followed by independent exact-head parity/security review before manual merge.
+
+### D12 - extend the existing taxonomy Firebase adapter with registration sectors
+
+- State: `IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION`.
+- Verified starting GitHub `main`: `f51c7b123dfa2643623fbd2d5a26ccfecfd33c82`, the manual merge of PR #154.
+- Branch: `codex/d12-registration-sectors-firebase-adapter`.
+- Scope: extend the existing `SupplierTaxonomyDictionaryImplementation` and its one Firebase adapter instance with `listRegistrationSectors()`, then route the configured branch in `workspace.ts` through the same shared taxonomy resolver already used by configured `listMaterialTerms()`.
+- D11 Low resolution: one narrowly scoped shared taxonomy provider-composition module owns the single Firebase adapter instance, single `ProviderImplementationRegistry<SupplierTaxonomyDictionaryImplementation>`, and single resolver. `firestore.ts` and `workspace.ts` import that resolver; no second workspace registry or adapter path exists.
+- Registration parity: exactly one `getDoc(doc(db, "publicConfig", "registration"))` per invocation; no import-time read; truthy active filtering; numeric-subtraction stable ordering; no normalization; real repository defaults for absent/non-array/empty/inactive-only data or configured read/filter/sort failure.
+- Error and application-mode boundary: Demo/local remains before provider resolution with its prior parsing/filter/sort behavior. Provider Contract failures propagate; an unsupported Supabase selection cannot invoke Firebase or return registration defaults. Configured Firebase failures never switch to Demo/local.
+- D10 regression boundary: configured `listMaterialTerms()` retains its active-only, limit-500, no-explicit-order query, stored-id overwrite mapping, real merge helper, successful-empty defaults, and propagated Firebase errors.
+- Excluded and unchanged: `saveRegistrationSectors(...)`, all three direct callers, material-term writes/suggestions, Provider manifest/vocabulary, Auth, Rules/indexes, Supabase runtime/networking, SQL/RLS, migrations, hosted actions, Production/TEST data, and deployment.
+- Current validation: focused taxonomy/registration 27/27; directly relevant taxonomy/registration/provider/runtime/Demo matrix 45/45; full repository unit gate 229/229; TypeScript passed; Vite production build passed. Correction loops: 1 bounded documentation-lifecycle correction; runtime corrections: 0.
+- Production boundary: Firebase remains authoritative for the complete taxonomy/dictionary aggregate. GitHub branch code is not deployed Firebase state. Supabase remains local-only, unlinked, undeployed, non-authoritative, and absent from this runtime path.
+- Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+- Exact next gate: independent exact-head D12 parity/security review before manual merge. Autonomous merge and deployment remain forbidden.
 
 ## Queue advancement rules
 

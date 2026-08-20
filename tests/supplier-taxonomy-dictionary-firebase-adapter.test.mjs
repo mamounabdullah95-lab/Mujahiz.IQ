@@ -5,6 +5,7 @@ import {
   defaultMaterialTerms,
   mergeMaterialTerms,
 } from "../src/data/materialTerms.ts";
+import { defaultRegistrationSectors } from "../src/data/registrationSectors.ts";
 import {
   createFirebaseSupplierTaxonomyDictionaryAdapter,
 } from "../src/services/providers/supplierTaxonomyDictionaryFirebaseAdapter.ts";
@@ -16,12 +17,20 @@ import {
   resolveProviderImplementation,
 } from "../src/services/providers/providerContract.ts";
 
-const facadeSource = fs.readFileSync(
+const firestoreFacadeSource = fs.readFileSync(
   new URL("../src/services/firestore.ts", import.meta.url),
+  "utf8",
+);
+const workspaceFacadeSource = fs.readFileSync(
+  new URL("../src/services/workspace.ts", import.meta.url),
   "utf8",
 );
 const adapterSource = fs.readFileSync(
   new URL("../src/services/providers/supplierTaxonomyDictionaryFirebaseAdapter.ts", import.meta.url),
+  "utf8",
+);
+const providerSource = fs.readFileSync(
+  new URL("../src/services/providers/supplierTaxonomyDictionaryProvider.ts", import.meta.url),
   "utf8",
 );
 
@@ -44,13 +53,27 @@ function activeTerm(id, overrides = {}) {
   };
 }
 
-function createHarness({ documents = [], getDocsError } = {}) {
+function registrationSnapshot(data, exists = true) {
+  return { exists: () => exists, data: () => data };
+}
+
+function createHarness({
+  documents = [],
+  getDocsError,
+  registrationDocument = registrationSnapshot({}, false),
+  getDocError,
+} = {}) {
   const calls = [];
   const dependencies = {
     db: { name: "synthetic-firestore" },
     collection: (_db, path) => {
       calls.push(["collection", path]);
       return { path };
+    },
+    doc: (_db, path, ...pathSegments) => {
+      const reference = { path: [path, ...pathSegments].join("/") };
+      calls.push(["doc", reference]);
+      return reference;
     },
     where: (field, operator, value) => ({ kind: "where", field, operator, value }),
     limit: (value) => ({ kind: "limit", value }),
@@ -63,6 +86,11 @@ function createHarness({ documents = [], getDocsError } = {}) {
       calls.push(["getDocs", firestoreQuery]);
       if (getDocsError) throw getDocsError;
       return { docs: documents };
+    },
+    getDoc: async (documentReference) => {
+      calls.push(["getDoc", documentReference]);
+      if (getDocError) throw getDocError;
+      return registrationDocument;
     },
   };
   return { adapter: createFirebaseSupplierTaxonomyDictionaryAdapter(dependencies), calls };
@@ -83,11 +111,90 @@ function manifestWithTaxonomyAuthority(authority) {
   };
 }
 
-test("the adapter creates no backend read until listMaterialTerms is invoked", async () => {
+test("the adapter creates no backend read until one of its methods is invoked", async () => {
   const { adapter, calls } = createHarness();
   assert.deepEqual(calls, [["collection", "materialTerms"]]);
   await adapter.listMaterialTerms();
   assert.equal(calls.filter(([name]) => name === "getDocs").length, 1);
+  assert.equal(calls.filter(([name]) => name === "getDoc").length, 0);
+});
+
+test("listRegistrationSectors reads publicConfig/registration exactly once when invoked", async () => {
+  const { adapter, calls } = createHarness();
+  assert.equal(calls.filter(([name]) => name === "doc").length, 0);
+
+  await adapter.listRegistrationSectors();
+
+  assert.deepEqual(calls.filter(([name]) => name === "doc"), [["doc", { path: "publicConfig/registration" }]]);
+  assert.deepEqual(calls.filter(([name]) => name === "getDoc"), [["getDoc", { path: "publicConfig/registration" }]]);
+});
+
+test("missing, non-array, empty, and inactive-only configured sectors return fresh repository defaults", async (t) => {
+  const cases = [
+    ["missing document", registrationSnapshot({}, false)],
+    ["missing sectors", registrationSnapshot({})],
+    ["non-array sectors", registrationSnapshot({ sectors: "not-an-array" })],
+    ["empty sectors", registrationSnapshot({ sectors: [] })],
+    ["inactive-only sectors", registrationSnapshot({ sectors: [{ active: false, order: 1 }] })],
+  ];
+
+  for (const [name, document] of cases) {
+    await t.test(name, async () => {
+      const result = await createHarness({ registrationDocument: document }).adapter.listRegistrationSectors();
+      assert.deepEqual(result, defaultRegistrationSectors);
+      assert.notStrictEqual(result, defaultRegistrationSectors);
+      assert.strictEqual(result[0], defaultRegistrationSectors[0]);
+    });
+  }
+});
+
+test("configured sectors preserve truthiness, ordinary fields, object references, numeric coercion, and stable equal-order input", async () => {
+  const equalFirst = { value: " equal-first ", labelAr: null, labelEn: "First", order: 2, active: "yes", extra: "retained" };
+  const inactive = { value: "inactive", labelAr: "", labelEn: "", order: 0, active: 0 };
+  const coercedFirst = { value: "coerced", labelAr: "", labelEn: "", order: "1", active: 1 };
+  const equalSecond = { value: "equal-second", labelAr: "", labelEn: "Second", order: 2, active: true };
+  const configured = [equalFirst, inactive, coercedFirst, equalSecond];
+  const result = await createHarness({
+    registrationDocument: registrationSnapshot({ sectors: configured }),
+  }).adapter.listRegistrationSectors();
+
+  assert.deepEqual(result, [coercedFirst, equalFirst, equalSecond]);
+  assert.strictEqual(result[0], coercedFirst);
+  assert.strictEqual(result[1], equalFirst);
+  assert.equal(result[1].value, " equal-first ");
+  assert.equal(result[1].labelAr, null);
+  assert.equal(result[1].extra, "retained");
+  assert.deepEqual(configured, [equalFirst, inactive, coercedFirst, equalSecond]);
+});
+
+test("configured filtering and sorting failures return repository defaults", async (t) => {
+  for (const [name, sectors] of [
+    ["null element", [null]],
+    ["undefined element", [undefined]],
+    ["throwing numeric coercion", [
+      { active: true, order: Symbol("bad") },
+      { active: true, order: 1 },
+    ]],
+  ]) {
+    await t.test(name, async () => {
+      const result = await createHarness({
+        registrationDocument: registrationSnapshot({ sectors }),
+      }).adapter.listRegistrationSectors();
+      assert.deepEqual(result, defaultRegistrationSectors);
+    });
+  }
+});
+
+test("configured getDoc failures return defaults without changing the material-term error contract", async () => {
+  const registrationFailure = new Error("synthetic registration failure");
+  const registrationHarness = createHarness({ getDocError: registrationFailure });
+  assert.deepEqual(await registrationHarness.adapter.listRegistrationSectors(), defaultRegistrationSectors);
+
+  const materialFailure = new Error("synthetic material failure");
+  await assert.rejects(
+    createHarness({ getDocsError: materialFailure }).adapter.listMaterialTerms(),
+    (error) => error === materialFailure,
+  );
 });
 
 test("listMaterialTerms preserves the materialTerms active-only 500-record query without an application sort", async () => {
@@ -164,6 +271,10 @@ test("supplier_taxonomy_dictionary resolves only the shipped Firebase implementa
       firebaseCalls += 1;
       return [];
     },
+    listRegistrationSectors: async () => {
+      firebaseCalls += 1;
+      return [];
+    },
   };
   const registry = new Map([["supplier_taxonomy_dictionary", new Map([["firebase", firebaseImplementation]])]]);
 
@@ -189,13 +300,35 @@ test("supplier_taxonomy_dictionary resolves only the shipped Firebase implementa
 
 test("the firestore facade keeps Demo/local before the taxonomy resolver and routes configured reads through it", () => {
   assert.match(
-    facadeSource,
+    firestoreFacadeSource,
     /export async function listMaterialTerms\(\) \{\s*if \(!isFirebaseConfigured\) \{\s*return demo\.demoListMaterialTerms\(\);\s*\}\s*return resolveSupplierTaxonomyDictionaryImplementation\(\)\.listMaterialTerms\(\);\s*\}/,
   );
-  assert.match(facadeSource, /feature: "supplier_taxonomy_dictionary"/);
+  assert.match(firestoreFacadeSource, /from "\.\/providers\/supplierTaxonomyDictionaryProvider"/);
 });
 
-test("the extracted adapter has no Demo, Supabase, or registration-sector runtime dependency", () => {
+test("the workspace facade keeps Demo/local before resolution and leaves the write inline", () => {
+  assert.match(
+    workspaceFacadeSource,
+    /export async function listRegistrationSectors\(\) \{\s*const fallback = [^;]+;\s*if \(!isFirebaseConfigured\) \{\s*const configured = localRead<RegistrationSector>\("registrationSectors"\);\s*const sectors = configured\.filter\(\(item\) => item\.active\)\.sort\(\(a, b\) => a\.order - b\.order\);\s*return sectors\.length \? sectors : fallback\(\);\s*\}\s*return resolveSupplierTaxonomyDictionaryImplementation\(\)\.listRegistrationSectors\(\);\s*\}/,
+  );
+  assert.match(
+    workspaceFacadeSource,
+    /export async function saveRegistrationSectors[\s\S]*?setDoc\(doc\(db, "publicConfig", "registration"\), \{ sectors: sanitized, updatedAt: serverTimestamp\(\), updatedBy: actorId \}, \{ merge: true \}\);/,
+  );
+});
+
+test("both facades share one taxonomy adapter, registry, and resolver composition path", () => {
+  assert.match(providerSource, /const firebaseSupplierTaxonomyDictionaryImplementation = createFirebaseSupplierTaxonomyDictionaryAdapter\(/);
+  assert.equal((providerSource.match(/ProviderImplementationRegistry<SupplierTaxonomyDictionaryImplementation>/g) || []).length, 1);
+  assert.equal((providerSource.match(/function resolveSupplierTaxonomyDictionaryImplementation\(/g) || []).length, 1);
+  assert.match(providerSource, /feature: "supplier_taxonomy_dictionary"/);
+  assert.doesNotMatch(firestoreFacadeSource, /createFirebaseSupplierTaxonomyDictionaryAdapter|supplierTaxonomyDictionaryImplementations/);
+  assert.doesNotMatch(workspaceFacadeSource, /createFirebaseSupplierTaxonomyDictionaryAdapter|supplierTaxonomyDictionaryImplementations|ProviderImplementationRegistry/);
+  assert.match(firestoreFacadeSource, /resolveSupplierTaxonomyDictionaryImplementation\(\)\.listMaterialTerms\(\)/);
+  assert.match(workspaceFacadeSource, /resolveSupplierTaxonomyDictionaryImplementation\(\)\.listRegistrationSectors\(\)/);
+});
+
+test("the extracted adapter and shared composition have no Demo or Supabase runtime dependency", () => {
   assert.doesNotMatch(adapterSource, /localDemo|demoList|@supabase|supabase-js|import\s*\(/i);
-  assert.doesNotMatch(adapterSource, /registration|listRegistrationSectors/i);
+  assert.doesNotMatch(providerSource, /localDemo|demoList|@supabase|supabase-js|import\s*\(/i);
 });
