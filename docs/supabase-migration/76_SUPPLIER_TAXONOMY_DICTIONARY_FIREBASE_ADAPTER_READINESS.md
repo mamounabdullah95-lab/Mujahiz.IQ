@@ -1,14 +1,16 @@
 # `supplier_taxonomy_dictionary` Firebase adapter readiness
 
-Status: **D9 COMPLETE / REVIEWED / MANUALLY MERGED; D10 implementation in progress and awaiting independent exact-head review after completion**
+Status: **D9 COMPLETE / REVIEWED / MANUALLY MERGED; D10 COMPLETE / REVIEWED / MANUALLY MERGED**
 
-Date: 2026-08-19
+Date: 2026-08-19; lifecycle synchronized: 2026-08-20
 
-## D9 merge and D10 implementation state
+## D9 and D10 merge state
 
 D9 head `12d1a7b1bceccd0eb64721579261d145a58553ed` received independent exact-head review with 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings. PR Gate #261 / run `32273398751` succeeded, and PR #152 was manually merged as GitHub `main` `c19b87532026d1ab5dba49fc664b4fc52ba5c6ad`.
 
-D10 is the separate implementation task permitted by that merged readiness contract. It is bounded to extracting only configured `listMaterialTerms()` into a Firebase-only `supplier_taxonomy_dictionary` adapter while retaining the existing manifest authority, exact query/mapping/default-merge/error behavior, and explicit Demo/local pre-resolution branch. D10 is awaiting independent exact-head review after implementation. It is not merged or deployed; Firebase Production was not deployed by D9 or D10.
+D10 implementation head `56c170c124ead1211bde0d318c4e61d15dafd79e` received independent exact-head review with 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings. PR Gate #262 / run `32334282427` succeeded, and PR #153 was manually merged as GitHub `main` `44f850d485a83b48091052046519668731da0f37`. GitHub `main` now contains the bounded Firebase-only `listMaterialTerms()` adapter behind the existing `supplier_taxonomy_dictionary` Provider Contract feature. Firebase Production was not deployed by D9 or D10, no Production/TEST data action occurred, no Supabase runtime capability was added, and Firebase remains authoritative for the complete taxonomy/dictionary feature.
+
+The separately deferred `listRegistrationSectors()` seam is assessed and selected for readiness only in [`77_REGISTRATION_SECTORS_FIREBASE_ADAPTER_READINESS.md`](77_REGISTRATION_SECTORS_FIREBASE_ADAPTER_READINESS.md). This lifecycle synchronization does not extend D9/D10 scope or authorize another runtime adapter.
 
 ## 1. Verified starting main
 
@@ -278,11 +280,11 @@ The seven Open gates remain unchanged and Open:
 
 No D9 statement resolves, narrows, or bypasses any gate.
 
-## 17. Exact D9 stop point
+## 17. Historical D9 stop point
 
-D9 stops after post-D8 state synchronization, candidate analysis, this readiness contract, internal adversarial review, focused documentation/source validation, commit, branch push, and one Draft PR if safe tooling is available.
+D9 stopped after post-D8 state synchronization, candidate analysis, this readiness contract, internal adversarial review, focused documentation/source validation, commit, branch push, and one Draft PR.
 
-D9 stops before:
+D9 stopped before these later lifecycle actions, which subsequently occurred only through their separately reviewed tasks:
 
 - independent exact-head readiness review;
 - any runtime adapter or facade/provider rewiring;
@@ -293,6 +295,6 @@ D9 stops before:
 - Ready-for-review transition; and
 - merge.
 
-## 18. Next review gate
+## 18. Historical D9 review gate
 
-The exact next gate is an **independent exact-head D9 readiness review** of this documentation branch. Runtime implementation is not authorized unless that review passes, any correction is re-reviewed at its new exact head, and the readiness PR is manually merged through the required workflow.
+The historical next gate was an **independent exact-head D9 readiness review** of that documentation branch. It passed, D9 was manually merged, and the separately bounded D10 implementation later passed its own exact-head review and was manually merged as recorded at the top of this document. The current next gate is the independent exact-head D11 readiness review defined in [`77_REGISTRATION_SECTORS_FIREBASE_ADAPTER_READINESS.md`](77_REGISTRATION_SECTORS_FIREBASE_ADAPTER_READINESS.md).
