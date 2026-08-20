@@ -45,6 +45,7 @@ import type {
 } from "../types/workspace";
 import { toDate } from "../utils/date";
 import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
+import { resolveSupplierTaxonomyDictionaryImplementation } from "./providers/supplierTaxonomyDictionaryProvider";
 import {
   currentRfqRevision,
   hasMaterialRfqResponseChange,
@@ -1182,14 +1183,7 @@ export async function listRegistrationSectors() {
     const sectors = configured.filter((item) => item.active).sort((a, b) => a.order - b.order);
     return sectors.length ? sectors : fallback();
   }
-  try {
-    const snapshot = await getDoc(doc(db, "publicConfig", "registration"));
-    const configured = snapshot.exists() && Array.isArray(snapshot.data().sectors) ? snapshot.data().sectors as RegistrationSector[] : [];
-    const sectors = configured.filter((item) => item.active).sort((a, b) => a.order - b.order);
-    return sectors.length ? sectors : fallback();
-  } catch {
-    return fallback();
-  }
+  return resolveSupplierTaxonomyDictionaryImplementation().listRegistrationSectors();
 }
 
 export async function saveRegistrationSectors(sectors: RegistrationSector[], actorId: string) {
