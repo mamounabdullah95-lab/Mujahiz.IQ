@@ -483,6 +483,13 @@ Hard boundary:
 - Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 - Exact next gate: independent exact-head D13 readiness review before any runtime implementation. Autonomous Ready transition, merge, implementation, and deployment remain forbidden.
 
+### D14 - published content Firebase adapter implementation
+
+- State: `IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION`.
+- D13 lifecycle: `COMPLETE / REVIEWED / MANUALLY MERGED`; readiness head `6617875f137de3b2c9f3610a3e80be0e9ace6554`; independent exact-head review 0 Critical / 0 High / 0 Medium / 0 Low / 0 Nit; static assertions 55/55; Markdown links 32/32; focused provider/runtime/Demo tests 18/18; `git diff --check` passed; PR Gate #265 / run `32412107538` succeeded; PR #156 was manually merged as GitHub `main` `2144c9c6959d0594de3f79005f72041cf7fa219c`.
+- Scope: extract only `managed_content_config / getPublishedContentPage(slug)` into one Firebase adapter, one Firebase implementation, one feature registry, and one resolver; preserve the configured query and the Demo/local branch before resolution.
+- Boundaries: no manifest, Rules/index/Auth/config, Supabase, SQL/RLS, Production/TEST data, hosted, or deployment action; Firebase remains authoritative for the complete aggregate and the seven Open gates remain unchanged.
+
 ## Queue advancement rules
 
 1. Work only the first eligible `READY_AUTONOMOUS` item whose dependencies are proven on latest `origin/main`.

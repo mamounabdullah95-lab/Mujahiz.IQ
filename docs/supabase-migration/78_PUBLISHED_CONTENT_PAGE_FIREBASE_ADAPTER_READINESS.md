@@ -1,12 +1,18 @@
 # Published content page Firebase adapter readiness
 
-Status: **D13 READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW**
+Status: **D13 COMPLETE / REVIEWED / MANUALLY MERGED; D14 IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**
 
 Date: 2026-08-20
 Verified starting GitHub `main`: `4e0867e37b353e5b22e4451f606b964013faba48`
 Selected Provider feature: `managed_content_config`
 Selected operation: `getPublishedContentPage(slug)`
 Risk: **Low**
+
+## Lifecycle update
+
+D13 is **COMPLETE / REVIEWED / MANUALLY MERGED**. Its readiness head was `6617875f137de3b2c9f3610a3e80be0e9ace6554`; independent exact-head review reported 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings. Focused evidence recorded static assertions 55/55, Markdown links 32/32, focused provider/runtime/Demo tests 18/18, and a passing `git diff --check`. PR Gate #265 / run `32412107538` succeeded. PR #156 was manually merged, resulting in GitHub `main` `2144c9c6959d0594de3f79005f72041cf7fa219c`.
+
+D14 is **IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**. It is limited to the selected Firebase-only seam and does not authorize a manifest change, Provider fallback, Rules/index/Auth/configuration change, Supabase capability, data action, hosted action, or deployment.
 
 ## 1. Control-point result
 
