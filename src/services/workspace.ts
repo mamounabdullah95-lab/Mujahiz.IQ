@@ -45,6 +45,7 @@ import type {
 } from "../types/workspace";
 import { toDate } from "../utils/date";
 import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
+import { resolveManagedContentConfigImplementation } from "./providers/managedContentConfigProvider";
 import { resolveSupplierTaxonomyDictionaryImplementation } from "./providers/supplierTaxonomyDictionaryProvider";
 import {
   currentRfqRevision,
@@ -1133,8 +1134,7 @@ export async function listContentPages(publishedOnly = false) {
 
 export async function getPublishedContentPage(slug: string) {
   if (!isFirebaseConfigured) return localRead<ContentPageRecord>("contentPages").find((item) => item.slug === slug && item.status === "published") || null;
-  const snapshot = await getDocs(query(contentPagesRef, where("slug", "==", slug), where("status", "==", "published"), limit(1)));
-  return snapshot.empty ? null : withId<ContentPageRecord>(snapshot.docs[0]);
+  return resolveManagedContentConfigImplementation().getPublishedContentPage(slug);
 }
 
 export async function saveContentPage(input: Omit<ContentPageRecord, "updatedAt">) {
