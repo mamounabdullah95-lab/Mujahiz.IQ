@@ -453,19 +453,35 @@ Hard boundary:
 
 ### D12 - extend the existing taxonomy Firebase adapter with registration sectors
 
-- State: `IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Verified starting GitHub `main`: `f51c7b123dfa2643623fbd2d5a26ccfecfd33c82`, the manual merge of PR #154.
-- Branch: `codex/d12-registration-sectors-firebase-adapter`.
+- Implementation head: `cc4a5a8a3653478d201b691a74c72e51a1a16b13`; independent exact-head review: 0 Critical / 0 High / 0 Medium / 0 Low / 0 Nit; PR Gate #264 / run `32353894728`: `SUCCESS`; PR #155: manually merged; resulting GitHub `main`: `4e0867e37b353e5b22e4451f606b964013faba48`.
 - Scope: extend the existing `SupplierTaxonomyDictionaryImplementation` and its one Firebase adapter instance with `listRegistrationSectors()`, then route the configured branch in `workspace.ts` through the same shared taxonomy resolver already used by configured `listMaterialTerms()`.
-- D11 Low resolution: one narrowly scoped shared taxonomy provider-composition module owns the single Firebase adapter instance, single `ProviderImplementationRegistry<SupplierTaxonomyDictionaryImplementation>`, and single resolver. `firestore.ts` and `workspace.ts` import that resolver; no second workspace registry or adapter path exists.
+- D11 Low resolution: fully resolved. One narrowly scoped shared taxonomy provider-composition module owns the single Firebase adapter instance, single `ProviderImplementationRegistry<SupplierTaxonomyDictionaryImplementation>`, and single resolver. `firestore.ts` and `workspace.ts` import that resolver; no second workspace registry or adapter path exists.
 - Registration parity: exactly one `getDoc(doc(db, "publicConfig", "registration"))` per invocation; no import-time read; truthy active filtering; numeric-subtraction stable ordering; no normalization; real repository defaults for absent/non-array/empty/inactive-only data or configured read/filter/sort failure.
 - Error and application-mode boundary: Demo/local remains before provider resolution with its prior parsing/filter/sort behavior. Provider Contract failures propagate; an unsupported Supabase selection cannot invoke Firebase or return registration defaults. Configured Firebase failures never switch to Demo/local.
 - D10 regression boundary: configured `listMaterialTerms()` retains its active-only, limit-500, no-explicit-order query, stored-id overwrite mapping, real merge helper, successful-empty defaults, and propagated Firebase errors.
 - Excluded and unchanged: `saveRegistrationSectors(...)`, all three direct callers, material-term writes/suggestions, Provider manifest/vocabulary, Auth, Rules/indexes, Supabase runtime/networking, SQL/RLS, migrations, hosted actions, Production/TEST data, and deployment.
-- Current validation: focused taxonomy/registration 27/27; directly relevant taxonomy/registration/provider/runtime/Demo matrix 45/45; full repository unit gate 229/229; TypeScript passed; Vite production build passed. Correction loops: 1 bounded documentation-lifecycle correction; runtime corrections: 0.
-- Production boundary: Firebase remains authoritative for the complete taxonomy/dictionary aggregate. GitHub branch code is not deployed Firebase state. Supabase remains local-only, unlinked, undeployed, non-authoritative, and absent from this runtime path.
+- Validation: focused taxonomy/registration 27/27; directly relevant taxonomy/registration/provider/runtime/Demo matrix 45/45; full repository unit gate 229/229; TypeScript passed; Vite production build passed. Correction loops: 1 bounded documentation-lifecycle correction; runtime corrections: 0.
+- Production boundary: GitHub `main` contains D12. Firebase Production was not deployed; no Production/TEST data action occurred; no Supabase runtime capability was added. Firebase remains authoritative for the complete taxonomy/dictionary aggregate. Supabase remains local-only, unlinked, undeployed, non-authoritative, and absent from this runtime path.
 - Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
-- Exact next gate: independent exact-head D12 parity/security review before manual merge. Autonomous merge and deployment remain forbidden.
+- Completion architecture: `supplier_taxonomy_dictionary` -> one shared registry -> one Firebase implementation instance -> one resolver -> `listMaterialTerms()` and `listRegistrationSectors()`.
+
+### D13 - post-D12 synchronization and next eligible Firebase read-seam readiness
+
+- State: `READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- Verified starting GitHub `main`: `4e0867e37b353e5b22e4451f606b964013faba48`, the manual merge of PR #155 with D12 implementation head `cc4a5a8a3653478d201b691a74c72e51a1a16b13` as its second parent.
+- Deliverable: [`78_PUBLISHED_CONTENT_PAGE_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/78_PUBLISHED_CONTENT_PAGE_FIREBASE_ADAPTER_READINESS.md).
+- Selected seam: exactly `getPublishedContentPage(slug)` under `managed_content_config`. The configured Firebase path queries `contentPages` with `where("slug", "==", slug)`, `where("status", "==", "published")`, and `limit(1)`; it returns `null` when empty and otherwise maps `{ id: snapshot.id, ...snapshot.data() }` with stored `id` overwrite behavior.
+- Direct caller: only `PublicContentPage`, using one repository-controlled slug per page. The caller catches service/query errors, sets managed content to `null`, and renders repository static public content.
+- Rules/Auth boundary: active `firebase.json` points to `firestore.rbac.rules`; `/contentPages/{pageId}` permits reads for published records or Owners. The selected query includes the required published constraint, is public, and needs no new Auth, Rules, or index contract.
+- Demo/local boundary: explicit application mode before provider resolution; scan the local `mujahiz-iq-workspace:contentPages` array and return the first matching published slug or `null`. This is not provider fallback or configured-Firebase error fallback.
+- Provider composition: `managed_content_config` has no existing provider registry/adapter. A later implementation may add only one feature-scoped Firebase implementation, one registry, and one resolver for this bounded method; no global provider container or duplicate registry is authorized.
+- Aggregate boundary: Firebase remains authoritative for the complete `managed_content_config` aggregate, including all content/settings reads and writes. The future extraction is Firebase-to-Firebase code organization only; no manifest change, split authority, Supabase read, fallback, probing, dual-read, or dual-write is authorized.
+- Deferred candidates: Favorites is private and caller-identity dependent with adjacent deterministic-ID writes; settings reads are authenticated and coupled to Owner/Admin controls, defaults, privileged behavior, or `FILE-001` adjacency; reviews/feedback carry multi-audience lifecycle and moderation coupling; reporting/audit are cached and cross-aggregate or highly sensitive; AI intent is a feature-flagged external Firebase AI call, not a datastore read seam. `listContentPages(true)` has no current direct runtime caller, while `listContentPages(false)` is Owner-only and includes drafts.
+- No runtime, test, manifest, Firebase Rules/index/Auth/config, SQL/RLS, Supabase, hosted, Production/TEST data, or deployment change is part of D13.
+- Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+- Exact next gate: independent exact-head D13 readiness review before any runtime implementation. Autonomous Ready transition, merge, implementation, and deployment remain forbidden.
 
 ## Queue advancement rules
 

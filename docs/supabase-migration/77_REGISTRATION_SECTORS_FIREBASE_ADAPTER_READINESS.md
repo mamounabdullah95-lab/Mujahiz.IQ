@@ -1,16 +1,18 @@
 # Registration sectors Firebase adapter readiness
 
-Status: **D11 COMPLETE / REVIEWED / MANUALLY MERGED; D12 IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**
+Status: **D11 COMPLETE / REVIEWED / MANUALLY MERGED; D12 COMPLETE / REVIEWED / MANUALLY MERGED**
 
 Date: 2026-08-20
 
-## D11 review/merge and D12 implementation state
+## D11 review/merge and D12 final lifecycle state
 
 D11 readiness head `d5454560907436527789786996d59a1fd6374102` received independent exact-head review with 0 Critical, 0 High, 0 Medium, 1 Low, and 0 Nit findings. PR Gate #263 / run `32336621145` succeeded, and PR #154 was manually merged as GitHub `main` `f51c7b123dfa2643623fbd2d5a26ccfecfd33c82`. The Low finding requires D12 to reuse one existing taxonomy Firebase implementation, registry, and resolver path rather than create a second independent composition path in `workspace.ts`.
 
-D12 starts from that exact main on branch `codex/d12-registration-sectors-firebase-adapter`. It extends the existing D10 `SupplierTaxonomyDictionaryImplementation` and Firebase adapter with configured `listRegistrationSectors()`, and moves the single taxonomy adapter/registry/resolver composition into one narrowly scoped shared provider module imported by both service facades. Demo/local remains before provider resolution; Provider Contract failures remain outside the configured Firebase catch/default boundary; configured registration read/filter/sort failures still return the real repository defaults; and D10 material-term errors still propagate.
+D12 started from that exact main on branch `codex/d12-registration-sectors-firebase-adapter`. It extended the existing D10 `SupplierTaxonomyDictionaryImplementation` and Firebase adapter with configured `listRegistrationSectors()`, and moved the single taxonomy adapter/registry/resolver composition into one narrowly scoped shared provider module imported by both service facades. Demo/local remains before provider resolution; Provider Contract failures remain outside the configured Firebase catch/default boundary; configured registration read/filter/sort failures still return the real repository defaults; and D10 material-term errors still propagate.
 
-Current D12 evidence is focused taxonomy/registration 27/27, directly relevant provider/runtime matrix 45/45, full repository unit gate 229/229, TypeScript passed, Vite production build passed, and one bounded documentation-lifecycle correction loop with zero runtime corrections. D12 changes no direct caller, registration-sector write, Provider manifest/vocabulary, Rules/index/Auth, Supabase runtime, Production/TEST data, or deployment state. Firebase remains authoritative for the complete taxonomy/dictionary aggregate. The exact next gate is independent exact-head D12 parity/security review before manual merge.
+D12 implementation head `cc4a5a8a3653478d201b691a74c72e51a1a16b13` received independent exact-head review with 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings. PR Gate #264 / run `32353894728` succeeded, and PR #155 was manually merged as GitHub `main` `4e0867e37b353e5b22e4451f606b964013faba48`. This fully resolved D11's Low finding. Final architecture is `supplier_taxonomy_dictionary` -> one shared registry -> one Firebase implementation instance -> one resolver -> `listMaterialTerms()` and `listRegistrationSectors()`.
+
+D12 validation evidence remains focused taxonomy/registration 27/27, directly relevant provider/runtime matrix 45/45, full repository unit gate 229/229, TypeScript passed, Vite production build passed, and one bounded documentation-lifecycle correction loop with zero runtime corrections. GitHub `main` contains D12, but Firebase Production was not deployed. No Production/TEST data action occurred, no Supabase runtime capability was added, and Firebase remains authoritative for the complete taxonomy/dictionary aggregate.
 
 ## 1. Verified starting state
 
@@ -294,10 +296,10 @@ Preserved exactly:
 
 D11 does not resolve, rename, add, or remove any gate.
 
-## 20. Historical D11 stop point and current next gate
+## 20. Historical D11 stop point and completed D12 gate
 
 D11 stopped after D10 lifecycle synchronization, current-source candidate analysis, this documentation-only readiness contract, internal adversarial review, focused validation, one bounded commit, branch push, and one Draft PR.
 
 D11 did not itself start or authorize runtime implementation. Its independent exact-head review later passed with the one Low composition finding recorded at the top of this document, and PR #154 was manually merged. That completed the prerequisite for the separately authorized D12 branch without authorizing any Rules/index/Auth/manifest change, Supabase runtime capability, hosted action, SQL/RLS, migration, Production/TEST data action, or deployment.
 
-The current exact next gate is an **independent exact-head D12 parity/security review before manual merge**. Any D12 correction must be re-reviewed at its new exact head. Autonomous merge and deployment remain forbidden.
+That D12 gate is now complete: exact-head review found no findings, PR Gate #264 / run `32353894728` succeeded, and PR #155 was manually merged as `4e0867e37b353e5b22e4451f606b964013faba48`. D13 separately owns the next-read-seam selection. This document does not authorize another runtime adapter, Ready transition, merge, or deployment.
