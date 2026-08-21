@@ -1,6 +1,6 @@
 # Published content page Firebase adapter readiness
 
-Status: **D13 COMPLETE / REVIEWED / MANUALLY MERGED; D14 IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**
+Status: **D13 COMPLETE / REVIEWED / MANUALLY MERGED; D14 COMPLETE / REVIEWED / MANUALLY MERGED**
 
 Date: 2026-08-20
 Verified starting GitHub `main`: `4e0867e37b353e5b22e4451f606b964013faba48`
@@ -12,7 +12,9 @@ Risk: **Low**
 
 D13 is **COMPLETE / REVIEWED / MANUALLY MERGED**. Its readiness head was `6617875f137de3b2c9f3610a3e80be0e9ace6554`; independent exact-head review reported 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings. Focused evidence recorded static assertions 55/55, Markdown links 32/32, focused provider/runtime/Demo tests 18/18, and a passing `git diff --check`. PR Gate #265 / run `32412107538` succeeded. PR #156 was manually merged, resulting in GitHub `main` `2144c9c6959d0594de3f79005f72041cf7fa219c`.
 
-D14 is **IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**. It is limited to the selected Firebase-only seam and does not authorize a manifest change, Provider fallback, Rules/index/Auth/configuration change, Supabase capability, data action, hosted action, or deployment.
+D14 is **COMPLETE / REVIEWED / MANUALLY MERGED**. Its implementation head was `64f4ba52c639e4f8afef35ecfcbc7f3733a217c0`; independent exact-head review reported 0 Critical, 0 High, 0 Medium, 1 Low, and 0 Nit findings. The review reproduced focused tests 73/73, the full repository unit suite 242/242, a passing `tsc -b`, a passing Vite production build, and a passing `git diff --check`. PR Gate #266 / run `32521086096` succeeded. PR #157 was manually merged, resulting in GitHub `main` `5736d6142cce47ac51ec247e87d535481234bf21`.
+
+The single Low is bounded non-blocking test debt, not a runtime parity or security defect: static review proved the production resolver wiring correct, but the composition test does not explicitly assert both `manifest: SHIPPED_PROVIDER_MANIFEST` and `registry: managedContentConfigImplementations`. D15 must not alter D14 runtime merely for this Low. Because the next selected seam extends `managed_content_config`, its future implementation contract must require the explicit composition assertion while that same feature is changed.
 
 ## 1. Control-point result
 
@@ -71,7 +73,7 @@ The Provider Contract vocabulary remains exactly 17 feature IDs:
 16. `audit_evidence`
 17. `supplier_search_ai_intent`
 
-The shipped manifest selects Firebase for every feature. Existing feature-specific composition exists for `user_profiles_access`, `supplier_directory`, and `supplier_taxonomy_dictionary`. There is no existing `managed_content_config` adapter, implementation interface, registry, or resolver. No Supabase implementation, client, import, query, or runtime network path exists for the selected seam.
+The shipped manifest selects Firebase for every feature. Existing feature-specific composition exists for `user_profiles_access`, `supplier_directory`, `supplier_taxonomy_dictionary`, and `managed_content_config`. D14 added exactly one `ManagedContentConfigImplementation`, one Firebase adapter instance, one `managed_content_config` registry, and one resolver for `getPublishedContentPage(slug)`. No Supabase implementation, client, import, query, or runtime network path exists for the selected seam.
 
 ## 4. Candidate matrix
 
@@ -181,9 +183,9 @@ Firebase remains authoritative for the complete `managed_content_config` aggrega
 
 Extracting one read into a Firebase adapter is code organization only. It does not create split authority or transfer authority for a sub-operation.
 
-## 10. Future Provider composition
+## 10. Final Provider composition
 
-Because `managed_content_config` has no existing Provider composition, a separately authorized implementation must create the minimum one-feature Firebase-only composition:
+D14 created the minimum one-feature Firebase-only composition:
 
 ```text
 PublicContentPage
@@ -197,9 +199,9 @@ PublicContentPage
   -> contentPages published-only query
 ```
 
-The implementation interface should expose only the selected method. One narrowly scoped provider module should own the single Firebase implementation instance, feature registry, and resolver. Do not create a global provider container or duplicate `managed_content_config` registries. Other aggregate operations remain in their current service paths under Firebase authority.
+The implementation interface exposes only the selected method. One narrowly scoped provider module owns the single Firebase implementation instance, feature registry, and resolver. No global provider container or duplicate `managed_content_config` registry exists. Other aggregate operations remain in their current service paths under Firebase authority.
 
-Initialization must create references/composition only. No backend read may occur at import time; each query occurs only when the selected method is invoked.
+Initialization creates references/composition only. No backend read occurs at import time; each query occurs only when the selected method is invoked.
 
 ## 11. Provider fail-closed boundary
 
