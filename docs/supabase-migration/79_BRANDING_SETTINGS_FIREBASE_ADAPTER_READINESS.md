@@ -89,8 +89,8 @@ No Supabase implementation, client, import, query, or runtime network path exist
 | --- | --- | --- | --- | --- | --- | --- |
 | `managed_content_config` / `listContentPages(true)` | `contentPages`; `status == "published"`; `limit(100)`; application sort by numeric `order`. No direct caller; the only call is `listContentPages(false)`. | No current runtime value despite a public low-sensitivity result. | No identity argument. `/contentPages` permits published reads or Owner reads; this query aligns with published visibility. | Adjacent Owner writes; `{ id: doc.id, ...data }`; no catch/cache/realtime; Demo filters local items but does not sort. | Existing composition can be extended; no gate; low code complexity, **Low** risk. | Deferred because it is unused. Adapter count alone is not product value. |
 | `managed_content_config` / `listContentPages(false)` | `contentPages`; `limit(100)`; no status filter; application sort by `order`. Only `OwnerContentPage`. | Active Owner CMS, but includes drafts/unpublished content. | No identity argument; ambient Owner authorization is required by Rules for unpublished documents and by the `super_admin` route. | Coupled to the Owner save path and Rules-authorized content lifecycle; mapping allows stored-ID overwrite; errors propagate; no cache/realtime. | Existing composition; no gate; privileged lifecycle scope; **Medium**. | Deferred because unpublished-content authorization and write coupling exceed Branding. |
-| `managed_content_config` / `getBrandingSettings()` | Exactly one `getDoc(doc(settingsRef, "branding"))`. Only `OwnerBrandingPage`. | Active Owner text/color configuration and preview. Presentation-only; no security or feature-enable decision. | No caller-supplied identity. `/settings` requires sign-in; route requires `super_admin`, mapped from role `owner`. | Missing document -> six-field fallback; existing document overlays stored data; configured errors propagate; no cache/realtime. Adjacent write forces uploads pending. | Reuses existing composition; `FILE-001` is adjacent but not crossed; one deterministic read; **Low**. | **Selected.** Smallest active, useful, low-sensitivity seam after D14. |
-| `managed_content_config` / `getAdminOperationsSettings()` | Exactly one `getDoc(settings/adminOperations)`. Only `AdminOperationalSettingsPage`. | Active Admin/Owner operational controls affecting notifications, incomplete Supplier visibility, duplicate reasons, and dictionary threshold. | No identity argument; `/settings` requires sign-in; Admin/Owner can write this document. | Four-field fallback overlay; errors propagate; no cache/realtime; coupled to active Admin write behavior. | Existing composition; no direct gate; behavior-sensitive; **Medium**. | Deferred because values influence several privileged workflows. |
+| `managed_content_config` / `getBrandingSettings()` | Exactly one `getDoc(doc(settingsRef, "branding"))`. Only `OwnerBrandingPage`. | Active Owner text/color configuration and preview. Presentation-only; no security or feature-enable decision. | No caller-supplied identity. `/settings` requires sign-in; route requires `super_admin`, mapped from role `owner`. | Missing document -> six-field fallback; existing document overlays stored data; configured errors propagate; no cache/realtime. `assetUploadStatus` is preserved but unused by the page; adjacent write forces it pending. | Reuses existing composition; `FILE-001` is adjacent but not crossed; one deterministic read; **Low**. | **Selected after a Low-versus-Low tie-breaker.** Demonstrable preview value and a narrower Owner-only application/write boundary. |
+| `managed_content_config` / `getAdminOperationsSettings()` | Exactly one `getDoc(settings/adminOperations)`. Only `AdminOperationalSettingsPage`. | The four values populate that settings form; no downstream runtime consumers were found. | No identity argument; `/settings` requires sign-in; the route admits Admin/Owner and Admin/Owner can write this document. | Missing document -> exact four-field fallback; existing document overlays stored data; configured errors propagate; no cache/realtime. | Existing composition; no direct gate; one deterministic read; **Low**. | Deferred after the corrected tie-breaker: less demonstrated runtime value and a broader Admin/Owner application/write boundary than Branding. |
 | `managed_content_config` / `getPlatformSettings()` | Exactly one `getDoc(settings/platform)`. Taxonomy context, dashboards/access pages, Admin user/submission/settings pages, and review moderation call it. | Wide active runtime value, including access periods, review incentives, taxonomy/default behavior, and Admin decisions. | No identity argument; `/settings` requires sign-in; Owner writes. | Broad repository-default overlay; errors propagate; no cache/realtime; adjacent save/seed emits audit evidence. | Existing feature composition can be extended, but source/callers span services; no direct gate; **High**. | Deferred because one `getDoc` controls broad and partly privileged behavior. |
 | `supplier_favorites` / `listFavorites(userId)` | `favorites`; `userId ==` caller value; `limit(250)`; Buyer dashboard, favorites page, and Supplier profile favorite state. | Active private Buyer behavior. | Caller-supplied user ID. Rules require signed-in self via stored `userId == request.auth.uid`. | `{ id, ...data }`, application sort by `updatedAt || createdAt`; adjacent deterministic `${userId}_${supplierId}` save/delete; callers mask, display, or clear on errors; no cache/realtime. | No current feature registry; no gate; identity/ownership contract required; **Medium**. | Deferred because actor/argument binding is materially riskier than Branding. |
 | `supplier_reviews` / `listSupplierReviews(supplierId, includePending)` | Supplier equality; optional approved-status equality; application created-time sort/truncate 50. Supplier profile calls the default approved-only form. | Active multi-audience view for Admin, eligible Buyer, review author, or owned Supplier. | Supplier ID is caller-supplied. Rules distinguish Admin, active Buyer approved visibility, review author, and owned Supplier. | Caller masks errors as `[]`; adjacent moderation mutates review, Supplier rating/count, user points, settings, and audit. | No current feature registry; existing review indexes; cross-feature moderation; **High**. | Deferred for multi-audience Rules and mutation coupling. |
@@ -106,19 +106,26 @@ No other current Provider feature exposes an obviously smaller eligible configur
 
 ## 5. Selection rationale
 
-Branding is the unique winner because it combines:
+Branding and Admin Operations are both Low-complexity finalists. Branding wins the corrected tie-breaker because it combines:
 
 - one active direct caller rather than unused behavior;
 - one deterministic document read rather than a query or cross-collection aggregate;
 - no caller-supplied user, actor, Supplier, or status identity;
-- low-sensitivity presentation values rather than access, moderation, audit, or operational-control values;
+- low-sensitivity presentation values with demonstrable editing and preview use;
+- an Owner-only application route and write boundary, narrower than the Admin/Owner Admin Operations surface;
 - active Rules and route authorization that already permit the current call;
 - no index, pagination, cursor, cache, retry, or realtime behavior;
 - a small explicit fallback and mapping contract;
 - no new Open-gate dependency; and
 - the lowest implementation cost now that D14 already provides the exact feature composition to extend.
 
-`listContentPages(true)` is technically comparably small but has no current direct runtime caller. `listContentPages(false)` is active but includes unpublished Owner content. Favorites is active and small but accepts a caller-supplied user ID against self-only Rules. The other settings reads influence wider or privileged behavior. Branding is therefore the smallest useful seam, not merely the lowest line count.
+`listContentPages(true)` is technically comparably small but has no current direct runtime caller. `listContentPages(false)` is active but includes unpublished Owner content. Favorites is active and small but accepts a caller-supplied user ID against self-only Rules. Platform settings influence wider or privileged behavior. Admin Operations does not: its values currently populate only its settings form. Branding is therefore selected on visible runtime value plus the narrower Owner-only application/write boundary, not because Admin Operations is more complex or controls downstream workflows.
+
+### Corrected Branding versus Admin Operations contract comparison
+
+`getAdminOperationsSettings()` performs exactly one configured `getDoc(settings/adminOperations)`. A missing document returns `{ reviewNotifications: true, showIncompleteSuppliers: false, requireDuplicateReason: true, dictionarySuggestionMinimum: 2 }`; an existing document returns `{ ...fallback, ...snapshot.data() }`. Configured read and mapping errors propagate. There is no identity argument, ordering, query filter, limit, pagination, cursor, cache, retry, or realtime subscription. Demo/local returns `localRead<AdminOperationsSettings & { id: string }>("adminOperations")[0] || fallback` before Provider resolution, preserving the same raw-first-record distinction as Branding.
+
+The only direct caller, `AdminOperationalSettingsPage`, loads those values and lets the user display, edit, and save the same four fields. A complete source inventory found no downstream runtime consumer for any of them. The route admits `admin` and `super_admin` (Admin/Owner), and active `/settings/{settingId}` Rules allow signed-in reads plus Admin/Owner writes specifically for `adminOperations`. This makes Admin Operations **Low**, not Medium. Branding remains selected because its text/colors have an actual preview consumer and its application/write boundary is Owner-only.
 
 ### Readiness contract checklist
 
@@ -194,12 +201,13 @@ The type also permits optional `updatedAt` and `updatedBy`, which pass through w
 
 The only direct runtime caller is `OwnerBrandingPage` in [`AdminWorkspacePages.tsx`](../../src/pages/workspace/AdminWorkspacePages.tsx). The route `/super-admin/branding` is nested under `RoleProtectedRoute` with only `super_admin` allowed; `resolvePortalRole(...)` maps application role `owner` to `super_admin`.
 
-The component calls `getBrandingSettings()` once in an effect and applies a successful result to local component state. The values drive:
+The component calls `getBrandingSettings()` once in an effect and applies a successful result to local component state. Its rendered values drive:
 
 - three color inputs;
 - Arabic and English introduction text inputs;
-- a local preview border, color bar, heading, and button; and
-- the fixed upload-pending presentation state.
+- a local preview border, color bar, heading, and button.
+
+`assetUploadStatus` is loaded and preserved by the service mapping and component state, but `OwnerBrandingPage` does not render, consult, or branch on it. `DisabledFileUpload` is unconditionally inert and does not use the field. The adjacent save path independently forces `assetUploadStatus: "upload_pending_launch"`.
 
 No other current source imports or calls `getBrandingSettings()`. The result does not control Auth, role resolution, route access, feature enablement, billing, RFQ behavior, moderation, or another privileged command.
 
@@ -363,6 +371,7 @@ D15 and the bounded future implementation exclude:
 
 - Configured Firebase overlays stored data onto the fallback; Demo/local returns its first stored value without fallback overlay.
 - Stored configured fields override fallback values, including `assetUploadStatus`.
+- `OwnerBrandingPage` does not render or consult `assetUploadStatus`; `DisabledFileUpload` is independently inert.
 - Extra stored fields pass through at runtime despite the TypeScript return type.
 - No document ID is added to configured results.
 - Missing configured documents return fallback, but configured Firebase/query/mapping errors reject.
@@ -449,11 +458,11 @@ The bounded self-review confirmed:
 - no split authority or Supabase capability; and
 - documentation-only scope.
 
-Correction loops: **1**. Loop 1 removed an implication that a content-delete service exists, normalized all candidate risks to the required Low/Medium/High scale, clarified a review audience, converted one historical baseline sentence from present to past tense, and added the explicit 25-point readiness checklist. It changed neither the selected seam nor any runtime, Rules, gate, authority, or scope conclusion.
+Correction loops: **2 total**. Loop 1 removed an implication that a content-delete service exists, normalized the original candidate risks, clarified a review audience, converted one historical baseline sentence from present to past tense, and added the explicit 25-point readiness checklist. Loop 2 corrected the Admin Operations caller/consumer evidence and risk from Medium to Low, corrected the Branding `assetUploadStatus` usage statement, and retained Branding only after the explicit preview-value and narrower Owner-only boundary tie-breaker. Neither loop changed runtime, Rules, gates, authority, or scope.
 
-D15 focused validation after that correction recorded:
+D15 focused validation after the second correction recorded:
 
-- static source/lifecycle/composition/scope assertions: 44/44;
+- static source/lifecycle/composition/scope assertions: 39/39;
 - complete direct-caller inventories for all matrix operations: passed;
 - Markdown local targets across the four changed documents: 53/53;
 - readiness checklist: 25/25;
