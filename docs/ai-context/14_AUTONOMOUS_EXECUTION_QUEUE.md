@@ -534,10 +534,19 @@ Hard boundary:
 
 ### D18 - Admin Operations settings Firebase adapter implementation
 
-- State: `IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Base: GitHub `main` `229ed5c3f53648a6151d700b62ecc8cb619c26d0` (manual merge of PR #160).
 - Scope: extend the existing `managed_content_config` Firebase implementation with `getAdminOperationsSettings()` and route only the configured workspace read through the existing resolver. Preserve the Demo/local raw-first-record branch, the four-field fresh fallback, configured overlay and error behavior, existing composition, and all D16 published-content and Branding behavior.
 - Boundaries: the adjacent write, caller/UI, routes, role mapping, Rules/index/Auth/configuration, Provider manifest/vocabulary, SQL/RLS, Supabase runtime capability, Production/TEST data, deployment, and the seven Open gates remain unchanged. The D16 formatting-sensitive Nit remains bounded and non-blocking unless a focused test-only change safely addresses it.
+- Final lifecycle: original implementation head `5be09b2baacd188b9012effe306dcd634f59e4b9` received 0 Critical / 0 High / 1 Medium / 0 Low / 1 Nit; the Medium was documentation lifecycle/current-state drift only. Corrected final head `5953ad98844ce914647ade8bb7b1a4061fefda7f` received fresh independent exact-head review of 0 Critical / 0 High / 0 Medium / 0 Low / 1 Nit. Review checks passed static assertions 73/73, runtime/test-blob invariance 4/4, Markdown links 2/2, and `git diff --check`; PR Gate #272 / run `32572497400` succeeded. PR #161 was manually merged as GitHub `main` `89fb43c6d5340518db9283abbcf00a2286e1d9fa`.
+
+### D19 - post-D18 synchronization and content-page list Firebase adapter readiness
+
+- State: `READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- Base: GitHub `main` `89fb43c6d5340518db9283abbcf00a2286e1d9fa` (manual merge of PR #161).
+- Selection: exactly `managed_content_config / listContentPages(publishedOnly = false)`, preserving the existing one-operation two-mode boundary. The default/false Owner CMS list is the only active direct caller; the public true mode has no direct runtime caller. The active useful seam wins over extracting an unused lower-risk mode, without inventing a method split.
+- Required future scope: add one fourth method to the existing single `ManagedContentConfigImplementation`, existing Firebase adapter object and instance, `managedContentConfigImplementations` registry, and resolver. Preserve both mode queries, `limit(100)`, native Firebase query order followed by numeric client `order` sorting, stored-ID overwrite mapping, Demo/local filtering and stored order, configured error propagation, the Owner route/Rules distinction, and adjacent write exclusion.
+- Boundaries: Firebase remains authoritative for the complete aggregate. No Rules/index/Auth/configuration or Provider manifest/vocabulary change, Supabase runtime capability, Production/TEST data action, Firebase deployment, SQL/RLS, migration, dual read/write, fallback, or cutover is authorized. The seven Open gates remain unchanged.
 
 ## Queue advancement rules
 

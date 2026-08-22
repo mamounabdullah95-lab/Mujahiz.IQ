@@ -1,19 +1,19 @@
 # Admin Operations settings Firebase adapter readiness
 
-Status: **D18 IMPLEMENTATION COMPLETE / CORRECTION APPLIED / AWAITING FRESH INDEPENDENT EXACT-HEAD REVIEW**
+Status: **D18 COMPLETE / REVIEWED / MANUALLY MERGED**
 
 Date: 2026-08-22
-Verified D18 starting GitHub `main`: `229ed5c3f53648a6151d700b62ecc8cb619c26d0`
+Verified D18 starting GitHub `main`: `229ed5c3f53648a6151d700b62ecc8cb619c26d0`; final merged GitHub `main`: `89fb43c6d5340518db9283abbcf00a2286e1d9fa`
 Selected Provider feature: `managed_content_config`
 Selected operation: `getAdminOperationsSettings()`
-Runtime implementation: **COMPLETE ON BRANCH; UNMERGED AND UNDEPLOYED**
+Runtime implementation: **COMPLETE / REVIEWED / MANUALLY MERGED; UNDEPLOYED**
 Risk: **Low**
 
-## 1. D16 lifecycle and selection result
+## 1. D18 lifecycle and selection result
 
 D17 is **COMPLETE / REVIEWED / MANUALLY MERGED**. Its readiness head `3b56b6527f8ed05e18376112bc939004e6781c1b` received independent exact-head review with 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit. Focused review validation passed static/source 23/23, Markdown 42/42, Provider features 17, direct callers 1, and `git diff --check`; PR Gate #270 / run `32560998804` succeeded; and PR #160 was manually merged as GitHub `main` `229ed5c3f53648a6151d700b62ecc8cb619c26d0`.
 
-D18 implementation head `5be09b2baacd188b9012effe306dcd634f59e4b9` is **COMPLETE ON BRANCH / UNMERGED / UNDEPLOYED**. The previous independent exact-head review is historical after this correction; a fresh review is required for the corrected head. The D16 formatting-sensitive Nit remains semantically valid, bounded, non-blocking, and unchanged by D18.
+D18 original implementation head `5be09b2baacd188b9012effe306dcd634f59e4b9` received an independent exact-head review with 0 Critical, 0 High, 1 Medium, 0 Low, and 1 Nit. The Medium was documentation lifecycle/current-state drift only. Corrected final head `5953ad98844ce914647ade8bb7b1a4061fefda7f` received fresh independent exact-head review with 0 Critical, 0 High, 0 Medium, 0 Low, and 1 Nit. The D16 formatting-sensitive Nit remains semantically valid, bounded, non-blocking, and unchanged by D18.
 
 D16 is **COMPLETE / REVIEWED / MANUALLY MERGED**. Its implementation head `87996359e5b42f5ebf8e07e6bc21463d3ba0d306` received independent exact-head review with 0 Critical, 0 High, 0 Medium, 1 Low, and 1 Nit. Focused tests passed 34/34, the full repository unit suite passed 245/245, `tsc -b`, Vite production build, and `git diff --check` passed; PR Gate #269 / run `32558505576` succeeded; and PR #159 was manually merged as GitHub `main` `604dcdae8cf4f23ab69c9074bd4ca7d931b5717f`.
 
@@ -122,12 +122,12 @@ Parity requirements are: a fresh four-field fallback per operation; missing conf
 | Adjacent/authorization regressions | Admin Operations write, platform settings, route/Roles, and Rules remain unchanged. |
 | Environment boundary | No Supabase runtime capability was added and all seven Open gates remain unchanged. |
 
-Implementation validation recorded on the previous implementation head `5be09b2baacd188b9012effe306dcd634f59e4b9` was: focused provider/runtime/Demo tests 39/39; managed-content adapter suite 21/21; full repository unit suite 250/250; `tsc -b --pretty false` passed; Vite production build passed; and `git diff --check` passed. This is implementation evidence, not independent review approval.
+Implementation validation recorded on original implementation head `5be09b2baacd188b9012effe306dcd634f59e4b9` was: focused provider/runtime/Demo tests 39/39; managed-content adapter suite 21/21; full repository unit suite 250/250; `tsc -b --pretty false` passed; Vite production build passed; and `git diff --check` passed. Corrected-head independent review validation on `5953ad98844ce914647ade8bb7b1a4061fefda7f` passed static assertions 73/73, runtime/test-blob invariance 4/4, Markdown links 2/2, and `git diff --check`.
 
 ## 11. Current validation, gates, and stop point
 
-The previous independent exact-head review of `5be09b2baacd188b9012effe306dcd634f59e4b9` found 0 Critical, 0 High, 1 Medium, 0 Low, and 1 Nit. The single Medium was the stale lifecycle/current-state wording corrected by this commit; the Nit is the unchanged D16 formatting-sensitive assertion. That review and old-head Gate #271 are historical after this correction. A fresh exact-head review and new gate result are required for the corrected head.
+The original independent exact-head review of `5be09b2baacd188b9012effe306dcd634f59e4b9` found 0 Critical, 0 High, 1 Medium, 0 Low, and 1 Nit. The single Medium was the stale lifecycle/current-state wording corrected in final head `5953ad98844ce914647ade8bb7b1a4061fefda7f`; the Nit is the unchanged D16 formatting-sensitive assertion. The fresh exact-head review of that corrected head found 0 Critical, 0 High, 0 Medium, 0 Low, and 1 Nit. Gate #272 / run `32572497400` succeeded on the corrected head, and PR #161 was manually merged as GitHub `main` `89fb43c6d5340518db9283abbcf00a2286e1d9fa`.
 
 The Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`. D18 resolves none and does not reinterpret `FILE-001`.
 
-D18 correction scope is documentation-only: no Production/TEST data access or change, Firebase deployment, Rules/index/Auth/configuration change, Provider manifest change, Supabase runtime capability, hosted Supabase, SQL/RLS, migration, seed, backfill, or cutover occurred. Stop before Ready transition, merge, deployment, D19, Firebase Production action, Rules/index/Auth change, Provider manifest change, Supabase work, migration, or Production/TEST data action.
+The post-implementation correction scope was documentation-only: no Production/TEST data access or change, Firebase deployment, Rules/index/Auth/configuration change, Provider manifest change, Supabase runtime capability, hosted Supabase, SQL/RLS, migration, seed, backfill, or cutover occurred. D18 is complete; D19 separately selects the next readiness seam. No deployment, Firebase Production action, Rules/index/Auth change, Provider manifest change, Supabase work, migration, or Production/TEST data action is asserted.
