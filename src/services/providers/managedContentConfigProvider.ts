@@ -1,5 +1,7 @@
 import {
   collection,
+  doc,
+  getDoc,
   getDocs,
   limit,
   query,
@@ -19,10 +21,12 @@ import {
 const firebaseManagedContentConfigImplementation = createFirebaseManagedContentConfigAdapter({
   db,
   collection,
+  doc,
   where,
   limit,
   query,
   getDocs,
+  getDoc,
 });
 
 const managedContentConfigImplementations: ProviderImplementationRegistry<ManagedContentConfigImplementation> = new Map([
