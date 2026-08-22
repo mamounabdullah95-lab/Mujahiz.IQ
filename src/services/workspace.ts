@@ -46,6 +46,7 @@ import type {
 import { toDate } from "../utils/date";
 import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
 import { resolveManagedContentConfigImplementation } from "./providers/managedContentConfigProvider";
+import { BRANDING_SETTINGS_FALLBACK } from "./providers/managedContentConfigFirebaseAdapter";
 import { resolveSupplierTaxonomyDictionaryImplementation } from "./providers/supplierTaxonomyDictionaryProvider";
 import {
   currentRfqRevision,
@@ -1144,17 +1145,8 @@ export async function saveContentPage(input: Omit<ContentPageRecord, "updatedAt"
 }
 
 export async function getBrandingSettings(): Promise<BrandingSettings> {
-  const fallback: BrandingSettings = {
-    primaryColor: "#062b4d",
-    secondaryColor: "#0b4f76",
-    accentColor: "#f37021",
-    introAr: "مجهز.. نقطة البداية لتوفير حقيقي.",
-    introEn: "Mujahiz.. the starting point for real savings.",
-    assetUploadStatus: "upload_pending_launch",
-  };
-  if (!isFirebaseConfigured) return localRead<BrandingSettings & { id: string }>("branding")[0] || fallback;
-  const snapshot = await getDoc(doc(settingsRef, "branding"));
-  return snapshot.exists() ? { ...fallback, ...snapshot.data() } as BrandingSettings : fallback;
+  if (!isFirebaseConfigured) return localRead<BrandingSettings & { id: string }>("branding")[0] || BRANDING_SETTINGS_FALLBACK;
+  return resolveManagedContentConfigImplementation().getBrandingSettings();
 }
 
 export async function saveBrandingSettings(settings: BrandingSettings, actorId: string) {

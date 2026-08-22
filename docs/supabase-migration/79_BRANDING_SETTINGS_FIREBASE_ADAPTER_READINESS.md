@@ -1,13 +1,15 @@
 # Branding settings Firebase adapter readiness
 
-Status: **D15 READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW**
+Status: **D15 COMPLETE / REVIEWED / MANUALLY MERGED; D16 IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**
 
-Date: 2026-08-21
-Verified starting GitHub `main`: `5736d6142cce47ac51ec247e87d535481234bf21`
+Date: 2026-08-22
+Verified D16 starting GitHub `main`: `006a5ea4561360a60af471c548dc9fabd16ef6a5`
 Selected Provider feature: `managed_content_config`
 Selected operation: `getBrandingSettings()`
-Future runtime implementation: **NOT STARTED**
+D16 runtime implementation: **IN PROGRESS**
 Risk: **Low**
+
+D15 final lifecycle: **COMPLETE / REVIEWED / MANUALLY MERGED**. Corrected readiness head `494efe40c173dc66fcef71674a04e3a91818cc1c` received fresh independent review with 0 Critical, 0 High, 0 Medium, 1 Low, and 0 Nit findings. PR Gate #268 / run `32526221532` succeeded, and PR #158 was manually merged as GitHub `main` `006a5ea4561360a60af471c548dc9fabd16ef6a5`. The Low was documentation-only: stale stop-point wording said one documentation commit, while corrected PR #158 had two commits after its correction cycle.
 
 ## 1. Control-point result
 
@@ -25,7 +27,7 @@ managed_content_config
 
 The configured published-content query remains `contentPages`, supplied-slug equality, published-status equality, and `limit(1)`. Demo/local remains before Provider resolution. Firebase/query/mapping failures propagate from the service, while `PublicContentPage` retains its caller-level repository-static presentation fallback.
 
-The D14 Low is bounded non-blocking test debt, not a runtime parity or security defect. Static review proved the production wiring correct, but the composition test does not explicitly assert that the real resolver call uses both `SHIPPED_PROVIDER_MANIFEST` and `managedContentConfigImplementations`. D15 makes no runtime or test change. Because the selected next seam extends the same feature, its future implementation must close this Low while extending the existing composition.
+The D14 Low was bounded non-blocking test debt, not a runtime parity or security defect. D16 closes it with a deterministic production-source assertion that binds `SHIPPED_PROVIDER_MANIFEST`, feature `managed_content_config`, and `managedContentConfigImplementations` in the real resolver call.
 
 After independently re-evaluating the current merged sources and active Rules, D15 selects exactly `getBrandingSettings()` as the next smallest useful dependency-safe Firebase read seam. D15 stops before runtime implementation.
 
@@ -424,9 +426,7 @@ The future implementation should not change Rules, indexes, Auth, Firebase confi
 
 ## 19. Current test coverage
 
-Current D14 tests cover published-content query/mapping/errors, Demo/local ordering and malformed-data behavior, fail-closed Provider selection, one managed-content instance/registry/resolver, caller fallback, active content Rules, indexes, and static proof that Branding remains inline.
-
-There is no focused behavioral parity test for `getBrandingSettings()`. The current managed-content test explicitly treats Branding as outside D14's adapter. The future implementation must replace that exclusion with the bounded Branding behavior matrix above without broadening to Branding writes or other settings reads.
+D14 tests cover published-content query/mapping/errors, Demo/local ordering and malformed-data behavior, fail-closed Provider selection, one managed-content instance/registry/resolver, caller fallback, active content Rules, and indexes. D16 extends the same harness with Branding construction, exact-read, missing-document, overlay, extra-field, no-ID, error-propagation, Demo-gate, fail-closed, single-composition, and adjacent-boundary assertions. The focused D16 provider/runtime/Demo suite passed 34/34 before independent exact-head review; the full repository unit suite passed 245/245, and `tsc -b`, Vite production build, and `git diff --check` passed.
 
 ## 20. Open gates
 
@@ -488,6 +488,6 @@ GitHub source state must not be treated as deployed Firebase state.
 
 ## 23. Exact implementation stop point
 
-D15 stops after D14 lifecycle synchronization, current-source candidate analysis, this documentation-only readiness contract, internal adversarial review, focused validation, one bounded documentation commit, branch push, and one Draft PR if safe tooling is available.
+D15 stopped after D14 lifecycle synchronization, current-source candidate analysis, this documentation-only readiness contract, internal adversarial review, focused validation, **two bounded documentation commits after its correction cycle**, branch push, and one Draft PR. D15 did not implement runtime behavior.
 
-D15 does not start or authorize runtime implementation. Future runtime implementation is **NOT STARTED**. The exact next gate is an **independent exact-head D15 readiness review before any runtime implementation**. Any correction requires review at the new exact head. Ready transition, merge, adapter implementation, Provider manifest change, Firebase Rules/index/Auth change, Supabase runtime, SQL/RLS, Production/TEST data action, deployment, and D16 remain outside this task.
+D16 is now implementing the approved seam and remains subject to an **independent exact-head D16 parity/security review before manual merge**. Ready transition, merge, deployment, Firebase Rules/index/Auth change, Supabase runtime, SQL/RLS, Production/TEST data action, and D17 remain outside D16.

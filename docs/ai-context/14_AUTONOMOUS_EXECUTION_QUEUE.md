@@ -491,12 +491,12 @@ Hard boundary:
 - Scope: extract only `managed_content_config / getPublishedContentPage(slug)` into one Firebase adapter, one Firebase implementation, one feature registry, and one resolver; preserve the configured query and the Demo/local branch before resolution.
 - Review and merge result: implementation head `64f4ba52c639e4f8afef35ecfcbc7f3733a217c0`; independent exact-head review 0 Critical / 0 High / 0 Medium / 1 Low / 0 Nit; focused tests 73/73; full repository unit suite 242/242; `tsc -b` passed; Vite production build passed; `git diff --check` passed; PR Gate #266 / run `32521086096` succeeded; PR #157 was manually merged as GitHub `main` `5736d6142cce47ac51ec247e87d535481234bf21`.
 - Final architecture: `managed_content_config` -> one Firebase implementation instance -> one feature registry -> one resolver -> `getPublishedContentPage(slug)`. The configured query remains `contentPages`, supplied-slug equality, published-status equality, and `limit(1)`. Demo/local remains before resolution; Firebase/query/mapping failures propagate; `PublicContentPage` retains its caller-level repository-static presentation fallback.
-- Low handling: the production wiring is statically correct, but the D14 test does not explicitly assert both `SHIPPED_PROVIDER_MANIFEST` and the real `managedContentConfigImplementations` registry at the production resolver call. This is bounded non-blocking test debt, not a runtime parity/security defect. Because D15 selects another operation in the same feature, its future implementation must close this Low while extending the existing composition.
+- Low handling: **CLOSED BY D16 TEST COVERAGE**. The D16 production-composition assertion explicitly binds `SHIPPED_PROVIDER_MANIFEST`, feature `managed_content_config`, and the real `managedContentConfigImplementations` registry at the resolver call.
 - Boundaries: no manifest, Rules/index/Auth/config, Supabase, SQL/RLS, Production/TEST data, hosted, or deployment action occurred; Firebase remains authoritative for the complete aggregate and the seven Open gates remain unchanged.
 
 ### D15 - post-D14 synchronization and branding settings Firebase adapter readiness
 
-- State: `READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Verified starting GitHub `main`: `5736d6142cce47ac51ec247e87d535481234bf21`, the manual merge of PR #157 with D14 implementation head `64f4ba52c639e4f8afef35ecfcbc7f3733a217c0` as its second parent.
 - Deliverable: [`79_BRANDING_SETTINGS_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/79_BRANDING_SETTINGS_FIREBASE_ADAPTER_READINESS.md).
 - Selected seam: exactly `getBrandingSettings()` under existing feature `managed_content_config`. Configured Firebase performs one `getDoc` at `settings/branding`; missing data returns the six-field repository fallback, and an existing document is overlaid onto the fallback without validation or ID injection.
@@ -508,9 +508,19 @@ Hard boundary:
 - Aggregate boundary: Firebase remains authoritative for the complete `managed_content_config` aggregate. No split authority, Provider manifest change, Supabase implementation, fallback, probing, dual-read, or dual-write is authorized.
 - Corrected finalist comparison: Branding and Admin Operations are both **Low**-complexity one-document reads. Admin Operations merges a four-field fallback, populates only `AdminOperationalSettingsPage`, and has no verified downstream consumers. Branding remains selected because it has demonstrable text/color preview value and the narrower Owner-only application/write boundary, while Admin Operations is exposed on the broader Admin/Owner settings route and write boundary.
 - Deferred: `listContentPages(true)` remains unused; `listContentPages(false)` includes unpublished Owner content; Admin Operations loses the corrected Low-versus-Low tie-breaker above; platform settings affect wide and partly privileged behavior; Favorites/reviews/feedback require identity or multi-audience moderation contracts; reporting/audit retain cache, cross-aggregate, or sensitivity concerns; AI intent remains an external gated capability rather than a datastore read seam.
-- No runtime, test, manifest, Firebase Rules/index/Auth/config, SQL/RLS, Supabase, hosted, Production/TEST data, or deployment change is part of D15.
+- Final lifecycle: corrected readiness head `494efe40c173dc66fcef71674a04e3a91818cc1c`; fresh independent review 0 Critical / 0 High / 0 Medium / 1 Low / 0 Nit; PR Gate #268 / run `32526221532` succeeded; PR #158 was manually merged as GitHub `main` `006a5ea4561360a60af471c548dc9fabd16ef6a5`. The Low was documentation-only: stale stop-point wording said one documentation commit although the corrected PR had two commits after its correction cycle.
+- No runtime, test, manifest, Firebase Rules/index/Auth/config, SQL/RLS, Supabase, hosted, Production/TEST data, or deployment change was part of D15.
 - Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
-- Exact next gate: independent exact-head D15 readiness review before any runtime implementation. Future implementation is `NOT STARTED`.
+- D15 review and manual merge completed before D16 started.
+
+### D16 - branding settings Firebase adapter implementation
+
+- State: `IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION`.
+- Base: GitHub `main` `006a5ea4561360a60af471c548dc9fabd16ef6a5` (manual merge of PR #158).
+- Scope: extend the existing `managed_content_config` Firebase implementation with `getBrandingSettings()` only; preserve the Demo/local raw-first-record branch before resolution and keep all adjacent writes, other settings/content operations, caller/UI, Rules/Auth/indexes, manifest, and file capability unchanged.
+- D14 historical Low: closed by a deterministic production-source assertion binding `SHIPPED_PROVIDER_MANIFEST`, feature `managed_content_config`, and `managedContentConfigImplementations` in the real resolver call.
+- Validation before review: focused managed-content/Provider/runtime/Demo tests 34/34; full repository unit suite 245/245; `tsc -b`, Vite production build, and `git diff --check` passed.
+- Boundaries: Firebase remains authoritative; no Supabase runtime capability, Production/TEST data action, Firebase deployment, or configuration change is authorized. The seven Open gates remain unchanged.
 
 ## Queue advancement rules
 

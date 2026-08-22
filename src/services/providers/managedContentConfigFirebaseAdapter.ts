@@ -1,21 +1,34 @@
 import type {
   CollectionReference,
   DocumentData,
+  DocumentReference,
+  DocumentSnapshot,
   Firestore,
   Query,
   QueryConstraint,
   QuerySnapshot,
   WhereFilterOp,
 } from "firebase/firestore";
-import type { ContentPageRecord } from "../../types/workspace";
+import type { BrandingSettings, ContentPageRecord } from "../../types/workspace";
+
+export const BRANDING_SETTINGS_FALLBACK: BrandingSettings = {
+  primaryColor: "#062b4d",
+  secondaryColor: "#0b4f76",
+  accentColor: "#f37021",
+  introAr: "مجهز.. نقطة البداية لتوفير حقيقي.",
+  introEn: "Mujahiz.. the starting point for real savings.",
+  assetUploadStatus: "upload_pending_launch",
+};
 
 export interface ManagedContentConfigImplementation {
   getPublishedContentPage(slug: string): Promise<ContentPageRecord | null>;
+  getBrandingSettings(): Promise<BrandingSettings>;
 }
 
 export interface FirebaseManagedContentConfigDependencies {
   readonly db: Firestore;
   readonly collection: (firestore: Firestore, path: string) => CollectionReference<DocumentData>;
+  readonly doc: (collectionReference: CollectionReference<DocumentData>, path: string) => DocumentReference<DocumentData>;
   readonly where: (fieldPath: string, opStr: WhereFilterOp, value: unknown) => QueryConstraint;
   readonly limit: (limit: number) => QueryConstraint;
   readonly query: (
@@ -23,6 +36,7 @@ export interface FirebaseManagedContentConfigDependencies {
     ...constraints: QueryConstraint[]
   ) => Query<DocumentData>;
   readonly getDocs: (firestoreQuery: Query<DocumentData>) => Promise<QuerySnapshot<DocumentData>>;
+  readonly getDoc: (documentReference: DocumentReference<DocumentData>) => Promise<DocumentSnapshot<DocumentData>>;
 }
 
 function withContentPageId(snapshot: { id: string; data: () => DocumentData }) {
@@ -35,12 +49,16 @@ function withContentPageId(snapshot: { id: string; data: () => DocumentData }) {
 export function createFirebaseManagedContentConfigAdapter({
   db,
   collection,
+  doc,
   where,
   limit,
   query,
   getDocs,
+  getDoc,
 }: FirebaseManagedContentConfigDependencies): ManagedContentConfigImplementation {
   const contentPages = collection(db, "contentPages");
+  const settings = collection(db, "settings");
+  const branding = doc(settings, "branding");
 
   return {
     async getPublishedContentPage(slug) {
@@ -51,6 +69,12 @@ export function createFirebaseManagedContentConfigAdapter({
         limit(1),
       ));
       return snapshot.empty ? null : withContentPageId(snapshot.docs[0]);
+    },
+    async getBrandingSettings() {
+      const snapshot = await getDoc(branding);
+      return snapshot.exists()
+        ? { ...BRANDING_SETTINGS_FALLBACK, ...snapshot.data() } as BrandingSettings
+        : BRANDING_SETTINGS_FALLBACK;
     },
   };
 }
