@@ -14,6 +14,8 @@ const firestoreSource = fs.readFileSync(new URL("../src/services/firestore.ts", 
 const adapterSource = fs.readFileSync(new URL("../src/services/providers/supplierReviewsFirebaseAdapter.ts", import.meta.url), "utf8");
 const providerSource = fs.readFileSync(new URL("../src/services/providers/supplierReviewsProvider.ts", import.meta.url), "utf8");
 const myReviewsPageSource = fs.readFileSync(new URL("../src/pages/MyReviewsPage.tsx", import.meta.url), "utf8");
+const supplierProfilePageSource = fs.readFileSync(new URL("../src/pages/SupplierProfilePage.tsx", import.meta.url), "utf8");
+const localDemoSource = fs.readFileSync(new URL("../src/services/localDemo.ts", import.meta.url), "utf8");
 const appSource = fs.readFileSync(new URL("../src/AppV2.tsx", import.meta.url), "utf8");
 const rulesSource = fs.readFileSync(new URL("../firestore.rbac.rules", import.meta.url), "utf8");
 const indexesSource = fs.readFileSync(new URL("../firestore.indexes.json", import.meta.url), "utf8");
@@ -22,7 +24,18 @@ function documentSnapshot(id, data) {
   return { id, data: () => data };
 }
 
-function createHarness({ documents = [], getDocsError, queryError } = {}) {
+function defaultToDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === "string") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (typeof value === "object" && "toDate" in value && typeof value.toDate === "function") return value.toDate();
+  return null;
+}
+
+function createHarness({ documents = [], getDocsError, queryError, toDate = defaultToDate } = {}) {
   const calls = [];
   const dependencies = {
     db: { kind: "synthetic-firestore" },
@@ -42,16 +55,7 @@ function createHarness({ documents = [], getDocsError, queryError } = {}) {
       if (getDocsError) throw getDocsError;
       return { docs: documents };
     },
-    toDate: (value) => {
-      if (!value) return null;
-      if (value instanceof Date) return value;
-      if (typeof value === "string") {
-        const parsed = new Date(value);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
-      }
-      if (typeof value === "object" && "toDate" in value && typeof value.toDate === "function") return value.toDate();
-      return null;
-    },
+    toDate,
   };
   return { adapter: createFirebaseSupplierReviewsAdapter(dependencies), calls };
 }
@@ -90,21 +94,67 @@ test("listMyReviews performs one user query with no Firestore order, limit, or c
   ]);
 });
 
-test("listMyReviews maps stored ids, sorts after the unbounded Firebase read, limits client results, and preserves empty results", async () => {
+test("listSupplierReviews preserves the approved-only and include-pending Firebase queries", async () => {
+  const { adapter, calls } = createHarness();
+  await adapter.listSupplierReviews("supplier-1");
+  await adapter.listSupplierReviews("supplier-1", true);
+  assert.deepEqual(calls, [
+    ["collection", "reviews"],
+    ["query", {
+      collection: { path: "reviews" },
+      constraints: [
+        { kind: "where", field: "supplierId", operator: "==", value: "supplier-1" },
+        { kind: "where", field: "status", operator: "==", value: "approved" },
+      ],
+    }],
+    ["getDocs", {
+      collection: { path: "reviews" },
+      constraints: [
+        { kind: "where", field: "supplierId", operator: "==", value: "supplier-1" },
+        { kind: "where", field: "status", operator: "==", value: "approved" },
+      ],
+    }],
+    ["query", {
+      collection: { path: "reviews" },
+      constraints: [
+        { kind: "where", field: "supplierId", operator: "==", value: "supplier-1" },
+      ],
+    }],
+    ["getDocs", {
+      collection: { path: "reviews" },
+      constraints: [
+        { kind: "where", field: "supplierId", operator: "==", value: "supplier-1" },
+      ],
+    }],
+  ]);
+});
+
+test("review reads map stored ids, sort after Firebase reads, retain the newest client window, and preserve empty results", async () => {
   const documents = [
     documentSnapshot("older", { id: "stored-older", createdAt: "2026-08-20T00:00:00.000Z" }),
     documentSnapshot("newer", { createdAt: "2026-08-21T00:00:00.000Z" }),
+    documentSnapshot("timestamp-like", { createdAt: { toDate: () => new Date("2026-08-22T00:00:00.000Z") } }),
+    documentSnapshot("missing", {}),
     documentSnapshot("invalid", { createdAt: "not-a-date" }),
   ];
   assert.deepEqual(await createHarness({ documents }).adapter.listMyReviews("buyer-1"), [
+    { id: "timestamp-like", createdAt: { toDate: documents[2].data().createdAt.toDate } },
     { id: "newer", createdAt: "2026-08-21T00:00:00.000Z" },
     { id: "stored-older", createdAt: "2026-08-20T00:00:00.000Z" },
+    { id: "missing" },
     { id: "invalid", createdAt: "not-a-date" },
   ]);
   const manyDocuments = Array.from({ length: 101 }, (_, index) => documentSnapshot(String(index), {
     createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, index)),
   }));
-  assert.equal((await createHarness({ documents: manyDocuments }).adapter.listMyReviews("buyer-1")).length, 100);
+  const myReviews = await createHarness({ documents: manyDocuments }).adapter.listMyReviews("buyer-1");
+  assert.equal(myReviews.length, 100);
+  assert.equal(myReviews[0].id, "100");
+  assert.equal(myReviews.at(-1).id, "1");
+  const supplierReviews = await createHarness({ documents: manyDocuments }).adapter.listSupplierReviews("supplier-1");
+  assert.equal(supplierReviews.length, 50);
+  assert.equal(supplierReviews[0].id, "100");
+  assert.equal(supplierReviews.at(-1).id, "51");
   assert.deepEqual(await createHarness().adapter.listMyReviews("buyer-1"), []);
 });
 
@@ -112,9 +162,19 @@ test("configured query, read, and mapping failures propagate unchanged", async (
   const queryFailure = new Error("reviews query failure");
   const readFailure = new Error("reviews read failure");
   const mappingFailure = new Error("reviews mapping failure");
+  const dateFailure = new Error("reviews date failure");
+  await assert.rejects(createHarness({ queryError: queryFailure }).adapter.listSupplierReviews("supplier-1"), (error) => error === queryFailure);
+  await assert.rejects(createHarness({ getDocsError: readFailure }).adapter.listSupplierReviews("supplier-1"), (error) => error === readFailure);
+  await assert.rejects(createHarness({ documents: [{ id: "broken", data: () => { throw mappingFailure; } }] }).adapter.listSupplierReviews("supplier-1"), (error) => error === mappingFailure);
   await assert.rejects(createHarness({ queryError: queryFailure }).adapter.listMyReviews("buyer-1"), (error) => error === queryFailure);
   await assert.rejects(createHarness({ getDocsError: readFailure }).adapter.listMyReviews("buyer-1"), (error) => error === readFailure);
   await assert.rejects(createHarness({ documents: [{ id: "broken", data: () => { throw mappingFailure; } }] }).adapter.listMyReviews("buyer-1"), (error) => error === mappingFailure);
+  await assert.rejects(createHarness({
+    documents: [
+      documentSnapshot("baseline-date", { createdAt: new Date("2026-08-21T00:00:00.000Z") }),
+      documentSnapshot("broken-date", { createdAt: { toDate: () => { throw dateFailure; } } }),
+    ],
+  }).adapter.listMyReviews("buyer-1"), (error) => error === dateFailure);
 });
 
 test("the shipped selection resolves Firebase and a synthetic Supabase selection fails closed without invoking Firebase", async () => {
@@ -133,6 +193,10 @@ test("the Firestore facade preserves Demo/local before Provider resolution witho
   assert.match(firestoreSource, /export async function listMyReviews\(userId: string\) \{\s*if \(!isFirebaseConfigured\) \{\s*return demo\.demoListMyReviews\(userId\);\s*\}\s*return resolveSupplierReviewsImplementation\(\)\.listMyReviews\(userId\);\s*\}/);
   const listMyReviewsSource = firestoreSource.match(/export async function listMyReviews[\s\S]*?\r?\n\}/)?.[0] || "";
   assert.doesNotMatch(listMyReviewsSource, /catch\s*\(/);
+  assert.match(firestoreSource, /export async function listSupplierReviews\(supplierId: string, includePending = false\) \{\s*if \(!isFirebaseConfigured\) \{\s*return demo\.demoListSupplierReviews\(supplierId, includePending\);\s*\}\s*return resolveSupplierReviewsImplementation\(\)\.listSupplierReviews\(supplierId, includePending\);\s*\}/);
+  const listSupplierReviewsSource = firestoreSource.match(/export async function listSupplierReviews[\s\S]*?\r?\n\}/)?.[0] || "";
+  assert.doesNotMatch(listSupplierReviewsSource, /catch\s*\(/);
+  assert.match(localDemoSource, /export async function demoListSupplierReviews\(supplierId: string, includePending = false\) \{\s*return readDb\(\)\.reviews\.filter\(\(review\) => review\.supplierId === supplierId && \(includePending \|\| review\.status === "approved"\)\);\s*\}/);
 });
 
 test("the real composition has one Firebase instance, registry, resolver, and no facade feature literal", () => {
@@ -147,10 +211,13 @@ test("the adapter has no Firestore ordering, pagination, Demo, Supabase, retry, 
   assert.match(adapterSource, /const reviews = collection\(db, "reviews"\);/);
 });
 
-test("the active buyer caller, identity, route, Rules, index boundary, and adjacent writes remain unchanged", () => {
+test("the active Buyer callers, identities, routes, Rules, index boundary, and adjacent writes remain unchanged", () => {
   assert.match(myReviewsPageSource, /listMyReviews\(firebaseUser\.uid\)/);
   assert.match(appSource, /<Route element=\{<RoleProtectedRoute allowedRoles=\{\["buyer"\]\} allowPending \/>\}>[\s\S]*?<Route path="my-reviews" element=\{<MyReviewsPage \/>\} \/>/);
+  assert.match(supplierProfilePageSource, /listSupplierReviews\(supplierId\)\.catch\(\(\) => \[\]\)/);
+  assert.match(appSource, /<Route element=\{<RoleProtectedRoute allowedRoles=\{buyerRoles\} requireAccess \/>\}>[\s\S]*?<Route path="suppliers\/:id" element=\{<SupplierProfilePage \/>\} \/>/);
   assert.match(rulesSource, /match \/reviews\/\{reviewId\} \{\s*allow create:[\s\S]*?allow read: if isAdmin\(\) \|\| \(isBuyer\(\) && hasActiveAccess\(\) && resource\.data\.status == "approved"\) \|\| \(isBuyer\(\) && resource\.data\.reviewedBy == request\.auth\.uid\)/);
+  assert.match(indexesSource, /"collectionGroup": "reviews"[\s\S]*?"fieldPath": "supplierId"[\s\S]*?"fieldPath": "status"[\s\S]*?"fieldPath": "createdAt"/);
   assert.match(indexesSource, /"collectionGroup": "reviews"[\s\S]*?"fieldPath": "reviewedBy"[\s\S]*?"fieldPath": "createdAt"/);
   assert.match(firestoreSource, /export async function submitSupplierReview\(/);
   assert.match(firestoreSource, /await addDoc\(reviewsRef,/);

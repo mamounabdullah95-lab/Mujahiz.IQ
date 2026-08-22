@@ -1,6 +1,6 @@
 # Buyer self-review Firebase Provider implementation
 
-Status: **D22 IMPLEMENTATION COMPLETE ON BRANCH / AWAITING INDEPENDENT EXACT-HEAD REVIEW**
+Status: **D22 COMPLETE / REVIEWED / MANUALLY MERGED**
 
 Date: 2026-08-22
 Verified starting GitHub `main`: `29c34d90aa902bd8df0b1977c92383905b99e9b5`
@@ -44,4 +44,6 @@ Focused adapter/Provider/runtime/Demo/route tests passed 33/33. The full reposit
 
 Firebase remains authoritative for the complete reviews aggregate. No Provider manifest change, Supabase SDK/client/network capability, Rules/index/Auth/configuration change, SQL/RLS, migration, hosted action, Firebase deployment, Production/TEST data action, fallback, probing, dual read, or dual write is included. D22 resolves none of the seven Open gates: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 
-Await one independent exact-head D22 parity/security review before Ready, manual merge, deployment, Firebase Production, Rules/Auth/index change, Provider-manifest change, Supabase, migration, or Production/TEST data action.
+D22 implementation head `1367efbc629c47cb7dc101e894185ce467ebbee3` received independent exact-head review of 0 Critical, 0 High, 0 Medium, 2 Low, and 0 Nit. Focused validation passed 33/33; the full repository unit suite passed 274/274; `tsc -b --pretty false`, Vite production build, and `git diff --check` passed. PR Gate #276 / run `32596612349` succeeded on that exact head. PR #165 was manually merged as GitHub `main` `7a3e2fe86fc2cc4e4f62855c6baf871343544415`.
+
+D22 Low 1 (direct tests for Timestamp-like and missing `createdAt`, throwing injected `toDate`, and the exact retained sorted window above 100) and Low 2 (precise converter typing instead of `never`/`as never`) are closed by D23 because it extends this exact adapter and harness with no D22 behavior change. D21's two bounded Lows, D20's direct-rule/route precision Low, and D16's formatting-sensitive Nit remain unchanged.
