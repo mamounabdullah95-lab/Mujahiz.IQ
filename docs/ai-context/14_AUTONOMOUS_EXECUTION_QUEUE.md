@@ -1,6 +1,6 @@
 # Autonomous Execution Queue
 
-Updated: 2026-08-20
+Updated: 2026-08-21
 Package A setup base: `bd33fb3d3b73f87a775d5f2375194d2acf67b6be`
 Verified Package A closure base: `63ebaf2972350848dbe494908efd6756c070802a` (merge of PR #136)
 
@@ -469,26 +469,48 @@ Hard boundary:
 
 ### D13 - post-D12 synchronization and next eligible Firebase read-seam readiness
 
-- State: `READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Verified starting GitHub `main`: `4e0867e37b353e5b22e4451f606b964013faba48`, the manual merge of PR #155 with D12 implementation head `cc4a5a8a3653478d201b691a74c72e51a1a16b13` as its second parent.
+- Review and merge result: readiness head `6617875f137de3b2c9f3610a3e80be0e9ace6554`; independent exact-head review 0 Critical / 0 High / 0 Medium / 0 Low / 0 Nit; static assertions 55/55; Markdown links 32/32; focused provider/runtime/Demo tests 18/18; `git diff --check` passed; PR Gate #265 / run `32412107538` succeeded; PR #156 was manually merged as GitHub `main` `2144c9c6959d0594de3f79005f72041cf7fa219c`.
 - Deliverable: [`78_PUBLISHED_CONTENT_PAGE_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/78_PUBLISHED_CONTENT_PAGE_FIREBASE_ADAPTER_READINESS.md).
 - Selected seam: exactly `getPublishedContentPage(slug)` under `managed_content_config`. The configured Firebase path queries `contentPages` with `where("slug", "==", slug)`, `where("status", "==", "published")`, and `limit(1)`; it returns `null` when empty and otherwise maps `{ id: snapshot.id, ...snapshot.data() }` with stored `id` overwrite behavior.
 - Direct caller: only `PublicContentPage`, using one repository-controlled slug per page. The caller catches service/query errors, sets managed content to `null`, and renders repository static public content.
 - Rules/Auth boundary: active `firebase.json` points to `firestore.rbac.rules`; `/contentPages/{pageId}` permits reads for published records or Owners. The selected query includes the required published constraint, is public, and needs no new Auth, Rules, or index contract.
 - Demo/local boundary: explicit application mode before provider resolution; scan the local `mujahiz-iq-workspace:contentPages` array and return the first matching published slug or `null`. This is not provider fallback or configured-Firebase error fallback.
-- Provider composition: `managed_content_config` has no existing provider registry/adapter. A later implementation may add only one feature-scoped Firebase implementation, one registry, and one resolver for this bounded method; no global provider container or duplicate registry is authorized.
+- Provider composition at the readiness checkpoint: `managed_content_config` had no provider registry/adapter. D14 subsequently created exactly one feature-scoped Firebase implementation, one registry, and one resolver for this bounded method; no global provider container or duplicate registry exists.
 - Aggregate boundary: Firebase remains authoritative for the complete `managed_content_config` aggregate, including all content/settings reads and writes. The future extraction is Firebase-to-Firebase code organization only; no manifest change, split authority, Supabase read, fallback, probing, dual-read, or dual-write is authorized.
 - Deferred candidates: Favorites is private and caller-identity dependent with adjacent deterministic-ID writes; settings reads are authenticated and coupled to Owner/Admin controls, defaults, privileged behavior, or `FILE-001` adjacency; reviews/feedback carry multi-audience lifecycle and moderation coupling; reporting/audit are cached and cross-aggregate or highly sensitive; AI intent is a feature-flagged external Firebase AI call, not a datastore read seam. `listContentPages(true)` has no current direct runtime caller, while `listContentPages(false)` is Owner-only and includes drafts.
 - No runtime, test, manifest, Firebase Rules/index/Auth/config, SQL/RLS, Supabase, hosted, Production/TEST data, or deployment change is part of D13.
 - Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
-- Exact next gate: independent exact-head D13 readiness review before any runtime implementation. Autonomous Ready transition, merge, implementation, and deployment remain forbidden.
+- Historical next gate: independent exact-head D13 readiness review before runtime implementation. That review and manual merge completed before D14; autonomous merge and deployment remained forbidden.
 
 ### D14 - published content Firebase adapter implementation
 
-- State: `IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - D13 lifecycle: `COMPLETE / REVIEWED / MANUALLY MERGED`; readiness head `6617875f137de3b2c9f3610a3e80be0e9ace6554`; independent exact-head review 0 Critical / 0 High / 0 Medium / 0 Low / 0 Nit; static assertions 55/55; Markdown links 32/32; focused provider/runtime/Demo tests 18/18; `git diff --check` passed; PR Gate #265 / run `32412107538` succeeded; PR #156 was manually merged as GitHub `main` `2144c9c6959d0594de3f79005f72041cf7fa219c`.
 - Scope: extract only `managed_content_config / getPublishedContentPage(slug)` into one Firebase adapter, one Firebase implementation, one feature registry, and one resolver; preserve the configured query and the Demo/local branch before resolution.
-- Boundaries: no manifest, Rules/index/Auth/config, Supabase, SQL/RLS, Production/TEST data, hosted, or deployment action; Firebase remains authoritative for the complete aggregate and the seven Open gates remain unchanged.
+- Review and merge result: implementation head `64f4ba52c639e4f8afef35ecfcbc7f3733a217c0`; independent exact-head review 0 Critical / 0 High / 0 Medium / 1 Low / 0 Nit; focused tests 73/73; full repository unit suite 242/242; `tsc -b` passed; Vite production build passed; `git diff --check` passed; PR Gate #266 / run `32521086096` succeeded; PR #157 was manually merged as GitHub `main` `5736d6142cce47ac51ec247e87d535481234bf21`.
+- Final architecture: `managed_content_config` -> one Firebase implementation instance -> one feature registry -> one resolver -> `getPublishedContentPage(slug)`. The configured query remains `contentPages`, supplied-slug equality, published-status equality, and `limit(1)`. Demo/local remains before resolution; Firebase/query/mapping failures propagate; `PublicContentPage` retains its caller-level repository-static presentation fallback.
+- Low handling: the production wiring is statically correct, but the D14 test does not explicitly assert both `SHIPPED_PROVIDER_MANIFEST` and the real `managedContentConfigImplementations` registry at the production resolver call. This is bounded non-blocking test debt, not a runtime parity/security defect. Because D15 selects another operation in the same feature, its future implementation must close this Low while extending the existing composition.
+- Boundaries: no manifest, Rules/index/Auth/config, Supabase, SQL/RLS, Production/TEST data, hosted, or deployment action occurred; Firebase remains authoritative for the complete aggregate and the seven Open gates remain unchanged.
+
+### D15 - post-D14 synchronization and branding settings Firebase adapter readiness
+
+- State: `READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- Verified starting GitHub `main`: `5736d6142cce47ac51ec247e87d535481234bf21`, the manual merge of PR #157 with D14 implementation head `64f4ba52c639e4f8afef35ecfcbc7f3733a217c0` as its second parent.
+- Deliverable: [`79_BRANDING_SETTINGS_FIREBASE_ADAPTER_READINESS.md`](../supabase-migration/79_BRANDING_SETTINGS_FIREBASE_ADAPTER_READINESS.md).
+- Selected seam: exactly `getBrandingSettings()` under existing feature `managed_content_config`. Configured Firebase performs one `getDoc` at `settings/branding`; missing data returns the six-field repository fallback, and an existing document is overlaid onto the fallback without validation or ID injection.
+- Direct caller and value: only the active Owner branding route. The text and color values drive editing and preview; `assetUploadStatus` is loaded and preserved in local state but is not rendered or consulted. The result does not control authorization, feature enablement, billing, or another privileged command.
+- Rules/Auth: active `firebase.json` points to `firestore.rbac.rules`; `/settings/{settingId}` requires sign-in for reads. The caller route requires `super_admin`, which maps from application role `owner`. No new Rules, Auth, or index contract is required.
+- FILE-001: remains Open and unchanged. It does not block this exact read because `DisabledFileUpload` performs no upload, current feature policy keeps uploads disabled, and the adjacent Owner write forces `assetUploadStatus: "upload_pending_launch"`.
+- Provider composition: future implementation must extend the existing `ManagedContentConfigImplementation`, existing Firebase adapter instance, existing `managedContentConfigImplementations` registry, and existing resolver. It must not create a second adapter, registry, resolver, or production path.
+- D14 Low requirement: focused tests must explicitly prove that the real production resolver call uses `SHIPPED_PROVIDER_MANIFEST`, feature `managed_content_config`, and the one real `managedContentConfigImplementations` registry.
+- Aggregate boundary: Firebase remains authoritative for the complete `managed_content_config` aggregate. No split authority, Provider manifest change, Supabase implementation, fallback, probing, dual-read, or dual-write is authorized.
+- Corrected finalist comparison: Branding and Admin Operations are both **Low**-complexity one-document reads. Admin Operations merges a four-field fallback, populates only `AdminOperationalSettingsPage`, and has no verified downstream consumers. Branding remains selected because it has demonstrable text/color preview value and the narrower Owner-only application/write boundary, while Admin Operations is exposed on the broader Admin/Owner settings route and write boundary.
+- Deferred: `listContentPages(true)` remains unused; `listContentPages(false)` includes unpublished Owner content; Admin Operations loses the corrected Low-versus-Low tie-breaker above; platform settings affect wide and partly privileged behavior; Favorites/reviews/feedback require identity or multi-audience moderation contracts; reporting/audit retain cache, cross-aggregate, or sensitivity concerns; AI intent remains an external gated capability rather than a datastore read seam.
+- No runtime, test, manifest, Firebase Rules/index/Auth/config, SQL/RLS, Supabase, hosted, Production/TEST data, or deployment change is part of D15.
+- Open gates remain unchanged: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
+- Exact next gate: independent exact-head D15 readiness review before any runtime implementation. Future implementation is `NOT STARTED`.
 
 ## Queue advancement rules
 

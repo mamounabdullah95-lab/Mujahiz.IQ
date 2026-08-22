@@ -1,6 +1,6 @@
 # Published content page Firebase adapter readiness
 
-Status: **D13 COMPLETE / REVIEWED / MANUALLY MERGED; D14 IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**
+Status: **D13 COMPLETE / REVIEWED / MANUALLY MERGED; D14 COMPLETE / REVIEWED / MANUALLY MERGED**
 
 Date: 2026-08-20
 Verified starting GitHub `main`: `4e0867e37b353e5b22e4451f606b964013faba48`
@@ -12,7 +12,9 @@ Risk: **Low**
 
 D13 is **COMPLETE / REVIEWED / MANUALLY MERGED**. Its readiness head was `6617875f137de3b2c9f3610a3e80be0e9ace6554`; independent exact-head review reported 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit findings. Focused evidence recorded static assertions 55/55, Markdown links 32/32, focused provider/runtime/Demo tests 18/18, and a passing `git diff --check`. PR Gate #265 / run `32412107538` succeeded. PR #156 was manually merged, resulting in GitHub `main` `2144c9c6959d0594de3f79005f72041cf7fa219c`.
 
-D14 is **IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**. It is limited to the selected Firebase-only seam and does not authorize a manifest change, Provider fallback, Rules/index/Auth/configuration change, Supabase capability, data action, hosted action, or deployment.
+D14 is **COMPLETE / REVIEWED / MANUALLY MERGED**. Its implementation head was `64f4ba52c639e4f8afef35ecfcbc7f3733a217c0`; independent exact-head review reported 0 Critical, 0 High, 0 Medium, 1 Low, and 0 Nit findings. The review reproduced focused tests 73/73, the full repository unit suite 242/242, a passing `tsc -b`, a passing Vite production build, and a passing `git diff --check`. PR Gate #266 / run `32521086096` succeeded. PR #157 was manually merged, resulting in GitHub `main` `5736d6142cce47ac51ec247e87d535481234bf21`.
+
+The single Low is bounded non-blocking test debt, not a runtime parity or security defect: static review proved the production resolver wiring correct, but the composition test does not explicitly assert both `manifest: SHIPPED_PROVIDER_MANIFEST` and `registry: managedContentConfigImplementations`. D15 must not alter D14 runtime merely for this Low. Because the next selected seam extends `managed_content_config`, its future implementation contract must require the explicit composition assertion while that same feature is changed.
 
 ## 1. Control-point result
 
@@ -71,7 +73,7 @@ The Provider Contract vocabulary remains exactly 17 feature IDs:
 16. `audit_evidence`
 17. `supplier_search_ai_intent`
 
-The shipped manifest selects Firebase for every feature. Existing feature-specific composition exists for `user_profiles_access`, `supplier_directory`, and `supplier_taxonomy_dictionary`. There is no existing `managed_content_config` adapter, implementation interface, registry, or resolver. No Supabase implementation, client, import, query, or runtime network path exists for the selected seam.
+The shipped manifest selects Firebase for every feature. Existing feature-specific composition exists for `user_profiles_access`, `supplier_directory`, `supplier_taxonomy_dictionary`, and `managed_content_config`. D14 added exactly one `ManagedContentConfigImplementation`, one Firebase adapter instance, one `managed_content_config` registry, and one resolver for `getPublishedContentPage(slug)`. No Supabase implementation, client, import, query, or runtime network path exists for the selected seam.
 
 ## 4. Candidate matrix
 
@@ -80,8 +82,8 @@ The shipped manifest selects Firebase for every feature. Existing feature-specif
 | `managed_content_config` / `getPublishedContentPage(slug)` | `contentPages`; `slug ==` caller slug; `status == "published"`; `limit(1)`. Only `PublicContentPage`. | Public only because the query constrains `status` to `published`; no actor/user ID. Active Rules also permit Owner reads. | Maps the first document with stored-`id` overwrite; no order/cache/retry/realtime; service errors propagate and caller converts them to static-content fallback. Adjacent content writes remain Owner-only and excluded. | No Open gate; one small feature-scoped registry is required; **Low**. | **Selected.** Smallest public, identity-free current seam with one caller and exact Rules/query alignment. |
 | `managed_content_config` / `listContentPages(true)` | `contentPages`; `status == "published"`; `limit(100)`; application sort by numeric `order`. No current direct caller. | Public published-only Rules boundary; no identity argument. | Broader list and ordering surface than the selected method. | No gate; Low, but no current runtime seam. | Deferred because no direct runtime caller exists; extracting unused behavior is not the next bounded runtime step. |
 | `managed_content_config` / `listContentPages(false)` | `contentPages`; `limit(100)` without status filter; Owner content-management page. | Query can return drafts, so Rules require Owner. | Shares Owner-only create/update/delete lifecycle; maps all records then sorts by `order`; no service catch. | No gate; Medium authorization/content-lifecycle scope. | Deferred. Includes unpublished content and privileged administration behavior. |
-| `managed_content_config` / `getBrandingSettings()` | `getDoc(settings/branding)`; Owner branding page. | All `settings` reads require sign-in; route/caller is Owner. | Merges a six-field repository fallback; contains `assetUploadStatus`; adjacent Owner write forcibly keeps uploads pending. No catch/cache/realtime. | `FILE-001` adjacent; Low-Medium. | Deferred. Simpler Firestore primitive, but more security/capability coupling than the public selected read. |
-| `managed_content_config` / `getAdminOperationsSettings()` | `getDoc(settings/adminOperations)`; Admin operations settings page. | Signed-in read; Admin/Owner write. | Merges four operational defaults controlling notifications, incomplete Supplier visibility, duplicate reason, and dictionary threshold. No catch/cache/realtime. | No direct gate; Medium behavior coupling. | Deferred. The result controls multiple privileged workflows and is coupled to its administration write. |
+| `managed_content_config` / `getBrandingSettings()` | `getDoc(settings/branding)`; Owner branding page. | All `settings` reads require sign-in; route/caller is Owner. | Merges a six-field repository fallback; the page uses text/colors in editing and preview. `assetUploadStatus` is preserved but not rendered or consulted; the adjacent Owner write forces it pending. No catch/cache/realtime. | `FILE-001` adjacent but not crossed; **Low**. | Deferred. The D13 public-content seam had public runtime value and no Owner-only route/write boundary. |
+| `managed_content_config` / `getAdminOperationsSettings()` | `getDoc(settings/adminOperations)`; only the Admin operations settings page. | Signed-in read; Admin/Owner route and write boundary. | Merges four form defaults. The fields are displayed, edited, and saved only on that page; no downstream runtime consumer was found. No catch/cache/realtime. | No direct gate; **Low**. | Deferred. It had lower demonstrated runtime value and a broader Admin/Owner application/write boundary than the D13 public-content seam. |
 | `managed_content_config` / `getPlatformSettings()` | `getDoc(settings/platform)`; Taxonomy context plus access, dashboard, Admin user/submission/settings consumers. | Signed-in read; Owner write. | Wide repository-default merge; affects access periods, review incentives, taxonomy/default seeding, and administration behavior; adjacent write emits audit evidence. | No direct Open gate; Medium due to wide caller/security effects. | Deferred. Materially wider and more behavior-sensitive than the selected seam. |
 | `supplier_favorites` / `listFavorites(userId)` | `favorites`; `userId ==` caller value; `limit(250)`; Buyer dashboard, Buyer favorites page, Supplier profile favorite state. | Private self-read. Rules require stored `userId == request.auth.uid`; service accepts caller-supplied `userId`. | `{ id: doc.id, ...data }`, then `sortNewest` by `updatedAt || createdAt`; no explicit query order. Adjacent save/delete use deterministic `${userId}_${supplierId}` ownership IDs. Callers respectively mask errors, show errors, or clear favorite state. | No gate; Medium security-contract risk. | Deferred. Tiny query, but actor/argument binding and private read/write ownership are materially harder than the identity-free public seam. |
 | `supplier_reviews` / `listSupplierReviews(...)` | `reviews`; Supplier equality plus optional approved-status equality; Supplier profile caller. Service sorts by `createdAt` descending and truncates to 50. | Rules distinguish Admin, active Buyer approved visibility, self review, and owned Supplier. No actor argument on this method. | Caller masks errors as `[]`; adjacent moderation mutates review, Supplier rating/count, user points, settings, and audit log. | No gate; Medium-High. | Deferred for multi-audience Rules and cross-feature moderation effects. |
@@ -181,9 +183,9 @@ Firebase remains authoritative for the complete `managed_content_config` aggrega
 
 Extracting one read into a Firebase adapter is code organization only. It does not create split authority or transfer authority for a sub-operation.
 
-## 10. Future Provider composition
+## 10. Final Provider composition
 
-Because `managed_content_config` has no existing Provider composition, a separately authorized implementation must create the minimum one-feature Firebase-only composition:
+D14 created the minimum one-feature Firebase-only composition:
 
 ```text
 PublicContentPage
@@ -197,9 +199,9 @@ PublicContentPage
   -> contentPages published-only query
 ```
 
-The implementation interface should expose only the selected method. One narrowly scoped provider module should own the single Firebase implementation instance, feature registry, and resolver. Do not create a global provider container or duplicate `managed_content_config` registries. Other aggregate operations remain in their current service paths under Firebase authority.
+The implementation interface exposes only the selected method. One narrowly scoped provider module owns the single Firebase implementation instance, feature registry, and resolver. No global provider container or duplicate `managed_content_config` registry exists. Other aggregate operations remain in their current service paths under Firebase authority.
 
-Initialization must create references/composition only. No backend read may occur at import time; each query occurs only when the selected method is invoked.
+Initialization creates references/composition only. No backend read occurs at import time; each query occurs only when the selected method is invoked.
 
 ## 11. Provider fail-closed boundary
 
