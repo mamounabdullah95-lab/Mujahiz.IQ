@@ -46,6 +46,7 @@ import type {
 import { toDate } from "../utils/date";
 import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
 import { resolveManagedContentConfigImplementation } from "./providers/managedContentConfigProvider";
+import { resolveSupplierFavoritesImplementation } from "./providers/supplierFavoritesProvider";
 import {
   BRANDING_SETTINGS_FALLBACK,
   createAdminOperationsSettingsFallback,
@@ -122,8 +123,7 @@ function nowIso() {
 
 export async function listFavorites(userId: string) {
   if (!isFirebaseConfigured) return sortNewest(localRead<FavoriteSupplier>("favorites").filter((item) => item.userId === userId));
-  const snapshot = await getDocs(query(favoritesRef, where("userId", "==", userId), limit(250)));
-  return sortNewest(snapshot.docs.map((item) => withId<FavoriteSupplier>(item)));
+  return resolveSupplierFavoritesImplementation().listFavorites(userId);
 }
 
 export async function saveFavorite(userId: string, supplier: Pick<Supplier, "id" | "displayName" | "nameOriginal" | "governorate" | "categories">) {
