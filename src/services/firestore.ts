@@ -719,15 +719,7 @@ export async function listSupplierReviews(supplierId: string, includePending = f
   if (!isFirebaseConfigured) {
     return demo.demoListSupplierReviews(supplierId, includePending);
   }
-  const snapshot = await getDocs(
-    includePending
-      ? query(reviewsRef, where("supplierId", "==", supplierId))
-      : query(reviewsRef, where("supplierId", "==", supplierId), where("status", "==", "approved")),
-  );
-  return sortByCreatedAtDesc(
-    snapshot.docs.map((item) => withId<SupplierReview>(item)),
-    50,
-  );
+  return resolveSupplierReviewsImplementation().listSupplierReviews(supplierId, includePending);
 }
 
 export async function listMyReviews(userId: string) {
