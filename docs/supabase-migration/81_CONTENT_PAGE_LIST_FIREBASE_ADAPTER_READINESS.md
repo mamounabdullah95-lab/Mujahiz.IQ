@@ -1,12 +1,12 @@
 # Content-page list Firebase adapter readiness
 
-Status: **D19 COMPLETE / REVIEWED / MANUALLY MERGED; D20 IMPLEMENTATION COMPLETE ON BRANCH / AWAITING INDEPENDENT EXACT-HEAD REVIEW**
+Status: **D19 COMPLETE / REVIEWED / MANUALLY MERGED; D20 COMPLETE / REVIEWED / MANUALLY MERGED**
 
 Date: 2026-08-22
 Verified D19 starting GitHub `main`: `89fb43c6d5340518db9283abbcf00a2286e1d9fa`
 Selected Provider feature: `managed_content_config`
 Selected operation: `listContentPages(publishedOnly = false)`
-Runtime implementation: **D20 COMPLETE ON `codex/d20-content-page-list-firebase-adapter`; AWAITING INDEPENDENT EXACT-HEAD REVIEW**
+Runtime implementation: **D20 COMPLETE / REVIEWED / MANUALLY MERGED as PR #163**
 Risk: **Medium**
 
 ## 1. D18 lifecycle and D19 selection
@@ -101,10 +101,10 @@ The next separate runtime task/branch may change only the existing managed-conte
 | Regressions | Existing published-content, Branding, and Admin Operations adapter behavior and fail-closed resolver errors remain unchanged. |
 | Environment | No Supabase runtime capability, hosted action, data operation, or deployment appears. |
 
-D20 closes that Low as **CLOSED BY D20 VALIDATION CONTRACT / TEST COVERAGE**: its executable construction-zero-read assertion and focused managed-content/Provider/runtime/workflow tests passed 42/42; the full repository unit suite passed 256/256; `tsc -b --pretty false`, Vite production build, and `git diff --check` passed. D20 is **IMPLEMENTATION COMPLETE ON BRANCH / AWAITING INDEPENDENT EXACT-HEAD REVIEW**; it must not claim review, merge eligibility, merge, or deployment before that review.
+D20 closes that D19 Low as **CLOSED BY D20 VALIDATION CONTRACT / TEST COVERAGE**: its executable construction-zero-read assertion and focused managed-content/Provider/runtime/workflow tests passed 45/45; the full repository unit suite passed 256/256; `tsc -b --pretty false`, Vite production build, and `git diff --check` passed. D20 implementation head `12519bf8c8dcd06e6585d33f39db9f44a0c4dc2d` received independent exact-head review with 0 Critical, 0 High, 0 Medium, 1 Low, and 0 Nit; PR Gate #274 / run `32580037457` succeeded; PR #163 was manually merged as GitHub `main` `a8a74ba79f71b9619a90025c9e6ad74439d3f711`. The separate D20 Low is bounded test-precision debt only: focused tests do not directly bind the real `/contentPages/{pageId}` rule and singleton `super_admin` guarded route nesting. It is non-blocking and remains open unless a later task naturally edits that same harness.
 
 ## 9. Gates, impact, and stop point
 
 The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`; D19 and D20 resolve none. D19 was documentation/readiness only: no runtime implementation, Production/TEST data action, Firebase deployment, Rules/index/Auth/configuration change, Provider manifest change, Supabase capability, SQL/RLS, migration, seed, backfill, or hosted operation occurred.
 
-The D20 task has completed its scoped runtime implementation, validation, and lifecycle synchronization. Stop after commit, push, and Draft PR, then await one independent exact-head D20 review before any Ready, merge, deployment, Firebase Production, Rules/index/Auth change, Provider manifest change, Supabase, migration, or Production/TEST data action.
+D20 completed its scoped runtime implementation, validation, independent review, and manual merge. Firebase Production was not deployed; no Production/TEST data action, Rules/index/Auth/configuration or Provider manifest change, Supabase capability, SQL/RLS, migration, seed, backfill, or hosted action occurred.

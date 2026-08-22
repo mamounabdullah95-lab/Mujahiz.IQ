@@ -553,11 +553,20 @@ Hard boundary:
 
 ### D20 - content-page list Firebase adapter implementation
 
-- State: `IMPLEMENTATION COMPLETE ON BRANCH / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Base: GitHub `main` `a45ad2fdf3e8fac7e978dae464c63ee4cb39092b` (manual merge of PR #162).
 - Scope: extend the existing Firebase `managed_content_config` composition with the fourth `listContentPages(publishedOnly?)` method and route only the configured workspace list read through the existing resolver. Preserve both existing query modes, post-limit numeric sort, stored-ID overwrite mapping, Demo/local filtering and stored order before resolution, and configured error propagation.
 - Boundaries: `saveContentPage`, callers/UI, routes, role mapping, Rules/index/Auth/configuration, Provider manifest/vocabulary, SQL/RLS, Supabase runtime capability, Production/TEST data, deployment, and the seven Open gates remain unchanged. The D16 formatting-sensitive Nit remains bounded and non-blocking.
-- Validation: executable construction-zero-read and focused managed-content/Provider/runtime/workflow tests 42/42; full repository unit suite 256/256; `tsc -b --pretty false`, Vite production build, and `git diff --check` passed. This closes the D19 Low as `CLOSED BY D20 VALIDATION CONTRACT / TEST COVERAGE`. No independent D20 review, merge, or deployment is claimed.
+- Final lifecycle: implementation head `12519bf8c8dcd06e6585d33f39db9f44a0c4dc2d`; independent exact-head review 0 Critical / 0 High / 0 Medium / 1 Low / 0 Nit; focused validation 45/45; full repository unit suite 256/256; `tsc -b --pretty false`, Vite production build, and `git diff --check` passed. PR Gate #274 / run `32580037457` succeeded. PR #163 was manually merged as GitHub `main` `a8a74ba79f71b9619a90025c9e6ad74439d3f711`. The D19 Low remains `CLOSED BY D20 VALIDATION CONTRACT / TEST COVERAGE`; the D20 Low is separate bounded test-precision debt about direct binding of the real `/contentPages/{pageId}` rule and singleton `super_admin` route nesting.
+
+### D21 - supplier favorites Firebase Provider read implementation
+
+- State: `IMPLEMENTATION COMPLETE ON BRANCH / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- Base: GitHub `main` `a8a74ba79f71b9619a90025c9e6ad74439d3f711` (manual merge of PR #163).
+- Selection: exactly `supplier_favorites / listFavorites(userId)`. It is active in the Buyer dashboard, Buyer favorites workspace, and Buyer supplier-profile control; each passes the existing authoritative `firebaseUser.uid`. It wins over `getPlatformSettings()` (broad cross-aggregate lifecycle coupling), reviews/feedback (multi-audience moderation), operational reporting/audit evidence (cache/cross-aggregate or sensitive read scope), and AI intent (external capability rather than a datastore read).
+- Scope: create one feature-scoped Firebase favorites implementation, one registry, and one resolver, then route only the configured `listFavorites(userId)` facade branch through it. Preserve Demo/local filtering and newest-first sorting before Provider resolution, the one Firebase `favorites` query constrained by `userId == userId` and `limit(250)`, mapping with stored-ID overwrite, post-limit newest-first sorting, configured error propagation, and empty `[]` behavior.
+- Validation: focused favorites/Provider/runtime/managed-content regression tests 48/48; full repository unit suite 265/265; `tsc -b --pretty false`, Vite production build, and `git diff --check` passed. The initial sandboxed full-suite/build attempts were blocked only by esbuild directory access; the required reruns outside that sandbox passed without code changes.
+- Boundaries: `saveFavorite` and `removeFavorite` remain inline and unchanged. The application routes remain buyer/active-access scoped; Firestore Rules remain `signedIn() && resource.data.userId == request.auth.uid`; the explicit caller UID remains unchanged. No Rules/index/Auth/configuration or Provider manifest/vocabulary change, Supabase runtime capability, SQL/RLS, migration, Production/TEST data action, Firebase deployment, fallback, probing, dual read, or dual write is authorized. The seven Open gates remain `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 
 ## Queue advancement rules
 
