@@ -1,12 +1,12 @@
 # Branding settings Firebase adapter readiness
 
-Status: **D15 COMPLETE / REVIEWED / MANUALLY MERGED; D16 IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**
+Status: **D15 COMPLETE / REVIEWED / MANUALLY MERGED; D16 COMPLETE / REVIEWED / MANUALLY MERGED**
 
 Date: 2026-08-22
 Verified D16 starting GitHub `main`: `006a5ea4561360a60af471c548dc9fabd16ef6a5`
 Selected Provider feature: `managed_content_config`
 Selected operation: `getBrandingSettings()`
-D16 runtime implementation: **IN PROGRESS**
+D16 runtime implementation: **COMPLETE / REVIEWED / MANUALLY MERGED**
 Risk: **Low**
 
 D15 final lifecycle: **COMPLETE / REVIEWED / MANUALLY MERGED**. Corrected readiness head `494efe40c173dc66fcef71674a04e3a91818cc1c` received fresh independent review with 0 Critical, 0 High, 0 Medium, 1 Low, and 0 Nit findings. PR Gate #268 / run `32526221532` succeeded, and PR #158 was manually merged as GitHub `main` `006a5ea4561360a60af471c548dc9fabd16ef6a5`. The Low was documentation-only: stale stop-point wording said one documentation commit, while corrected PR #158 had two commits after its correction cycle.
@@ -490,4 +490,4 @@ GitHub source state must not be treated as deployed Firebase state.
 
 D15 stopped after D14 lifecycle synchronization, current-source candidate analysis, this documentation-only readiness contract, internal adversarial review, focused validation, **two bounded documentation commits after its correction cycle**, branch push, and one Draft PR. D15 did not implement runtime behavior.
 
-D16 is now implementing the approved seam and remains subject to an **independent exact-head D16 parity/security review before manual merge**. Ready transition, merge, deployment, Firebase Rules/index/Auth change, Supabase runtime, SQL/RLS, Production/TEST data action, and D17 remain outside D16.
+D16 completed the approved seam and was independently exact-head reviewed before PR #159 was manually merged. Its implementation head was `87996359e5b42f5ebf8e07e6bc21463d3ba0d306`; review found 0 Critical, 0 High, 0 Medium, 1 Low, and 1 Nit; focused tests passed 34/34, the full unit suite passed 245/245, `tsc -b`, Vite, and `git diff --check` passed; and PR Gate #269 / run `32558505576` succeeded. Resulting GitHub `main` is `604dcdae8cf4f23ab69c9074bd4ca7d931b5717f`. D14's historical Low is closed by D16 coverage. The one D16 Nit is bounded formatting-sensitive test-maintainability debt and is not a runtime, parity, or security defect. D17 may document it but must not change the test. Firebase Rules/index/Auth, the Provider manifest, Supabase runtime, Production/TEST data, Firebase deployment, and D17 runtime work remain outside D16.

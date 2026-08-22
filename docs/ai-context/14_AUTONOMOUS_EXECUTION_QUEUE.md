@@ -515,12 +515,21 @@ Hard boundary:
 
 ### D16 - branding settings Firebase adapter implementation
 
-- State: `IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Base: GitHub `main` `006a5ea4561360a60af471c548dc9fabd16ef6a5` (manual merge of PR #158).
 - Scope: extend the existing `managed_content_config` Firebase implementation with `getBrandingSettings()` only; preserve the Demo/local raw-first-record branch before resolution and keep all adjacent writes, other settings/content operations, caller/UI, Rules/Auth/indexes, manifest, and file capability unchanged.
 - D14 historical Low: closed by a deterministic production-source assertion binding `SHIPPED_PROVIDER_MANIFEST`, feature `managed_content_config`, and `managedContentConfigImplementations` in the real resolver call.
-- Validation before review: focused managed-content/Provider/runtime/Demo tests 34/34; full repository unit suite 245/245; `tsc -b`, Vite production build, and `git diff --check` passed.
+- Review and merge result: implementation head `87996359e5b42f5ebf8e07e6bc21463d3ba0d306`; independent exact-head review 0 Critical / 0 High / 0 Medium / 1 Low / 1 Nit; focused managed-content/Provider/runtime/Demo tests 34/34; full repository unit suite 245/245; `tsc -b`, Vite production build, and `git diff --check` passed; PR Gate #269 / run `32558505576` succeeded; PR #159 was manually merged as GitHub `main` `604dcdae8cf4f23ab69c9074bd4ca7d931b5717f`.
+- Nit handling: the D16 production-wiring assertion is semantically correct but somewhat formatting-sensitive. This is bounded test-maintainability debt, not a runtime, parity, or security defect. D17 documents it only; a future implementation may make a tiny semantically equivalent focused test-only tolerance improvement only while retaining all three real production bindings.
 - Boundaries: Firebase remains authoritative; no Supabase runtime capability, Production/TEST data action, Firebase deployment, or configuration change is authorized. The seven Open gates remain unchanged.
+
+### D17 - post-D16 synchronization and Admin Operations Firebase adapter readiness
+
+- State: `READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- Base: GitHub `main` `604dcdae8cf4f23ab69c9074bd4ca7d931b5717f` (manual merge of PR #159).
+- Selection: exactly `managed_content_config / getAdminOperationsSettings()`. Current source remains a Low-complexity one-document Firebase read with a four-field fallback, exactly one direct runtime caller (`AdminOperationalSettingsPage`), and no verified downstream runtime consumer of its four fields outside the service and settings page. No changed source promoted a safer active candidate above it after D16.
+- Required future scope: extend the existing single `ManagedContentConfigImplementation`, Firebase adapter object and instance, `managedContentConfigImplementations` registry, and resolver. Preserve the Demo/local raw-first-record branch before resolution, configured overlay behavior, fresh fallback-object behavior, fail-closed Provider errors, adjacent write exclusion, application route/Roles boundary, and Firestore Rules boundary. Runtime implementation is not started.
+- Boundaries: Firebase remains authoritative for the complete aggregate; no Supabase runtime capability, Rules/index/Auth/config change, Provider manifest change, Production/TEST data action, Firebase deployment, SQL/RLS, migration, or cutover is authorized. The seven Open gates remain unchanged.
 
 ## Queue advancement rules
 
