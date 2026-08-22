@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import {
   BRANDING_SETTINGS_FALLBACK,
+  createAdminOperationsSettingsFallback,
   createFirebaseManagedContentConfigAdapter,
 } from "../src/services/providers/managedContentConfigFirebaseAdapter.ts";
 import {
@@ -40,7 +41,7 @@ function brandingSnapshot({ exists = true, data = {}, existsError, dataError } =
   };
 }
 
-function createHarness({ documents = [], getDocsError, snapshot = brandingSnapshot(), getDocError } = {}) {
+function createHarness({ documents = [], getDocsError, snapshot = brandingSnapshot(), adminOperationsSnapshot = snapshot, getDocError } = {}) {
   const calls = [];
   const dependencies = {
     db: { kind: "synthetic-firestore" },
@@ -68,7 +69,7 @@ function createHarness({ documents = [], getDocsError, snapshot = brandingSnapsh
     getDoc: async (documentReference) => {
       calls.push(["getDoc", documentReference]);
       if (getDocError) throw getDocError;
-      return snapshot;
+      return documentReference.id === "adminOperations" ? adminOperationsSnapshot : snapshot;
     },
   };
   return { adapter: createFirebaseManagedContentConfigAdapter(dependencies), calls };
@@ -95,6 +96,7 @@ test("adapter construction creates references only and performs zero backend rea
     ["collection", "contentPages"],
     ["collection", "settings"],
     ["doc", { collection: { path: "settings" }, id: "branding" }],
+    ["doc", { collection: { path: "settings" }, id: "adminOperations" }],
   ]);
   assert.equal(calls.filter(([name]) => name === "getDocs" || name === "getDoc").length, 0);
 });
@@ -165,26 +167,83 @@ test("configured Branding getDoc, exists, and data failures propagate unchanged"
   await assert.rejects(createHarness({ snapshot: brandingSnapshot({ dataError: dataFailure }) }).adapter.getBrandingSettings(), (error) => error === dataFailure);
 });
 
+test("getAdminOperationsSettings reads exactly settings/adminOperations once per invocation without a query", async () => {
+  const { adapter, calls } = createHarness();
+  await adapter.getAdminOperationsSettings();
+  await adapter.getAdminOperationsSettings();
+  assert.deepEqual(calls.filter(([name]) => name === "getDoc"), [
+    ["getDoc", { collection: { path: "settings" }, id: "adminOperations" }],
+    ["getDoc", { collection: { path: "settings" }, id: "adminOperations" }],
+  ]);
+  assert.equal(calls.filter(([name]) => name === "getDocs" || name === "query").length, 0);
+});
+
+test("a missing Admin Operations document returns a fresh exact four-field fallback", async () => {
+  const adapter = createHarness({ adminOperationsSnapshot: brandingSnapshot({ exists: false }) }).adapter;
+  const first = await adapter.getAdminOperationsSettings();
+  const second = await adapter.getAdminOperationsSettings();
+  assert.deepEqual(first, createAdminOperationsSettingsFallback());
+  assert.deepEqual(second, createAdminOperationsSettingsFallback());
+  assert.notStrictEqual(first, second);
+  first.reviewNotifications = false;
+  assert.deepEqual(await adapter.getAdminOperationsSettings(), createAdminOperationsSettingsFallback());
+});
+
+test("configured Admin Operations overlays partial and complete stored fields, preserving unexpected fields without an id", async () => {
+  const partial = await createHarness({
+    adminOperationsSnapshot: brandingSnapshot({ data: { reviewNotifications: false } }),
+  }).adapter.getAdminOperationsSettings();
+  assert.deepEqual(partial, { ...createAdminOperationsSettingsFallback(), reviewNotifications: false });
+
+  const stored = {
+    reviewNotifications: false,
+    showIncompleteSuppliers: true,
+    requireDuplicateReason: false,
+    dictionarySuggestionMinimum: 9,
+    unexpected: "preserved",
+  };
+  const result = await createHarness({ adminOperationsSnapshot: brandingSnapshot({ data: stored }) }).adapter.getAdminOperationsSettings();
+  assert.deepEqual(result, { ...createAdminOperationsSettingsFallback(), ...stored });
+  assert.equal("id" in result, false);
+});
+
+test("configured Admin Operations getDoc, exists, and data failures propagate unchanged", async () => {
+  const getDocFailure = new Error("getDoc failure");
+  const existsFailure = new Error("exists failure");
+  const dataFailure = new Error("data failure");
+  await assert.rejects(createHarness({ getDocError: getDocFailure }).adapter.getAdminOperationsSettings(), (error) => error === getDocFailure);
+  await assert.rejects(createHarness({ adminOperationsSnapshot: brandingSnapshot({ existsError: existsFailure }) }).adapter.getAdminOperationsSettings(), (error) => error === existsFailure);
+  await assert.rejects(createHarness({ adminOperationsSnapshot: brandingSnapshot({ dataError: dataFailure }) }).adapter.getAdminOperationsSettings(), (error) => error === dataFailure);
+});
+
 test("the shipped selection resolves Firebase and a synthetic Supabase selection fails closed without invoking Firebase", async () => {
   let firebaseCalls = 0;
   const firebaseImplementation = {
     getPublishedContentPage: async () => { firebaseCalls += 1; return null; },
     getBrandingSettings: async () => { firebaseCalls += 1; return BRANDING_SETTINGS_FALLBACK; },
+    getAdminOperationsSettings: async () => { firebaseCalls += 1; return createAdminOperationsSettingsFallback(); },
   };
   const registry = new Map([["managed_content_config", new Map([["firebase", firebaseImplementation]])]]);
   const resolved = resolveProviderImplementation({ manifest: SHIPPED_PROVIDER_MANIFEST, feature: "managed_content_config", registry });
   assert.strictEqual(resolved, firebaseImplementation);
   assert.equal(await resolved.getPublishedContentPage("privacy-policy"), null);
   assert.equal(await resolved.getBrandingSettings(), BRANDING_SETTINGS_FALLBACK);
-  assert.equal(firebaseCalls, 2);
+  assert.deepEqual(await resolved.getAdminOperationsSettings(), createAdminOperationsSettingsFallback());
+  assert.equal(firebaseCalls, 3);
   assert.throws(() => resolveProviderImplementation({ manifest: manifestWithManagedContentAuthority("supabase"), feature: "managed_content_config", registry }), (error) => error instanceof ProviderResolverError && error.code === "provider_implementation_unsupported");
-  assert.equal(firebaseCalls, 2);
+  assert.equal(firebaseCalls, 3);
 });
 
 test("configured Branding resolves only after preserving its Demo/local raw-first-record branch", () => {
   assert.match(workspaceSource, /export async function getBrandingSettings\(\): Promise<BrandingSettings> \{\s*if \(!isFirebaseConfigured\) return localRead<BrandingSettings & \{ id: string \}>\("branding"\)\[0\] \|\| BRANDING_SETTINGS_FALLBACK;\s*return resolveManagedContentConfigImplementation\(\)\.getBrandingSettings\(\);\s*\}/);
   assert.doesNotMatch(workspaceSource, /getBrandingSettings\(\)[\s\S]*?catch\s*\(/);
   assert.doesNotMatch(workspaceSource, /getBrandingSettings\(\)[\s\S]*?\{\s*\.\.\.BRANDING_SETTINGS_FALLBACK/);
+});
+
+test("configured Admin Operations resolves only after preserving its Demo/local raw-first-record branch and fresh fallback", () => {
+  assert.match(workspaceSource, /export async function getAdminOperationsSettings\(\): Promise<AdminOperationsSettings> \{\s*if \(!isFirebaseConfigured\) return localRead<AdminOperationsSettings & \{ id: string \}>\("adminOperations"\)\[0\] \|\| createAdminOperationsSettingsFallback\(\);\s*return resolveManagedContentConfigImplementation\(\)\.getAdminOperationsSettings\(\);\s*\}/);
+  assert.doesNotMatch(workspaceSource, /getAdminOperationsSettings\(\)[\s\S]*?catch\s*\(/);
+  assert.doesNotMatch(workspaceSource, /getAdminOperationsSettings\(\)[\s\S]*?\{\s*\.\.\.createAdminOperationsSettingsFallback/);
 });
 
 test("the configured published-content facade retains its existing Demo/local behavior", () => {
@@ -209,17 +268,21 @@ test("the adapter has no ordering, pagination, Demo, Supabase, retry, or import-
   assert.match(adapterSource, /const contentPages = collection\(db, "contentPages"\);/);
   assert.match(adapterSource, /const settings = collection\(db, "settings"\);/);
   assert.match(adapterSource, /const branding = doc\(settings, "branding"\);/);
+  assert.match(adapterSource, /const adminOperations = doc\(settings, "adminOperations"\);/);
 });
 
 test("callers, disabled file UI, adjacent writes, other settings, Rules, and indexes remain outside this adapter", () => {
   assert.match(publicCallerSource, /getPublishedContentPage\(slugs\[pageKey\]\)\.then\(setManaged\)\.catch\(\(\) => setManaged\(null\)\)/);
   assert.equal((brandingCallerSource.match(/getBrandingSettings\(/g) || []).length, 1);
   assert.match(brandingCallerSource, /void getBrandingSettings\(\)\.then\(setSettings\)/);
+  assert.equal((brandingCallerSource.match(/getAdminOperationsSettings\(/g) || []).length, 1);
+  assert.match(brandingCallerSource, /void getAdminOperationsSettings\(\)\.then\(setSettings\)/);
   assert.match(disabledFileUploadSource, /disabled aria-disabled="true"/);
   assert.match(workspaceSource, /export async function saveBrandingSettings\(settings: BrandingSettings, actorId: string\) \{\s*const payload = \{ \.\.\.settings, assetUploadStatus: "upload_pending_launch" as const, updatedAt: isFirebaseConfigured \? serverTimestamp\(\) : nowIso\(\), updatedBy: actorId \};\s*if \(!isFirebaseConfigured\) return localUpsert\("branding", \{ id: "branding", \.\.\.payload \}\);\s*await setDoc\(doc\(settingsRef, "branding"\), payload, \{ merge: true \}\);\s*\}/);
+  assert.match(workspaceSource, /export async function saveAdminOperationsSettings\(settings: AdminOperationsSettings, actorId: string\) \{\s*const payload = \{ \.\.\.settings, updatedAt: isFirebaseConfigured \? serverTimestamp\(\) : nowIso\(\), updatedBy: actorId \};\s*if \(!isFirebaseConfigured\) return localUpsert\("adminOperations", \{ id: "adminOperations", \.\.\.payload \}\);\s*await setDoc\(doc\(settingsRef, "adminOperations"\), payload, \{ merge: true \}\);\s*\}/);
   for (const operation of ["listContentPages", "saveContentPage", "getAdminOperationsSettings", "saveAdminOperationsSettings"]) assert.match(workspaceSource, new RegExp(`export async function ${operation}\\(`));
   for (const operation of ["getPlatformSettings", "savePlatformSettings"]) assert.match(firestoreFacadeSource, new RegExp(`export async function ${operation}\\(`));
-  assert.doesNotMatch(adapterSource, /saveContentPage|listContentPages|AdminOperationsSettings|PlatformSettings|storage/i);
+  assert.doesNotMatch(adapterSource, /saveContentPage|listContentPages|saveAdminOperationsSettings|PlatformSettings|storage/i);
   assert.match(rulesSource, /match \/settings\/\{settingId\} \{\s*allow read: if signedIn\(\);/);
   assert.doesNotMatch(indexesSource, /contentPages|settings/);
 });

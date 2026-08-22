@@ -1,15 +1,19 @@
 # Admin Operations settings Firebase adapter readiness
 
-Status: **D17 READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW**
+Status: **D18 IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**
 
 Date: 2026-08-22
-Verified D17 starting GitHub `main`: `604dcdae8cf4f23ab69c9074bd4ca7d931b5717f`
+Verified D18 starting GitHub `main`: `229ed5c3f53648a6151d700b62ecc8cb619c26d0`
 Selected Provider feature: `managed_content_config`
 Selected operation: `getAdminOperationsSettings()`
-Future runtime implementation: **NOT STARTED**
+Runtime implementation: **IN PROGRESS**
 Risk: **Low**
 
 ## 1. D16 lifecycle and selection result
+
+D17 is **COMPLETE / REVIEWED / MANUALLY MERGED**. Its readiness head `3b56b6527f8ed05e18376112bc939004e6781c1b` received independent exact-head review with 0 Critical, 0 High, 0 Medium, 0 Low, and 0 Nit. Focused review validation passed static/source 23/23, Markdown 42/42, Provider features 17, direct callers 1, and `git diff --check`; PR Gate #270 / run `32560998804` succeeded; and PR #160 was manually merged as GitHub `main` `229ed5c3f53648a6151d700b62ecc8cb619c26d0`.
+
+D18 is **IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION**. It must not be represented as merged, deployed, or a Production/TEST data action. The D16 formatting-sensitive Nit remains bounded and non-blocking unless a safe focused test-only change demonstrably addresses it.
 
 D16 is **COMPLETE / REVIEWED / MANUALLY MERGED**. Its implementation head `87996359e5b42f5ebf8e07e6bc21463d3ba0d306` received independent exact-head review with 0 Critical, 0 High, 0 Medium, 1 Low, and 1 Nit. Focused tests passed 34/34, the full repository unit suite passed 245/245, `tsc -b`, Vite production build, and `git diff --check` passed; PR Gate #269 / run `32558505576` succeeded; and PR #159 was manually merged as GitHub `main` `604dcdae8cf4f23ab69c9074bd4ca7d931b5717f`.
 
