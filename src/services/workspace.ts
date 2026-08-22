@@ -46,7 +46,10 @@ import type {
 import { toDate } from "../utils/date";
 import { ReadThroughCache, type CacheReadOptions } from "../utils/readThroughCache";
 import { resolveManagedContentConfigImplementation } from "./providers/managedContentConfigProvider";
-import { BRANDING_SETTINGS_FALLBACK } from "./providers/managedContentConfigFirebaseAdapter";
+import {
+  BRANDING_SETTINGS_FALLBACK,
+  createAdminOperationsSettingsFallback,
+} from "./providers/managedContentConfigFirebaseAdapter";
 import { resolveSupplierTaxonomyDictionaryImplementation } from "./providers/supplierTaxonomyDictionaryProvider";
 import {
   currentRfqRevision,
@@ -1156,10 +1159,8 @@ export async function saveBrandingSettings(settings: BrandingSettings, actorId: 
 }
 
 export async function getAdminOperationsSettings(): Promise<AdminOperationsSettings> {
-  const fallback: AdminOperationsSettings = { reviewNotifications: true, showIncompleteSuppliers: false, requireDuplicateReason: true, dictionarySuggestionMinimum: 2 };
-  if (!isFirebaseConfigured) return localRead<AdminOperationsSettings & { id: string }>("adminOperations")[0] || fallback;
-  const snapshot = await getDoc(doc(settingsRef, "adminOperations"));
-  return snapshot.exists() ? { ...fallback, ...snapshot.data() } as AdminOperationsSettings : fallback;
+  if (!isFirebaseConfigured) return localRead<AdminOperationsSettings & { id: string }>("adminOperations")[0] || createAdminOperationsSettingsFallback();
+  return resolveManagedContentConfigImplementation().getAdminOperationsSettings();
 }
 
 export async function saveAdminOperationsSettings(settings: AdminOperationsSettings, actorId: string) {

@@ -525,11 +525,19 @@ Hard boundary:
 
 ### D17 - post-D16 synchronization and Admin Operations Firebase adapter readiness
 
-- State: `READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Base: GitHub `main` `604dcdae8cf4f23ab69c9074bd4ca7d931b5717f` (manual merge of PR #159).
 - Selection: exactly `managed_content_config / getAdminOperationsSettings()`. Current source remains a Low-complexity one-document Firebase read with a four-field fallback, exactly one direct runtime caller (`AdminOperationalSettingsPage`), and no verified downstream runtime consumer of its four fields outside the service and settings page. No changed source promoted a safer active candidate above it after D16.
 - Required future scope: extend the existing single `ManagedContentConfigImplementation`, Firebase adapter object and instance, `managedContentConfigImplementations` registry, and resolver. Preserve the Demo/local raw-first-record branch before resolution, configured overlay behavior, fresh fallback-object behavior, fail-closed Provider errors, adjacent write exclusion, application route/Roles boundary, and Firestore Rules boundary. Runtime implementation is not started.
 - Boundaries: Firebase remains authoritative for the complete aggregate; no Supabase runtime capability, Rules/index/Auth/config change, Provider manifest change, Production/TEST data action, Firebase deployment, SQL/RLS, migration, or cutover is authorized. The seven Open gates remain unchanged.
+- Final lifecycle: readiness head `3b56b6527f8ed05e18376112bc939004e6781c1b`; independent exact-head review 0 Critical / 0 High / 0 Medium / 0 Low / 0 Nit; focused review validation static/source 23/23, Markdown 42/42, Provider features 17, direct callers 1, and `git diff --check` passed; PR Gate #270 / run `32560998804` succeeded; PR #160 was manually merged as GitHub `main` `229ed5c3f53648a6151d700b62ecc8cb619c26d0`.
+
+### D18 - Admin Operations settings Firebase adapter implementation
+
+- State: `IMPLEMENTATION IN PROGRESS / AWAITING INDEPENDENT EXACT-HEAD REVIEW AFTER COMPLETION`.
+- Base: GitHub `main` `229ed5c3f53648a6151d700b62ecc8cb619c26d0` (manual merge of PR #160).
+- Scope: extend the existing `managed_content_config` Firebase implementation with `getAdminOperationsSettings()` and route only the configured workspace read through the existing resolver. Preserve the Demo/local raw-first-record branch, the four-field fresh fallback, configured overlay and error behavior, existing composition, and all D16 published-content and Branding behavior.
+- Boundaries: the adjacent write, caller/UI, routes, role mapping, Rules/index/Auth/configuration, Provider manifest/vocabulary, SQL/RLS, Supabase runtime capability, Production/TEST data, deployment, and the seven Open gates remain unchanged. The D16 formatting-sensitive Nit remains bounded and non-blocking unless a focused test-only change safely addresses it.
 
 ## Queue advancement rules
 
