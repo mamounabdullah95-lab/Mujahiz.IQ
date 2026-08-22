@@ -321,6 +321,8 @@ Hard boundary:
 
 Package objective: define one feature-specific readiness contract at a time before any adapter or runtime provider rewiring, preserving Firebase as the sole current Production authority and keeping Demo/local behavior distinct from provider selection.
 
+From D20 onward, a routine bounded Low/Medium Provider seam with no material architecture, security, authorization, migration, or Open-Gate ambiguity is completed in one task, branch, and Draft PR: selection, investigation, implementation, focused tests, bounded corrections, broader validation, and lifecycle documentation. Standalone readiness/design work remains reserved for material authority, Rules/Auth/RLS, migration/cutover, sensitive identity/security, Open-Gate, or public-contract decisions.
+
 Hard boundary:
 
 - no adapter implementation, service rewiring, Auth change, provider switch, Supabase SDK/client/network capability, hosted action, data action, migration, or deployment;
@@ -542,11 +544,20 @@ Hard boundary:
 
 ### D19 - post-D18 synchronization and content-page list Firebase adapter readiness
 
-- State: `READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- State: `COMPLETE / REVIEWED / MANUALLY MERGED`.
 - Base: GitHub `main` `89fb43c6d5340518db9283abbcf00a2286e1d9fa` (manual merge of PR #161).
 - Selection: exactly `managed_content_config / listContentPages(publishedOnly = false)`, preserving the existing one-operation two-mode boundary. The default/false Owner CMS list is the only active direct caller; the public true mode has no direct runtime caller. The active useful seam wins over extracting an unused lower-risk mode, without inventing a method split.
 - Required future scope: add one fourth method to the existing single `ManagedContentConfigImplementation`, existing Firebase adapter object and instance, `managedContentConfigImplementations` registry, and resolver. Preserve both mode queries, `limit(100)`, native Firebase query order followed by numeric client `order` sorting, stored-ID overwrite mapping, Demo/local filtering and stored order, configured error propagation, the Owner route/Rules distinction, and adjacent write exclusion.
 - Boundaries: Firebase remains authoritative for the complete aggregate. No Rules/index/Auth/configuration or Provider manifest/vocabulary change, Supabase runtime capability, Production/TEST data action, Firebase deployment, SQL/RLS, migration, dual read/write, fallback, or cutover is authorized. The seven Open gates remain unchanged.
+- Final lifecycle: readiness head `105d20acbfbd796ca3705252b1593c45cb763320`; independent exact-head review 0 Critical / 0 High / 0 Medium / 1 Low / 0 Nit; the Low required an explicit D20 construction-zero-read and broader-validation contract only. PR Gate #273 / run `32574333742` succeeded. PR #162 was manually merged as GitHub `main` `a45ad2fdf3e8fac7e978dae464c63ee4cb39092b`.
+
+### D20 - content-page list Firebase adapter implementation
+
+- State: `IMPLEMENTATION COMPLETE ON BRANCH / AWAITING INDEPENDENT EXACT-HEAD REVIEW`.
+- Base: GitHub `main` `a45ad2fdf3e8fac7e978dae464c63ee4cb39092b` (manual merge of PR #162).
+- Scope: extend the existing Firebase `managed_content_config` composition with the fourth `listContentPages(publishedOnly?)` method and route only the configured workspace list read through the existing resolver. Preserve both existing query modes, post-limit numeric sort, stored-ID overwrite mapping, Demo/local filtering and stored order before resolution, and configured error propagation.
+- Boundaries: `saveContentPage`, callers/UI, routes, role mapping, Rules/index/Auth/configuration, Provider manifest/vocabulary, SQL/RLS, Supabase runtime capability, Production/TEST data, deployment, and the seven Open gates remain unchanged. The D16 formatting-sensitive Nit remains bounded and non-blocking.
+- Validation: executable construction-zero-read and focused managed-content/Provider/runtime/workflow tests 42/42; full repository unit suite 256/256; `tsc -b --pretty false`, Vite production build, and `git diff --check` passed. This closes the D19 Low as `CLOSED BY D20 VALIDATION CONTRACT / TEST COVERAGE`. No independent D20 review, merge, or deployment is claimed.
 
 ## Queue advancement rules
 

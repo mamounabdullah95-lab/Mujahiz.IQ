@@ -33,6 +33,7 @@ export interface ManagedContentConfigImplementation {
   getPublishedContentPage(slug: string): Promise<ContentPageRecord | null>;
   getBrandingSettings(): Promise<BrandingSettings>;
   getAdminOperationsSettings(): Promise<AdminOperationsSettings>;
+  listContentPages(publishedOnly?: boolean): Promise<ContentPageRecord[]>;
 }
 
 export interface FirebaseManagedContentConfigDependencies {
@@ -92,6 +93,14 @@ export function createFirebaseManagedContentConfigAdapter({
       return snapshot.exists()
         ? { ...createAdminOperationsSettingsFallback(), ...snapshot.data() } as AdminOperationsSettings
         : createAdminOperationsSettingsFallback();
+    },
+    async listContentPages(publishedOnly = false) {
+      const snapshot = await getDocs(publishedOnly
+        ? query(contentPages, where("status", "==", "published"), limit(100))
+        : query(contentPages, limit(100)));
+      return snapshot.docs
+        .map((item) => withContentPageId(item))
+        .sort((a, b) => a.order - b.order);
     },
   };
 }

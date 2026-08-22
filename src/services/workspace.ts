@@ -1132,8 +1132,7 @@ export async function deleteSupplierDocumentMetadata(documentId: string) {
 
 export async function listContentPages(publishedOnly = false) {
   if (!isFirebaseConfigured) return localRead<ContentPageRecord>("contentPages").filter((item) => !publishedOnly || item.status === "published");
-  const snapshot = await getDocs(publishedOnly ? query(contentPagesRef, where("status", "==", "published"), limit(100)) : query(contentPagesRef, limit(100)));
-  return snapshot.docs.map((item) => withId<ContentPageRecord>(item)).sort((a, b) => a.order - b.order);
+  return resolveManagedContentConfigImplementation().listContentPages(publishedOnly);
 }
 
 export async function getPublishedContentPage(slug: string) {
