@@ -1,12 +1,12 @@
 # Content-page list Firebase adapter readiness
 
-Status: **D19 READINESS COMPLETE / AWAITING INDEPENDENT EXACT-HEAD REVIEW**
+Status: **D19 COMPLETE / REVIEWED / MANUALLY MERGED; D20 IMPLEMENTATION COMPLETE ON BRANCH / AWAITING INDEPENDENT EXACT-HEAD REVIEW**
 
 Date: 2026-08-22
 Verified D19 starting GitHub `main`: `89fb43c6d5340518db9283abbcf00a2286e1d9fa`
 Selected Provider feature: `managed_content_config`
 Selected operation: `listContentPages(publishedOnly = false)`
-Runtime implementation: **NOT STARTED**
+Runtime implementation: **D20 COMPLETE ON `codex/d20-content-page-list-firebase-adapter`; AWAITING INDEPENDENT EXACT-HEAD REVIEW**
 Risk: **Medium**
 
 ## 1. D18 lifecycle and D19 selection
@@ -15,7 +15,7 @@ D18 is **COMPLETE / REVIEWED / MANUALLY MERGED**. PR #161 manually merged final 
 
 The D16 production-wiring Nit remains bounded non-blocking test-maintainability debt: its real production binding is semantically correct but formatting-sensitive. D19 changes no test and does not reopen it.
 
-D19 selects the one existing operation `listContentPages(publishedOnly = false)`, preserving both modes. `false` is actively used by the Owner CMS and is the useful next extraction; `true` has no direct runtime caller. Selecting only the unused `true` mode would be technically lower-risk but would not produce a live runtime extraction. Splitting the public API into two methods lacks source evidence and is not authorized.
+D19 selects the one existing operation `listContentPages(publishedOnly = false)`, preserving both modes. `false` is actively used by the Owner CMS and is the useful next extraction; `true` has no direct runtime caller. Selecting only the unused `true` mode would be technically lower-risk but would not produce a live runtime extraction. Splitting the public API into two methods lacks source evidence and is not authorized. D19 is **COMPLETE / REVIEWED / MANUALLY MERGED**: readiness head `105d20acbfbd796ca3705252b1593c45cb763320` received 0 Critical, 0 High, 0 Medium, 1 Low, and 0 Nit; PR Gate #273 / run `32574333742` succeeded; PR #162 merged it as GitHub `main` `a45ad2fdf3e8fac7e978dae464c63ee4cb39092b`. Its Low was only the future D20 validation-contract under-specification.
 
 ## 2. Bounded candidate comparison
 
@@ -101,10 +101,10 @@ The next separate runtime task/branch may change only the existing managed-conte
 | Regressions | Existing published-content, Branding, and Admin Operations adapter behavior and fail-closed resolver errors remain unchanged. |
 | Environment | No Supabase runtime capability, hosted action, data operation, or deployment appears. |
 
-Focused future validation is static/source assertions plus the directly affected managed-content adapter and workspace tests, `git diff --check`, documentation links if changed, and a documentation-only/runtime-scope assertion. Do not run the full repository suite, TypeScript build, Vite build, Emulator, Docker, SQL/pgTAP, E2E, Production smoke, or hosted Supabase checks by default unless the implementation diff/risk requires them.
+D20 closes that Low as **CLOSED BY D20 VALIDATION CONTRACT / TEST COVERAGE**: its executable construction-zero-read assertion and focused managed-content/Provider/runtime/workflow tests passed 42/42; the full repository unit suite passed 256/256; `tsc -b --pretty false`, Vite production build, and `git diff --check` passed. D20 is **IMPLEMENTATION COMPLETE ON BRANCH / AWAITING INDEPENDENT EXACT-HEAD REVIEW**; it must not claim review, merge eligibility, merge, or deployment before that review.
 
 ## 9. Gates, impact, and stop point
 
-The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`; D19 resolves none. D19 is documentation/readiness only: no runtime implementation, Production/TEST data action, Firebase deployment, Rules/index/Auth/configuration change, Provider manifest change, Supabase capability, SQL/RLS, migration, seed, backfill, or hosted operation occurred.
+The seven Open gates remain exactly `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`; D19 and D20 resolve none. D19 was documentation/readiness only: no runtime implementation, Production/TEST data action, Firebase deployment, Rules/index/Auth/configuration change, Provider manifest change, Supabase capability, SQL/RLS, migration, seed, backfill, or hosted operation occurred.
 
-Stop after independent exact-head D19 readiness review. The selected runtime implementation is **NOT STARTED** and belongs to the next separate task/branch/PR. Stop before Ready, runtime implementation, merge, deployment, Firebase Production, Rules/index/Auth changes, Provider manifest change, Supabase, migration, or Production/TEST data action.
+The D20 task has completed its scoped runtime implementation, validation, and lifecycle synchronization. Stop after commit, push, and Draft PR, then await one independent exact-head D20 review before any Ready, merge, deployment, Firebase Production, Rules/index/Auth change, Provider manifest change, Supabase, migration, or Production/TEST data action.
