@@ -30,6 +30,7 @@ import {
   type ProviderImplementationRegistry,
 } from "./providers/providerContract";
 import { resolveSupplierTaxonomyDictionaryImplementation } from "./providers/supplierTaxonomyDictionaryProvider";
+import { resolveSupplierReviewsImplementation } from "./providers/supplierReviewsProvider";
 import {
   approveSupplierSubmissionTrusted,
   decideSupplierSubmissionTrusted,
@@ -733,11 +734,7 @@ export async function listMyReviews(userId: string) {
   if (!isFirebaseConfigured) {
     return demo.demoListMyReviews(userId);
   }
-  const snapshot = await getDocs(query(reviewsRef, where("reviewedBy", "==", userId)));
-  return sortByCreatedAtDesc(
-    snapshot.docs.map((item) => withId<SupplierReview>(item)),
-    100,
-  );
+  return resolveSupplierReviewsImplementation().listMyReviews(userId);
 }
 
 export async function submitSupplierReview(review: Omit<SupplierReview, "id" | "status" | "createdAt">) {

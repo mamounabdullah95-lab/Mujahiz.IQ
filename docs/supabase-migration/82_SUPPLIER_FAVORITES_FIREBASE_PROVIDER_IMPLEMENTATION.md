@@ -1,6 +1,6 @@
 # Supplier favorites Firebase Provider implementation
 
-Status: **D21 IMPLEMENTATION COMPLETE ON BRANCH / AWAITING INDEPENDENT EXACT-HEAD REVIEW**
+Status: **D21 COMPLETE / REVIEWED / MANUALLY MERGED**
 
 Date: 2026-08-22
 Verified starting GitHub `main`: `a8a74ba79f71b9619a90025c9e6ad74439d3f711`
@@ -42,8 +42,8 @@ D21 adds exactly one `SupplierFavoritesImplementation`, one Firebase adapter obj
 
 Firebase remains authoritative for the complete favorites aggregate. No Provider manifest change, Supabase SDK/client/network capability, fallback, probing, dual read/write, Rules/index/Auth/configuration change, SQL/RLS, migration, hosted action, Firebase deployment, or Production/TEST data action is included. D21 resolves none of the seven Open gates: `ORG-001`, `ORG-002`, `MSG-002`, `FILE-001`, `BILL-001`, `RES-001`, and `MIG-002`.
 
-## Validation and stop point
+## Final review, merge, and carried findings
 
-Focused favorites/Provider/runtime/managed-content regression tests passed 48/48. They cover construction-zero-read, exact path/query/read count, mapping and stored-ID overwrite, post-limit ordering, empty and error behavior, Demo-before-resolver behavior, Firebase/Supabase resolver behavior, single composition, callers/identity/routes, Rules/indexes, and unchanged adjacent writes. The full repository unit suite passed 265/265; `tsc -b --pretty false`, Vite production build, and `git diff --check` passed. The first sandboxed full-suite/build attempts were blocked only by esbuild directory access; required reruns outside that sandbox passed with no code changes.
+D21 implementation head `80a1db1b59f50ef1e0a6a2bba55b2834b2e410ea` received an independent exact-head review of 0 Critical, 0 High, 0 Medium, 2 Low, and 0 Nit. Independent focused validation passed 54/54; the full repository unit suite passed 265/265; `tsc -b --pretty false`, Vite production build, and `git diff --check` passed. PR Gate #275 / run `32594492895` succeeded on that exact head. PR #164 was manually merged as GitHub `main` `29c34d90aa902bd8df0b1977c92383905b99e9b5`; Firebase Production was not deployed and no Production/TEST data action occurred.
 
-Stop after commit, push, Draft PR, and one exact-head Gate snapshot. Await one independent exact-head D21 parity/security review before Ready, manual merge, deployment, Firebase Production, Rules/Auth/index change, Provider-manifest change, Supabase, migration, or Production/TEST data action.
+D21 Low 1 remains open/non-blocking: the adapter's local date-conversion/newest-first helper is behaviorally equivalent to the existing shared implementation but creates future parity-drift maintenance risk. D21 Low 2 remains open/non-blocking: focused tests do not directly exercise Date, invalid date-string, Timestamp-like, and absent timestamp values, though current behavior was manually proven. D22 does not naturally modify the favorites adapter or harness, so neither finding is changed. The D20 direct-rule/route test-precision Low and D16 formatting-sensitive Nit are likewise unchanged.
